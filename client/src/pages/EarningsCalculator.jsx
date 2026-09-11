@@ -1,40 +1,36 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Sprout, Sparkles, Rocket, TrendingUp, ArrowUpRight, ShieldCheck, Info, Check } from "lucide-react";
+import { Sprout, Sparkles, Rocket, Crown, Minus, Plus, ArrowRight, Info, Check, Zap, Wallet, Lock, Heart } from "lucide-react";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
 import { SITE_URL } from "../utils/seo";
 import {
-  resultsFor, pickWinner, annualSaving, ceilingState,
-  starterCommissionPerYear, ANNUAL_FEE, HOSTPLUS_ANNUAL_CAP,
-  deltaVsFree, hostplusCrossover,
+  resultsFor, pickWinner, annualSaving, deltaVsFree, ANNUAL_FEE,
 } from "../lib/earningsCalc";
 
-// /earnings-calculator — public conversion tool. Host drags price + monthly
-// volume; sees annual take-home per plan (annual billing default), what Starter's
-// 5% commission costs over a year, and — once volume passes Host+'s 1,000/yr cap —
-// an honest nudge to Studio (identical take-home, uncapped). Winner is always the
-// highest annual take-home among non-capped plans; Studio never fakes a higher
-// number. Math: lib/earningsCalc.js + lib/morPricing.js (server mirror). Display
-// only; real pricing computed server-side at booking.
+// /earnings-calculator — public conversion tool. Host sets price + monthly volume;
+// sees annual take-home per plan as a bar chart (Starter 5% · Host+ 0% · Studio 0%),
+// the plan that keeps the most, and how much more than free. All numbers come from
+// lib/earningsCalc.js + lib/morPricing.js (server mirror) — display only, real
+// pricing computed server-side at booking. No invented tiers, no fake figures.
 
 const ROUTE_START = "/be-a-sloth";
 const ICON = { starter: Sprout, hostplus: Sparkles, studio: Rocket };
-const ACCENT = { starter: "#4AB765", hostplus: "#269CEF", studio: "#FE5100" };
+const ACCENT = { starter: "#4AB765", hostplus: "#FE5100", studio: "#269CEF" };
+const CTA_LABEL = { starter: "Get Started", hostplus: "Start on Host+", studio: "Start on Studio" };
 
-// What the recommended plan actually *does* — so the verdict answers "what am I
-// paying for", not just "how much". Short labels mirror data/plans.js features.
-const VALUE_CHIPS = {
-  starter: ["Free forever", "Online payments", "Your booking page"],
-  hostplus: ["0% commission", "Auto reminders", "Auto invoices"],
-  studio: ["Unlimited bookings", "Client CRM", "Advanced analytics"],
-};
-
-// One-line "who's this for" per plan, so a card sells a fit — not just a price.
+// One-line "who's this for" per plan.
 const POSITION = {
   starter: "Test the waters, free.",
-  hostplus: "Booking regularly? Kill the commission.",
+  hostplus: "Booking grows, you keep it all.",
   studio: "Outgrowing the limits.",
+};
+
+// Concise, REAL feature highlights — mirrors data/plans.js. Keep in sync if plans change.
+const FEATURES = {
+  starter: ["5% commission per booking", "Up to 3 services", "300 bookings / year", "Booking page + payments", "Email support"],
+  hostplus: ["0% commission", "Up to 5 services", "1,000 bookings / year", "Auto invoices + reminders", "Email + chat support"],
+  studio: ["0% commission", "Unlimited services & bookings", "Client CRM + history", "Advanced analytics + export", "WhatsApp + call support"],
 };
 
 const inr0 = (n) =>
@@ -69,29 +65,83 @@ function useCountUp(value, ms = 500) {
   return display;
 }
 
-function Field({ label, hint, value, min, max, step, onChange, prefix }) {
+// Numbered input: value + −/+ steppers + a slider, with min/max rails.
+function StepperInput({ n, title, sublabel, value, min, max, step, prefix, onChange }) {
+  const num = Number(value) || 0;
+  const clamp = (v) => Math.min(max, Math.max(min, v));
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <label className="text-sm font-semibold text-ink">{label}</label>
-        <span className="text-xs text-neutral-500">{hint}</span>
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{n}</span>
+        <div>
+          <p className="text-sm font-bold text-ink">{title}</p>
+          <p className="text-xs text-neutral-500">{sublabel}</p>
+        </div>
       </div>
-      <div className="mt-2 flex items-center gap-2 rounded-[6px] border border-black/10 bg-white px-3 py-2 transition-all duration-150 hover:border-black/20 focus-within:ring-2 focus-within:ring-primary/25">
+      <div className="mt-3 flex items-center gap-2 rounded-[10px] border border-black/10 bg-white px-3 py-2 transition-all duration-150 hover:border-black/20 focus-within:ring-2 focus-within:ring-primary/25">
         {prefix && <span className="text-neutral-400">{prefix}</span>}
         <input
           type="number" inputMode="numeric" min={min} max={max} step={step}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full border-0 bg-transparent p-0 text-lg font-semibold text-ink outline-none focus:shadow-none focus:outline-none focus-visible:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-          aria-label={label}
+          onChange={(e) => onChange(e.target.value === "" ? "" : clamp(Number(e.target.value)))}
+          className="w-full border-0 bg-transparent p-0 text-lg font-bold text-ink outline-none focus:shadow-none focus:outline-none focus-visible:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          aria-label={title}
         />
+        <button type="button" onClick={() => onChange(clamp(num - step))} aria-label={`Decrease ${title}`}
+          className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition hover:bg-neutral-200">
+          <Minus size={14} />
+        </button>
+        <button type="button" onClick={() => onChange(clamp(num + step))} aria-label={`Increase ${title}`}
+          className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition hover:bg-neutral-200">
+          <Plus size={14} />
+        </button>
       </div>
       <input
         type="range" min={min} max={max} step={step}
-        value={Math.min(Math.max(Number(value) || min, min), max)}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-3 w-full accent-primary" aria-label={`${label} slider`}
+        value={Math.min(Math.max(num, min), max)}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mt-3 w-full accent-primary" aria-label={`${title} slider`}
       />
+      <div className="mt-1 flex justify-between text-[11px] text-neutral-400">
+        <span>{prefix}{min.toLocaleString("en-IN")}</span>
+        <span>{prefix}{max.toLocaleString("en-IN")}</span>
+      </div>
+    </div>
+  );
+}
+
+// Honest bar chart — heights are true (0-based) net-annual take-home; the winner
+// is coloured + crowned, others muted. No truncated axis, no exaggeration.
+function EarningsBars({ results, winnerKey }) {
+  const order = ["starter", "hostplus", "studio"];
+  const bars = order.map((k) => results.find((r) => r.plan.key === k)).filter(Boolean);
+  const maxNet = Math.max(...bars.map((b) => b.netAnnual), 1);
+  const BAR_MAX = 132;
+  return (
+    <div className="mt-4">
+      <div className="flex items-end justify-between gap-3" style={{ height: BAR_MAX + 34 }}>
+        {bars.map((b) => {
+          const isWin = b.plan.key === winnerKey;
+          const muted = b.capped || b.outgrows;
+          const h = Math.max(10, (Math.max(0, b.netAnnual) / maxNet) * BAR_MAX);
+          return (
+            <div key={b.plan.key} className="flex flex-1 flex-col items-center justify-end">
+              {isWin && <Crown size={16} className="mb-0.5" style={{ color: ACCENT.hostplus }} fill={ACCENT.hostplus} />}
+              <span className="mb-1 text-[11px] font-bold text-ink">{inr0(b.netAnnual)}</span>
+              <div className="w-full max-w-[58px] rounded-t-lg transition-all duration-300"
+                style={{ height: h, background: isWin ? ACCENT.hostplus : "#d9d5cc", opacity: muted ? 0.5 : 1 }} />
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex justify-between gap-3">
+        {bars.map((b) => (
+          <div key={b.plan.key} className="flex-1 text-center">
+            <p className="text-xs font-semibold text-ink">{b.plan.name}</p>
+            <p className="text-[10px] text-neutral-500">{b.plan.key === "starter" ? "5% fee" : "0% fee"}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -100,129 +150,98 @@ function PlanCard({ result, winnerKey, cycle }) {
   const { plan } = result;
   const Icon = ICON[plan.key] ?? Sparkles;
   const accent = ACCENT[plan.key];
-  const isWinner = winnerKey === plan.key;
-  // Studio rarely wins on take-home (its higher fee makes it look "worse" than
-  // Host+ until you're over the cap). Below the cap, stop competing on rupees —
-  // sell what it's actually for: capacity + features.
-  const studioCapacity = plan.key === "studio" && !isWinner && !result.outgrows;
+  const isRec = plan.key === "hostplus"; // Host+ is the recommended plan
+  const monthly = plan.monthly;
+  const yearly = ANNUAL_FEE[plan.key];
+  const priceNote =
+    monthly === 0
+      ? "Free to start · 5% per booking"
+      : `0% commission · ${cycle === "annual" ? `${inr0(yearly)}/yr` : `${inr0(monthly)}/mo`}`;
   return (
-    <div
-      className={`relative flex flex-col rounded-[6px] border bg-white p-5 transition-all sm:p-6 ${
-        isWinner ? "shadow-[0_10px_36px_rgba(26,26,26,0.10)]" : "border-black/5"
-      }`}
-      style={isWinner ? { borderColor: accent } : undefined}
-    >
-      {isWinner && (
-        <span className="absolute -top-3 left-5 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: accent }}>
-          <TrendingUp size={12} /> Best for your volume
+    <div className={`relative flex flex-col rounded-[14px] border bg-white p-5 sm:p-6 ${isRec ? "border-2 shadow-[0_12px_40px_rgba(254,81,0,0.12)]" : "border-black/10"}`}
+      style={isRec ? { borderColor: accent, background: "#fff8f4" } : undefined}>
+      {isRec && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold text-white" style={{ background: accent }}>
+          <Crown size={12} fill="#fff" /> Recommended
         </span>
       )}
       <div className="flex items-center gap-2.5">
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-[6px]" style={{ color: accent, background: `${accent}14` }}>
-          <Icon size={18} strokeWidth={1.75} />
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-[10px]" style={{ color: accent, background: `${accent}14` }}>
+          <Icon size={20} strokeWidth={1.75} />
         </span>
         <div>
-          <p className="text-sm font-bold text-ink">{plan.name}</p>
-          <p className="text-[11px] text-neutral-500">{plan.note}</p>
+          <p className="text-base font-bold text-ink">{plan.name}</p>
+          <p className="text-[11px] text-neutral-500">{priceNote}</p>
         </div>
       </div>
-      <p className="mt-2 text-xs font-medium text-neutral-600">{POSITION[plan.key]}</p>
 
-      {studioCapacity ? (
-        <div className="mt-4">
-          <p className="text-xs text-neutral-500">Same take-home as Host+</p>
-          <p className="mt-1 text-sm font-semibold text-ink">Unlock CRM, unlimited bookings &amp; analytics when you outgrow Host+&rsquo;s limits.</p>
-        </div>
-      ) : (
-        <div className="mt-4">
-          <p className="text-xs text-neutral-500">You keep, per year</p>
-          <p className="text-2xl font-extrabold" style={{ color: accent }}>{inr0(result.netAnnual)}</p>
-        </div>
-      )}
+      <p className="mt-4 text-sm font-bold text-ink">{POSITION[plan.key]}</p>
+      <div className="mt-2">
+        <p className="text-2xl font-extrabold" style={{ color: isRec ? accent : "#1a1a1a" }}>{inr0(result.netAnnual)}</p>
+        <p className="text-xs text-neutral-500">you keep per year</p>
+      </div>
 
-      {/* Math collapsed by default so the card reads as a plan, not a spreadsheet.
-          Open on the recommended card so the proof is one glance away. */}
-      <details className="mt-3" {...(isWinner ? { open: true } : {})}>
-        <summary className="cursor-pointer select-none text-[11px] font-semibold text-neutral-500 hover:text-ink">See the math</summary>
-        <div className="mt-2 space-y-1.5 border-t border-black/5 pt-3 text-xs">
-          {plan.monthly > 0 && (
-            <p className="text-[11px] text-neutral-400">
-              {inr0(result.grossAnnual)} earned − {inr0(result.fee)} plan fee{cycle === "annual" ? " (yearly)" : " (monthly ×12)"}
-            </p>
-          )}
-          <div className="flex justify-between"><span className="text-neutral-500">Take-home / session</span><span className="font-semibold text-ink">{inr2(result.perBookingTakeHome)}</span></div>
-        </div>
-      </details>
+      <ul className="mt-4 flex-1 space-y-2">
+        {FEATURES[plan.key].map((f) => (
+          <li key={f} className="flex items-start gap-2 text-[13px] text-neutral-700">
+            <Check size={15} className="mt-0.5 flex-shrink-0" style={{ color: accent }} /> {f}
+          </li>
+        ))}
+      </ul>
 
       {result.capped && (
-        <p className="mt-3 rounded-[6px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
-          Starter caps at {inr0(plan.maxServicePrice)} per session. Host+ prices above it.
+        <p className="mt-3 rounded-[8px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
+          Starter caps at {inr0(plan.maxServicePrice)} per session — Host+ prices above it.
         </p>
       )}
       {result.outgrows && (
-        <p className="mt-3 rounded-[6px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
-          Caps at {result.bookingCap.toLocaleString("en-IN")} bookings/year — {result.uncollectedBookings.toLocaleString("en-IN")} you couldn't take
-          {result.uncollectedValue > 0 ? `, ${inr0(result.uncollectedValue)} left uncollected` : ""}.
+        <p className="mt-3 rounded-[8px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
+          Caps at {result.bookingCap.toLocaleString("en-IN")} bookings/year — {result.uncollectedBookings.toLocaleString("en-IN")} you couldn&rsquo;t take.
         </p>
       )}
+
+      <Link to={ROUTE_START}
+        className={`mt-5 inline-flex items-center justify-center gap-1.5 rounded-[10px] px-5 py-3 text-sm font-semibold transition ${isRec ? "text-white hover:opacity-95" : "border border-black/15 text-ink hover:border-black/30"}`}
+        style={isRec ? { background: accent } : undefined}>
+        {CTA_LABEL[plan.key]} <ArrowRight size={16} />
+      </Link>
     </div>
   );
 }
 
-// Dynamic donut: of a year's Starter earnings, the red wedge is what the 5%
-// commission quietly takes vs the green you keep — a picture of the money the
-// wrong (free) plan costs. No chart lib; the r=15.915 trick makes the circle's
-// circumference 100, so a dasharray value is a percentage directly.
-function LossDonut({ lost, kept, animatedLost, winnerName }) {
-  const total = lost + kept;
-  const pct = total > 0 ? Math.min(100, (lost / total) * 100) : 0;
+const REASSURE = [
+  { icon: Zap, title: "Free to start", body: "Test the waters at zero cost." },
+  { icon: Wallet, title: "Real payouts", body: "Monthly, not a sales number." },
+  { icon: Lock, title: "Cancel anytime", body: "No lock-in." },
+  { icon: Heart, title: "Same take-home", body: "Whether or not you're GST-registered." },
+];
+
+// Module-level (stable identity) so it doesn't remount on every parent render.
+function CycleToggle({ cycle, setCycle, small }) {
   return (
-    <div className="flex items-center gap-4">
-      <div className="relative h-24 w-24 flex-shrink-0" aria-hidden="true">
-        <svg viewBox="0 0 42 42" className="h-full w-full">
-          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#eef0f3" strokeWidth="5" />
-          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#4AB765" strokeWidth="5"
-            strokeDasharray="100 0" strokeDashoffset="25" />
-          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#c0392b" strokeWidth="5"
-            strokeDasharray={`${pct} ${100 - pct}`} strokeDashoffset="25"
-            style={{ transition: "stroke-dasharray .5s ease" }} />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-sm font-extrabold leading-none text-[#c0392b]">− {inr0(animatedLost)}</span>
-          <span className="mt-0.5 text-[9px] text-neutral-500">lost / yr</span>
-        </div>
-      </div>
-      <div className="text-xs leading-relaxed">
-        <p className="font-semibold text-ink">On Starter, 5% walks out the door</p>
-        <p className="mt-1.5 flex items-center gap-1.5"><span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-[#c0392b]" /> <strong className="text-ink">{inr0(lost)}</strong> lost to commission</p>
-        <p className="mt-1 flex items-center gap-1.5"><span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-[#4AB765]" /> {inr0(kept)} you keep</p>
-        <p className="mt-1.5 text-[11px] text-neutral-500">On {winnerName}, that&rsquo;s <strong>₹0</strong>.</p>
-      </div>
+    <div className={`inline-flex rounded-full bg-neutral-100 p-0.5 ${small ? "text-[11px]" : "text-xs"}`}>
+      <button type="button" onClick={() => setCycle("annual")} aria-pressed={cycle === "annual"}
+        className={`rounded-full px-3 py-1 font-semibold transition ${cycle === "annual" ? "bg-white text-ink shadow-sm" : "text-neutral-500"}`}>Yearly</button>
+      <button type="button" onClick={() => setCycle("monthly")} aria-pressed={cycle === "monthly"}
+        className={`rounded-full px-3 py-1 font-semibold transition ${cycle === "monthly" ? "bg-white text-ink shadow-sm" : "text-neutral-500"}`}>Monthly</button>
     </div>
   );
 }
 
 export default function EarningsCalculator() {
-  const [earning, setEarning] = useState(1500);
+  const [earning, setEarning] = useState(5000);
   const [bookings, setBookings] = useState(12);
   const [cycle, setCycle] = useState("annual"); // annual | monthly
 
   const results = useMemo(() => resultsFor(earning, bookings, cycle), [earning, bookings, cycle]);
   const winnerKey = useMemo(() => pickWinner(results), [results]);
   const winner = results.find((r) => r.plan.key === winnerKey);
-  const loss = starterCommissionPerYear(earning, bookings);
-  const ceiling = ceilingState(bookings);
-  const saving = annualSaving(winnerKey);
 
   const winnerIsFree = winnerKey === "starter";
-  const delta = deltaVsFree(results, winnerKey);      // ₹/yr the winner beats free by
-  const crossover = hostplusCrossover(earning);       // sessions/mo Host+ starts paying off
-  const chips = VALUE_CHIPS[winnerKey] ?? [];
-  const starterNet = results.find((r) => r.plan.key === "starter")?.netAnnual ?? 0; // pie: kept slice
+  const delta = deltaVsFree(results, winnerKey);
+  const maxSaving = Math.max(annualSaving("hostplus"), annualSaving("studio"));
 
-  const animatedDelta = useCountUp(delta);
-  const animatedLoss = useCountUp(loss);
-
+  const animatedNet = useCountUp(winner.netAnnual);
   const canonical = `${SITE_URL}/earnings-calculator`;
 
   return (
@@ -234,141 +253,94 @@ export default function EarningsCalculator() {
         image={ogCard("earnings-calculator", "png")}
       />
       <div className="app-container py-10 sm:py-14">
-        <div className="mx-auto max-w-3xl pb-24 sm:pb-0">
-          {/* HERO + INPUTS (fused) */}
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Your booking page, payments &amp; reminders — for people who get paid for their time
-          </p>
-          <h1 className="mt-2 text-2xl font-bold text-ink sm:text-3xl">See exactly what you'd keep.</h1>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-neutral-600">
-            Set your price and how often you book. We'll pick the plan that leaves the most in your pocket — and show you what it does for you.
+        <div className="mx-auto max-w-5xl pb-24 sm:pb-0">
+
+          {/* HERO */}
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">For people who get paid for their time</p>
+          <h1 className="mt-3 text-3xl font-extrabold leading-tight text-ink sm:text-5xl">
+            Your time. Your rules.<br /><span className="text-primary">More money</span> in your pocket.
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-600 sm:text-base">
+            Set your price and how often you book. We&rsquo;ll show you what you&rsquo;ll keep with each plan — so you can choose what works best for you.
           </p>
 
-          <div className="mt-8 grid gap-6 rounded-[6px] border border-black/5 bg-white p-6 sm:grid-cols-2 sm:p-7">
-            <Field label="Price per session" hint="what you keep" prefix="₹" value={earning}
-              min={100} max={10000} step={50}
-              onChange={(v) => setEarning(v === "" ? "" : Math.max(0, Number(v)))} />
-            <Field label="Sessions per month" hint="your volume" value={bookings}
-              min={1} max={120} step={1}
-              onChange={(v) => setBookings(v === "" ? "" : Math.max(0, Number(v)))} />
-          </div>
+          {/* CALCULATOR + EARNINGS */}
+          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+            {/* Inputs */}
+            <div className="rounded-[16px] border border-black/5 bg-white p-6 sm:p-7">
+              <StepperInput n={1} title="Set your price per session" sublabel="How much do you charge for each session?"
+                prefix="₹" value={earning} min={500} max={50000} step={500}
+                onChange={(v) => setEarning(v)} />
+              <div className="mt-7">
+                <StepperInput n={2} title="Set your sessions per month" sublabel="How many sessions do you conduct?"
+                  value={bookings} min={1} max={50} step={1}
+                  onChange={(v) => setBookings(v)} />
+              </div>
+            </div>
 
-          {/* VERDICT: recommendation-first — one plan, the delta vs free, what it
-              does, and the CTA, all above the fold. Replaces the twin big-number
-              reveal strip so the visitor decides and acts in a single glance. */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-5">
-            <div className="sm:col-span-3 rounded-[6px] border-2 bg-white p-5 sm:p-6" style={{ borderColor: ACCENT[winnerKey] }}>
-              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Your plan</p>
-              <p className="mt-0.5 text-2xl font-extrabold" style={{ color: ACCENT[winnerKey] }}>
-                {winner.plan.name}{winnerIsFree ? " · free" : ""}
+            {/* Estimated earnings + bar chart */}
+            <div className="rounded-[16px] border p-6 sm:p-7" style={{ borderColor: "rgba(254,81,0,0.18)", background: "linear-gradient(180deg,#fff6f1,#ffffff)" }}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Your estimated earnings</span>
+                <CycleToggle cycle={cycle} setCycle={setCycle} small />
+              </div>
+              <p className="mt-3 text-lg font-bold text-ink">With {winner.plan.name}, you keep</p>
+              <p className="text-4xl font-extrabold leading-none text-primary sm:text-[2.7rem]">
+                {inr0(animatedNet)}
               </p>
-
-              {winnerIsFree ? (
-                <p className="mt-1.5 text-sm text-neutral-700">
-                  <strong className="text-ink">Start free.</strong> At your volume the 5% commission is still
-                  less than a paid plan's fee. You'll want Host+ past{" "}
-                  <strong className="text-ink">~{Number.isFinite(crossover) ? crossover : "—"} sessions/mo</strong> — we'll tell you when.
-                </p>
+              <p className="mt-1 text-sm text-neutral-500">per year</p>
+              {!winnerIsFree && delta > 0 ? (
+                <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#e9f6ee] px-3 py-1.5 text-xs font-semibold text-[#1f7a3d]">
+                  🚀 {inr0(delta)} more than the free plan
+                </span>
               ) : (
-                <p className="mt-1.5 text-sm text-neutral-700">
-                  You keep <strong className="text-ink">{inr0(animatedDelta)} more a year</strong> than the free plan —
-                  because {winner.plan.name} drops the 5% commission, and that beats the {inr0(winner.fee)} fee at your volume.
-                </p>
+                <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-semibold text-neutral-600">
+                  Free plan keeps the most at your volume
+                </span>
               )}
-
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {chips.map((c) => (
-                  <span key={c} className="inline-flex items-center gap-1 rounded-full bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-neutral-700">
-                    <Check size={12} className="text-primary" /> {c}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
-                <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-95">
-                  Start on {winner.plan.name} <ArrowUpRight size={16} />
-                </Link>
-                <span className="text-[11px] text-neutral-500">Free to set up · cancel anytime</span>
-              </div>
-            </div>
-
-            {/* Dynamic commission card — never contradicts the recommendation */}
-            <div className="sm:col-span-2 rounded-[6px] border border-black/5 bg-white p-5">
-              {winnerIsFree ? (
-                <>
-                  <p className="text-xs text-neutral-500">Staying free is the math</p>
-                  <p className="text-3xl font-extrabold" style={{ color: ACCENT.starter }}>{inr0(animatedLoss)}</p>
-                  <p className="mt-1 text-[11px] text-neutral-500">in commission this year — still less than a {inr0(ANNUAL_FEE.hostplus)} plan. No fee beats it yet.</p>
-                </>
-              ) : (
-                <LossDonut lost={loss} kept={starterNet} animatedLost={animatedLoss} winnerName={winner.plan.name} />
-              )}
+              <EarningsBars results={results} winnerKey={winnerKey} />
             </div>
           </div>
 
-          {/* BILLING TOGGLE */}
-          <div className="mt-6 flex items-center justify-center gap-2">
-            <button type="button" onClick={() => setCycle("annual")}
-              className={`rounded-[6px] px-3 py-1.5 text-xs font-semibold ${cycle === "annual" ? "bg-primary text-white" : "text-neutral-500"}`}
-              aria-pressed={cycle === "annual"}>
-              Pay yearly{saving > 0 ? ` · save ${inr0(saving)}` : ""}
-            </button>
-            <button type="button" onClick={() => setCycle("monthly")}
-              className={`rounded-[6px] px-3 py-1.5 text-xs font-semibold ${cycle === "monthly" ? "bg-primary text-white" : "text-neutral-500"}`}
-              aria-pressed={cycle === "monthly"}>
-              Pay monthly
-            </button>
-          </div>
+          {/* PLANS */}
+          <div className="mt-14">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Choose a plan</p>
+            <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">Plans that grow with you</h2>
+              <div className="inline-flex items-center gap-2">
+                <CycleToggle cycle={cycle} setCycle={setCycle} />
+                {maxSaving > 0 && cycle === "annual" && (
+                  <span className="text-[11px] font-semibold text-[#1f7a3d]">Save up to {inr0(maxSaving)}</span>
+                )}
+              </div>
+            </div>
 
-          {/* PLAN CARDS — winner first (matters most on the mobile stack) */}
-          <div className="mt-4 grid gap-5 sm:grid-cols-3">
-            {[...results]
-              .sort((a, b) => (b.plan.key === winnerKey) - (a.plan.key === winnerKey))
-              .map((r) => (
-                <PlanCard key={r.plan.key} result={r} winnerKey={winnerKey} cycle={cycle} />
+            <div className="mt-6 grid gap-5 lg:grid-cols-3">
+              {["starter", "hostplus", "studio"].map((k) => (
+                <PlanCard key={k} result={results.find((r) => r.plan.key === k)} winnerKey={winnerKey} cycle={cycle} />
               ))}
-          </div>
-
-          {/* Guest price, once — it never varies by plan, so showing it 3× was noise */}
-          <p className="mt-3 text-center text-[11px] leading-relaxed text-neutral-500">
-            Your guest pays <strong>{inr2(winner.guestPays)}</strong> — your {inr0(earning)} price plus a flat ₹10 booking fee. You never eat it; your take-home is your price minus taxes.
-          </p>
-
-          {/* CEILING NUDGE (honest top-plan moment) */}
-          {ceiling !== "none" && (
-            <div className="mt-6 flex items-start gap-3 rounded-[6px] border p-5" style={{ borderColor: ACCENT.studio, background: `${ACCENT.studio}0D` }}>
-              <span className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[6px]" style={{ color: ACCENT.studio, background: `${ACCENT.studio}14` }}>
-                <Rocket size={18} />
-              </span>
-              <p className="text-sm text-neutral-700">
-                {ceiling === "over" ? "You're booking past" : "You're closing in on"} Host+'s{" "}
-                <strong>{HOSTPLUS_ANNUAL_CAP.toLocaleString("en-IN")}/year limit</strong>.{" "}
-                <strong style={{ color: ACCENT.studio }}>Studio keeps you uncapped</strong> — same 0% cut, same take-home per session, room to grow.
-              </p>
             </div>
-          )}
 
-          {/* CTA */}
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-            <div className="flex flex-col items-center gap-1 sm:items-start">
-              <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-95">
-                Start on {winner.plan.name} <ArrowUpRight size={16} />
-              </Link>
-              <span className="text-[11px] text-neutral-500">Free to set up · cancel anytime</span>
-            </div>
-            <Link to="/pricing" className="text-xs text-neutral-500 hover:text-primary hover:underline">
-              Compare every feature →
-            </Link>
+            <p className="mt-4 text-center text-[11px] leading-relaxed text-neutral-500">
+              Your guest pays <strong>{inr2(winner.guestPays)}</strong> at a {inr0(earning)} price — your price plus a flat ₹10 booking fee. You never eat it; your take-home is your price minus taxes.
+            </p>
           </div>
 
-          {/* OBJECTION RESOLVER + footnote */}
-          <div className="mt-8 grid gap-2.5 rounded-[6px] border border-black/5 bg-white/60 p-4 text-xs leading-relaxed text-neutral-600 sm:grid-cols-2">
-            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Free to start — test the waters at zero cost.</p>
-            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Cancel anytime — no lock-in.</p>
-            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Real payout math, not a sales number.</p>
-            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Same take-home whether or not you're GST-registered.</p>
+          {/* REASSURANCE */}
+          <div className="mt-12 grid gap-4 rounded-[14px] border border-black/5 bg-white/60 p-5 sm:grid-cols-4">
+            {REASSURE.map(({ icon: I, title, body }) => (
+              <div key={title} className="flex items-start gap-2.5">
+                <I size={18} className="mt-0.5 flex-shrink-0 text-primary" />
+                <div>
+                  <p className="text-sm font-bold text-ink">{title}</p>
+                  <p className="text-xs text-neutral-500">{body}</p>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="mt-3 flex gap-2.5 text-[11px] leading-relaxed text-neutral-500">
+
+          {/* FOOTNOTE */}
+          <div className="mt-5 flex gap-2.5 text-[11px] leading-relaxed text-neutral-500">
             <Info size={13} className="mt-0.5 flex-shrink-0" />
             <p>
               An illustration, not a quote. Figures assume 18% GST (most categories; some differ) and your exact price is confirmed when you list a service. See the{" "}
@@ -378,10 +350,10 @@ export default function EarningsCalculator() {
         </div>
       </div>
 
-      {/* Sticky CTA on mobile — keep the action one thumb-reach away */}
+      {/* Sticky CTA on mobile */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 p-3 backdrop-blur sm:hidden">
-        <Link to={ROUTE_START} className="flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-5 py-3 text-sm font-semibold text-white">
-          Start on {winner.plan.name} <ArrowUpRight size={16} />
+        <Link to={ROUTE_START} className="flex items-center justify-center gap-1.5 rounded-[10px] bg-primary px-5 py-3 text-sm font-semibold text-white">
+          Start on {winner.plan.name} <ArrowRight size={16} />
         </Link>
       </div>
     </div>

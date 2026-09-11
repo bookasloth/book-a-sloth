@@ -6,51 +6,41 @@ import EarningsCalculator from '../pages/EarningsCalculator';
 const setup = () => render(<EarningsCalculator />, { wrapper: MemoryRouter });
 
 describe('EarningsCalculator', () => {
-  it('recommends a plan with the delta-vs-free on mount (Host+ at default)', () => {
+  it('shows the estimated earnings for the winning plan on mount', () => {
     setup();
-    expect(screen.getByText(/your plan/i)).toBeTruthy();
-    expect(screen.getAllByText(/host\+/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/more a year/i)).toBeTruthy();
+    expect(screen.getByText(/your estimated earnings/i)).toBeTruthy();
+    expect(screen.getByText(/with host\+, you keep/i)).toBeTruthy();
+    expect(screen.getAllByText(/per year/i).length).toBeGreaterThan(0);
   });
 
-  it('shows the Starter commission loss line', () => {
+  it('shows how much more the winner keeps than the free plan', () => {
     setup();
-    // default 1500 x 5% x 144 = 10,800
-    expect(screen.getAllByText(/walks out the door|commission/i).length).toBeGreaterThan(0);
+    // default ₹5,000 × 12/mo → Host+ wins by well over the fee
+    expect(screen.getByText(/more than the free plan/i)).toBeTruthy();
   });
 
-  it('shows the loss donut (kept vs commission) when a paid plan wins', () => {
+  it('renders all three real plans with take-home + CTAs (Studio is live)', () => {
     setup();
-    expect(screen.getByText(/lost to commission/i)).toBeTruthy();
+    expect(screen.getAllByText(/you keep per year/i).length).toBe(3);
+    expect(screen.getByRole('link', { name: /get started/i })).toBeTruthy();
+    expect(screen.getAllByRole('link', { name: /start on host\+/i }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: /start on studio/i })).toBeTruthy(); // live, not "coming soon"
   });
 
-  it('flips the commission card to a "stay free" message when Starter wins', () => {
+  it('billing toggle switches to monthly', () => {
     setup();
-    const price = screen.getByLabelText('Price per session');
-    const sessions = screen.getByLabelText('Sessions per month');
-    fireEvent.change(price, { target: { value: '200' } });
+    const monthly = screen.getAllByRole('button', { name: /^monthly$/i })[0];
+    fireEvent.click(monthly);
+    expect(monthly.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('recommends the free plan at very low volume', () => {
+    setup();
+    const price = screen.getByLabelText('Set your price per session');
+    const sessions = screen.getByLabelText('Set your sessions per month');
+    fireEvent.change(price, { target: { value: '600' } });
     fireEvent.change(sessions, { target: { value: '1' } });
-    expect(screen.getByText(/staying free is the math/i)).toBeTruthy();
-    expect(screen.queryByText(/walks out the door/i)).toBeNull();
-  });
-
-  it('no ceiling nudge at low volume', () => {
-    setup();
-    expect(screen.queryByText(/1,000\/year limit|uncapped/i)).toBeNull();
-  });
-
-  it('shows the ceiling nudge to Studio at very high volume', () => {
-    setup();
-    const sessions = screen.getByLabelText('Sessions per month');
-    fireEvent.change(sessions, { target: { value: '100' } });
-    expect(screen.getAllByText(/uncapped|1,000\/year limit/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Studio/i).length).toBeGreaterThan(0);
-  });
-
-  it('billing toggle changes the plan fee shown', () => {
-    setup();
-    const toggle = screen.getByRole('button', { name: /pay monthly|monthly/i });
-    fireEvent.click(toggle);
-    expect(screen.getByRole('button', { name: /pay yearly|yearly/i })).toBeTruthy();
+    expect(screen.getByText(/free plan keeps the most/i)).toBeTruthy();
+    expect(screen.getByText(/with starter, you keep/i)).toBeTruthy();
   });
 });
