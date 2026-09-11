@@ -327,12 +327,6 @@ export default function ProfessionLanding() {
         image={seo.ogImage}
         jsonLd={jsonLd}
       />
-      {feeOnly && (
-        <div className="px-5 py-2.5 text-center text-xs font-medium sm:text-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 10%, transparent)', color: 'var(--lp-accent-cta)' }}>
-          Paid bookings &amp; payouts are launching soon — set up your booking page and take free bookings today.
-        </div>
-      )}
-
       <ForHeader ctaText="Get Started" />
 
       {/* ════════════════ HERO (dark, themed, two-column) ════════════════ */}
