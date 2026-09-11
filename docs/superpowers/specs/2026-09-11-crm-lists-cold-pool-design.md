@@ -39,8 +39,8 @@ suppression and send-logging, all built around `leads` + `campaigns` + `sendGate
 separate store rebuilds that whole stack and forces dedupe across two stores.
 
 So cold contacts **are** `leads`, distinguished by a new `status` value **`list`** — lowest
-rank, its own board ("Lists"), sitting *outside* the four Sales pipelines
-(Presale/Relations/Marketing/Exit). This rides the existing `changeStatus` +
+rank, sitting *outside* the four Sales pipelines (Presale/Relations/Marketing/Exit) and
+rendered as a **plain table, never a kanban board**. This rides the existing `changeStatus` +
 `lifecycleRules` machinery: promote/demote are ordinary status changes, logged and
 handed-off for free — the same way `do_not_contact` already lives as an orthogonal status.
 
@@ -100,8 +100,8 @@ List counts (cold / promoted) are **derived by query**, not stored — no drift.
 
 ## 5. Excluding cold from the pipeline (the risk surface)
 
-Cold = `status='list'`, in the `lists` board outside the four Sales pipelines. Every
-consumer that treats "the pipeline" as all-of-`leads` must exclude it:
+Cold = `status='list'`, outside the four Sales pipelines (shown as a flat table, not a
+board). Every consumer that treats "the pipeline" as all-of-`leads` must exclude it:
 
 - **lifecycleEngine** cron — `NO_AUTO` covers it; confirm no raw status scan bypasses that.
 - **board / `listLeads`** ([leadService.js:389](../../../server/services/crm/leadService.js)) —
@@ -179,10 +179,12 @@ UPDATE leads
 
 - **`/admin/sales/lists`** — index of lists (name, source, cold count, promoted count,
   created). "New list" + "Import CSV → list".
-- **List detail** — the `SalesLeads` table filtered to `list_id` + `status='list'`, with
-  bulk **Promote → New** and **Send cold campaign** actions. Reuse `SalesLeads.jsx`
-  components (`TagChip`, table, bulk bar).
-- **Pipeline board** (`/admin/sales/leads`) — excludes the `lists` pipeline; add a per-lead
+- **List detail** — a **plain data table** (no board, no columns/drag), one row per cold
+  contact: name, business, email, phone, tags, imported-at. Rows are checkbox-selectable;
+  bulk **Promote → New** and **Send cold campaign** actions on the selection. Filter/search
+  across the fields. Reuse the `SalesLeads.jsx` table + `TagChip` + bulk bar (the table
+  parts only — not the kanban board).
+- **Pipeline board** (`/admin/sales/leads`) — excludes `status='list'`; add a per-lead
   **Demote to list** action.
 
 Design tokens / components per project rules (reuse `SalesLeads`, no new color/borders).
