@@ -15,12 +15,32 @@ const aisensy = require('./aisensyService');
 const waTemplates = require('./whatsappTemplateService');
 const NotificationEngine = require('./notificationEngine');
 
+// Max campaign emails handed to Resend per UTC day. Guards the provider's daily
+// sending quota so a large blast throttles across days instead of overflowing
+// and dying as terminal 'failed'. WhatsApp campaigns are a different provider
+// (AiSensy) and are never gated by this.
+const DAILY_EMAIL_CAP = parseInt(process.env.RESEND_DAILY_CAMPAIGN_CAP || '400', 10);
+
 async function processDue() {
   const { data: campaigns } = await supabaseAdmin.from('email_campaigns').select('*').eq('status', 'sending');
   let enqueued = 0, failed = 0;
 
+  // ── Daily Resend send budget (email only) ──────────────────────────────
+  // Count campaign emails already handed to Resend today (UTC — Resend resets
+  // its daily quota at 00:00 UTC). When the budget is spent, email recipients
+  // are left 'queued' and resume on a later tick / the next day, instead of
+  // enqueuing into a doomed (quota-rejected) send.
+  const dayStart = new Date(); dayStart.setUTCHours(0, 0, 0, 0);
+  const { count: sentToday } = await supabaseAdmin
+    .from('email_logs').select('id', { count: 'exact', head: true })
+    .not('campaign_id', 'is', null).gte('created_at', dayStart.toISOString());
+  let emailBudget = Math.max(0, DAILY_EMAIL_CAP - (sentToday || 0));
+
   for (const campaign of campaigns || []) {
     const cap = campaign.throttle_per_min || 120;
+    // Email campaign but no budget left today → skip its recipients this tick
+    // (avoids pointless contact reads); they stay 'queued' for the next day.
+    if (campaign.channel !== 'whatsapp' && emailBudget <= 0) continue;
     const { data: recipients } = await supabaseAdmin
       .from('campaign_recipients').select('*').eq('campaign_id', campaign.id).eq('status', 'queued').limit(cap);
 
@@ -62,6 +82,9 @@ async function processDue() {
       if (!contact || !contact.email || !contact.email_opt_in || contact.email_suppressed) {
         await mark(rcpt.id, 'skipped', 'not_contactable'); continue;
       }
+      // Daily Resend budget ran out mid-batch — leave 'queued' (untouched) so a
+      // later tick / the next UTC day picks it up, rather than burn it as failed.
+      if (emailBudget <= 0) continue;
       const data = { first_name: (contact.name || '').split(' ')[0], name: contact.name, email: contact.email, ...(contact.attributes || {}) };
       // Custom (composer) campaign carries its own compiled body; template-based
       // campaign carries a template_id. enqueueCampaignEmail accepts either.
@@ -79,7 +102,7 @@ async function processDue() {
         campaignId: campaign.id, subjectOverride: campaign.subject_override || null,
         recipientUserId: contact.user_id || null,
       });
-      if (r.ok) { await mark(rcpt.id, 'sent', null, r.logId); enqueued++; }
+      if (r.ok) { await mark(rcpt.id, 'sent', null, r.logId); enqueued++; emailBudget--; }
       else      { await mark(rcpt.id, 'failed', r.reason || 'enqueue_failed'); failed++; }
     }
 
