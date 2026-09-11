@@ -70,6 +70,700 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "how-to-become-paid-mentor",
+  "title": "How to Become a Paid Mentor (Online, 1:1) in India",
+  "date": "Sep 11, 2026",
+  "icons": [
+    "users",
+    "megaphone",
+    "trending-up"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Growth",
+  "image": null,
+  "excerpt": "How to become a paid mentor online: turn can-I-pick-your-brain into booked, paid 1:1 sessions. Steps, pricing guidance, and how to get started in India.",
+  "body": [
+    {
+      "p": "To become a paid mentor, pick the one thing people already ask you for help with, set a price for your time, and give them a single link to book and pay for a session. That's the whole model. The skill is the hard part, and you already have it. What stops most people isn't ability — it's that sure-happy-to-help has no price tag and no calendar slot attached to it."
+    },
+    {
+      "p": "If people keep asking to pick your brain, this guide turns those requests into booked, paid sessions. I'll cover the steps, how to price, and how to get set up without becoming a full-time admin."
+    },
+    {
+      "h2": "What does it mean to become a paid mentor?"
+    },
+    {
+      "p": "Becoming a paid mentor means charging for one-on-one guidance in an area where you have real experience. You're not teaching a syllabus — you're giving specific, personal advice to someone a few steps behind you."
+    },
+    {
+      "p": "The person paying isn't buying information they could Google. They're buying your judgment, your shortcuts, and the confidence of hearing it from someone who's done it. A backend engineer mentors juniors on system design. A recruiter mentors candidates through interviews. A founder mentors first-timers on fundraising. The pattern is always the same: you've walked a path, and someone will pay to walk it faster."
+    },
+    {
+      "p": "There's a salaried version of this too — career counsellors and coaches on a payroll. But independent 1:1 mentoring is different. You set your own price, your own hours, and keep what you earn. That's the path this guide is about."
+    },
+    {
+      "h2": "How do you become a paid mentor online? (5 steps)"
+    },
+    {
+      "p": "You become a paid mentor online by defining who you help, packaging your offer, setting a price, and putting a booking link where people can find it. Here's the sequence that works."
+    },
+    {
+      "steps": [
+        "Name your niche. Career mentor is too vague. I help data analysts move into data science roles is bookable. The narrower you are, the easier it is for the right person to say yes.",
+        "Define one clear offer. Start with a single format — a 30-minute or 60-minute 1:1 call. Don't build a six-tier menu on day one. One offer, one outcome.",
+        "Set your price. More on this below, but pick a number that feels slightly uncomfortable. That discomfort usually means it's about right.",
+        "Set up a booking link. One link that shows your availability, takes the booking, and collects payment. This is the difference between a hobby and an income.",
+        "Tell the people already asking. You don't need an audience of thousands. You need the ten people who've already asked for your time this year to see your link."
+      ]
+    },
+    {
+      "p": "That fourth step is where the whole thing lives or dies. If you're not sure how to build it, [how to book an appointment online](/blog/how-to-book-an-appointment-online) walks through it end to end."
+    },
+    {
+      "h2": "How much should you charge as a mentor?"
+    },
+    {
+      "p": "Charge based on the outcome you help create, not the length of the call — but if you need a starting anchor, price a monthly mentorship or a single session at what a good dinner out costs, then raise it as demand shows up."
+    },
+    {
+      "p": "Real rates vary widely. On one global marketplace, [mentees in India commonly pay around $160–$220 a month](https://mentorcruise.com/country/in/) — roughly ₹13,000 to ₹18,000 for ongoing guidance, with premium mentors charging more. Others sell single sessions in the ₹500 to ₹2,000 range. There's no fixed rate for a mentor; there's only what your specific help is worth to the person receiving it."
+    },
+    {
+      "table": {
+        "head": [
+          "Format",
+          "Typical starting range",
+          "Best for"
+        ],
+        "rows": [
+          [
+            "Single 1:1 session (30–60 min)",
+            "₹500 – ₹2,000",
+            "Testing demand, one-off advice"
+          ],
+          [
+            "Session pack (4–6 calls)",
+            "₹3,000 – ₹10,000",
+            "Working toward a goal"
+          ],
+          [
+            "Monthly mentorship",
+            "₹7,000 – ₹30,000+",
+            "Ongoing, long-term support"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Two rules keep you sane. First, undercharging attracts the wrong people — those who want free time, not real help. Second, raise your price the moment you're fully booked; a waitlist is the clearest signal you're too cheap. Platforms like [Preplaced, which runs a 600+ mentor network](https://www.preplaced.in/become-a-mentor), let mentors set and edit their own pricing for exactly this reason: your rate should move as your demand does."
+    },
+    {
+      "h2": "Where do you find your first mentees?"
+    },
+    {
+      "p": "Your first mentees are almost always people already in your orbit — juniors, ex-colleagues, people who've messaged you for advice, and their friends. You don't start with strangers."
+    },
+    {
+      "p": "Do three things this week. Post once about what you now offer and who it's for — plainly, no hard sell. Reply to the next can-I-pick-your-brain message with your booking link instead of a free hour. And add the link to your LinkedIn bio and profiles so it's there when someone goes looking. Marketplaces can supplement this later, but your own network converts fastest because they already trust you."
+    },
+    {
+      "h2": "Marketplace or your own booking link?"
+    },
+    {
+      "p": "Use your own booking link as your home base, and treat marketplaces as extra shelves — not your only shop. The difference is control and cost."
+    },
+    {
+      "p": "A marketplace brings discovery but takes a cut and owns the relationship. Your own link keeps the full fee and the client. If you're weighing the popular platforms, [our comparison of the best Topmate alternatives](/blog/topmate-alternative) lays out the trade-offs. The strongest setup is both: be discoverable where mentees search, but send everyone you already know to a link that's yours."
+    },
+    {
+      "h2": "Give them a way to book — and pay"
+    },
+    {
+      "p": "People keep asking for your time. The kindest thing you can do — for them and for you — is give them a way to book it, and pay for it, in one step."
+    },
+    {
+      "p": "Here's the trap. The moment you start mentoring, a second job appears: chasing payments, sending reminders, making invoices, juggling time zones and reschedules. That's the part that turns a mentor into an administrator. It's the reason so many people quit before they've really started."
+    },
+    {
+      "p": "That's what [Book A Sloth](/) removes. One link books the session and collects the payment at the same time — over UPI, with a GST invoice generated automatically and reminders going out over email and WhatsApp so you don't chase anyone. And if a payment ever does slip, [how to ask a client for payment politely](/blog/how-to-ask-client-for-payment-politely) has the scripts. But mostly, you won't need them, because the money arrives when the booking does."
+    },
+    {
+      "p": "The craft is yours. The machinery is ours. Set your price, share your link, and let people pay for the time they're already asking for."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I start getting paid to mentor?",
+          "a": "Pick the topic people already ask you about, set a price for a 1:1 session, and share a single link that lets them book and pay in one step. Start with the people who've already asked for your time."
+        },
+        {
+          "q": "Do I need a certification to be a paid mentor?",
+          "a": "No. For independent 1:1 mentoring, real experience matters more than a certificate. Certifications help mostly for employed coaching or counselling roles, not for charging directly for your own expertise."
+        },
+        {
+          "q": "How much do online mentors earn in India?",
+          "a": "It varies widely. Monthly mentorship plans commonly range from about ₹7,000 to ₹30,000, while single sessions often sell for ₹500 to ₹2,000. Your rate depends on your niche and the outcome you help create."
+        },
+        {
+          "q": "Should I use a mentoring platform or my own booking page?",
+          "a": "Both. Use your own booking link as your main channel to keep the full fee and the relationship, and use marketplaces for extra discovery. Send your existing network to your own link."
+        },
+        {
+          "q": "How do I get paid without chasing invoices?",
+          "a": "Collect payment at the moment of booking rather than after the session. A booking link that takes payment upfront and sends automatic reminders removes the follow-up almost entirely."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-ask-client-for-payment-politely",
+  "title": "How to Ask a Client for Payment Politely (Templates)",
+  "date": "Sep 10, 2026",
+  "icons": [
+    "wallet",
+    "coins",
+    "money"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Money",
+  "image": null,
+  "excerpt": "How to ask a client for payment politely: copy-paste email, WhatsApp and SMS scripts, a follow-up timeline, and the one setup that ends chasing for good.",
+  "body": [
+    {
+      "p": "To ask a client for payment politely, send a short, friendly message that states the invoice number, the amount, the original due date, and one clear next step to pay. Keep it warm, assume the best, and make paying easier than replying. The scripts below are copy-paste ready for email, WhatsApp, and SMS."
+    },
+    {
+      "p": "I run a business where people book and pay for time. So I've written this exact message more times than I'd like to admit — and I've watched hundreds of freelancers do the same. The awkwardness is real, but it's fixable. Here's how to ask without sounding desperate, and how to stop needing to ask at all."
+    },
+    {
+      "h2": "Why asking for payment feels so awkward (and why it isn't your fault)"
+    },
+    {
+      "p": "Chasing payment feels bad because the system is quietly stacked against you, not because you're doing something wrong. You did the work. You're the one who has to beg for the money. That's backwards."
+    },
+    {
+      "p": "The data backs up how common this is. Roughly [29% of freelancer invoices are paid at least a day late, and 71% of freelancers have hit a stalled payment at least once](https://clockify.me/late-invoice-statistics) — with the average freelancer losing more than a full working day every month just to chasing. So if it feels like a second job, that's because it is one."
+    },
+    {
+      "p": "The goal is to make the ask feel routine, not personal. A polite payment reminder is a business function, like sending an invoice. Treat it that way and the awkwardness drops."
+    },
+    {
+      "quote": "Politeness isn't what gets you paid — systems are. A warm tone protects the relationship; a predictable schedule and up-front collection move the money.",
+      "cite": "Shubham N Datarkar, Founder of Book A Sloth"
+    },
+    {
+      "h2": "The 5 rules of a polite payment request"
+    },
+    {
+      "p": "A good payment request is short, specific, warm, and ends with one obvious action. Follow these five rules and almost any message works."
+    },
+    {
+      "ol": [
+        "Lead with the facts, not an apology. Invoice number, amount, due date. Don't open with so-sorry-to-bother-you.",
+        "Assume good faith. Most late payments are forgetfulness, not malice. A this-may-have-slipped-through line gives them an easy out.",
+        "Make one clear ask. One amount, one link or account, one deadline. Choices create delay.",
+        "Keep the door warm. You want the next project too. Firm and friendly beat cold and legal — until they don't (see the timeline below).",
+        "Remove the friction. Attach the invoice again. Include the UPI ID or payment link right in the message. Every extra step is an extra day."
+      ]
+    },
+    {
+      "h2": "The follow-up timeline: what to send and when"
+    },
+    {
+      "p": "Send four touches on a predictable schedule — a heads-up before the due date, a nudge on the day, a firm reminder a week late, and a final notice at two weeks. Consistency does the heavy lifting, so the client learns you always follow up."
+    },
+    {
+      "table": {
+        "head": [
+          "When",
+          "Tone",
+          "Goal"
+        ],
+        "rows": [
+          [
+            "3 days before due date",
+            "Friendly heads-up",
+            "Get it on their radar early"
+          ],
+          [
+            "On the due date",
+            "Neutral reminder",
+            "Just a nudge — due today"
+          ],
+          [
+            "7 days late",
+            "Polite but firm",
+            "Confirm they got it, restate amount"
+          ],
+          [
+            "14 days late",
+            "Firm, with next step",
+            "Mention late fee / pause on work"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Most invoices clear inside this window — over 75% of late freelancer invoices get paid within 14 days of the due date — which is exactly why a steady four-touch rhythm works better than one angry email at day 30."
+    },
+    {
+      "h2": "Copy-paste email templates"
+    },
+    {
+      "info": {
+        "title": "1. Before the due date (friendly heads-up)",
+        "text": "Subject: Invoice #1024 — due Friday 12th. Hi [Name], quick heads-up that invoice #1024 for ₹15,000 is due on Friday the 12th. I've attached it again here for easy reference. You can pay by UPI to yourname@upi or via the link below. Anything you need from my side, just say the word. Thanks! [Your name]"
+      }
+    },
+    {
+      "info": {
+        "title": "2. On the due date",
+        "text": "Subject: Invoice #1024 due today. Hi [Name], just a gentle nudge — invoice #1024 for ₹15,000 is due today. Payment link and UPI ID are below. Let me know if anything's holding it up. Best, [Your name]"
+      }
+    },
+    {
+      "info": {
+        "title": "3. One week late (polite but firm)",
+        "text": "Subject: Following up — Invoice #1024. Hi [Name], following up on invoice #1024 for ₹15,000, now a week past due. I wanted to check this reached you and didn't slip through. Could you confirm a payment date? Happy to resend anything you need. Thanks, [Your name]"
+      }
+    },
+    {
+      "info": {
+        "title": "4. Two weeks late (firm, with a next step)",
+        "text": "Subject: Overdue — Invoice #1024, action needed. Hi [Name], invoice #1024 for ₹15,000 is now two weeks overdue. As per our agreement, a late fee of 2% per month applies from today, and I'll be pausing new work until the balance clears. Please settle at your earliest — link and UPI details below. If there's a genuine issue, call me and we'll sort it. Regards, [Your name]"
+      }
+    },
+    {
+      "h2": "WhatsApp and SMS scripts (short and India-friendly)"
+    },
+    {
+      "p": "For WhatsApp, keep it to two lines and attach the invoice PDF — most Indian clients reply faster there than on email. A short, respectful WhatsApp nudge lands as a normal business message, not a confrontation."
+    },
+    {
+      "ul": [
+        "WhatsApp (gentle nudge): Hi [Name], just a reminder that invoice #1024 for ₹15,000 was due the 12th. UPI: yourname@upi or link below. Thanks!",
+        "WhatsApp (one week late): Hi [Name], following up on invoice #1024 (₹15,000, now a week overdue). Could you share a payment date? Resending the invoice here.",
+        "SMS (short reminder): [Your name] here — invoice #1024 for ₹15,000 is overdue. Pay via UPI yourname@upi or the link. Reply if any issue. Thanks."
+      ]
+    },
+    {
+      "p": "Keep names in brackets so you can save these as templates and swap the details in ten seconds."
+    },
+    {
+      "h2": "The best way to ask for payment is to not have to"
+    },
+    {
+      "p": "The single biggest fix is to collect payment when the client books, not weeks after the work — so there's no invoice to chase in the first place. If money changes hands before your calendar does, the awkward email never gets written."
+    },
+    {
+      "p": "That's the whole idea behind how I built [Book A Sloth](/): you share one link, the client picks a slot, and they pay at the moment they book. UPI and Razorpay, an auto GST invoice, no front desk, no follow-ups. The craft stays yours; the machinery is ours."
+    },
+    {
+      "p": "It works cleanly for anything you'd otherwise invoice for after the fact: a consultant selling a bookable 30-minute call collects the fee up front instead of billing later; a tutor or coach uses [an online booking page](/blog/how-to-book-an-appointment-online) so every session is prepaid; and automated [reminders that actually arrive](/blog/notifications-that-actually-arrive) cut no-shows, so you're not chasing time and money."
+    },
+    {
+      "p": "Chasing invoices [costs freelancers a full working day every month](https://www.plutio.com/freelancer-magazine/late-invoice-payments). Booking-and-paying in one step gives it back. If you've been weighing tools, [here's how Book A Sloth compares to Topmate and Calendly](/blog/topmate-alternative) for exactly this."
+    },
+    {
+      "h2": "Conclusion: chase less, get paid faster"
+    },
+    {
+      "p": "Here's my honest take after watching this play out hundreds of times: politeness isn't what gets you paid — systems are. A warm tone stops you from burning the relationship, but a predictable four-touch timeline and up-front collection are what actually move the money."
+    },
+    {
+      "p": "Three things you can do this week:"
+    },
+    {
+      "ol": [
+        "Save the four scripts above as templates in your email and WhatsApp so a reminder takes ten seconds, not ten minutes of dread.",
+        "Set a calendar rule: heads-up at minus-3 days, reminders at day 0, day 7, day 14. Make chasing automatic and boring.",
+        "For anything you can, collect at booking. Move even one recurring service to prepaid and you'll feel the difference in a month."
+      ]
+    },
+    {
+      "p": "You did the work. Getting paid for it shouldn't be the hardest part of your week."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I ask for payment without sounding rude?",
+          "a": "Lead with facts, not apologies — invoice number, amount, due date — and assume the client simply forgot. A line like this-may-have-slipped-through keeps it warm while still being direct. Firmness comes from clarity, not tone."
+        },
+        {
+          "q": "How long should I wait before sending a payment reminder?",
+          "a": "Don't wait. Send a friendly heads-up a few days before the due date, a nudge on the day, then follow up at 7 and 14 days late. Most invoices clear inside two weeks when you follow up on a steady schedule."
+        },
+        {
+          "q": "Should I charge a late fee?",
+          "a": "Only if it was in your contract or invoice terms from the start. A common rate is 2% per month. Mention it in the two-weeks-late message, not before — it's an escalation tool, not an opener."
+        },
+        {
+          "q": "Is it okay to ask for payment on WhatsApp in India?",
+          "a": "Yes. For most Indian clients, a short, polite WhatsApp message with the invoice attached gets a faster reply than email. Keep it to two lines and include your UPI ID or a payment link."
+        },
+        {
+          "q": "How can I stop chasing payments altogether?",
+          "a": "Collect payment at the point of booking instead of invoicing after the work. When the client pays as they book the slot, there's no overdue invoice to chase — which is exactly what a tool like Book A Sloth automates for you."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-book-an-appointment-online",
+  "title": "How to Book an Appointment Online (+ Add a Button)",
+  "date": "Sep 9, 2026",
+  "icons": [
+    "calendar",
+    "target",
+    "chart"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to book an appointment online — a simple step-by-step, plus how to set up your own booking page and add a booking button to your site in about 5 minutes.",
+  "body": [
+    {
+      "p": "To book an appointment online, open the provider's booking page or booking button, pick an available slot, enter your details, and confirm — often paying at the same time. The whole thing takes under a minute and you get an instant confirmation with the date, time, and a calendar invite. If you want people to book you, you set up a booking page once and share one link."
+    },
+    {
+      "p": "This guide covers both sides: how to book an appointment as a customer, and — the part most people are really here for — how to set up online booking for your own service in about five minutes."
+    },
+    {
+      "h2": "How does online appointment booking work?"
+    },
+    {
+      "p": "Online appointment booking lets someone see your live availability and reserve a slot themselves, without calling or messaging back and forth. Behind the scenes, a booking tool syncs with your calendar, blocks the slot the moment it's taken, sends confirmations and reminders, and (if you enable it) collects payment at booking."
+    },
+    {
+      "p": "The demand is real: [67% of consumers prefer to book online rather than call, and 40% of online bookings happen outside business hours](https://simplybook.me/en/blog/online-booking-statistics) — evenings and weekends, when no one is answering the phone. Phone-only booking quietly loses you all of those."
+    },
+    {
+      "h2": "How to book an appointment online in 5 steps (as a customer)"
+    },
+    {
+      "p": "Booking an appointment online is a five-step flow that rarely takes more than a minute. Here's what it looks like from the customer's side."
+    },
+    {
+      "steps": [
+        "Open the booking link or button. From the provider's website, Instagram bio, or a link they sent you.",
+        "Choose your service. Pick the session type — e.g. a 30-minute consultation.",
+        "Pick a slot. The calendar only shows times that are actually free.",
+        "Enter your details. Name, email or phone, and any notes the provider asks for.",
+        "Confirm (and pay, if required). You get an instant confirmation, a calendar invite, and reminders before the appointment."
+      ]
+    },
+    {
+      "p": "That's it. No phone tag, no are-you-open-Saturday, no waiting for a reply."
+    },
+    {
+      "h2": "How to set up online booking for your own service"
+    },
+    {
+      "p": "To let clients book you online, you create a booking page once, connect your calendar and payments, and share the link — most people finish in under 30 minutes, and with a simple tool, about five. Here's the setup, step by step."
+    },
+    {
+      "steps": [
+        "Choose a booking tool that fits how you work and where your clients are.",
+        "Add your services — name, duration, and price for each (e.g. 60-min coaching call, ₹2,000).",
+        "Set your availability — the days and hours you're open, plus buffers between sessions.",
+        "Connect your calendar — Google Calendar sync stops double-bookings automatically.",
+        "Turn on payments — so clients pay when they book, not weeks later.",
+        "Switch on reminders — automated email/WhatsApp/SMS nudges before each slot.",
+        "Share your link everywhere — website, Instagram bio, email signature, WhatsApp."
+      ]
+    },
+    {
+      "p": "The two steps people skip — payments and reminders — are the ones that pay off most. Collecting at booking means you [never have to chase payment afterward](/blog/how-to-ask-client-for-payment-politely), and [automated reminders cut no-shows by up to 38%](https://www.klara.com/blog/text-message-appointment-reminders-reduce-no-shows-by-38-study-finds)."
+    },
+    {
+      "h2": "How to add a booking button (website, Instagram, WhatsApp)"
+    },
+    {
+      "p": "A booking button is just your booking link, placed where people already find you — and it works on every channel, not only your website. The trick is to put it everywhere a can-I-book-you question might come up."
+    },
+    {
+      "table": {
+        "head": [
+          "Where",
+          "How to add it",
+          "Why it works"
+        ],
+        "rows": [
+          [
+            "Website",
+            "Add a Book Now button linking to your page",
+            "Captures visitors ready to act"
+          ],
+          [
+            "Instagram bio",
+            "Paste the link in your bio / link sticker",
+            "Turns followers into bookings"
+          ],
+          [
+            "WhatsApp",
+            "Send the link, or set it as your catalog link",
+            "Where Indian clients reply fastest"
+          ],
+          [
+            "Email signature",
+            "Book a time with me: [link]",
+            "Converts every email thread"
+          ],
+          [
+            "Google Business Profile",
+            "Add the booking link to your profile",
+            "Catches near-me searchers"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "One link, pasted in five places, beats a Contact us form every time — because the visitor books instead of waiting for you to reply."
+    },
+    {
+      "h2": "The 5-minute version with Book A Sloth"
+    },
+    {
+      "p": "The fastest way to start taking bookings is a tool that bundles the page, calendar, payments, and reminders into one setup — so you're live in about five minutes, not an afternoon of connecting plugins. That's what I built [Book A Sloth](/) to do."
+    },
+    {
+      "p": "You add your service and price, connect Google Calendar, and share one link. Clients pick a slot and pay by UPI or Razorpay on the spot, you get an auto GST invoice, and email plus WhatsApp reminders go out on their own. Google Meet links are generated automatically for video calls. No front desk, no plugins, no chasing."
+    },
+    {
+      "p": "It fits pretty much anyone selling time — a consultant taking a bookable 30-minute call, a tutor booking sessions, a therapist or CA managing a full calendar. If you're comparing options, here's [how it stacks up against Topmate and Calendly](/blog/topmate-alternative) for Indian professionals specifically."
+    },
+    {
+      "h2": "Conclusion: start with one link"
+    },
+    {
+      "p": "Here's the honest version: the tool matters less than turning your availability into something people can act on right now. Most missed bookings aren't lost to a competitor — they're lost to a phone that didn't get answered and a DM that got buried."
+    },
+    {
+      "p": "Three things to do this week:"
+    },
+    {
+      "ol": [
+        "Create one booking page with a single service and price. Don't overthink the menu — you can add more later.",
+        "Turn on payments and reminders from day one. These are the two settings that protect your time and your income.",
+        "Put the link in three places today — your Instagram bio, your email signature, and your WhatsApp. Let people book you while you sleep."
+      ]
+    },
+    {
+      "p": "Your time is something people can book. Give them the button."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I book an appointment online?",
+          "a": "Open the provider's booking link or Book Now button, choose the service, pick an available time slot, enter your details, and confirm. You'll usually pay at the same step and receive an instant confirmation and reminders."
+        },
+        {
+          "q": "How do I set up online booking for my business?",
+          "a": "Choose a booking tool, add your services and prices, set your availability, connect your calendar, turn on payments and reminders, and share your booking link. With a simple all-in-one tool, this takes about five minutes."
+        },
+        {
+          "q": "How do I add a booking button to my website?",
+          "a": "Add a button or link labeled Book Now that points to your booking page URL. You can paste the same link into your Instagram bio, WhatsApp, email signature, and Google Business Profile so clients can book from anywhere."
+        },
+        {
+          "q": "Can clients pay when they book an appointment?",
+          "a": "Yes. Tools that support payment collection let clients pay by card or UPI at the moment they book, so you're paid up front and don't have to send an invoice or chase payment later."
+        },
+        {
+          "q": "Does online booking reduce no-shows?",
+          "a": "Yes. Online booking with automated email, SMS, or WhatsApp reminders reduces no-shows significantly — studies show text reminders cut them by up to 38% — because clients get confirmations and nudges before the appointment."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "topmate-alternative",
+  "title": "Topmate & Calendly Alternative in India: Book A Sloth",
+  "date": "Sep 8, 2026",
+  "icons": [
+    "scale",
+    "money",
+    "trophy"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Comparison",
+  "image": null,
+  "excerpt": "Looking for a Topmate or Calendly alternative in India? Compare fees, payments and features — and see why Book A Sloth is the calm, 0%-commission option.",
+  "body": [
+    {
+      "p": "The best Topmate or Calendly alternative in India is the one that takes payment the way your clients actually pay — UPI — without skimming a commission off every booking. Topmate is built for creators but charges a percentage of what you earn. Calendly is world-class scheduling but wasn't built for India or for collecting money. Book A Sloth sits in the gap: one link that books and collects payment, 0% commission on paid plans, made for how India transacts."
+    },
+    {
+      "p": "I'm the founder of Book A Sloth, so treat this as a comparison from someone with a horse in the race — but a fair one. I'll tell you honestly where the other two are the better pick."
+    },
+    {
+      "h2": "Quick answer: which one is for you?"
+    },
+    {
+      "p": "Pick based on what you sell and where your clients are, not on brand name. Here's the short version before the detail."
+    },
+    {
+      "ul": [
+        "Choose Topmate if you're a creator who wants an all-in-one link-in-bio storefront and you don't mind paying a cut of each sale.",
+        "Choose Calendly if you're on a Western team that lives inside Google/Outlook calendars and rarely collects payment.",
+        "Choose Book A Sloth if you sell your time in India, want UPI plus auto GST invoices, and refuse to hand over a commission on money you earned."
+      ]
+    },
+    {
+      "h2": "Topmate vs Calendly vs Book A Sloth: the comparison table"
+    },
+    {
+      "p": "The clearest way to see the difference is fees, payments, and India-fit side by side. Everything below reflects publicly listed 2026 pricing and features."
+    },
+    {
+      "table": {
+        "head": [
+          "",
+          "Book A Sloth",
+          "Topmate",
+          "Calendly"
+        ],
+        "rows": [
+          [
+            "Commission per booking",
+            "0% on paid plans",
+            "~10% platform fee",
+            "0% (but no native payments)"
+          ],
+          [
+            "Payment collection",
+            "Native UPI + Razorpay",
+            "Yes (creator storefront)",
+            "Stripe / PayPal only"
+          ],
+          [
+            "Auto GST invoices",
+            "Yes",
+            "Partial",
+            "No"
+          ],
+          [
+            "WhatsApp + SMS reminders",
+            "Built in",
+            "Limited",
+            "No (email only)"
+          ],
+          [
+            "Google Calendar & Meet",
+            "Yes",
+            "Yes",
+            "Yes (best-in-class)"
+          ],
+          [
+            "Made for India",
+            "Yes",
+            "Yes",
+            "No"
+          ],
+          [
+            "Best for",
+            "Selling your time in India",
+            "Creators / mentors",
+            "Global sales & teams"
+          ],
+          [
+            "Pricing",
+            "Free + paid plans",
+            "Free + paid",
+            "Free–$16/user/mo"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Where Topmate wins — and where it costs you"
+    },
+    {
+      "p": "Topmate is a genuinely good all-in-one for creators, but its business model takes a percentage of everything you make. If you want a single link-in-bio that handles sessions, digital products, and testimonials, Topmate does that well and has a large Indian creator base."
+    },
+    {
+      "p": "The catch is the cut. Independent breakdowns put Topmate's [platform commission at around 10%, rising to an effective 16–18% once payment-gateway and currency costs are added on international payments](https://eximpe.com/blog/payments/topmate-io-the-complete-guide-to-getting-started-earning-money-avoiding-pitfalls). On ₹50,000 of monthly sessions, 10% is ₹5,000 gone — every month, forever, on money you earned."
+    },
+    {
+      "p": "Book A Sloth's wedge here is simple: 0% commission on paid plans. You pay a flat subscription, not a tax on your talent. If you're a high earner, that difference compounds fast."
+    },
+    {
+      "h2": "Where Calendly wins — and where it falls short in India"
+    },
+    {
+      "p": "Calendly is the best pure scheduling tool in the world, but it wasn't designed to collect money or to work in India. If your job is coordinating meetings across Google and Outlook calendars for a Western team, nothing beats its polish. Its plans run from a [free tier up to $16 per user per month on the Teams plan](https://costbench.com/software/scheduling/calendly/)."
+    },
+    {
+      "p": "The problem shows up the moment you want to get paid. Calendly only collects payment through a Stripe or PayPal integration on its paid tiers — so for an Indian consultant, tutor, or coach, that means no native UPI, no auto GST invoice, and no WhatsApp reminders: the three things your clients and your accountant actually expect."
+    },
+    {
+      "p": "Book A Sloth is the opposite trade-off: slightly less scheduling flash, but it books and collects payment in one Indian-native flow."
+    },
+    {
+      "h2": "The real difference: calm vs clutter"
+    },
+    {
+      "p": "Beyond fees, the deeper split is philosophy — Book A Sloth is built to keep you out of admin, not to turn you into a storefront manager. Topmate leans into the creator-hustle aesthetic: dashboards, upsells, product tiles. Calendly leans corporate. Book A Sloth deliberately does less on the surface so you do less work."
+    },
+    {
+      "p": "The belief behind it: your craft is the valuable part. You shouldn't spend your day chasing payments or running a front desk. You share one link, the client picks a slot and pays, and the invoice, reminders, and calendar invite happen on their own. The craft is yours; the machinery is ours."
+    },
+    {
+      "p": "That's why the setup is deliberately boring in the best way — [you can put up a booking page in about five minutes](/blog/how-to-book-an-appointment-online), and because payment happens at booking, you [never write the awkward please-pay-me email](/blog/how-to-ask-client-for-payment-politely) again."
+    },
+    {
+      "h2": "Conclusion: my honest recommendation"
+    },
+    {
+      "p": "Here's where I'll put my bias aside. If you're a global creator selling digital products to a US audience, Topmate's storefront is a reasonable home. If you're a scheduler for a Western enterprise team, stay on Calendly — it's superb at that one job."
+    },
+    {
+      "p": "But if you sell your time in India — a consultant, a CA, a therapist, a coach, a tutor — the math and the mechanics both point one way. Three things worth doing this week:"
+    },
+    {
+      "ol": [
+        "Add up your commission. Take last month's session revenue and multiply by 10%. That number is what an all-in-one is quietly costing you every month.",
+        "Check your payment reality. If your clients pay by UPI, a tool that can't accept UPI natively is friction you're absorbing.",
+        "Try the calm version. [Set up a Book A Sloth page](/), share the link, and see how it feels to have booking, payment, GST, and [reminders that actually arrive](/blog/notifications-that-actually-arrive) handled for you."
+      ]
+    },
+    {
+      "p": "Same idea as the others. Less clutter. Made for India."
+    },
+    {
+      "faq": [
+        {
+          "q": "Is there a free Topmate alternative in India?",
+          "a": "Yes. Book A Sloth offers a free plan to start, and unlike Topmate it charges 0% commission on its paid plans — so you keep the full value of each booking rather than losing about 10% per sale."
+        },
+        {
+          "q": "Does Calendly work well in India?",
+          "a": "Calendly works for scheduling anywhere, but it wasn't built for India. It has no native UPI collection, no automatic GST invoices, and no WhatsApp reminders — so most Indian professionals need a payment workaround on top of it."
+        },
+        {
+          "q": "What's the difference between Topmate and Book A Sloth?",
+          "a": "Topmate is an all-in-one creator storefront that takes roughly a 10% cut of your earnings. Book A Sloth focuses on selling your time — one link that books and collects payment via UPI and Razorpay — with 0% commission on paid plans."
+        },
+        {
+          "q": "Can I collect payment by UPI when someone books?",
+          "a": "Yes — with Book A Sloth, UPI and Razorpay are built in, so clients pay the moment they book and you get an auto GST invoice. Calendly and most Western tools can't do this natively."
+        },
+        {
+          "q": "Which platform is cheapest overall?",
+          "a": "It depends on volume. A percentage-based tool like Topmate feels cheap at low earnings but gets expensive as you grow. A flat-fee, 0%-commission model like Book A Sloth's is usually cheaper once you're doing meaningful monthly revenue."
+        }
+      ]
+    }
+  ]
+},
+{
   slug: "digital-marketing-for-startups",
   title: "Digital Marketing for Startups: A Lean, Low-Budget Playbook",
   date: "Sep 7, 2026",
