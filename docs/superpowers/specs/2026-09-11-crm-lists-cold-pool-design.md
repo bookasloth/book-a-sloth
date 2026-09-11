@@ -132,9 +132,11 @@ board sets), most consumers inherit the exclusion from one edit. **Task:** audit
   classification. It is pointed at a "Topmate" list (`list_id`, `status='list'`) instead of
   dropping into the pipeline: a small edit to its `upsertLead` opts, not a rewrite.
 
-**Upload format (v1 = fixed columns, no mapping UI — §11).** CSV, or `.xlsx` (first sheet
-parsed client-side → rows JSON, the shape `/import` already takes). Row 1 = headers,
-matched **case-insensitively**; one contact per row.
+**Upload format (v1 = CSV, fixed columns, no mapping UI — §11).** CSV, UTF-8, comma-delimited,
+RFC-4180 quoting; parsed client-side → rows JSON (the shape `/import` already takes) with the
+reused dep-free `parseCSV` from #990 ([importTopmateLeads.js:33](../../../server/scripts/importTopmateLeads.js)).
+`.xlsx` upload deferred (§11 — Excel → *Save As CSV* for now). Row 1 = headers, matched
+**case-insensitively**; one contact per row.
 
 | Header | Required | → lead field |
 |---|---|---|
@@ -217,6 +219,8 @@ Design tokens / components per project rules (reuse `SalesLeads`, no new color/b
 
 - **Auto-promotion** (on reply/action) — explicitly not wanted. Promotion is manual.
 - **Auto-demote on going quiet** — manual demote + the Topmate backfill cover the need.
+- **`.xlsx` upload** — v1 is CSV-only (reuses #990's dep-free parser). Add SheetJS (`xlsx`)
+  when *Save As CSV* friction actually bites.
 - **Column-mapping UI** (drag CSV header → field). v1 = fixed columns; add mapping when a
   messy CSV actually blocks an import.
 - **Enrichment / profession inference** in the generic importer — that is #990's job for its
