@@ -24,6 +24,7 @@ export const DEMO_PERSONAS = [
     tagline: '1:1 coaching · 500+ sessions',
     bio: 'Career and business coach helping professionals get unstuck and move faster. Book a slot below — the first call is where it clicks.',
     serviceSlugs: ['demo-career-clarity-call', 'demo-business-strategy-hour', 'demo-mock-interview'],
+    image: 'https://loremflickr.com/400/400/business,coach?lock=11',
   },
   {
     key: 'salon',
@@ -33,6 +34,7 @@ export const DEMO_PERSONAS = [
     tagline: 'Hair · Makeup · Skin',
     bio: 'A calm little studio for cuts, colour, and event-ready makeup. Pick a service and a time — we handle the rest.',
     serviceSlugs: ['demo-haircut-style', 'demo-bridal-makeup-trial', 'demo-spa-facial'],
+    image: 'https://loremflickr.com/400/400/hair,salon?lock=21',
   },
   {
     key: 'wellness',
@@ -42,6 +44,7 @@ export const DEMO_PERSONAS = [
     tagline: 'Therapy · Nutrition · Yoga',
     bio: 'Gentle, practical support for mind and body — one honest session at a time. Book what fits you today.',
     serviceSlugs: ['demo-therapy-session', 'demo-nutrition-consult', 'demo-1-1-yoga'],
+    image: 'https://loremflickr.com/400/400/yoga,wellness?lock=31',
   },
   {
     key: 'sports-arena',
@@ -51,6 +54,7 @@ export const DEMO_PERSONAS = [
     tagline: 'Turf · Courts · Nets',
     bio: 'Book the turf, a court, or a practice net by the hour. Instant slots, no phone calls, no waiting.',
     serviceSlugs: ['demo-turf-slot', 'demo-badminton-court', 'demo-cricket-net'],
+    image: 'https://loremflickr.com/400/400/football,stadium?lock=41',
   },
 ];
 
@@ -68,7 +72,11 @@ export const personaView = (base, key) => {
   }
   const slugs = new Set(p.serviceSlugs || []);
   return {
-    host: { ...base.host, name: p.name, profession: p.profession, tagline: p.tagline, bio: p.bio },
+    host: {
+      ...base.host,
+      name: p.name, profession: p.profession, tagline: p.tagline, bio: p.bio,
+      profile_image: p.image || base.host.profile_image,
+    },
     services: base.services.filter((s) => slugs.has(s.slug)),
   };
 };
