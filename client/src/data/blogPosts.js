@@ -2619,7 +2619,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'content-marketing-for-brand-awareness',
-    title: 'Content Marketing for Brand Awareness: What Actually Builds Recall',
+    title: 'Content Marketing for Brand Awareness',
     date: 'Jul 28, 2026',
     icons: ['megaphone', 'chart', 'star'],
     author: 'Shubham N Datarkar',
@@ -3308,7 +3308,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'refer-earn-studio-crm-offline-bookings',
-    title: 'Get paid to refer, keep your clients in one place, and actual directions to the venue',
+    title: 'Refer & Earn, Studio CRM & Offline Bookings',
     date: 'Jul 15, 2026',
     icons: ['megaphone', 'money', 'users'],
     author: 'Shubham N Datarkar',
@@ -3415,7 +3415,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'explore-ranking-and-a-more-app-like-app',
-    title: 'Explore knows what it’s doing now, and the app stopped feeling like a website',
+    title: 'Smarter Explore Ranking & a More App-Like App',
     date: 'Jul 11, 2026',
     icons: ['chart', 'target', 'calendar'],
     author: 'Shubham N Datarkar',
@@ -3483,7 +3483,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'gst-invoices-host-verification-mobile',
-    title: 'GST invoices, a verified badge for hosts, and Book A Sloth that fits in your pocket',
+    title: 'GST Invoices, Host Verification & a Mobile App',
     date: 'Jul 8, 2026',
     icons: ['money', 'shield', 'lightning'],
     author: 'Shubham N Datarkar',
@@ -3543,7 +3543,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'pricing-page-and-the-rebook-nudge',
-    title: 'A pricing page that finally exists, and a nudge that rebooks your regulars for you',
+    title: 'A Pricing Page & a Rebook Nudge for Regulars',
     date: 'Jul 2, 2026',
     icons: ['money', 'megaphone', 'target'],
     author: 'Shubham N Datarkar',
@@ -3565,7 +3565,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'categories-that-make-sense-profile-polish',
-    title: 'Categories that actually make sense, and the small fixes nobody writes threads about',
+    title: 'Clearer Service Categories & Profile Polish',
     date: 'Jul 5, 2026',
     icons: ['target', 'shield', 'users'],
     author: 'Shubham N Datarkar',
@@ -3587,7 +3587,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'themes-doors-and-a-warmer-booking-flow',
-    title: 'Pick your colour, pick your door, and a booking flow that stopped being rude to guests',
+    title: 'Custom Themes, Two Doors & a Warmer Booking Flow',
     date: 'Jun 29, 2026',
     icons: ['palette', 'calendar', 'bell'],
     author: 'Shubham N Datarkar',
@@ -3610,7 +3610,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'google-sign-in-service-pages-two-way-reviews',
-    title: 'Sign in with Google, a service page that actually sells, and reviews that go both ways',
+    title: 'Google Sign-In, Service Pages & Two-Way Reviews',
     date: 'Jun 26, 2026',
     icons: ['star', 'chart', 'users'],
     author: 'Shubham N Datarkar',
@@ -3633,7 +3633,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'homepage-emails-and-downloadable-products',
-    title: 'A new homepage, emails that don’t look like 2009, and files your customers can actually download',
+    title: 'New Homepage, Modern Emails & Downloadable Products',
     date: 'Jun 23, 2026',
     icons: ['palette', 'megaphone', 'money'],
     author: 'Shubham N Datarkar',
@@ -3656,7 +3656,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'permanent-usernames-legal-and-newsletter',
-    title: 'Your @username is permanently yours now, and other grown-up things a real product needs',
+    title: 'Permanent @usernames, Legal Pages & a Newsletter',
     date: 'Jun 20, 2026',
     icons: ['target', 'users', 'shield'],
     author: 'Shubham N Datarkar',
@@ -3679,7 +3679,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'monthly-plans-whatsapp-verification-reminders',
-    title: 'Monthly plans, a WhatsApp code instead of a password, and reminders that actually show up',
+    title: 'Monthly Plans, WhatsApp Login & Reliable Reminders',
     date: 'Jun 17, 2026',
     icons: ['money', 'bell', 'shield'],
     author: 'Shubham N Datarkar',
@@ -3702,7 +3702,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'phone-login-and-reschedule-bookings',
-    title: 'Two logins, one less password, and the reschedule button we probably should’ve shipped first',
+    title: 'Phone Login, One Less Password & Reschedule Bookings',
     date: 'Jun 14, 2026',
     icons: ['users', 'calendar', 'lightning'],
     author: 'Shubham N Datarkar',
@@ -3725,7 +3725,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'how-explore-ranking-works',
-    title: 'How Explore Ranking Works on Book A Sloth: A Host’s Guide to Getting Found',
+    title: 'How Explore Ranking Works on Book A Sloth',
     date: 'Jul 11, 2026',
     author: 'Shubham N Datarkar',
     readMins: 16,
@@ -3934,7 +3934,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'digital-marketing-strategy-vibe-coders',
-    title: 'Digital Marketing Strategy for Vibe Coders: How to Pay Down Distribution Debt',
+    title: 'Digital Marketing Strategy for Vibe Coders',
     date: 'Jul 6, 2026',
     author: 'Shubham N Datarkar',
     readMins: 13,
