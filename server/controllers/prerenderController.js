@@ -31,6 +31,15 @@ const truncate = (s, n = 160) => {
  */
 const upscaleAvatar = (url) => String(url || '').replace(/=s\d+-c$/, '=s512-c');
 
+// Category slugs → human topic labels for Person.knowsAbout / occupationalCategory
+// (e.g. 'startup-advisor' → 'Startup Advisor'). MIRRORS the same helper in the
+// client SEO path (client/src/utils/seo.js) — keep both in sync.
+const humanizeSlug = (s) => String(s || '').replace(/[-_]+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase());
+const knowsAboutFrom = (host = {}) => [...new Set(
+  [host.primary_category, ...(Array.isArray(host.categories) ? host.categories : [])]
+    .filter(Boolean).map(humanizeSlug),
+)];
+
 function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd, faqJsonLd, cardImage }) {
   const site = trimSlash(SITE_URL);
   const img = image || `${site}/og-image.png`;
@@ -131,11 +140,15 @@ async function resolveProfileMeta(username) {
   // sameAs (external identity links) + dateModified are AEO/entity-clarity signals:
   // they tell answer engines who this Person is and how fresh the page is.
   const sameAs = sameAsFrom(host);
+  const knowsAbout = knowsAboutFrom(host);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
     url: canonical,
     ...(host.updated_at ? { dateModified: host.updated_at } : {}),
+    // BAS publishes the profile page (accurate — NOT the person's employer, so never
+    // Person.worksFor). Links the page to the Organization entity for the graph.
+    publisher: { '@type': 'Organization', name: 'Book A Sloth', url: site },
     mainEntity: {
       '@type': 'Person',
       name,
@@ -144,6 +157,17 @@ async function resolveProfileMeta(username) {
       description: host.seo_description || host.bio || undefined,
       image: avatar,
       ...(sameAs.length ? { sameAs } : {}),
+      // Structured occupation + topics reinforce jobTitle as a real entity and tell
+      // answer engines what this person is known for (name-query relevance). Mirrors
+      // the client seo.js profileJsonLd — keep both in sync.
+      ...(host.profession ? {
+        hasOccupation: {
+          '@type': 'Occupation',
+          name: host.profession,
+          ...(host.primary_category ? { occupationalCategory: humanizeSlug(host.primary_category) } : {}),
+        },
+      } : {}),
+      ...(knowsAbout.length ? { knowsAbout } : {}),
       // Only the host's OWN reviews (never a platform default) — a rating here must
       // be reviews of this person and is shown on the profile. Platform-wide rating
       // lives on the homepage SoftwareApplication node instead.
