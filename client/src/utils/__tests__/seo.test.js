@@ -46,11 +46,11 @@ describe('resolveServiceSeo — admin overrides win, fallbacks otherwise', () =>
       .toBe('noindex,nofollow');
   });
 
-  test('og image falls back thumbnail -> brand card', () => {
+  test('og image falls back seo_image -> thumbnail -> service card', () => {
     expect(resolveServiceSeo({ service: { ...base, thumbnail_url: 'https://img/t.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
       .toBe('https://img/t.jpg');
     expect(resolveServiceSeo({ service: base, vendor: VENDOR, siteUrl: SITE }).image)
-      .toBe('https://bookasloth.com/og-image.png');
+      .toBe('https://bookasloth.com/service-og-default.jpg');
     expect(resolveServiceSeo({ service: { ...base, seo_image: 'https://img/seo.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
       .toBe('https://img/seo.jpg');
   });

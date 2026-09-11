@@ -47,12 +47,8 @@ export default function ServiceCard({ service, rank }) {
     >
       {/* Cover 4:3, host chip overlaid on it */}
       <div className="relative aspect-[4/3] overflow-hidden bg-[#FFF8EE]">
-        {coverImage ? (
-          <img src={coverImage} alt={title} loading="lazy"
-               className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-4xl" aria-hidden="true">🦥</div>
-        )}
+        <img src={coverImage || '/service-og-default.jpg'} alt={title} loading="lazy"
+             className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
 
         {badges.isNew && (
           <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-amber-100

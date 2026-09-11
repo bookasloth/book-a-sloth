@@ -260,13 +260,18 @@ async function resolveServiceMeta(username, serviceSlug) {
     } : {}),
   };
 
+  // No host image → fall back to the service share card (a known 1200x630 asset,
+  // so flag cardImage to emit the og:image size hints). A real thumbnail stays
+  // hint-less (whatever size the host uploaded).
+  const serviceImage = service.seo_image || service.thumbnail_url;
   const buildHtmlArgs = {
     title,
     description,
     canonical,
     ogTitle: service.og_title || service.seo_title || baseTitle,
     ogDescription: service.og_description || description,
-    image: service.seo_image || service.thumbnail_url,
+    image: serviceImage || `${site}/service-og-default.jpg`,
+    cardImage: !serviceImage,
     robots: service.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
     jsonLd,
   };

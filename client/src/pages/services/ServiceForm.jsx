@@ -307,7 +307,7 @@ const ThumbnailCropper = ({ currentUrl, onUploaded }) => {
 
   return (
     <div>
-      <label className={fieldLabel}>Thumbnail <span className="text-red-500">*</span></label>
+      <label className={fieldLabel}>Thumbnail <span className="text-gray-400 text-xs font-normal">(optional — we'll use a Book A Sloth card if you skip)</span></label>
 
       {/* Preview if no new file selected */}
       {!imgEl && (
@@ -517,7 +517,9 @@ export default function ServiceForm({ initialData, serviceId }) {
       toast.error(`Paid services must be at least ₹${MIN_SERVICE_PRICE}. Set a higher price, or make it free (₹0).`);
       return;
     }
-    if (!form.thumbnail_url) { toast.error('Thumbnail is required'); return; }
+    // Thumbnail is OPTIONAL — a missing image falls back to the Book A Sloth
+    // service card (see seo.js / prerenderController + ServiceCard / ServiceDetail).
+    // Requiring it here was the main add-service drop-off point.
     if (!effectiveDuration || effectiveDuration < 1) { toast.error('Duration is required'); return; }
     const isOffline = form.service_type === 'offline';
     if (isOffline && !mapLink.trim()) {

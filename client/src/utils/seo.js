@@ -23,6 +23,9 @@ const truncate = (s, n = 160) => {
 const robotsFor = (indexable) => (indexable === false ? 'noindex,nofollow' : 'index,follow');
 
 const brandCard = (siteUrl) => `${trimSlash(siteUrl)}/og-image.png`;
+// Service-specific share card: used when a service has no seo_image / thumbnail_url.
+// Distinct from brandCard so a plain service still shares a service-branded 1200x630.
+const serviceCard = (siteUrl) => `${trimSlash(siteUrl)}/service-og-default.jpg`;
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +59,7 @@ export const resolveServiceSeo = ({ service = {}, vendor = {}, siteUrl = SITE_UR
     description,
     ogTitle: service.og_title || service.seo_title || baseTitle,
     ogDescription: service.og_description || description,
-    image: service.seo_image || service.thumbnail_url || brandCard(site),
+    image: service.seo_image || service.thumbnail_url || serviceCard(site),
     canonical,
     indexable: service.is_indexable !== false,
     robots: robotsFor(service.is_indexable),
