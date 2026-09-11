@@ -370,10 +370,10 @@ const TRENDING = [
 
 /* ── Stats strip — live launch numbers ── */
 export const STATS = [
-  { icon: Users, value: "20+", label: "Professionals already on Book A Sloth" },
-  { icon: CalendarCheck, value: "100+", label: "Sessions booked" },
-  { icon: Wallet, value: "₹40K+", label: "Processed through the platform" },
-  { icon: Smile, value: "5 / 5", label: "Average host rating" },
+  { icon: Users, value: "70+", label: "Professionals already on Book A Sloth" },
+  { icon: CalendarCheck, value: "150+", label: "Sessions booked" },
+  { icon: Wallet, value: "₹50K+", label: "Processed through the platform" },
+  { icon: Smile, value: "5 / 5", label: "Platform rating by hosts" },
 ];
 
 
