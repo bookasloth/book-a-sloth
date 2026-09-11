@@ -19,6 +19,11 @@ describe('EarningsCalculator', () => {
     expect(screen.getAllByText(/walks out the door|commission/i).length).toBeGreaterThan(0);
   });
 
+  it('shows the loss donut (kept vs commission) when a paid plan wins', () => {
+    setup();
+    expect(screen.getByText(/lost to commission/i)).toBeTruthy();
+  });
+
   it('flips the commission card to a "stay free" message when Starter wins', () => {
     setup();
     const price = screen.getByLabelText('Price per session');

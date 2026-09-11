@@ -76,13 +76,13 @@ function Field({ label, hint, value, min, max, step, onChange, prefix }) {
         <label className="text-sm font-semibold text-ink">{label}</label>
         <span className="text-xs text-neutral-500">{hint}</span>
       </div>
-      <div className="mt-2 flex items-center gap-2 rounded-[6px] border border-black/10 bg-white px-3 py-2 transition-all duration-150 hover:border-black/20 focus-within:border-primary/30 focus-within:ring-[3px] focus-within:ring-primary/15">
+      <div className="mt-2 flex items-center gap-2 rounded-[6px] border border-black/10 bg-white px-3 py-2 transition-all duration-150 hover:border-black/20 focus-within:ring-2 focus-within:ring-primary/25">
         {prefix && <span className="text-neutral-400">{prefix}</span>}
         <input
           type="number" inputMode="numeric" min={min} max={max} step={step}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent text-lg font-semibold text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="w-full border-0 bg-transparent p-0 text-lg font-semibold text-ink outline-none focus:shadow-none focus:outline-none focus-visible:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           aria-label={label}
         />
       </div>
@@ -169,6 +169,39 @@ function PlanCard({ result, winnerKey, cycle }) {
   );
 }
 
+// Dynamic donut: of a year's Starter earnings, the red wedge is what the 5%
+// commission quietly takes vs the green you keep — a picture of the money the
+// wrong (free) plan costs. No chart lib; the r=15.915 trick makes the circle's
+// circumference 100, so a dasharray value is a percentage directly.
+function LossDonut({ lost, kept, animatedLost, winnerName }) {
+  const total = lost + kept;
+  const pct = total > 0 ? Math.min(100, (lost / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-4">
+      <div className="relative h-24 w-24 flex-shrink-0" aria-hidden="true">
+        <svg viewBox="0 0 42 42" className="h-full w-full">
+          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#eef0f3" strokeWidth="5" />
+          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#4AB765" strokeWidth="5"
+            strokeDasharray="100 0" strokeDashoffset="25" />
+          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#c0392b" strokeWidth="5"
+            strokeDasharray={`${pct} ${100 - pct}`} strokeDashoffset="25"
+            style={{ transition: "stroke-dasharray .5s ease" }} />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className="text-sm font-extrabold leading-none text-[#c0392b]">− {inr0(animatedLost)}</span>
+          <span className="mt-0.5 text-[9px] text-neutral-500">lost / yr</span>
+        </div>
+      </div>
+      <div className="text-xs leading-relaxed">
+        <p className="font-semibold text-ink">On Starter, 5% walks out the door</p>
+        <p className="mt-1.5 flex items-center gap-1.5"><span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-[#c0392b]" /> <strong className="text-ink">{inr0(lost)}</strong> lost to commission</p>
+        <p className="mt-1 flex items-center gap-1.5"><span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-[#4AB765]" /> {inr0(kept)} you keep</p>
+        <p className="mt-1.5 text-[11px] text-neutral-500">On {winnerName}, that&rsquo;s <strong>₹0</strong>.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function EarningsCalculator() {
   const [earning, setEarning] = useState(1500);
   const [bookings, setBookings] = useState(12);
@@ -185,6 +218,7 @@ export default function EarningsCalculator() {
   const delta = deltaVsFree(results, winnerKey);      // ₹/yr the winner beats free by
   const crossover = hostplusCrossover(earning);       // sessions/mo Host+ starts paying off
   const chips = VALUE_CHIPS[winnerKey] ?? [];
+  const starterNet = results.find((r) => r.plan.key === "starter")?.netAnnual ?? 0; // pie: kept slice
 
   const animatedDelta = useCountUp(delta);
   const animatedLoss = useCountUp(loss);
@@ -267,11 +301,7 @@ export default function EarningsCalculator() {
                   <p className="mt-1 text-[11px] text-neutral-500">in commission this year — still less than a {inr0(ANNUAL_FEE.hostplus)} plan. No fee beats it yet.</p>
                 </>
               ) : (
-                <>
-                  <p className="text-xs text-neutral-500">On Starter, 5% walks out the door</p>
-                  <p className="text-3xl font-extrabold text-[#c0392b]">− {inr0(animatedLoss)}</p>
-                  <p className="mt-1 text-[11px] text-neutral-500">in commission this year. On {winner.plan.name}, that's <strong>₹0</strong>.</p>
-                </>
+                <LossDonut lost={loss} kept={starterNet} animatedLost={animatedLoss} winnerName={winner.plan.name} />
               )}
             </div>
           </div>
