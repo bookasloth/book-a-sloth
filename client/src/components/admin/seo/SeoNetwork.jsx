@@ -17,6 +17,8 @@ import SeoInspector from './SeoInspector';
 const TYPE_COLOR = { static: '#8fa0b8', blog: '#2fb39b', service: '#5b8def', host: '#a78bfa', unknown: '#b6bfca', other: '#b6bfca' };
 const TYPE_LABEL = { static: 'Static & landing', blog: 'Blog post', service: 'Service page', host: 'Host profile', unknown: 'Other', other: 'Other' };
 const TYPE_ORDER = ['static', 'blog', 'service', 'host', 'other'];
+// Page-type priority for the anchored layout — which pages earn the 8 outer slots.
+const TYPE_PRIORITY = { static: 1, blog: 2, service: 3, host: 4, unknown: 5, other: 5 };
 const ORPHAN = '#e0a458', ERRC = '#e5534b';
 const typeColor = (t) => TYPE_COLOR[t] || TYPE_COLOR.other;
 const typeLabel = (t) => TYPE_LABEL[t] || 'Other';
@@ -34,6 +36,7 @@ export default function SeoNetwork() {
   const [hover, setHover] = useState(null);
   const [catFilter, setCatFilter] = useState('');
   const [showLabels, setShowLabels] = useState(false);
+  const [layout, setLayout] = useState('force'); // 'force' | 'anchored'
 
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
@@ -45,7 +48,8 @@ export default function SeoNetwork() {
   const dirtyRef = useRef(true);
   const rafRef = useRef(0);
   const drawRef = useRef(() => {});
-  const flagsRef = useRef({ catFilter: '', showLabels: false, focusId: null });
+  const flagsRef = useRef({ catFilter: '', showLabels: false, focusId: null, layout: 'force' });
+  const layoutRef = useRef('force');
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
@@ -96,7 +100,9 @@ export default function SeoNetwork() {
     try { if (root) rootLabel = new URL(root.url).host; } catch { /* keep default */ }
 
     simRef.current = { nodes, edges, byId, parent, rootId: root ? root.id : null, rootLabel, alpha: 1 };
+    if (layoutRef.current === 'anchored') applyAnchored(simRef.current);
     dirtyRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.data]);
 
   const pathToRoot = (id) => {
@@ -108,9 +114,23 @@ export default function SeoNetwork() {
 
   // Mirror draw-only state into a ref so the loop always reads fresh values.
   useEffect(() => {
-    flagsRef.current = { catFilter, showLabels, focusId: hover?.id || selectedId };
+    flagsRef.current = { catFilter, showLabels, focusId: hover?.id || selectedId, layout };
     dirtyRef.current = true;
-  }, [catFilter, showLabels, hover, selectedId]);
+  }, [catFilter, showLabels, hover, selectedId, layout]);
+
+  // Switch layout: (re)pin the anchored hubs or release them, reset the view so the
+  // fixed anchor points sit where they're computed, and reheat so spokes re-settle.
+  useEffect(() => {
+    layoutRef.current = layout;
+    const s = simRef.current;
+    if (s) {
+      if (layout === 'anchored') applyAnchored(s); else clearAnchors(s);
+      viewRef.current = { ...viewRef.current, ox: 0, oy: 0, z: 1 };
+      s.alpha = 1;
+    }
+    dirtyRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout]);
 
   // ── Theme colours (resolve token classes to rgb so canvas strokes can carry alpha) ─
   const readTheme = useCallback(() => {
@@ -129,15 +149,22 @@ export default function SeoNetwork() {
     const dpr = window.devicePixelRatio || 1, W = wrap.clientWidth, H = wrap.clientHeight;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     cv.style.width = `${W}px`; cv.style.height = `${H}px`;
-    viewRef.current = { ...viewRef.current, W, H, dpr }; dirtyRef.current = true;
+    viewRef.current = { ...viewRef.current, W, H, dpr };
+    const s = simRef.current; if (s && layoutRef.current === 'anchored') placeAnchors(s);
+    dirtyRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const step = useCallback(() => {
     const s = simRef.current; if (!s) return;
     const { nodes, edges } = s; const { W, H } = viewRef.current;
     const cx = W / 2, cy = H / 2, drag = dragRef.current?.node || null;
+    // Anchored layout: homepage + the 8 hubs are fixed; softer gravity lets each hub's
+    // spokes cluster around it instead of all being pulled to the centre.
+    const grav = layoutRef.current === 'anchored' ? GRAV * 0.4 : GRAV;
+    const pinned = (n) => n === drag || n.fixed;
     s.alpha *= 0.986; if (s.alpha < 0.02) s.alpha = 0; const a = s.alpha; if (a === 0) return;
-    for (const n of nodes) { if (n === drag) continue; n.vx += (cx - n.x) * GRAV * a; n.vy += (cy - n.y) * GRAV * a; }
+    for (const n of nodes) { if (pinned(n)) continue; n.vx += (cx - n.x) * grav * a; n.vy += (cy - n.y) * grav * a; }
     for (let i = 0; i < nodes.length; i++) { const ni = nodes[i];
       for (let j = i + 1; j < nodes.length; j++) { const nj = nodes[j];
         let dx = ni.x - nj.x, dy = ni.y - nj.y, d2 = dx * dx + dy * dy;
@@ -148,16 +175,16 @@ export default function SeoNetwork() {
     }
     for (const e of edges) { const dx = e.t.x - e.s.x, dy = e.t.y - e.s.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
       const f = (d - LEN) * SPRING * a, fx = dx / d * f, fy = dy / d * f;
-      if (e.s !== drag) { e.s.vx += fx; e.s.vy += fy; } if (e.t !== drag) { e.t.vx -= fx; e.t.vy -= fy; }
+      if (!pinned(e.s)) { e.s.vx += fx; e.s.vy += fy; } if (!pinned(e.t)) { e.t.vx -= fx; e.t.vy -= fy; }
     }
-    for (const n of nodes) { if (n === drag) { n.vx = n.vy = 0; continue; } n.vx *= DECAY; n.vy *= DECAY; n.x += n.vx; n.y += n.vy; }
+    for (const n of nodes) { if (pinned(n)) { n.vx = n.vy = 0; continue; } n.vx *= DECAY; n.vy *= DECAY; n.x += n.vx; n.y += n.vy; }
   }, []);
 
   const draw = useCallback(() => {
     const cv = canvasRef.current, s = simRef.current; if (!cv || !s) return;
     const ctx = cv.getContext('2d');
     const { W, H, dpr, ox, oy, z } = viewRef.current;
-    const { catFilter: cat, showLabels: labels, focusId } = flagsRef.current;
+    const { catFilter: cat, showLabels: labels, focusId, layout: lay } = flagsRef.current;
     const th = themeRef.current;
     const rgba = (c, al) => `rgba(${c[0]},${c[1]},${c[2]},${al})`;
     const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
@@ -210,7 +237,8 @@ export default function SeoNetwork() {
       ctx.font = `${weight} ${11.5 / z}px 'Plus Jakarta Sans', system-ui, sans-serif`;
       ctx.fillStyle = color; ctx.fillText(t, n.x, n.y - n.r - 3 / z);
     };
-    if (!focus && labels) { ctx.globalAlpha = 0.9; for (const n of s.nodes) if (!n.__root && n.r >= 9) drawLabel(n, rgb(th.ink), 600); ctx.globalAlpha = 1; }
+    if (!focus && lay === 'anchored') { for (const n of s.nodes) if (n.__anchor) drawLabel(n, rgb(th.ink), 700); }
+    else if (!focus && labels) { ctx.globalAlpha = 0.9; for (const n of s.nodes) if (!n.__root && n.r >= 9) drawLabel(n, rgb(th.ink), 600); ctx.globalAlpha = 1; }
     if (s.rootId) drawLabel(s.byId.get(s.rootId), rgb(th.accent), 800);
     if (focus && !focus.__root) drawLabel(focus, rgb(th.ink), 700);
   }, []);
@@ -299,6 +327,46 @@ export default function SeoNetwork() {
   }
   const reheat = () => { if (simRef.current) { simRef.current.alpha = 1; dirtyRef.current = true; } };
 
+  // ── Anchored layout: homepage centred, top hubs pinned around the edge ────────
+  // 8 evenly-spaced points on an inset ellipse = the 4 side-midpoints + 4 corners.
+  function anchorPoints() {
+    const { W, H } = viewRef.current;
+    const cx = W / 2, cy = H / 2;
+    const rx = Math.max(120, W * 0.40), ry = Math.max(110, H * 0.40);
+    const pts = [];
+    for (let k = 0; k < 8; k++) { const a = -Math.PI / 2 + k * (Math.PI / 4); pts.push({ x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry }); }
+    return { cx, cy, pts };
+  }
+  // Re-seat the fixed nodes (homepage + mapped hubs) at the current anchor points.
+  function placeAnchors(s) {
+    const { cx, cy, pts } = anchorPoints();
+    if (s.rootId) { const r = s.byId.get(s.rootId); r.fixed = true; r.x = cx; r.y = cy; r.r = Math.max(12, nodeRadius(r)); }
+    (s.anchorMap || []).forEach((id, i) => { if (!id) return; const n = s.byId.get(id); if (!n) return; n.fixed = true; n.__anchor = true; n.x = pts[i].x; n.y = pts[i].y; n.r = Math.max(12, nodeRadius(n)); });
+  }
+  // Choose the 8 outer hubs by page-type priority (tie-break: most inbound), then
+  // assign each to its nearest free anchor so edges stay short.
+  function applyAnchored(s) {
+    clearAnchors(s);
+    const { pts } = anchorPoints();
+    const hubs = s.nodes
+      .filter((n) => !n.__root)
+      .sort((x, y) => (TYPE_PRIORITY[x.page_type] || 5) - (TYPE_PRIORITY[y.page_type] || 5) || (y.inbound - x.inbound))
+      .slice(0, pts.length);
+    const used = new Array(pts.length).fill(false);
+    const map = new Array(pts.length).fill(null);
+    for (const hub of hubs) {
+      let best = -1, bd = Infinity;
+      for (let i = 0; i < pts.length; i++) { if (used[i]) continue; const dx = pts[i].x - hub.x, dy = pts[i].y - hub.y, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = i; } }
+      if (best >= 0) { used[best] = true; map[best] = hub.id; }
+    }
+    s.anchorMap = map;
+    placeAnchors(s);
+  }
+  function clearAnchors(s) {
+    s.anchorMap = null;
+    s.nodes.forEach((n) => { n.fixed = false; n.__anchor = false; n.r = n.__root ? Math.max(9, nodeRadius(n)) : nodeRadius(n); });
+  }
+
   // ── Derived stats ───────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const nodes = state.data?.nodes || [];
@@ -335,6 +403,10 @@ export default function SeoNetwork() {
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
+        <select className="fb-input text-sm" value={layout} onChange={(e) => setLayout(e.target.value)} aria-label="Graph layout">
+          <option value="force">Layout: Free</option>
+          <option value="anchored">Layout: Anchored</option>
+        </select>
         <select className="fb-input text-sm" value={catFilter} onChange={(e) => setCatFilter(e.target.value)} aria-label="Filter by page type">
           <option value="">All page types</option>
           {presentTypes.map((t) => <option key={t} value={t}>{typeLabel(t)}</option>)}
