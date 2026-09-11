@@ -113,7 +113,7 @@ async function upsertLead(patch = {}, { source, createdBy = '', attribution, met
 // not applied on this DB), strip them and retry so lead capture never breaks.
 // Strip the schema-optional columns a DB may not have yet (attribution + the
 // Meta Lead Ads id from v3.137) so lead capture never breaks before a migration.
-const stripOptional = (row) => { const o = stripAttributionColumns(row); delete o.meta_lead_id; return o; };
+const stripOptional = (row) => { const o = stripAttributionColumns(row); delete o.meta_lead_id; delete o.list_id; return o; };
 
 async function insertLeadTolerant(row) {
   let { data, error } = await supabaseAdmin.from('leads').insert(row).select('*').single();
@@ -386,8 +386,13 @@ function buildFollowupOr({ to, inclusive, taskIds = [], closedSql }) {
 // followup: 'overdue' | 'today' | 'open'  — restrict to leads with such a task.
 // createdSince: ISO — leads created on/after this instant (metric "New today").
 // hasValue: true — only leads with revenue_paise > 0.
-async function listLeads({ status, source, owner, tag, city, profession, q, followup, createdSince, hasValue, leadType, page = 1, pageSize = 25 } = {}) {
+async function listLeads({ status, source, owner, tag, city, profession, q, followup, createdSince, hasValue, leadType, listId, page = 1, pageSize = 25 } = {}) {
   let query = supabaseAdmin.from('leads').select('*', { count: 'exact' });
+  if (listId) {
+    query = query.eq('list_id', listId).eq('status', 'list');   // Lists view = one cold list
+  } else {
+    query = query.neq('status', 'list');                        // every Sales/pipeline view excludes cold
+  }
   if (status) query = query.eq('status', status);
   if (source) query = query.eq('source', source);
   if (owner) query = query.eq('owner_admin_id', owner);
@@ -451,7 +456,9 @@ async function changeStatus(id, status, actorAdminId, opts = {}) {
     },
   });
   // Cross-board team handoff (reassign + SLA + audit). Best-effort; never throws.
-  if (before && rules.pipelineOf(before.status) !== rules.pipelineOf(status)) {
+  // Skipped when either side is 'list' — promote/demote to the cold pool isn't a team handoff.
+  if (before && before.status !== 'list' && status !== 'list'
+      && rules.pipelineOf(before.status) !== rules.pipelineOf(status)) {
     await require('./handoffService').onCrossBoard({ leadId: id, from: before.status, to: status, actorAdminId });
   }
   return getLead(id);
