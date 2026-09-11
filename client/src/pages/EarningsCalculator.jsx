@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Sprout, Sparkles, Rocket, TrendingUp, ArrowUpRight, ShieldCheck, Info } from "lucide-react";
+import { Sprout, Sparkles, Rocket, TrendingUp, ArrowUpRight, ShieldCheck, Info, Check } from "lucide-react";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
 import { SITE_URL } from "../utils/seo";
 import {
   resultsFor, pickWinner, annualSaving, ceilingState,
   starterCommissionPerYear, ANNUAL_FEE, HOSTPLUS_ANNUAL_CAP,
+  deltaVsFree, hostplusCrossover,
 } from "../lib/earningsCalc";
 
 // /earnings-calculator — public conversion tool. Host drags price + monthly
@@ -20,6 +21,21 @@ import {
 const ROUTE_START = "/be-a-sloth";
 const ICON = { starter: Sprout, hostplus: Sparkles, studio: Rocket };
 const ACCENT = { starter: "#4AB765", hostplus: "#269CEF", studio: "#FE5100" };
+
+// What the recommended plan actually *does* — so the verdict answers "what am I
+// paying for", not just "how much". Short labels mirror data/plans.js features.
+const VALUE_CHIPS = {
+  starter: ["Free forever", "Online payments", "Your booking page"],
+  hostplus: ["0% commission", "Auto reminders", "Auto invoices"],
+  studio: ["Unlimited bookings", "Client CRM", "Advanced analytics"],
+};
+
+// One-line "who's this for" per plan, so a card sells a fit — not just a price.
+const POSITION = {
+  starter: "Test the waters, free.",
+  hostplus: "Booking regularly? Kill the commission.",
+  studio: "Outgrowing the limits.",
+};
 
 const inr0 = (n) =>
   "₹" + new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number(n) || 0);
@@ -60,13 +76,13 @@ function Field({ label, hint, value, min, max, step, onChange, prefix }) {
         <label className="text-sm font-semibold text-ink">{label}</label>
         <span className="text-xs text-neutral-500">{hint}</span>
       </div>
-      <div className="mt-2 flex items-center gap-2 rounded-[6px] border border-black/10 bg-white px-3 py-2 focus-within:border-primary">
+      <div className="mt-2 flex items-center gap-2 rounded-[6px] border border-black/10 bg-white px-3 py-2 transition-all duration-150 hover:border-black/20 focus-within:ring-2 focus-within:ring-primary/25">
         {prefix && <span className="text-neutral-400">{prefix}</span>}
         <input
           type="number" inputMode="numeric" min={min} max={max} step={step}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent text-lg font-semibold text-ink outline-none"
+          className="w-full border-0 bg-transparent p-0 text-lg font-semibold text-ink outline-none focus:shadow-none focus:outline-none focus-visible:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           aria-label={label}
         />
       </div>
@@ -85,6 +101,10 @@ function PlanCard({ result, winnerKey, cycle }) {
   const Icon = ICON[plan.key] ?? Sparkles;
   const accent = ACCENT[plan.key];
   const isWinner = winnerKey === plan.key;
+  // Studio rarely wins on take-home (its higher fee makes it look "worse" than
+  // Host+ until you're over the cap). Below the cap, stop competing on rupees —
+  // sell what it's actually for: capacity + features.
+  const studioCapacity = plan.key === "studio" && !isWinner && !result.outgrows;
   return (
     <div
       className={`relative flex flex-col rounded-[6px] border bg-white p-5 transition-all sm:p-6 ${
@@ -106,21 +126,33 @@ function PlanCard({ result, winnerKey, cycle }) {
           <p className="text-[11px] text-neutral-500">{plan.note}</p>
         </div>
       </div>
+      <p className="mt-2 text-xs font-medium text-neutral-600">{POSITION[plan.key]}</p>
 
-      <div className="mt-5">
-        <p className="text-xs text-neutral-500">You keep, per year</p>
-        <p className="text-2xl font-extrabold" style={{ color: accent }}>{inr0(result.netAnnual)}</p>
-        {plan.monthly > 0 && (
-          <p className="text-[11px] text-neutral-400">
-            {inr0(result.grossAnnual)} earned − {inr0(result.fee)} plan fee{cycle === "annual" ? " (yearly)" : " (monthly ×12)"}
-          </p>
-        )}
-      </div>
+      {studioCapacity ? (
+        <div className="mt-4">
+          <p className="text-xs text-neutral-500">Same take-home as Host+</p>
+          <p className="mt-1 text-sm font-semibold text-ink">Unlock CRM, unlimited bookings &amp; analytics when you outgrow Host+&rsquo;s limits.</p>
+        </div>
+      ) : (
+        <div className="mt-4">
+          <p className="text-xs text-neutral-500">You keep, per year</p>
+          <p className="text-2xl font-extrabold" style={{ color: accent }}>{inr0(result.netAnnual)}</p>
+        </div>
+      )}
 
-      <dl className="mt-4 space-y-1.5 border-t border-black/5 pt-4 text-xs">
-        <div className="flex justify-between"><dt className="text-neutral-500">Take-home / session</dt><dd className="font-semibold text-ink">{inr2(result.perBookingTakeHome)}</dd></div>
-        <div className="flex justify-between"><dt className="text-neutral-500">Your guest pays</dt><dd className="font-semibold text-ink">{inr2(result.guestPays)}</dd></div>
-      </dl>
+      {/* Math collapsed by default so the card reads as a plan, not a spreadsheet.
+          Open on the recommended card so the proof is one glance away. */}
+      <details className="mt-3" {...(isWinner ? { open: true } : {})}>
+        <summary className="cursor-pointer select-none text-[11px] font-semibold text-neutral-500 hover:text-ink">See the math</summary>
+        <div className="mt-2 space-y-1.5 border-t border-black/5 pt-3 text-xs">
+          {plan.monthly > 0 && (
+            <p className="text-[11px] text-neutral-400">
+              {inr0(result.grossAnnual)} earned − {inr0(result.fee)} plan fee{cycle === "annual" ? " (yearly)" : " (monthly ×12)"}
+            </p>
+          )}
+          <div className="flex justify-between"><span className="text-neutral-500">Take-home / session</span><span className="font-semibold text-ink">{inr2(result.perBookingTakeHome)}</span></div>
+        </div>
+      </details>
 
       {result.capped && (
         <p className="mt-3 rounded-[6px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
@@ -137,6 +169,39 @@ function PlanCard({ result, winnerKey, cycle }) {
   );
 }
 
+// Dynamic donut: of a year's Starter earnings, the red wedge is what the 5%
+// commission quietly takes vs the green you keep — a picture of the money the
+// wrong (free) plan costs. No chart lib; the r=15.915 trick makes the circle's
+// circumference 100, so a dasharray value is a percentage directly.
+function LossDonut({ lost, kept, animatedLost, winnerName }) {
+  const total = lost + kept;
+  const pct = total > 0 ? Math.min(100, (lost / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-4">
+      <div className="relative h-24 w-24 flex-shrink-0" aria-hidden="true">
+        <svg viewBox="0 0 42 42" className="h-full w-full">
+          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#eef0f3" strokeWidth="5" />
+          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#4AB765" strokeWidth="5"
+            strokeDasharray="100 0" strokeDashoffset="25" />
+          <circle cx="21" cy="21" r="15.915" fill="none" stroke="#c0392b" strokeWidth="5"
+            strokeDasharray={`${pct} ${100 - pct}`} strokeDashoffset="25"
+            style={{ transition: "stroke-dasharray .5s ease" }} />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className="text-sm font-extrabold leading-none text-[#c0392b]">− {inr0(animatedLost)}</span>
+          <span className="mt-0.5 text-[9px] text-neutral-500">lost / yr</span>
+        </div>
+      </div>
+      <div className="text-xs leading-relaxed">
+        <p className="font-semibold text-ink">On Starter, 5% walks out the door</p>
+        <p className="mt-1.5 flex items-center gap-1.5"><span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-[#c0392b]" /> <strong className="text-ink">{inr0(lost)}</strong> lost to commission</p>
+        <p className="mt-1 flex items-center gap-1.5"><span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-[#4AB765]" /> {inr0(kept)} you keep</p>
+        <p className="mt-1.5 text-[11px] text-neutral-500">On {winnerName}, that&rsquo;s <strong>₹0</strong>.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function EarningsCalculator() {
   const [earning, setEarning] = useState(1500);
   const [bookings, setBookings] = useState(12);
@@ -149,7 +214,13 @@ export default function EarningsCalculator() {
   const ceiling = ceilingState(bookings);
   const saving = annualSaving(winnerKey);
 
-  const animatedNet = useCountUp(winner.netAnnual);
+  const winnerIsFree = winnerKey === "starter";
+  const delta = deltaVsFree(results, winnerKey);      // ₹/yr the winner beats free by
+  const crossover = hostplusCrossover(earning);       // sessions/mo Host+ starts paying off
+  const chips = VALUE_CHIPS[winnerKey] ?? [];
+  const starterNet = results.find((r) => r.plan.key === "starter")?.netAnnual ?? 0; // pie: kept slice
+
+  const animatedDelta = useCountUp(delta);
   const animatedLoss = useCountUp(loss);
 
   const canonical = `${SITE_URL}/earnings-calculator`;
@@ -157,17 +228,20 @@ export default function EarningsCalculator() {
   return (
     <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
       <Seo
-        title="Earnings Calculator | Book A Sloth"
-        description="See what you'd actually pocket on Book A Sloth. Drag your price and monthly bookings to watch your yearly take-home — and what the wrong plan quietly costs you."
+        title="Earnings Calculator — see what you keep | Book A Sloth"
+        description="Book A Sloth earnings calculator: set your price and monthly bookings to see exactly what you keep — and which plan (Starter, Host+ or Studio) leaves you the most."
         canonical={canonical}
         image={ogCard("earnings-calculator", "png")}
       />
       <div className="app-container py-10 sm:py-14">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-3xl pb-24 sm:pb-0">
           {/* HERO + INPUTS (fused) */}
-          <h1 className="text-2xl font-bold text-ink sm:text-3xl">See what you'd actually pocket.</h1>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+            Your booking page, payments &amp; reminders — for people who get paid for their time
+          </p>
+          <h1 className="mt-2 text-2xl font-bold text-ink sm:text-3xl">See exactly what you'd keep.</h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-neutral-600">
-            Drag the numbers. Watch your year add up — and see what the wrong plan quietly costs you.
+            Set your price and how often you book. We'll pick the plan that leaves the most in your pocket — and show you what it does for you.
           </p>
 
           <div className="mt-8 grid gap-6 rounded-[6px] border border-black/5 bg-white p-6 sm:grid-cols-2 sm:p-7">
@@ -179,19 +253,56 @@ export default function EarningsCalculator() {
               onChange={(v) => setBookings(v === "" ? "" : Math.max(0, Number(v)))} />
           </div>
 
-          {/* REVEAL STRIP: annual take-home + loss */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[6px] border bg-white p-5" style={{ borderColor: ACCENT[winnerKey] }}>
-              <p className="text-xs text-neutral-500">Your take-home this year on {winner.plan.name}</p>
-              <p className="text-3xl font-extrabold" style={{ color: ACCENT[winnerKey] }}>{inr0(animatedNet)}<span className="text-sm font-semibold text-neutral-400">/year</span></p>
-              <p className="mt-1 text-[11px] text-neutral-500">
-                keep the most on <strong>{winner.plan.name}</strong> at {Math.floor(Number(bookings) || 0)} sessions/mo of {inr0(earning)}
+          {/* VERDICT: recommendation-first — one plan, the delta vs free, what it
+              does, and the CTA, all above the fold. Replaces the twin big-number
+              reveal strip so the visitor decides and acts in a single glance. */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-5">
+            <div className="sm:col-span-3 rounded-[6px] border-2 bg-white p-5 sm:p-6" style={{ borderColor: ACCENT[winnerKey] }}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Your plan</p>
+              <p className="mt-0.5 text-2xl font-extrabold" style={{ color: ACCENT[winnerKey] }}>
+                {winner.plan.name}{winnerIsFree ? " · free" : ""}
               </p>
+
+              {winnerIsFree ? (
+                <p className="mt-1.5 text-sm text-neutral-700">
+                  <strong className="text-ink">Start free.</strong> At your volume the 5% commission is still
+                  less than a paid plan's fee. You'll want Host+ past{" "}
+                  <strong className="text-ink">~{Number.isFinite(crossover) ? crossover : "—"} sessions/mo</strong> — we'll tell you when.
+                </p>
+              ) : (
+                <p className="mt-1.5 text-sm text-neutral-700">
+                  You keep <strong className="text-ink">{inr0(animatedDelta)} more a year</strong> than the free plan —
+                  because {winner.plan.name} drops the 5% commission, and that beats the {inr0(winner.fee)} fee at your volume.
+                </p>
+              )}
+
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {chips.map((c) => (
+                  <span key={c} className="inline-flex items-center gap-1 rounded-full bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-neutral-700">
+                    <Check size={12} className="text-primary" /> {c}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-95">
+                  Start on {winner.plan.name} <ArrowUpRight size={16} />
+                </Link>
+                <span className="text-[11px] text-neutral-500">Free to set up · cancel anytime</span>
+              </div>
             </div>
-            <div className="rounded-[6px] border border-black/5 bg-white p-5">
-              <p className="text-xs text-neutral-500">On Starter, 5% walks out the door</p>
-              <p className="text-3xl font-extrabold text-[#c0392b]">− {inr0(animatedLoss)}</p>
-              <p className="mt-1 text-[11px] text-neutral-500">in commission this year. On Host+ and Studio, that's <strong>₹0</strong>.</p>
+
+            {/* Dynamic commission card — never contradicts the recommendation */}
+            <div className="sm:col-span-2 rounded-[6px] border border-black/5 bg-white p-5">
+              {winnerIsFree ? (
+                <>
+                  <p className="text-xs text-neutral-500">Staying free is the math</p>
+                  <p className="text-3xl font-extrabold" style={{ color: ACCENT.starter }}>{inr0(animatedLoss)}</p>
+                  <p className="mt-1 text-[11px] text-neutral-500">in commission this year — still less than a {inr0(ANNUAL_FEE.hostplus)} plan. No fee beats it yet.</p>
+                </>
+              ) : (
+                <LossDonut lost={loss} kept={starterNet} animatedLost={animatedLoss} winnerName={winner.plan.name} />
+              )}
             </div>
           </div>
 
@@ -209,12 +320,19 @@ export default function EarningsCalculator() {
             </button>
           </div>
 
-          {/* PLAN CARDS */}
+          {/* PLAN CARDS — winner first (matters most on the mobile stack) */}
           <div className="mt-4 grid gap-5 sm:grid-cols-3">
-            {results.map((r) => (
-              <PlanCard key={r.plan.key} result={r} winnerKey={winnerKey} cycle={cycle} />
-            ))}
+            {[...results]
+              .sort((a, b) => (b.plan.key === winnerKey) - (a.plan.key === winnerKey))
+              .map((r) => (
+                <PlanCard key={r.plan.key} result={r} winnerKey={winnerKey} cycle={cycle} />
+              ))}
           </div>
+
+          {/* Guest price, once — it never varies by plan, so showing it 3× was noise */}
+          <p className="mt-3 text-center text-[11px] leading-relaxed text-neutral-500">
+            Your guest pays <strong>{inr2(winner.guestPays)}</strong> — your {inr0(earning)} price plus a flat ₹10 booking fee. You never eat it; your take-home is your price minus taxes.
+          </p>
 
           {/* CEILING NUDGE (honest top-plan moment) */}
           {ceiling !== "none" && (
@@ -232,18 +350,22 @@ export default function EarningsCalculator() {
 
           {/* CTA */}
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-            <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-95">
-              Start on {winner.plan.name} <ArrowUpRight size={16} />
-            </Link>
-            <Link to="/pricing" className="text-sm font-semibold text-primary hover:underline">
-              See full plan comparison →
+            <div className="flex flex-col items-center gap-1 sm:items-start">
+              <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-95">
+                Start on {winner.plan.name} <ArrowUpRight size={16} />
+              </Link>
+              <span className="text-[11px] text-neutral-500">Free to set up · cancel anytime</span>
+            </div>
+            <Link to="/pricing" className="text-xs text-neutral-500 hover:text-primary hover:underline">
+              Compare every feature →
             </Link>
           </div>
 
           {/* OBJECTION RESOLVER + footnote */}
-          <div className="mt-8 grid gap-2.5 rounded-[6px] border border-black/5 bg-white/60 p-4 text-xs leading-relaxed text-neutral-600 sm:grid-cols-3">
-            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Real payout math, not a sales number.</p>
+          <div className="mt-8 grid gap-2.5 rounded-[6px] border border-black/5 bg-white/60 p-4 text-xs leading-relaxed text-neutral-600 sm:grid-cols-2">
+            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Free to start — test the waters at zero cost.</p>
             <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Cancel anytime — no lock-in.</p>
+            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Real payout math, not a sales number.</p>
             <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Same take-home whether or not you're GST-registered.</p>
           </div>
           <div className="mt-3 flex gap-2.5 text-[11px] leading-relaxed text-neutral-500">
@@ -254,6 +376,13 @@ export default function EarningsCalculator() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Sticky CTA on mobile — keep the action one thumb-reach away */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 p-3 backdrop-blur sm:hidden">
+        <Link to={ROUTE_START} className="flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-5 py-3 text-sm font-semibold text-white">
+          Start on {winner.plan.name} <ArrowUpRight size={16} />
+        </Link>
       </div>
     </div>
   );
