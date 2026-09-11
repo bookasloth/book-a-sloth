@@ -6,6 +6,10 @@
 
 // Per-post keyword tags. Every published slug MUST appear (enforced by test).
 export const POST_TAGS = {
+  'how-to-become-paid-mentor': ['sell-your-time', 'growth'],
+  'how-to-ask-client-for-payment-politely': ['sell-your-time', 'money'],
+  'how-to-book-an-appointment-online': ['sell-your-time', 'booking'],
+  'topmate-alternative': ['sell-your-time', 'commission'],
   'digital-marketing-for-startups': ['marketing', 'startup', 'aeo'],
   'digital-marketing-for-saas-companies': ['marketing', 'saas', 'b2b', 'aeo'],
   'performance-marketing-for-ecommerce': ['marketing', 'ecommerce', 'performance', 'aeo'],
@@ -103,6 +107,9 @@ export const BLOG_CLUSTERS = [
     tags: ['local-seo', 'aeo'], priority: 70,
     description: 'Local-search and vertical marketing (restaurants, real estate, schools, law firms).',
     priorityLinks: ['digital-marketing-for-real-estate-companies', 'digital-marketing-for-schools', 'seo-marketing-for-law-firms'] },
+  { key: 'sell-your-time', keyword: 'selling your time online', pillar: 'how-to-book-an-appointment-online',
+    tags: ['sell-your-time'], priority: 95,
+    priorityLinks: ['topmate-alternative', 'how-to-ask-client-for-payment-politely', 'how-to-become-paid-mentor'] },
   { key: 'commission', keyword: '0% commission', pillar: 'zero-commission-bet',
     tags: ['commission', 'pricing', 'earnings'], priority: 100,
     description: 'The 0%-commission / flat-fee pricing argument.',
