@@ -47,7 +47,7 @@ export default function Pricing() {
     <main className="bg-white">
       <Seo
         title={feeOnly ? "Pricing — Book A Sloth | Plans for creators & professionals" : "Pricing — Book A Sloth | Zero-commission booking from ₹0"}
-        description={feeOnly ? "Simple, honest pricing for your booking page — scheduling, reminders, and payments launching soon. Compare Host+ and Studio side by side — prices in INR, excl. GST." : "Simple, honest pricing. Start free, keep 0% commission on paid plans. Compare Starter, Host+ and Studio side by side — prices in INR, excl. GST."}
+        description={feeOnly ? "Simple, honest pricing for your booking page — scheduling and reminders. Compare Host+ and Studio side by side — prices in INR, excl. GST." : "Simple, honest pricing. Start free, keep 0% commission on paid plans. Compare Starter, Host+ and Studio side by side — prices in INR, excl. GST."}
         image={ogCard('pricing')}
         canonical={`${SITE_URL}/pricing`}
         jsonLd={JSON_LD}
@@ -61,7 +61,7 @@ export default function Pricing() {
           </h1>
           <p className="mx-auto mt-4 max-w-[640px] text-neutral-500">
             {feeOnly
-              ? "Pick the plan that fits your booking page. Upgrade anytime — paid bookings and payouts are launching soon."
+              ? "Pick the plan that fits your booking page. Upgrade anytime."
               : "Start free, upgrade when your bookings grow, and keep every rupee. We don't believe in taxing your success — so we never take a cut of what you earn."}
           </p>
         </div>
@@ -74,7 +74,7 @@ export default function Pricing() {
         </div>
         <p className="mx-auto mt-6 max-w-[1050px] text-center text-xs text-neutral-400">
           {feeOnly
-            ? "Prices in INR, excl. GST · Paid bookings & payouts launching soon · Cancel anytime"
+            ? "Prices in INR, excl. GST · Cancel anytime"
             : "0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime"}
         </p>
       </section>
