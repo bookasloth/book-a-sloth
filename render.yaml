@@ -160,3 +160,38 @@ services:
         sync: false
       - key: SUPER_ADMIN_EMAIL
         sync: false
+
+  # ───────────────────────────────────────────────────────────────────────
+  # STAGING frontend — static SPA for sales demos / testing. Deploys from the
+  # `staging` branch. Uses build:no-prerender (plain `vite build`) so the build
+  # skips the puppeteer + prerender/OG steps (Vercel-prod concerns, not needed
+  # for a demo SPA). No CORS change required: set the staging API's CLIENT_URL
+  # to THIS site's URL and corsOrigins derives the allowlist (+ www/apex) from it.
+  #   URL will be https://bookasloth-client-staging.onrender.com
+  # NOTE: verify the static-site fields on first Blueprint apply — Render's schema
+  # for static sites (runtime/staticPublishPath/routes) can change; adjust if it errors.
+  # ───────────────────────────────────────────────────────────────────────
+  - type: web
+    name: bookasloth-client-staging
+    runtime: static
+    rootDir: client
+    branch: staging
+    buildCommand: npm ci && npm run build:no-prerender
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_URL
+        value: https://bookasloth-api-staging.onrender.com/api
+      - key: VITE_SUPABASE_URL
+        value: https://xwvciqkayammbvsidqig.supabase.co
+      - key: VITE_POSTHOG_HOST
+        value: https://app.posthog.com
+      # Public anon key — set in the Render dashboard (kept out of git by convention).
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
