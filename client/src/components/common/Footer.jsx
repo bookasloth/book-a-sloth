@@ -1,66 +1,16 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { subscribeNewsletter } from '../../services/api';
 
 const ROUTE_START = '/be-a-sloth';
 const EMAIL = 'bolt@bookasloth.in';
 const BOLT_URL = 'https://www.instagram.com/bookasloth';
 
-// Link columns. Legal lives in the inline bottom bar (LEGAL), not here — it kept
-// the grid lopsided as a 4th column. "Be a Host" / "Host log in" dropped as dups
-// of the CTA button and the navbar.
-const COLUMNS = [
-  { h: 'Product', links: [
-    { t: 'How it works', href: '/how-it-works' },
-    { t: 'Pricing', href: '/pricing' },
-    { t: 'Earnings calculator', href: '/earnings-calculator' },
-    { t: 'Explore', href: '/explore' },
-    { t: 'Enterprise', href: '/enterprise' },
-  ] },
-  // Feature pages had zero internal links (orphaned — only reachable via sitemap).
-  // The footer renders site-wide, so this is the durable way to get them crawled.
-  { h: 'Features', links: [
-    { t: 'Online scheduling', href: '/features/online-scheduling' },
-    { t: 'Booking pages', href: '/features/booking-pages' },
-    { t: 'Payments', href: '/features/payments' },
-    { t: 'Availability', href: '/features/availability' },
-    { t: 'Google Calendar', href: '/features/google-calendar' },
-    { t: 'Notifications', href: '/features/notifications' },
-    { t: 'Client management', href: '/features/client-management' },
-    { t: 'Digital products', href: '/features/digital-products' },
-    { t: 'Reviews & ratings', href: '/features/reviews' },
-    { t: 'Analytics', href: '/features/analytics' },
-  ] },
-  { h: "Who it's for", links: [
-    { t: 'Doctors', href: '/for/doctors' },
-    { t: 'Business consultants', href: '/for/business-consultant' },
-    { t: 'Agencies', href: '/for/agencies' },
-    { t: 'Freelancers', href: '/for/freelancers' },
-    { t: 'Events', href: '/for/events' },
-  ] },
-  { h: 'Compare', links: [
-    { t: 'vs Calendly', href: '/lp/calendly-alternative' },
-    { t: 'vs Acuity', href: '/lp/acuity-alternative' },
-    { t: 'vs Setmore', href: '/lp/setmore-alternative' },
-    { t: 'vs SimplyBook', href: '/lp/simplybook-alternative' },
-    { t: 'vs Zoho Bookings', href: '/lp/zoho-bookings-alternative' },
-    { t: 'vs Topmate', href: '/lp/topmate-vs-bookasloth' },
-  ] },
-  { h: 'Company', links: [
-    { t: 'About', href: '/about' },
-    { t: 'Blog', href: '/blog' },
-    { t: 'Careers', href: '/careers' },
-    { t: 'Wall of Love', href: '/wall-of-love' }, // was /#collective (a homepage anchor) — /wall-of-love was orphaned
-  ] },
-  { h: 'Support', links: [
-    { t: 'Help', href: '/help' },
-    { t: 'Contact', href: '/contact' },
-    { t: 'FAQ', href: '/#faq' },
-  ] },
-];
+// Minimal footer: link discovery now lives in the navbar mega-menus, so the
+// footer is just the CTA band + a centered legal strip + socials + operator bar.
 
-// Inline legal bar (Zoho-style, wraps) — pulled out of the columns.
+// Single centered inline row (support + legal, no label).
 const LEGAL = [
+  { t: 'FAQ', href: '/#faq' },
+  { t: 'Documentation', href: '/help/docs' },
   { t: 'Terms', href: '/terms' },
   { t: 'Privacy', href: '/privacy' },
   { t: 'Refund', href: '/refund' },
@@ -99,66 +49,18 @@ function FLink({ href, className, children }) {
 
 const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-// Newsletter signup — POST /email/subscribe adds the address to the campaign
-// contacts table (as a newsletter subscriber) AND upserts a CRM lead server-side.
-// Optimistic like the Home form: a network hiccup still shows success and stashes
-// the address locally so it is never lost.
-function NewsletterForm() {
-  const [email, setEmail] = useState('');
-  const [state, setState] = useState('idle'); // idle | loading | ok | err
-
-  const submit = async (e) => {
-    e.preventDefault();
-    const v = email.trim();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { setState('err'); return; }
-    setState('loading');
-    try {
-      await subscribeNewsletter(v);
-    } catch {
-      try {
-        const leads = JSON.parse(localStorage.getItem('newsletterLeads') || '[]');
-        localStorage.setItem('newsletterLeads', JSON.stringify([...leads, v].slice(-200)));
-      } catch { /* storage unavailable — ignore */ }
-    }
-    setState('ok');
-    setEmail('');
-  };
-
+// Centered, pipe-separated inline row (support + legal links, no label).
+function InlineRow({ items }) {
   return (
-    <div>
-      <h3 className="font-heading text-sm font-semibold text-white">Stay in touch</h3>
-      <p className="mt-4 text-sm leading-relaxed text-white/55">
-        Tips, templates and the occasional truth bomb — weekly, quietly.
-      </p>
-      <form onSubmit={submit} noValidate className="mt-4 flex gap-2">
-        <label htmlFor="footer-newsletter" className="sr-only">Email address</label>
-        <input
-          id="footer-newsletter"
-          type="email"
-          autoComplete="email"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => { setEmail(e.target.value); if (state !== 'idle') setState('idle'); }}
-          aria-invalid={state === 'err'}
-          className="h-10 min-w-0 flex-1 rounded-[5px] border border-white/15 bg-white/5 px-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-        />
-        <button
-          type="submit"
-          disabled={state === 'loading'}
-          className="inline-flex items-center justify-center whitespace-nowrap rounded-[5px] bg-white px-4 text-sm font-semibold text-ink transition-colors hover:bg-white/90 disabled:opacity-60"
-        >
-          {state === 'loading' ? 'Joining…' : 'Join'}
-        </button>
-      </form>
-      <p role="status" aria-live="polite" className="mt-2 text-xs text-white/40">
-        {state === 'ok'
-          ? 'You’re in — welcome to the Collective.'
-          : state === 'err'
-          ? 'Please enter a valid email address.'
-          : <>Or email us at{' '}
-              <a href={`mailto:${EMAIL}`} className="text-white/60 underline underline-offset-2 transition-colors hover:text-white">{EMAIL}</a>
-            </>}
-      </p>
+    <div className="flex flex-wrap items-center justify-center gap-y-2">
+      {items.map((l, i) => (
+        <span key={l.t} className="flex items-center">
+          {i > 0 && <span aria-hidden="true" className="mx-3 text-white/20">|</span>}
+          <FLink href={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
+            {l.t}
+          </FLink>
+        </span>
+      ))}
     </div>
   );
 }
@@ -187,30 +89,13 @@ export default function Footer({ variant = 'full' }) {
           </div>
         </div>
 
-        {/* Brand column + link columns + newsletter — dropped in minimal variant */}
+        {/* Minimal footer: no link columns (nav mega-menus own discovery now) —
+            just a centered legal strip + socials, dropped in the minimal variant. */}
         {!minimal && (
         <>
-        <div className="grid gap-x-8 gap-y-10 border-t border-white/10 py-12 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {/* Link columns */}
-          <nav aria-label="Footer" className="contents">
-            {COLUMNS.map((col) => (
-              <div key={col.h}>
-                <h3 className="font-heading text-sm font-semibold text-white">{col.h}</h3>
-                <ul className="mt-4 space-y-2.5">
-                  {col.links.map((l) => (
-                    <li key={l.t}>
-                      <FLink href={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
-                        {l.t}
-                      </FLink>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </nav>
-
-          {/* Stay in touch: newsletter + email */}
-          <NewsletterForm />
+        {/* Support + Legal — one centered inline row */}
+        <div className="border-t border-white/10 py-8">
+          <InlineRow items={LEGAL} />
         </div>
 
         {/* Centered socials */}
@@ -230,14 +115,16 @@ export default function Footer({ variant = 'full' }) {
         </>
         )}
 
-        {/* Inline legal bar */}
-        <nav aria-label="Legal" className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/10 py-6 ${minimal ? 'mt-14' : ''}`}>
-          {LEGAL.map((l) => (
-            <FLink key={l.t} href={l.href} className="text-xs text-white/50 transition-colors hover:text-white hover:no-underline">
-              {l.t}
-            </FLink>
-          ))}
-        </nav>
+        {/* Minimal variant keeps just a compact legal bar */}
+        {minimal && (
+          <nav aria-label="Legal" className="mt-14 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/10 py-6">
+            {LEGAL.map((l) => (
+              <FLink key={l.t} href={l.href} className="text-xs text-white/50 transition-colors hover:text-white hover:no-underline">
+                {l.t}
+              </FLink>
+            ))}
+          </nav>
+        )}
 
         {/* Copyright / operator */}
         <div className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
@@ -252,7 +139,7 @@ export default function Footer({ variant = 'full' }) {
             <span className="text-white/25">·</span>
             {/* Company ownership visible site-wide — part of the Google OAuth
                 verification checklist (homepage must identify the operator). */}
-            <span>Operated by Timewheel Internet Private Limited · CIN U62012OD2026PTC052654</span>
+            <span>Operated by Timewheel Internet Private Limited</span>
           </div>
           <p className="text-white/40">Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
         </div>

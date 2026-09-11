@@ -16,20 +16,97 @@ import {
   Search, User, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
   Gift, Star, Info, Cpu, HeartPulse,
-  GraduationCap, Sparkles, Mail, Award, Layers, Headset,
+  Sparkles, Mail, Award, Layers, Headset,
   BookOpen, Building2,
+  Users, Scale, Scissors, Camera, Ticket, Heart, HelpCircle,
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
 
-// "More" overflow menu. How It Works, Pricing and Explore are top-level links
-// (see PublicCenterNav), so they are deliberately absent here.
-const MORE_MENU = [
-  { label: 'Blog',       href: '/blog',       icon: BookOpen },
-  { label: 'About',      href: '/about',      icon: Info },
-  { label: 'Careers',    href: '/careers',    icon: Briefcase },
-  { label: 'Enterprise', href: '/enterprise', icon: Building2 },
-  { label: 'Contact',    href: '/contact',    icon: Mail },
+// ── Mega-menu configs (Calendly/Cal.com-style: grouped columns, icon + subtext) ─
+// Hardcoded (not derived from featureData) to keep the marketing data out of the
+// site-wide nav bundle. Every href points at a route that renders — dead nav
+// links are soft-404s, and the mega-nav is now the site-wide crawl anchor (the
+// footer went minimal), so these lists ARE the internal-linking surface.
+
+// `tone` pins each tile's colour to that feature page's own accent (featureData
+// accent → nearest TILE_MAP tone) so the mega-menu matches the page it opens.
+const PRODUCT_MENU = [
+  { header: 'Products', items: [
+    { label: 'Online scheduling', href: '/features/online-scheduling', desc: 'Clients pick a time — no back-and-forth',   icon: CalendarCheck,    tone: 'blue' },
+    { label: 'Booking pages',     href: '/features/booking-pages',     desc: 'A clean public page for every service',     icon: LayoutDashboard,  tone: 'orange' },
+    { label: 'Payments',          href: '/features/payments',          desc: 'Get paid up front and kill no-shows',       icon: Wallet,           tone: 'emerald' },
+    { label: 'Client management', href: '/features/client-management', desc: 'Clients, bookings and notes in one place',  icon: Users,            tone: 'orange' },
+    { label: 'Digital products',  href: '/features/digital-products',  desc: 'Sell guides & templates, no live call',     icon: Layers,           tone: 'blue' },
+  ] },
+  { header: 'Platform', items: [
+    { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Two-way sync, always up to date',           icon: CalendarCheck,    tone: 'pink' },
+    { label: 'Notifications',     href: '/features/notifications',     desc: 'Automatic WhatsApp + email reminders',      icon: Bell,             tone: 'amber' },
+    { label: 'Availability',      href: '/features/availability',      desc: 'Buffers, limits and hours that fit you',    icon: Clock,            tone: 'violet' },
+    { label: 'Reviews & ratings', href: '/features/reviews',           desc: 'Collect reviews that win more bookings',    icon: Star,             tone: 'pink' },
+    { label: 'Explore',           href: '/explore',                    desc: 'Get discovered in the marketplace',         icon: Search,           tone: 'teal' },
+  ] },
+];
+
+// Profession landing pages. Only slugs with real professionLandingData — dead
+// links would be soft-404s. `tone` pins each tile to that landing page's own
+// theme accent (professionLandingData theme.accent → nearest TILE_MAP tone).
+const WHOFOR_MENU = [
+  { header: 'By profession', items: [
+    { label: 'Doctors',    href: '/for/doctors',             desc: 'Clinics & consults', icon: HeartPulse, tone: 'emerald' },
+    { label: 'Consultant', href: '/for/business-consultant', desc: 'Advisory calls',     icon: Briefcase,  tone: 'amber' },
+    { label: 'Lawyers',    href: '/for/lawyers',             desc: 'Legal consults',     icon: Scale,      tone: 'amber' },
+    { label: 'Salons',     href: '/for/salon',               desc: 'Beauty & grooming',  icon: Scissors,   tone: 'pink' },
+  ] },
+  { header: 'By type', items: [
+    { label: 'Freelancers',   href: '/for/freelancers',   desc: 'Solo & independent',  icon: User,      tone: 'teal' },
+    { label: 'Agencies',      href: '/for/agencies',      desc: 'Teams & studios',     icon: Building2, tone: 'cyan' },
+    { label: 'Events',        href: '/for/events',        desc: 'Workshops & meetups', icon: Ticket,    tone: 'violet' },
+    { label: 'Photographers', href: '/for/photographers', desc: 'Shoots & sessions',   icon: Camera,    tone: 'fuchsia' },
+  ] },
+];
+const WHOFOR_PROMO = { title: 'For teams & enterprise', desc: 'Scale scheduling across your org.', href: '/enterprise', cta: 'Talk to sales' };
+
+const RESOURCES_MENU = [
+  { header: 'Get started', items: [
+    { label: 'How it works',        href: '/how-it-works',        desc: 'The 3-minute setup',  icon: Sparkles },
+    { label: 'Earnings calculator', href: '/earnings-calculator', desc: 'See what you keep',    icon: TrendingUp },
+    { label: 'Documentation',       href: '/help/docs',           desc: 'Guides & how-tos',    icon: BookOpen },
+  ] },
+  { header: 'Discover', items: [
+    { label: 'Blog',         href: '/blog',         desc: 'Tips & playbooks',   icon: BookOpen },
+    { label: 'Wall of Love', href: '/wall-of-love', desc: 'What hosts say',     icon: Heart },
+    { label: 'About',        href: '/about',        desc: 'Our mission',        icon: Info },
+    { label: 'Careers',      href: '/careers',      desc: 'Join the team',      icon: Award },
+  ] },
+  { header: 'Support', items: [
+    { label: 'Help center', href: '/help',    desc: 'Articles & FAQs',   icon: HelpCircle },
+    { label: 'FAQ',         href: '/#faq',    desc: 'Quick answers',     icon: MessageCircle },
+    { label: 'Contact',     href: '/contact', desc: 'Talk to a human',   icon: Mail },
+  ] },
+];
+
+// Compare — a mega-menu of "Sloth vs <competitor>" cards. Each carries the
+// competitor's domain (favicon) and primary brand colour (hover tint). Only LPs
+// that exist. `label` (mobile) kept alongside name/domain/color (desktop cards).
+const COMPARE_MENU = [
+  { label: 'vs Calendly',      name: 'Calendly',      href: '/lp/calendly-alternative',      domain: 'calendly.com',         color: '#006BFF' },
+  { label: 'vs Acuity',        name: 'Acuity',        href: '/lp/acuity-alternative',        domain: 'acuityscheduling.com', color: '#1B7FA8' },
+  { label: 'vs Setmore',       name: 'Setmore',       href: '/lp/setmore-alternative',       domain: 'setmore.com',          color: '#009DE0' },
+  { label: 'vs SimplyBook',    name: 'SimplyBook',    href: '/lp/simplybook-alternative',    domain: 'simplybook.me',        color: '#2FA8C9' },
+  { label: 'vs Zoho Bookings', name: 'Zoho Bookings', href: '/lp/zoho-bookings-alternative', domain: 'zoho.com',             color: '#E42527' },
+  { label: 'vs Topmate',       name: 'Topmate',       href: '/lp/topmate-vs-bookasloth',     domain: 'topmate.io',           color: '#FF3E5F' },
+];
+
+// Flat lists derived from the mega configs — reused by the mobile accordions.
+const flat = (cols) => cols.flatMap((c) => c.items);
+
+// Mobile drawer: the same menus as collapsible accordions (flat, no columns).
+const MOBILE_SECTIONS = [
+  { label: 'Product',      icon: Sparkles, items: flat(PRODUCT_MENU) },
+  { label: "Who it's for", icon: Award,    items: flat(WHOFOR_MENU) },
+  { label: 'Resources',    icon: Layers,   items: flat(RESOURCES_MENU) },
+  { label: 'Compare',      icon: BarChart2, items: COMPARE_MENU },
 ];
 
 // Slim guest profile menu (logged-in guests). The navbar carries nothing but the
@@ -72,7 +149,7 @@ const NavbarLogo = ({ appearance }) => {
   if (mode === 'icon_text' && appearance?.icon_url) {
     return (
       <>
-        <img src={appearance.icon_url} alt="" width={26} height={26} decoding="async"
+        <img src={appearance.icon_url} alt="Book A Sloth" width={26} height={26} decoding="async"
              className="h-[26px] w-[26px] rounded block" />
         {wordmarkText()}
       </>
@@ -183,27 +260,30 @@ const TagPill = ({ text }) =>
     </span>
   ) : null;
 
-// ── Self-contained header dropdown (Use Cases / More) ────────────────────────
-// Owns its open state + outside-click/ESC/route-change close, so the public
-// center nav can host several independent menus without shared wiring.
-const NavDropdown = ({ label, icon: Icon, wide = false, children }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const location = useLocation();
-  useEffect(() => { setOpen(false); }, [location.pathname]);
-  useEffect(() => {
-    if (!open) return undefined;
-    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('pointerdown', onPointer); document.removeEventListener('keydown', onKey); };
-  }, [open]);
+// ── Header dropdown (controlled) ─────────────────────────────────────────────
+// Open state is owned by the parent menu bar so only ONE menu is open at a time
+// — switching between adjacent triggers is an instant handoff (no two panels
+// overlapping mid-switch). The panel is always mounted and animated via classes
+// so it fades/slides on BOTH enter and exit.
+const NavDropdown = ({ id, label, icon: Icon, align = 'left', activeKey, onOpen, onClose, children }) => {
+  const open = activeKey === id;
+  const centered = align === 'center';
+  // Lazy-mount the panel contents on first open, so the menus don't fetch their
+  // images (e.g. Compare's competitor favicons) on every page load — only once
+  // the user actually opens a menu. Kept mounted afterwards so the exit
+  // animation still runs.
+  const [mounted, setMounted] = useState(false);
+  if (open && !mounted) setMounted(true);
   return (
-    <div ref={ref} className="relative flex items-stretch">
+    <div
+      data-navmenu
+      className="relative flex items-stretch"
+      onMouseEnter={() => onOpen(id)}
+      onMouseLeave={() => onClose(false)}
+    >
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? onClose(true) : onOpen(id))}
         aria-expanded={open}
         aria-haspopup="menu"
         className={[
@@ -216,48 +296,218 @@ const NavDropdown = ({ label, icon: Icon, wide = false, children }) => {
         {label}
         <ChevronDown size={13} strokeWidth={2.5} className={`text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && (
-        <div
-          className={`absolute left-0 top-full mt-0 ${wide ? 'w-[32rem]' : 'w-56'} bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden`}
-          role="menu"
-          onClick={() => setOpen(false)}
-        >
-          {children}
-        </div>
-      )}
+      <div
+        role="menu"
+        aria-hidden={!open}
+        onClick={() => onClose(true)}
+        className={[
+          'absolute top-full mt-1.5 w-max max-w-[calc(100vw-2rem)] origin-top rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden',
+          centered ? 'left-1/2' : 'left-0',
+          'transition duration-200 ease-out motion-reduce:transition-none',
+          centered ? '-translate-x-1/2' : '',
+          open ? 'translate-y-0 scale-100 opacity-100' : '-translate-y-1 scale-[0.98] opacity-0 pointer-events-none',
+        ].join(' ')}
+      >
+        {mounted && children}
+      </div>
     </div>
   );
 };
 
-// ── Public center nav (logged-out): How It Works + Pricing + Explore + More ──
-const PublicCenterNav = () => (
-  <>
-    <Link to="/how-it-works" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
-      How It Works
+// ── Mega-menu pieces (grouped columns, colored icon tile + label + subtext) ──
+// Per-item colored tiles + a two-layer "curtain" that wipes in left→right on
+// hover (and reverses out). Classes are literal (Tailwind JIT can't see
+// interpolated names), keyed by a tone that cycles per column:
+//   tile  — idle icon square (pastel bg + colored glyph)
+//   solid — group-hover: solid square + white glyph
+//   c1/c2 — the two curtain layers (front lighter, back deeper)
+// Wide palette so hues keep changing down and across the menu (the tone index
+// runs continuously across columns — see MegaMenu — instead of resetting).
+const TILE_TONES = ['pink', 'blue', 'emerald', 'orange', 'violet', 'amber', 'teal', 'rose', 'sky', 'indigo', 'fuchsia', 'lime', 'cyan', 'red'];
+const TILE_MAP = {
+  pink:    { tile: 'bg-pink-100 text-pink-500',       solid: 'group-hover/mi:bg-pink-500 group-hover/mi:text-white',       c1: 'bg-pink-50',    c2: 'bg-pink-100' },
+  blue:    { tile: 'bg-blue-100 text-blue-500',       solid: 'group-hover/mi:bg-blue-500 group-hover/mi:text-white',       c1: 'bg-blue-50',    c2: 'bg-blue-100' },
+  emerald: { tile: 'bg-emerald-100 text-emerald-500', solid: 'group-hover/mi:bg-emerald-500 group-hover/mi:text-white',    c1: 'bg-emerald-50', c2: 'bg-emerald-100' },
+  orange:  { tile: 'bg-orange-100 text-orange-500',   solid: 'group-hover/mi:bg-orange-500 group-hover/mi:text-white',     c1: 'bg-orange-50',  c2: 'bg-orange-100' },
+  violet:  { tile: 'bg-violet-100 text-violet-500',   solid: 'group-hover/mi:bg-violet-500 group-hover/mi:text-white',     c1: 'bg-violet-50',  c2: 'bg-violet-100' },
+  amber:   { tile: 'bg-amber-100 text-amber-500',     solid: 'group-hover/mi:bg-amber-500 group-hover/mi:text-white',      c1: 'bg-amber-50',   c2: 'bg-amber-100' },
+  teal:    { tile: 'bg-teal-100 text-teal-500',       solid: 'group-hover/mi:bg-teal-500 group-hover/mi:text-white',       c1: 'bg-teal-50',    c2: 'bg-teal-100' },
+  rose:    { tile: 'bg-rose-100 text-rose-500',       solid: 'group-hover/mi:bg-rose-500 group-hover/mi:text-white',       c1: 'bg-rose-50',    c2: 'bg-rose-100' },
+  sky:     { tile: 'bg-sky-100 text-sky-500',         solid: 'group-hover/mi:bg-sky-500 group-hover/mi:text-white',        c1: 'bg-sky-50',     c2: 'bg-sky-100' },
+  indigo:  { tile: 'bg-indigo-100 text-indigo-500',   solid: 'group-hover/mi:bg-indigo-500 group-hover/mi:text-white',     c1: 'bg-indigo-50',  c2: 'bg-indigo-100' },
+  fuchsia: { tile: 'bg-fuchsia-100 text-fuchsia-500', solid: 'group-hover/mi:bg-fuchsia-500 group-hover/mi:text-white',    c1: 'bg-fuchsia-50', c2: 'bg-fuchsia-100' },
+  lime:    { tile: 'bg-lime-100 text-lime-600',       solid: 'group-hover/mi:bg-lime-500 group-hover/mi:text-white',       c1: 'bg-lime-50',    c2: 'bg-lime-100' },
+  cyan:    { tile: 'bg-cyan-100 text-cyan-500',       solid: 'group-hover/mi:bg-cyan-500 group-hover/mi:text-white',       c1: 'bg-cyan-50',    c2: 'bg-cyan-100' },
+  red:     { tile: 'bg-red-100 text-red-500',         solid: 'group-hover/mi:bg-red-500 group-hover/mi:text-white',        c1: 'bg-red-50',     c2: 'bg-red-100' },
+};
+
+const MegaItem = ({ item, tone }) => {
+  const Icon = item.icon;
+  const c = TILE_MAP[tone] || TILE_MAP.orange;
+  return (
+    <Link
+      to={item.href}
+      role="menuitem"
+      className="group/mi relative flex items-start gap-3 overflow-hidden rounded-xl px-3 py-2.5 hover:no-underline"
+    >
+      {/* Two-layer curtain: back layer trails, front leads — both slide in from
+          the left on hover and slide back out on leave (transition reverses). */}
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-500 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none ${c.c2}`} />
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-300 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none ${c.c1}`} />
+
+      {/* Content sits above the curtain */}
+      <span className={`relative z-10 mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ${c.tile} ${c.solid}`}>
+        <Icon size={19} strokeWidth={2} />
+      </span>
+      <span className="relative z-10 min-w-0">
+        <span className="block text-[14px] font-bold text-[#1E1E1E]">{item.label}</span>
+        {item.desc && <span className="block text-[12px] leading-snug text-gray-400">{item.desc}</span>}
+      </span>
     </Link>
+  );
+};
 
-    <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
-      Pricing
-    </Link>
+// One consistent grid system for every mega-menu: fixed equal-width columns,
+// same gap + padding everywhere; the panel auto-sizes to fit. The promo tile and
+// the Compare cards use the same MENU_COL width so nothing feels off-rhythm.
+const MENU_COL = 'w-60'; // 15rem — every column, promo tile and compare cell
 
-    {/* Explore hidden from nav (marketplace demand not proven yet); /explore
-        route + page stay live and directly reachable. Restore <UseCasesMegaMenu/>
-        here to bring it back. */}
-
-    <NavDropdown label="More">
-      <div className="py-1">
-        {MORE_MENU.map((m) => {
-          const Icon = m.icon;
-          return (
-            <Link key={m.label} to={m.href} role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-              <Icon size={15} className="flex-shrink-0 text-gray-400" /> {m.label}
-            </Link>
-          );
-        })}
-      </div>
-    </NavDropdown>
-  </>
+// Renders grouped columns + an optional promo tile on the right. `colClass` lets
+// a menu widen its columns (Product uses fewer, wider columns).
+const MegaMenu = ({ sections, promo, colClass = MENU_COL }) => (
+  <div className="flex gap-5 p-5">
+    {sections.map((col, ci) => {
+      // Tone index continues across columns so hues keep rotating (never resets).
+      const offset = sections.slice(0, ci).reduce((n, s) => n + s.items.length, 0);
+      return (
+        <div key={col.header} className={colClass}>
+          <p className="mb-2 px-3 text-[11px] font-normal uppercase tracking-wider text-gray-400">{col.header}</p>
+          <div className="space-y-0.5">
+            {col.items.map((it, i) => <MegaItem key={it.href} item={it} tone={it.tone || TILE_TONES[(offset + i) % TILE_TONES.length]} />)}
+          </div>
+        </div>
+      );
+    })}
+    {promo && (
+      <Link
+        to={promo.href}
+        className={`flex ${MENU_COL} flex-col justify-end rounded-xl bg-gradient-to-br from-[#FE5100] to-[#ff8244] p-5 text-white transition-transform hover:scale-[1.01] hover:no-underline`}
+      >
+        <p className="text-[15px] font-bold leading-tight">{promo.title}</p>
+        <p className="mt-1.5 text-[12.5px] leading-snug text-white/85">{promo.desc}</p>
+        <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-semibold">
+          {promo.cta} <ChevronRight size={15} />
+        </span>
+      </Link>
+    )}
+  </div>
 );
+
+// ── Compare mega-menu: "Sloth vs <competitor>" cards ─────────────────────────
+// Favicons come from Google's favicon service (reliable, avoids pinging the
+// competitor); if that is blocked the img hides and a brand-colour monogram
+// shows instead. The competitor's primary brand colour (--bc) drives the
+// two-layer curtain + the name on hover.
+const CompareItem = ({ item }) => {
+  const [imgOk, setImgOk] = useState(true);
+  const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=64`;
+  return (
+    <Link
+      to={item.href}
+      role="menuitem"
+      style={{ '--bc': item.color }}
+      className="group/mi relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 hover:no-underline"
+    >
+      {/* Two-layer brand-colour curtain (inline bg = the competitor colour) */}
+      <span aria-hidden="true" style={{ backgroundColor: item.color, opacity: 0.1 }} className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-500 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none" />
+      <span aria-hidden="true" style={{ backgroundColor: item.color, opacity: 0.16 }} className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-300 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none" />
+
+      {/* Sloth favicon  vs  competitor favicon (sized to match the other menu tiles) */}
+      <span className="relative z-10 flex flex-shrink-0 items-center gap-1.5">
+        <img src="/sloth.png" alt="Book A Sloth" width="36" height="36" className="h-9 w-9 rounded-lg bg-gray-50 p-1" />
+        <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">vs</span>
+        {imgOk ? (
+          <img src={favicon} alt="" width="36" height="36" loading="lazy" onError={() => setImgOk(false)} className="h-9 w-9 rounded-lg bg-gray-50 p-1" />
+        ) : (
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg text-[14px] font-bold text-white" style={{ backgroundColor: item.color }}>
+            {item.name[0]}
+          </span>
+        )}
+      </span>
+      <span className="relative z-10 text-[14px] font-bold text-[#1E1E1E] transition-colors group-hover/mi:text-[var(--bc)]">{item.name}</span>
+    </Link>
+  );
+};
+
+const CompareMega = () => {
+  // Three columns (two cards each) so Compare matches the Resources width.
+  const per = Math.ceil(COMPARE_MENU.length / 3);
+  const cols = [0, 1, 2].map((n) => COMPARE_MENU.slice(n * per, n * per + per));
+  return (
+    <div className="p-5">
+      <p className="mb-2 px-3 text-[11px] font-normal uppercase tracking-wider text-gray-400">Switching? See how we compare</p>
+      <div className="flex gap-5">
+        {cols.map((group, i) => (
+          <div key={i} className={`${MENU_COL} space-y-0.5`}>
+            {group.map((c) => <CompareItem key={c.href} item={c} />)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── Public center nav (logged-out): mega-menus + Pricing ─────────────────────
+// Owns the single "which menu is open" state so switching between triggers is an
+// instant handoff (never two panels at once). One shared close timer bridges the
+// gap from a trigger to its panel; Escape / outside-click / route change close.
+export const PublicCenterNav = () => {
+  const [activeKey, setActiveKey] = useState(null);
+  const timer = useRef(null);
+  const location = useLocation();
+
+  const openMenu = (k) => { if (timer.current) clearTimeout(timer.current); setActiveKey(k); };
+  const closeMenu = (immediate) => {
+    if (timer.current) clearTimeout(timer.current);
+    if (immediate) { setActiveKey(null); return; }
+    timer.current = setTimeout(() => setActiveKey(null), 120);
+  };
+
+  useEffect(() => { setActiveKey(null); }, [location.pathname]);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setActiveKey(null); };
+    const onPointer = (e) => { if (!e.target.closest?.('[data-navmenu]')) setActiveKey(null); };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('pointerdown', onPointer); };
+  }, []);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const menuProps = { activeKey, onOpen: openMenu, onClose: closeMenu, align: 'center' };
+  return (
+    <>
+      <NavDropdown id="product" label="Product" {...menuProps}>
+        <MegaMenu sections={PRODUCT_MENU} colClass="w-[23rem]" />
+      </NavDropdown>
+
+      <NavDropdown id="whofor" label="Who it's for" {...menuProps}>
+        <MegaMenu sections={WHOFOR_MENU} promo={WHOFOR_PROMO} />
+      </NavDropdown>
+
+      <NavDropdown id="resources" label="Resources" {...menuProps}>
+        <MegaMenu sections={RESOURCES_MENU} />
+      </NavDropdown>
+
+      <NavDropdown id="compare" label="Compare" {...menuProps}>
+        <CompareMega />
+      </NavDropdown>
+
+      <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
+        Pricing
+      </Link>
+    </>
+  );
+};
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -701,24 +951,30 @@ const Navbar = () => {
 
                 {/* Explore hidden from nav (see PublicCenterNav). /explore still live. */}
 
-                {/* More — collapsed by default */}
-                <details className="group rounded-lg">
-                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
-                    <Layers size={16} className="flex-shrink-0 text-gray-400" />
-                    <span className="flex-1">More</span>
-                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="space-y-0.5 pl-1 pt-0.5">
-                    {MORE_MENU.map((m) => {
-                      const Icon = m.icon;
-                      return (
-                        <Link key={m.label} to={m.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                          <Icon size={15} className="flex-shrink-0 text-gray-400" /> {m.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </details>
+                {/* Product / Who it's for / Resources / Compare — collapsed accordions */}
+                {MOBILE_SECTIONS.map((sec) => {
+                  const SecIcon = sec.icon;
+                  return (
+                    <details key={sec.label} className="group rounded-lg">
+                      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
+                        <SecIcon size={16} className="flex-shrink-0 text-gray-400" />
+                        <span className="flex-1">{sec.label}</span>
+                        <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
+                      </summary>
+                      <div className="space-y-0.5 pl-1 pt-0.5">
+                        {sec.items.map((it) => {
+                          const ItIcon = it.icon;
+                          return (
+                            <Link key={it.href} to={it.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                              {ItIcon && <ItIcon size={15} className="flex-shrink-0 text-gray-400" />}
+                              {it.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  );
+                })}
 
                 {/* Primary conversion CTA — last in the sequence */}
                 <Link

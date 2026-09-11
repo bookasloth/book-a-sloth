@@ -375,6 +375,56 @@ async function opportunities({ crawlId } = {}) {
   return { crawlId: id, opportunities: buildOpportunities(pages) };
 }
 
+// ── Internal link network (interactive graph view) ───────────────────────────
+// Nodes = every crawled page in a crawl; edges = each page's outbound internal
+// links (raw_signals.links.internal) resolved to another crawled page. Reuses
+// scoredPages so a node carries the same seo/geo/health the list + drawer show, and
+// the node id IS the crawl_page id — so clicking a dot opens the existing inspector
+// (getPage) with no extra plumbing. inbound/outbound are counted here; the client
+// sizes each dot by inbound ("how well linked-to is this page").
+// ponytail: normalize + O(edges) dedupe is fine at one crawl's few-hundred pages;
+// revisit if a crawl ever tops a few thousand.
+const stripSlash = (u) => (u || '').replace(/\/$/, '');   // mirror rules/links.js normalize
+const pathOf = (u) => { try { return new URL(u).pathname || u; } catch { return u; } };
+async function linkGraph({ crawlId } = {}) {
+  const { crawlId: id, pages } = await scoredPages({ crawlId });
+  if (!id || !pages.length) return { crawlId: id, generatedAt: new Date().toISOString(), nodes: [], edges: [] };
+
+  const idByUrl = new Map();
+  for (const p of pages) idByUrl.set(stripSlash(p.url), p.id);
+
+  const inbound = new Map();
+  const outbound = new Map();
+  const seen = new Set();           // dedupe source→target (a page can link one target many times)
+  const edges = [];
+  for (const p of pages) {
+    for (const href of p.raw_signals?.links?.internal || []) {
+      const target = idByUrl.get(stripSlash(href));
+      if (!target || target === p.id) continue;   // uncrawled target (not a node) or self-link
+      const key = `${p.id} ${target}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      edges.push({ source: p.id, target });
+      inbound.set(target, (inbound.get(target) || 0) + 1);
+      outbound.set(p.id, (outbound.get(p.id) || 0) + 1);
+    }
+  }
+
+  const nodes = pages.map((p) => ({
+    id: p.id, url: p.url, path: pathOf(p.url), title: p.title || null,
+    page_type: p.page_type, category: p.category,
+    indexable: p.indexable, http_status: p.http_status,
+    seo_score: p.seo_score, geo_score: p.geo_score, health: p.health, status: p.status,
+    inbound: inbound.get(p.id) || 0, outbound: outbound.get(p.id) || 0,
+    // contentModel is set ONLY for the meta-shell host/service pages (see seoCrawler);
+    // their bodies aren't link-extracted, so outbound is not meaningful for them.
+    // links_crawled:false lets the client badge them instead of calling them orphans.
+    links_crawled: p.raw_signals?.contentModel == null,
+  }));
+
+  return { crawlId: id, generatedAt: new Date().toISOString(), nodes, edges };
+}
+
 // Mute an issue: rule-wide (ruleType 'rule', url_pattern null) or just this URL
 // (ruleType 'url', url_pattern = the issue's affected_url). Matches seoPersist's
 // isMuted() lookup (rule_key + optional url_pattern).
@@ -399,4 +449,4 @@ async function muteIssue(id, { ruleType, mutedBy } = {}) {
 
 module.exports = { latestOverview, listIssues, getIssue, listPages, getPage, scoreHistory, getCrawl, muteIssue, listGscUrls,
   pageReports, categoryRollups, changedSincePrevious, latestCrawlId,
-  scoredPages, pageList, dashboard, opportunities, gscStatus };
+  scoredPages, pageList, dashboard, opportunities, linkGraph, gscStatus };

@@ -121,7 +121,7 @@ const validateWeeklySchedule = (ws) => {
 // pre-migration DB still resolves the profile.
 const HOST_PUBLIC_COLS =
   "id, name, username, role, bio, tagline, profession, location, profile_image, " +
-  "cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected, primary_category";
+  "cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected, primary_category, updated_at";
 const HOST_SEO_COLS =
   "seo_title, seo_description, og_title, og_description, seo_image, is_indexable, og_image, og_status";
 
@@ -201,7 +201,7 @@ const updateServiceSafe = async (id, updates, userId) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url|category|primary_category)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category|primary_category|og_status)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
@@ -213,6 +213,8 @@ const updateServiceSafe = async (id, updates, userId) => {
     // writes the core fields.
     delete updatesCopy.category;
     delete updatesCopy.primary_category;
+    // og_status (v3.154 OG card) — drop it on a pre-migration schema.
+    delete updatesCopy.og_status;
     result = await supabaseAdmin
       .from("services")
       .update(updatesCopy)
@@ -299,7 +301,26 @@ const buildHostProfile = async (username) => {
     host.primary_category_label = cat?.label || null;
   }
 
-  return { payload: { host, services: services || [], availability } };
+  // Review aggregate for the profile's schema.org aggregateRating (guest→host,
+  // not admin-hidden) — mirrors getHostReviews. Only rating rows are needed here;
+  // the full comment list is a separate public read. Best-effort: a failure here
+  // must not drop the profile, so reviewCount/avgRating default to 0.
+  let reviews = [];
+  let avgRating = 0;
+  try {
+    const { data: ratingRows } = await supabaseAdmin
+      .from('reviews')
+      .select('rating')
+      .eq('host_id', host.id)
+      .eq('direction', 'guest_to_host')
+      .neq('status', 'hidden');
+    if (Array.isArray(ratingRows) && ratingRows.length) {
+      reviews = ratingRows;
+      avgRating = Math.round((ratingRows.reduce((s, r) => s + (r.rating || 0), 0) / ratingRows.length) * 10) / 10;
+    }
+  } catch { /* rating is best-effort — a reviews read hiccup must not drop the profile */ }
+
+  return { payload: { host, services: services || [], availability, reviews, avgRating } };
 };
 
 // GET /api/host/:username -- public profile
@@ -687,6 +708,11 @@ const updateService = async (req, res) => {
       updates.category = chk.value;
       updates.primary_category = chk.primary;
     }
+
+    // OG card (v3.154): title/price are the service-card's own fields — an edit to
+    // either stales it, so mark dirty for the next generator sweep. Schema-safe:
+    // updateServiceSafe drops og_status on a pre-migration schema.
+    if (title !== undefined || price !== undefined) updates.og_status = 'dirty';
 
     const { data, error } = await updateServiceSafe(
       req.params.id,

@@ -29,8 +29,21 @@
 //
 // Posts are listed newest-first; keep that order when adding.
 
-// Author backlink — the byline + Author meta link out here.
-export const AUTHOR_URL = 'https://bolt958.xyz';
+// Author — the byline links here and the JSON-LD Person entity is built from this.
+// On-site host profile is the canonical author identity (real, verifiable E-E-A-T);
+// sameAs are verified external identities only (no invented links).
+export const AUTHOR_URL = 'https://bookasloth.com/sndatarkar';
+export const AUTHOR = {
+  name: 'Shubham N Datarkar',
+  url: AUTHOR_URL,
+  jobTitle: 'Founder, Book A Sloth',
+  image: 'https://company-assets.bookasloth.in/images/about/shubham-datarkar.jpg',
+  sameAs: [
+    'https://x.com/sndatarkar',
+    'https://www.instagram.com/sndatarkar',
+    'https://shubhamdatarkar.com',
+  ],
+};
 
 // One colour theme per blog category. The post hero (+ bottom CTA band) use
 // `band`; the dark reading body uses `accent`; index chips use chip*.
@@ -57,6 +70,700 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "how-to-become-paid-mentor",
+  "title": "How to Become a Paid Mentor (Online, 1:1) in India",
+  "date": "Sep 11, 2026",
+  "icons": [
+    "users",
+    "megaphone",
+    "trending-up"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Growth",
+  "image": null,
+  "excerpt": "How to become a paid mentor online: turn can-I-pick-your-brain into booked, paid 1:1 sessions. Steps, pricing guidance, and how to get started in India.",
+  "body": [
+    {
+      "p": "To become a paid mentor, pick the one thing people already ask you for help with, set a price for your time, and give them a single link to book and pay for a session. That's the whole model. The skill is the hard part, and you already have it. What stops most people isn't ability — it's that sure-happy-to-help has no price tag and no calendar slot attached to it."
+    },
+    {
+      "p": "If people keep asking to pick your brain, this guide turns those requests into booked, paid sessions. I'll cover the steps, how to price, and how to get set up without becoming a full-time admin."
+    },
+    {
+      "h2": "What does it mean to become a paid mentor?"
+    },
+    {
+      "p": "Becoming a paid mentor means charging for one-on-one guidance in an area where you have real experience. You're not teaching a syllabus — you're giving specific, personal advice to someone a few steps behind you."
+    },
+    {
+      "p": "The person paying isn't buying information they could Google. They're buying your judgment, your shortcuts, and the confidence of hearing it from someone who's done it. A backend engineer mentors juniors on system design. A recruiter mentors candidates through interviews. A founder mentors first-timers on fundraising. The pattern is always the same: you've walked a path, and someone will pay to walk it faster."
+    },
+    {
+      "p": "There's a salaried version of this too — career counsellors and coaches on a payroll. But independent 1:1 mentoring is different. You set your own price, your own hours, and keep what you earn. That's the path this guide is about."
+    },
+    {
+      "h2": "How do you become a paid mentor online? (5 steps)"
+    },
+    {
+      "p": "You become a paid mentor online by defining who you help, packaging your offer, setting a price, and putting a booking link where people can find it. Here's the sequence that works."
+    },
+    {
+      "steps": [
+        "Name your niche. Career mentor is too vague. I help data analysts move into data science roles is bookable. The narrower you are, the easier it is for the right person to say yes.",
+        "Define one clear offer. Start with a single format — a 30-minute or 60-minute 1:1 call. Don't build a six-tier menu on day one. One offer, one outcome.",
+        "Set your price. More on this below, but pick a number that feels slightly uncomfortable. That discomfort usually means it's about right.",
+        "Set up a booking link. One link that shows your availability, takes the booking, and collects payment. This is the difference between a hobby and an income.",
+        "Tell the people already asking. You don't need an audience of thousands. You need the ten people who've already asked for your time this year to see your link."
+      ]
+    },
+    {
+      "p": "That fourth step is where the whole thing lives or dies. If you're not sure how to build it, [how to book an appointment online](/blog/how-to-book-an-appointment-online) walks through it end to end."
+    },
+    {
+      "h2": "How much should you charge as a mentor?"
+    },
+    {
+      "p": "Charge based on the outcome you help create, not the length of the call — but if you need a starting anchor, price a monthly mentorship or a single session at what a good dinner out costs, then raise it as demand shows up."
+    },
+    {
+      "p": "Real rates vary widely. On one global marketplace, [mentees in India commonly pay around $160–$220 a month](https://mentorcruise.com/country/in/) — roughly ₹13,000 to ₹18,000 for ongoing guidance, with premium mentors charging more. Others sell single sessions in the ₹500 to ₹2,000 range. There's no fixed rate for a mentor; there's only what your specific help is worth to the person receiving it."
+    },
+    {
+      "table": {
+        "head": [
+          "Format",
+          "Typical starting range",
+          "Best for"
+        ],
+        "rows": [
+          [
+            "Single 1:1 session (30–60 min)",
+            "₹500 – ₹2,000",
+            "Testing demand, one-off advice"
+          ],
+          [
+            "Session pack (4–6 calls)",
+            "₹3,000 – ₹10,000",
+            "Working toward a goal"
+          ],
+          [
+            "Monthly mentorship",
+            "₹7,000 – ₹30,000+",
+            "Ongoing, long-term support"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Two rules keep you sane. First, undercharging attracts the wrong people — those who want free time, not real help. Second, raise your price the moment you're fully booked; a waitlist is the clearest signal you're too cheap. Platforms like [Preplaced, which runs a 600+ mentor network](https://www.preplaced.in/become-a-mentor), let mentors set and edit their own pricing for exactly this reason: your rate should move as your demand does."
+    },
+    {
+      "h2": "Where do you find your first mentees?"
+    },
+    {
+      "p": "Your first mentees are almost always people already in your orbit — juniors, ex-colleagues, people who've messaged you for advice, and their friends. You don't start with strangers."
+    },
+    {
+      "p": "Do three things this week. Post once about what you now offer and who it's for — plainly, no hard sell. Reply to the next can-I-pick-your-brain message with your booking link instead of a free hour. And add the link to your LinkedIn bio and profiles so it's there when someone goes looking. Marketplaces can supplement this later, but your own network converts fastest because they already trust you."
+    },
+    {
+      "h2": "Marketplace or your own booking link?"
+    },
+    {
+      "p": "Use your own booking link as your home base, and treat marketplaces as extra shelves — not your only shop. The difference is control and cost."
+    },
+    {
+      "p": "A marketplace brings discovery but takes a cut and owns the relationship. Your own link keeps the full fee and the client. If you're weighing the popular platforms, [our comparison of the best Topmate alternatives](/blog/topmate-alternative) lays out the trade-offs. The strongest setup is both: be discoverable where mentees search, but send everyone you already know to a link that's yours."
+    },
+    {
+      "h2": "Give them a way to book — and pay"
+    },
+    {
+      "p": "People keep asking for your time. The kindest thing you can do — for them and for you — is give them a way to book it, and pay for it, in one step."
+    },
+    {
+      "p": "Here's the trap. The moment you start mentoring, a second job appears: chasing payments, sending reminders, making invoices, juggling time zones and reschedules. That's the part that turns a mentor into an administrator. It's the reason so many people quit before they've really started."
+    },
+    {
+      "p": "That's what [Book A Sloth](/) removes. One link books the session and collects the payment at the same time — over UPI, with a GST invoice generated automatically and reminders going out over email and WhatsApp so you don't chase anyone. And if a payment ever does slip, [how to ask a client for payment politely](/blog/how-to-ask-client-for-payment-politely) has the scripts. But mostly, you won't need them, because the money arrives when the booking does."
+    },
+    {
+      "p": "The craft is yours. The machinery is ours. Set your price, share your link, and let people pay for the time they're already asking for."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I start getting paid to mentor?",
+          "a": "Pick the topic people already ask you about, set a price for a 1:1 session, and share a single link that lets them book and pay in one step. Start with the people who've already asked for your time."
+        },
+        {
+          "q": "Do I need a certification to be a paid mentor?",
+          "a": "No. For independent 1:1 mentoring, real experience matters more than a certificate. Certifications help mostly for employed coaching or counselling roles, not for charging directly for your own expertise."
+        },
+        {
+          "q": "How much do online mentors earn in India?",
+          "a": "It varies widely. Monthly mentorship plans commonly range from about ₹7,000 to ₹30,000, while single sessions often sell for ₹500 to ₹2,000. Your rate depends on your niche and the outcome you help create."
+        },
+        {
+          "q": "Should I use a mentoring platform or my own booking page?",
+          "a": "Both. Use your own booking link as your main channel to keep the full fee and the relationship, and use marketplaces for extra discovery. Send your existing network to your own link."
+        },
+        {
+          "q": "How do I get paid without chasing invoices?",
+          "a": "Collect payment at the moment of booking rather than after the session. A booking link that takes payment upfront and sends automatic reminders removes the follow-up almost entirely."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-ask-client-for-payment-politely",
+  "title": "How to Ask a Client for Payment Politely (Templates)",
+  "date": "Sep 10, 2026",
+  "icons": [
+    "wallet",
+    "coins",
+    "money"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Money",
+  "image": null,
+  "excerpt": "How to ask a client for payment politely: copy-paste email, WhatsApp and SMS scripts, a follow-up timeline, and the one setup that ends chasing for good.",
+  "body": [
+    {
+      "p": "To ask a client for payment politely, send a short, friendly message that states the invoice number, the amount, the original due date, and one clear next step to pay. Keep it warm, assume the best, and make paying easier than replying. The scripts below are copy-paste ready for email, WhatsApp, and SMS."
+    },
+    {
+      "p": "I run a business where people book and pay for time. So I've written this exact message more times than I'd like to admit — and I've watched hundreds of freelancers do the same. The awkwardness is real, but it's fixable. Here's how to ask without sounding desperate, and how to stop needing to ask at all."
+    },
+    {
+      "h2": "Why asking for payment feels so awkward (and why it isn't your fault)"
+    },
+    {
+      "p": "Chasing payment feels bad because the system is quietly stacked against you, not because you're doing something wrong. You did the work. You're the one who has to beg for the money. That's backwards."
+    },
+    {
+      "p": "The data backs up how common this is. Roughly [29% of freelancer invoices are paid at least a day late, and 71% of freelancers have hit a stalled payment at least once](https://clockify.me/late-invoice-statistics) — with the average freelancer losing more than a full working day every month just to chasing. So if it feels like a second job, that's because it is one."
+    },
+    {
+      "p": "The goal is to make the ask feel routine, not personal. A polite payment reminder is a business function, like sending an invoice. Treat it that way and the awkwardness drops."
+    },
+    {
+      "quote": "Politeness isn't what gets you paid — systems are. A warm tone protects the relationship; a predictable schedule and up-front collection move the money.",
+      "cite": "Shubham N Datarkar, Founder of Book A Sloth"
+    },
+    {
+      "h2": "The 5 rules of a polite payment request"
+    },
+    {
+      "p": "A good payment request is short, specific, warm, and ends with one obvious action. Follow these five rules and almost any message works."
+    },
+    {
+      "ol": [
+        "Lead with the facts, not an apology. Invoice number, amount, due date. Don't open with so-sorry-to-bother-you.",
+        "Assume good faith. Most late payments are forgetfulness, not malice. A this-may-have-slipped-through line gives them an easy out.",
+        "Make one clear ask. One amount, one link or account, one deadline. Choices create delay.",
+        "Keep the door warm. You want the next project too. Firm and friendly beat cold and legal — until they don't (see the timeline below).",
+        "Remove the friction. Attach the invoice again. Include the UPI ID or payment link right in the message. Every extra step is an extra day."
+      ]
+    },
+    {
+      "h2": "The follow-up timeline: what to send and when"
+    },
+    {
+      "p": "Send four touches on a predictable schedule — a heads-up before the due date, a nudge on the day, a firm reminder a week late, and a final notice at two weeks. Consistency does the heavy lifting, so the client learns you always follow up."
+    },
+    {
+      "table": {
+        "head": [
+          "When",
+          "Tone",
+          "Goal"
+        ],
+        "rows": [
+          [
+            "3 days before due date",
+            "Friendly heads-up",
+            "Get it on their radar early"
+          ],
+          [
+            "On the due date",
+            "Neutral reminder",
+            "Just a nudge — due today"
+          ],
+          [
+            "7 days late",
+            "Polite but firm",
+            "Confirm they got it, restate amount"
+          ],
+          [
+            "14 days late",
+            "Firm, with next step",
+            "Mention late fee / pause on work"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Most invoices clear inside this window — over 75% of late freelancer invoices get paid within 14 days of the due date — which is exactly why a steady four-touch rhythm works better than one angry email at day 30."
+    },
+    {
+      "h2": "Copy-paste email templates"
+    },
+    {
+      "info": {
+        "title": "1. Before the due date (friendly heads-up)",
+        "text": "Subject: Invoice #1024 — due Friday 12th. Hi [Name], quick heads-up that invoice #1024 for ₹15,000 is due on Friday the 12th. I've attached it again here for easy reference. You can pay by UPI to yourname@upi or via the link below. Anything you need from my side, just say the word. Thanks! [Your name]"
+      }
+    },
+    {
+      "info": {
+        "title": "2. On the due date",
+        "text": "Subject: Invoice #1024 due today. Hi [Name], just a gentle nudge — invoice #1024 for ₹15,000 is due today. Payment link and UPI ID are below. Let me know if anything's holding it up. Best, [Your name]"
+      }
+    },
+    {
+      "info": {
+        "title": "3. One week late (polite but firm)",
+        "text": "Subject: Following up — Invoice #1024. Hi [Name], following up on invoice #1024 for ₹15,000, now a week past due. I wanted to check this reached you and didn't slip through. Could you confirm a payment date? Happy to resend anything you need. Thanks, [Your name]"
+      }
+    },
+    {
+      "info": {
+        "title": "4. Two weeks late (firm, with a next step)",
+        "text": "Subject: Overdue — Invoice #1024, action needed. Hi [Name], invoice #1024 for ₹15,000 is now two weeks overdue. As per our agreement, a late fee of 2% per month applies from today, and I'll be pausing new work until the balance clears. Please settle at your earliest — link and UPI details below. If there's a genuine issue, call me and we'll sort it. Regards, [Your name]"
+      }
+    },
+    {
+      "h2": "WhatsApp and SMS scripts (short and India-friendly)"
+    },
+    {
+      "p": "For WhatsApp, keep it to two lines and attach the invoice PDF — most Indian clients reply faster there than on email. A short, respectful WhatsApp nudge lands as a normal business message, not a confrontation."
+    },
+    {
+      "ul": [
+        "WhatsApp (gentle nudge): Hi [Name], just a reminder that invoice #1024 for ₹15,000 was due the 12th. UPI: yourname@upi or link below. Thanks!",
+        "WhatsApp (one week late): Hi [Name], following up on invoice #1024 (₹15,000, now a week overdue). Could you share a payment date? Resending the invoice here.",
+        "SMS (short reminder): [Your name] here — invoice #1024 for ₹15,000 is overdue. Pay via UPI yourname@upi or the link. Reply if any issue. Thanks."
+      ]
+    },
+    {
+      "p": "Keep names in brackets so you can save these as templates and swap the details in ten seconds."
+    },
+    {
+      "h2": "The best way to ask for payment is to not have to"
+    },
+    {
+      "p": "The single biggest fix is to collect payment when the client books, not weeks after the work — so there's no invoice to chase in the first place. If money changes hands before your calendar does, the awkward email never gets written."
+    },
+    {
+      "p": "That's the whole idea behind how I built [Book A Sloth](/): you share one link, the client picks a slot, and they pay at the moment they book. UPI and Razorpay, an auto GST invoice, no front desk, no follow-ups. The craft stays yours; the machinery is ours."
+    },
+    {
+      "p": "It works cleanly for anything you'd otherwise invoice for after the fact: a consultant selling a bookable 30-minute call collects the fee up front instead of billing later; a tutor or coach uses [an online booking page](/blog/how-to-book-an-appointment-online) so every session is prepaid; and automated [reminders that actually arrive](/blog/notifications-that-actually-arrive) cut no-shows, so you're not chasing time and money."
+    },
+    {
+      "p": "Chasing invoices [costs freelancers a full working day every month](https://www.plutio.com/freelancer-magazine/late-invoice-payments). Booking-and-paying in one step gives it back. If you've been weighing tools, [here's how Book A Sloth compares to Topmate and Calendly](/blog/topmate-alternative) for exactly this."
+    },
+    {
+      "h2": "Conclusion: chase less, get paid faster"
+    },
+    {
+      "p": "Here's my honest take after watching this play out hundreds of times: politeness isn't what gets you paid — systems are. A warm tone stops you from burning the relationship, but a predictable four-touch timeline and up-front collection are what actually move the money."
+    },
+    {
+      "p": "Three things you can do this week:"
+    },
+    {
+      "ol": [
+        "Save the four scripts above as templates in your email and WhatsApp so a reminder takes ten seconds, not ten minutes of dread.",
+        "Set a calendar rule: heads-up at minus-3 days, reminders at day 0, day 7, day 14. Make chasing automatic and boring.",
+        "For anything you can, collect at booking. Move even one recurring service to prepaid and you'll feel the difference in a month."
+      ]
+    },
+    {
+      "p": "You did the work. Getting paid for it shouldn't be the hardest part of your week."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I ask for payment without sounding rude?",
+          "a": "Lead with facts, not apologies — invoice number, amount, due date — and assume the client simply forgot. A line like this-may-have-slipped-through keeps it warm while still being direct. Firmness comes from clarity, not tone."
+        },
+        {
+          "q": "How long should I wait before sending a payment reminder?",
+          "a": "Don't wait. Send a friendly heads-up a few days before the due date, a nudge on the day, then follow up at 7 and 14 days late. Most invoices clear inside two weeks when you follow up on a steady schedule."
+        },
+        {
+          "q": "Should I charge a late fee?",
+          "a": "Only if it was in your contract or invoice terms from the start. A common rate is 2% per month. Mention it in the two-weeks-late message, not before — it's an escalation tool, not an opener."
+        },
+        {
+          "q": "Is it okay to ask for payment on WhatsApp in India?",
+          "a": "Yes. For most Indian clients, a short, polite WhatsApp message with the invoice attached gets a faster reply than email. Keep it to two lines and include your UPI ID or a payment link."
+        },
+        {
+          "q": "How can I stop chasing payments altogether?",
+          "a": "Collect payment at the point of booking instead of invoicing after the work. When the client pays as they book the slot, there's no overdue invoice to chase — which is exactly what a tool like Book A Sloth automates for you."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-book-an-appointment-online",
+  "title": "How to Book an Appointment Online (+ Add a Button)",
+  "date": "Sep 9, 2026",
+  "icons": [
+    "calendar",
+    "target",
+    "chart"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to book an appointment online — a simple step-by-step, plus how to set up your own booking page and add a booking button to your site in about 5 minutes.",
+  "body": [
+    {
+      "p": "To book an appointment online, open the provider's booking page or booking button, pick an available slot, enter your details, and confirm — often paying at the same time. The whole thing takes under a minute and you get an instant confirmation with the date, time, and a calendar invite. If you want people to book you, you set up a booking page once and share one link."
+    },
+    {
+      "p": "This guide covers both sides: how to book an appointment as a customer, and — the part most people are really here for — how to set up online booking for your own service in about five minutes."
+    },
+    {
+      "h2": "How does online appointment booking work?"
+    },
+    {
+      "p": "Online appointment booking lets someone see your live availability and reserve a slot themselves, without calling or messaging back and forth. Behind the scenes, a booking tool syncs with your calendar, blocks the slot the moment it's taken, sends confirmations and reminders, and (if you enable it) collects payment at booking."
+    },
+    {
+      "p": "The demand is real: [67% of consumers prefer to book online rather than call, and 40% of online bookings happen outside business hours](https://simplybook.me/en/blog/online-booking-statistics) — evenings and weekends, when no one is answering the phone. Phone-only booking quietly loses you all of those."
+    },
+    {
+      "h2": "How to book an appointment online in 5 steps (as a customer)"
+    },
+    {
+      "p": "Booking an appointment online is a five-step flow that rarely takes more than a minute. Here's what it looks like from the customer's side."
+    },
+    {
+      "steps": [
+        "Open the booking link or button. From the provider's website, Instagram bio, or a link they sent you.",
+        "Choose your service. Pick the session type — e.g. a 30-minute consultation.",
+        "Pick a slot. The calendar only shows times that are actually free.",
+        "Enter your details. Name, email or phone, and any notes the provider asks for.",
+        "Confirm (and pay, if required). You get an instant confirmation, a calendar invite, and reminders before the appointment."
+      ]
+    },
+    {
+      "p": "That's it. No phone tag, no are-you-open-Saturday, no waiting for a reply."
+    },
+    {
+      "h2": "How to set up online booking for your own service"
+    },
+    {
+      "p": "To let clients book you online, you create a booking page once, connect your calendar and payments, and share the link — most people finish in under 30 minutes, and with a simple tool, about five. Here's the setup, step by step."
+    },
+    {
+      "steps": [
+        "Choose a booking tool that fits how you work and where your clients are.",
+        "Add your services — name, duration, and price for each (e.g. 60-min coaching call, ₹2,000).",
+        "Set your availability — the days and hours you're open, plus buffers between sessions.",
+        "Connect your calendar — Google Calendar sync stops double-bookings automatically.",
+        "Turn on payments — so clients pay when they book, not weeks later.",
+        "Switch on reminders — automated email/WhatsApp/SMS nudges before each slot.",
+        "Share your link everywhere — website, Instagram bio, email signature, WhatsApp."
+      ]
+    },
+    {
+      "p": "The two steps people skip — payments and reminders — are the ones that pay off most. Collecting at booking means you [never have to chase payment afterward](/blog/how-to-ask-client-for-payment-politely), and [automated reminders cut no-shows by up to 38%](https://www.klara.com/blog/text-message-appointment-reminders-reduce-no-shows-by-38-study-finds)."
+    },
+    {
+      "h2": "How to add a booking button (website, Instagram, WhatsApp)"
+    },
+    {
+      "p": "A booking button is just your booking link, placed where people already find you — and it works on every channel, not only your website. The trick is to put it everywhere a can-I-book-you question might come up."
+    },
+    {
+      "table": {
+        "head": [
+          "Where",
+          "How to add it",
+          "Why it works"
+        ],
+        "rows": [
+          [
+            "Website",
+            "Add a Book Now button linking to your page",
+            "Captures visitors ready to act"
+          ],
+          [
+            "Instagram bio",
+            "Paste the link in your bio / link sticker",
+            "Turns followers into bookings"
+          ],
+          [
+            "WhatsApp",
+            "Send the link, or set it as your catalog link",
+            "Where Indian clients reply fastest"
+          ],
+          [
+            "Email signature",
+            "Book a time with me: [link]",
+            "Converts every email thread"
+          ],
+          [
+            "Google Business Profile",
+            "Add the booking link to your profile",
+            "Catches near-me searchers"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "One link, pasted in five places, beats a Contact us form every time — because the visitor books instead of waiting for you to reply."
+    },
+    {
+      "h2": "The 5-minute version with Book A Sloth"
+    },
+    {
+      "p": "The fastest way to start taking bookings is a tool that bundles the page, calendar, payments, and reminders into one setup — so you're live in about five minutes, not an afternoon of connecting plugins. That's what I built [Book A Sloth](/) to do."
+    },
+    {
+      "p": "You add your service and price, connect Google Calendar, and share one link. Clients pick a slot and pay by UPI or Razorpay on the spot, you get an auto GST invoice, and email plus WhatsApp reminders go out on their own. Google Meet links are generated automatically for video calls. No front desk, no plugins, no chasing."
+    },
+    {
+      "p": "It fits pretty much anyone selling time — a consultant taking a bookable 30-minute call, a tutor booking sessions, a therapist or CA managing a full calendar. If you're comparing options, here's [how it stacks up against Topmate and Calendly](/blog/topmate-alternative) for Indian professionals specifically."
+    },
+    {
+      "h2": "Conclusion: start with one link"
+    },
+    {
+      "p": "Here's the honest version: the tool matters less than turning your availability into something people can act on right now. Most missed bookings aren't lost to a competitor — they're lost to a phone that didn't get answered and a DM that got buried."
+    },
+    {
+      "p": "Three things to do this week:"
+    },
+    {
+      "ol": [
+        "Create one booking page with a single service and price. Don't overthink the menu — you can add more later.",
+        "Turn on payments and reminders from day one. These are the two settings that protect your time and your income.",
+        "Put the link in three places today — your Instagram bio, your email signature, and your WhatsApp. Let people book you while you sleep."
+      ]
+    },
+    {
+      "p": "Your time is something people can book. Give them the button."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I book an appointment online?",
+          "a": "Open the provider's booking link or Book Now button, choose the service, pick an available time slot, enter your details, and confirm. You'll usually pay at the same step and receive an instant confirmation and reminders."
+        },
+        {
+          "q": "How do I set up online booking for my business?",
+          "a": "Choose a booking tool, add your services and prices, set your availability, connect your calendar, turn on payments and reminders, and share your booking link. With a simple all-in-one tool, this takes about five minutes."
+        },
+        {
+          "q": "How do I add a booking button to my website?",
+          "a": "Add a button or link labeled Book Now that points to your booking page URL. You can paste the same link into your Instagram bio, WhatsApp, email signature, and Google Business Profile so clients can book from anywhere."
+        },
+        {
+          "q": "Can clients pay when they book an appointment?",
+          "a": "Yes. Tools that support payment collection let clients pay by card or UPI at the moment they book, so you're paid up front and don't have to send an invoice or chase payment later."
+        },
+        {
+          "q": "Does online booking reduce no-shows?",
+          "a": "Yes. Online booking with automated email, SMS, or WhatsApp reminders reduces no-shows significantly — studies show text reminders cut them by up to 38% — because clients get confirmations and nudges before the appointment."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "topmate-alternative",
+  "title": "Topmate & Calendly Alternative in India: Book A Sloth",
+  "date": "Sep 8, 2026",
+  "icons": [
+    "scale",
+    "money",
+    "trophy"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Comparison",
+  "image": null,
+  "excerpt": "Looking for a Topmate or Calendly alternative in India? Compare fees, payments and features — and see why Book A Sloth is the calm, 0%-commission option.",
+  "body": [
+    {
+      "p": "The best Topmate or Calendly alternative in India is the one that takes payment the way your clients actually pay — UPI — without skimming a commission off every booking. Topmate is built for creators but charges a percentage of what you earn. Calendly is world-class scheduling but wasn't built for India or for collecting money. Book A Sloth sits in the gap: one link that books and collects payment, 0% commission on paid plans, made for how India transacts."
+    },
+    {
+      "p": "I'm the founder of Book A Sloth, so treat this as a comparison from someone with a horse in the race — but a fair one. I'll tell you honestly where the other two are the better pick."
+    },
+    {
+      "h2": "Quick answer: which one is for you?"
+    },
+    {
+      "p": "Pick based on what you sell and where your clients are, not on brand name. Here's the short version before the detail."
+    },
+    {
+      "ul": [
+        "Choose Topmate if you're a creator who wants an all-in-one link-in-bio storefront and you don't mind paying a cut of each sale.",
+        "Choose Calendly if you're on a Western team that lives inside Google/Outlook calendars and rarely collects payment.",
+        "Choose Book A Sloth if you sell your time in India, want UPI plus auto GST invoices, and refuse to hand over a commission on money you earned."
+      ]
+    },
+    {
+      "h2": "Topmate vs Calendly vs Book A Sloth: the comparison table"
+    },
+    {
+      "p": "The clearest way to see the difference is fees, payments, and India-fit side by side. Everything below reflects publicly listed 2026 pricing and features."
+    },
+    {
+      "table": {
+        "head": [
+          "",
+          "Book A Sloth",
+          "Topmate",
+          "Calendly"
+        ],
+        "rows": [
+          [
+            "Commission per booking",
+            "0% on paid plans",
+            "~10% platform fee",
+            "0% (but no native payments)"
+          ],
+          [
+            "Payment collection",
+            "Native UPI + Razorpay",
+            "Yes (creator storefront)",
+            "Stripe / PayPal only"
+          ],
+          [
+            "Auto GST invoices",
+            "Yes",
+            "Partial",
+            "No"
+          ],
+          [
+            "WhatsApp + SMS reminders",
+            "Built in",
+            "Limited",
+            "No (email only)"
+          ],
+          [
+            "Google Calendar & Meet",
+            "Yes",
+            "Yes",
+            "Yes (best-in-class)"
+          ],
+          [
+            "Made for India",
+            "Yes",
+            "Yes",
+            "No"
+          ],
+          [
+            "Best for",
+            "Selling your time in India",
+            "Creators / mentors",
+            "Global sales & teams"
+          ],
+          [
+            "Pricing",
+            "Free + paid plans",
+            "Free + paid",
+            "Free–$16/user/mo"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Where Topmate wins — and where it costs you"
+    },
+    {
+      "p": "Topmate is a genuinely good all-in-one for creators, but its business model takes a percentage of everything you make. If you want a single link-in-bio that handles sessions, digital products, and testimonials, Topmate does that well and has a large Indian creator base."
+    },
+    {
+      "p": "The catch is the cut. Independent breakdowns put Topmate's [platform commission at around 10%, rising to an effective 16–18% once payment-gateway and currency costs are added on international payments](https://eximpe.com/blog/payments/topmate-io-the-complete-guide-to-getting-started-earning-money-avoiding-pitfalls). On ₹50,000 of monthly sessions, 10% is ₹5,000 gone — every month, forever, on money you earned."
+    },
+    {
+      "p": "Book A Sloth's wedge here is simple: 0% commission on paid plans. You pay a flat subscription, not a tax on your talent. If you're a high earner, that difference compounds fast."
+    },
+    {
+      "h2": "Where Calendly wins — and where it falls short in India"
+    },
+    {
+      "p": "Calendly is the best pure scheduling tool in the world, but it wasn't designed to collect money or to work in India. If your job is coordinating meetings across Google and Outlook calendars for a Western team, nothing beats its polish. Its plans run from a [free tier up to $16 per user per month on the Teams plan](https://costbench.com/software/scheduling/calendly/)."
+    },
+    {
+      "p": "The problem shows up the moment you want to get paid. Calendly only collects payment through a Stripe or PayPal integration on its paid tiers — so for an Indian consultant, tutor, or coach, that means no native UPI, no auto GST invoice, and no WhatsApp reminders: the three things your clients and your accountant actually expect."
+    },
+    {
+      "p": "Book A Sloth is the opposite trade-off: slightly less scheduling flash, but it books and collects payment in one Indian-native flow."
+    },
+    {
+      "h2": "The real difference: calm vs clutter"
+    },
+    {
+      "p": "Beyond fees, the deeper split is philosophy — Book A Sloth is built to keep you out of admin, not to turn you into a storefront manager. Topmate leans into the creator-hustle aesthetic: dashboards, upsells, product tiles. Calendly leans corporate. Book A Sloth deliberately does less on the surface so you do less work."
+    },
+    {
+      "p": "The belief behind it: your craft is the valuable part. You shouldn't spend your day chasing payments or running a front desk. You share one link, the client picks a slot and pays, and the invoice, reminders, and calendar invite happen on their own. The craft is yours; the machinery is ours."
+    },
+    {
+      "p": "That's why the setup is deliberately boring in the best way — [you can put up a booking page in about five minutes](/blog/how-to-book-an-appointment-online), and because payment happens at booking, you [never write the awkward please-pay-me email](/blog/how-to-ask-client-for-payment-politely) again."
+    },
+    {
+      "h2": "Conclusion: my honest recommendation"
+    },
+    {
+      "p": "Here's where I'll put my bias aside. If you're a global creator selling digital products to a US audience, Topmate's storefront is a reasonable home. If you're a scheduler for a Western enterprise team, stay on Calendly — it's superb at that one job."
+    },
+    {
+      "p": "But if you sell your time in India — a consultant, a CA, a therapist, a coach, a tutor — the math and the mechanics both point one way. Three things worth doing this week:"
+    },
+    {
+      "ol": [
+        "Add up your commission. Take last month's session revenue and multiply by 10%. That number is what an all-in-one is quietly costing you every month.",
+        "Check your payment reality. If your clients pay by UPI, a tool that can't accept UPI natively is friction you're absorbing.",
+        "Try the calm version. [Set up a Book A Sloth page](/), share the link, and see how it feels to have booking, payment, GST, and [reminders that actually arrive](/blog/notifications-that-actually-arrive) handled for you."
+      ]
+    },
+    {
+      "p": "Same idea as the others. Less clutter. Made for India."
+    },
+    {
+      "faq": [
+        {
+          "q": "Is there a free Topmate alternative in India?",
+          "a": "Yes. Book A Sloth offers a free plan to start, and unlike Topmate it charges 0% commission on its paid plans — so you keep the full value of each booking rather than losing about 10% per sale."
+        },
+        {
+          "q": "Does Calendly work well in India?",
+          "a": "Calendly works for scheduling anywhere, but it wasn't built for India. It has no native UPI collection, no automatic GST invoices, and no WhatsApp reminders — so most Indian professionals need a payment workaround on top of it."
+        },
+        {
+          "q": "What's the difference between Topmate and Book A Sloth?",
+          "a": "Topmate is an all-in-one creator storefront that takes roughly a 10% cut of your earnings. Book A Sloth focuses on selling your time — one link that books and collects payment via UPI and Razorpay — with 0% commission on paid plans."
+        },
+        {
+          "q": "Can I collect payment by UPI when someone books?",
+          "a": "Yes — with Book A Sloth, UPI and Razorpay are built in, so clients pay the moment they book and you get an auto GST invoice. Calendly and most Western tools can't do this natively."
+        },
+        {
+          "q": "Which platform is cheapest overall?",
+          "a": "It depends on volume. A percentage-based tool like Topmate feels cheap at low earnings but gets expensive as you grow. A flat-fee, 0%-commission model like Book A Sloth's is usually cheaper once you're doing meaningful monthly revenue."
+        }
+      ]
+    }
+  ]
+},
+{
   slug: "digital-marketing-for-startups",
   title: "Digital Marketing for Startups: A Lean, Low-Budget Playbook",
   date: "Sep 7, 2026",
@@ -65,7 +772,7 @@ export const BLOG_POSTS = [
     "target",
     "trending-up"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 5,
   category: "Guide",
   image: null,
@@ -148,10 +855,10 @@ export const BLOG_POSTS = [
       h2: "Get discovered by AI answer engines early: AEO for startups"
     },
     {
-      p: "You can get cited by AI answer engines like ChatGPT and Google's AI Overviews before you have any domain authority, by structuring content the way models extract it and by being mentioned where they already look. This is the biggest opening most startups miss, and it is where a small player can leapfrog established competitors."
+      p: "You can get cited by AI answer engines like ChatGPT and Google's AI Overviews before you have any domain authority, by [structuring content the way models extract it](/blog/digital-marketing-for-saas-companies) and by being mentioned where they already look. This is the biggest opening most startups miss, and it is where a small player can leapfrog established competitors."
     },
     {
-      p: "Answer engines are now where a large share of research begins—ChatGPT alone [reportedly serves over 900 million weekly active users, while Google's AI Overviews reach over two billion](https://nogood.io/blog/aeo-guide/). Crucially, these systems favor clearly extractable answers and third-party mentions over raw domain age, which is exactly why a young startup can win here. Earned media and community content carry disproportionate weight in what AI cites, so authority you build off your own site matters as much as your site itself."
+      p: "Answer engines are now where a large share of research begins—ChatGPT alone [reportedly serves over 900 million weekly active users, while Google's AI Overviews reach over two billion](https://nogood.io/blog/aeo-guide/). Crucially, these systems favor clearly extractable answers and third-party mentions over raw domain age, which is exactly why a young startup can win here. [Earned media and community content](/blog/content-marketing-for-brand-awareness) carry disproportionate weight in what AI cites, so authority you build off your own site matters as much as your site itself."
     },
     {
       p: "To show up early, do this:"
@@ -220,7 +927,7 @@ export const BLOG_POSTS = [
     "chart",
     "trending-up"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -287,7 +994,7 @@ export const BLOG_POSTS = [
       p: "The pages that convert for SaaS are product-led, not generic blog filler. As Ishir's breakdown of SaaS growth argues, the workhorses are [comparison, \"alternative to,\" and integration pages](https://www.ishir.com/blog/318664/digital-marketing-for-saas-companies.htm) that catch buyers already choosing between tools. Layer in use-case tutorials and playbooks that show your product doing the reader's exact job."
     },
     {
-      p: "The catch is patience. Lean Labs advises planning for [organic lead growth over a 36–48 month horizon](https://www.leanlabs.com/blog/digital-marketing-for-saas-companies) — SEO compounds, but it doesn't sprint. Start early and publish consistently, and the curve bends in your favor right when paid gets expensive."
+      p: "The catch is patience. Lean Labs advises planning for [organic lead growth over a 36–48 month horizon](https://www.leanlabs.com/blog/digital-marketing-for-saas-companies) — SEO compounds, but it doesn't sprint. Start early and [publish consistently](/blog/content-marketing-for-brand-awareness), and the curve bends in your favor right when paid gets expensive."
     },
     {
       h2: "Product-led growth and free trials"
@@ -302,7 +1009,7 @@ export const BLOG_POSTS = [
       h2: "Rounding out the mix: paid, email, and ABM"
     },
     {
-      p: "Paid ads, email nurture, and account-based marketing (ABM) are accelerants — they don't replace the compounding channels, they speed up specific stages of the funnel. Google and LinkedIn ads buy top-of-funnel reach and bottom-of-funnel intent capture; use them to test messaging and catch high-intent \"best [category]\" searches, not as your only engine. Email nurture carries trial users and MQLs across the long consideration gap that defines B2B SaaS. ABM concentrates spend on a named list of dream accounts when your contract values justify it. The point isn't to run every channel — it's to match each channel to the funnel stage where it earns its keep."
+      p: "Paid ads, email nurture, and account-based marketing (ABM) are accelerants — they don't replace the compounding channels, they speed up specific stages of the funnel. Google and LinkedIn ads buy top-of-funnel reach and bottom-of-funnel intent capture; use them to test messaging and catch high-intent \"best [category]\" searches, not as your only engine. [Email nurture](/blog/email-marketing-for-customer-acquisition) carries trial users and MQLs across the long consideration gap that defines B2B SaaS. ABM concentrates spend on a named list of dream accounts when your contract values justify it. The point isn't to run every channel — it's to match each channel to the funnel stage where it earns its keep."
     },
     {
       h2: "Affiliate marketing for developers (and other partners)"
@@ -369,7 +1076,7 @@ export const BLOG_POSTS = [
         },
         {
           q: "Can developers really make money with affiliate marketing?",
-          a: "Yes — developers are well suited to it because they can recommend tools they genuinely use through tutorials and reviews, and many SaaS programs pay recurring commissions or fixed bounties per paying customer. Authenticity is the entire edge. ---"
+          a: "Yes — developers are well suited to it because they can recommend tools they genuinely use through tutorials and reviews, and many SaaS programs pay recurring commissions or fixed bounties per paying customer. Authenticity is the entire edge."
         }
       ]
     }
@@ -384,7 +1091,7 @@ export const BLOG_POSTS = [
     "coins",
     "target"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 5,
   category: "Guide",
   image: null,
@@ -406,7 +1113,7 @@ export const BLOG_POSTS = [
       h2: "Marketplace vs owned D2C: the Amazon split"
     },
     {
-      p: "Split your budget by where the customer relationship lives: marketplace ads buy the sale, owned D2C buys the customer. Digital marketing for Amazon sellers is largely a marketplace search game — Sponsored Products, Sponsored Brands, and DSP — where a \"good\" return sits in the [three-to-five ROAS range](https://gotrellis.com/resources/blog/what-is-a-good-amazon-roas), tightening as a listing matures. The catch: Amazon owns the customer data, so repeat revenue is harder to engineer."
+      p: "Split your budget by where the customer relationship lives: [marketplace ads buy the sale, owned D2C buys the customer](/blog/digital-marketing-for-real-estate-companies). Digital marketing for Amazon sellers is largely a marketplace search game — Sponsored Products, Sponsored Brands, and DSP — where a \"good\" return sits in the [three-to-five ROAS range](https://gotrellis.com/resources/blog/what-is-a-good-amazon-roas), tightening as a listing matures. The catch: Amazon owns the customer data, so repeat revenue is harder to engineer."
     },
     {
       p: "Set Amazon targets by lifecycle, not one fixed goal. Sellers using phase-based ROAS targets — lower during launch, higher at maturity — [achieved 31 percent higher profit margins than those using fixed ROAS goals](https://gotrellis.com/resources/blog/what-is-a-good-amazon-roas). Owned D2C carries higher CAC and lower conversion, but you keep the email, the phone number, and the second order — which is where margin is made."
@@ -440,7 +1147,7 @@ export const BLOG_POSTS = [
       h2: "Niche playbooks: baby, organic, and jewellery"
     },
     {
-      p: "The economics stay constant across niches; the creative, trust signals, and buying cycle change. Digital marketing for baby products leans on safety, ingredients, and parent reviews — trust is the conversion bottleneck, and UGC from real parents outperforms polished studio ads. India's Mamaearth built [a ₹7,000 crore brand](https://www.balistro.com/blog/d2c-brand-marketing-strategies-india) largely on this trust-plus-performance loop."
+      p: "The economics stay constant across niches; the creative, trust signals, and buying cycle change. Digital marketing for baby products leans on safety, ingredients, and parent reviews — trust is the conversion bottleneck, and [UGC from real parents outperforms polished studio ads](/blog/influencer-marketing-for-product-launch). India's Mamaearth built [a ₹7,000 crore brand](https://www.balistro.com/blog/d2c-brand-marketing-strategies-india) largely on this trust-plus-performance loop."
     },
     {
       p: "Marketing for organic products competes on certification and provenance, so put third-party labels and sourcing stories directly in the ad and landing page to shorten the trust gap. Social media marketing for jewellery is visual and consideration-heavy: the buyer researches for weeks, so pair aspirational Instagram and Meta creative with strong retargeting and try-at-home or easy-returns messaging to close a high-AOV, low-frequency purchase. Different creative, same discipline — track every rupee to a sale."
@@ -459,7 +1166,7 @@ export const BLOG_POSTS = [
         "Ship complete Product and FAQ schema so answer engines can parse price, availability, and specs.",
         "Keep your product feed pristine — the same clean data that powers Shopping powers AI citations.",
         "Answer real purchase questions in content (\"best organic baby lotion for eczema\"), because that phrasing is what people type into AI.",
-        "Build off-site credibility — reviews, comparisons, and mentions AI models trust and quote."
+        "Build off-site credibility — [reviews, comparisons, and mentions AI models trust and quote](/blog/content-marketing-for-brand-awareness)."
       ]
     },
     {
@@ -512,7 +1219,7 @@ export const BLOG_POSTS = [
     "users",
     "target"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -537,7 +1244,7 @@ export const BLOG_POSTS = [
       p: "Email is the hedge. Once someone subscribes, no ranking change, feed tweak, or AI summary can revoke your access to them. The strategic move is to treat every channel you do not own — search, social, YouTube — primarily as a machine for converting attention into subscribers. Capture the address while you still have the reach, then do the selling in the inbox where you control the terms."
     },
     {
-      p: "There is a second twist worth naming: the same AI that is eroding organic traffic now makes email dramatically better. AI tools draft variants, predict the best send time, score subscribers by purchase intent, and cluster your list into micro-segments in seconds — work that used to take an analyst a week. So the channel most protected from AI disruption is also one of the biggest beneficiaries of AI assistance."
+      p: "There is a second twist worth naming: the same AI that is eroding organic traffic now makes email dramatically better. [AI tools draft variants, predict the best send time, score subscribers by purchase intent](/blog/digital-marketing-strategy-vibe-coders), and cluster your list into micro-segments in seconds — work that used to take an analyst a week. So the channel most protected from AI disruption is also one of the biggest beneficiaries of AI assistance."
     },
     {
       h2: "How to build a list that actually acquires"
@@ -581,13 +1288,13 @@ export const BLOG_POSTS = [
       h2: "Email marketing for bloggers"
     },
     {
-      p: "For bloggers, email is how you convert borrowed audience into an owned one you can eventually monetize. Traffic from search and social visits once and vanishes; a subscriber comes back on your schedule. Offer a content upgrade — a checklist, template, or bonus tied to a popular post — as the on-ramp, then use a welcome sequence to build the trust that later supports affiliate offers, a paid product, or sponsorships. This is also the sharpest illustration of the AI-era hedge: as zero-click search strips away casual blog traffic, the writers who captured emails keep an audience, while those who relied on Google keep a graph that points down. For a blogger, the email list is not a marketing tactic — it is the business asset."
+      p: "For bloggers, email is how you convert borrowed audience into an owned one you can eventually monetize. Traffic from search and social visits once and vanishes; a subscriber comes back on your schedule. Offer a [content upgrade](/blog/content-marketing-for-brand-awareness) — a checklist, template, or bonus tied to a popular post — as the on-ramp, then use a welcome sequence to build the trust that later supports affiliate offers, a paid product, or sponsorships. This is also the sharpest illustration of the AI-era hedge: as zero-click search strips away casual blog traffic, the writers who captured emails keep an audience, while those who relied on Google keep a graph that points down. For a blogger, the email list is not a marketing tactic — it is the business asset."
     },
     {
       h2: "Email marketing for logistics"
     },
     {
-      p: "For logistics and B2B service firms, email nurtures long, considered enquiries that rarely convert on first contact. A freight or fulfilment decision involves multiple stakeholders and weeks of deliberation, so the goal is to stay useful and present until the buyer is ready. Segment by service type, lane, and company size, then run a drip sequence — Abstrakt suggests [nurture journeys of roughly 6–15 days paired with open-rate targets of 25–35%](https://www.abstraktmg.com/email-marketing-logistics-industry/) — that addresses concrete pain points like port congestion or capacity crunches. Personalization beyond a first name (referencing a prospect's region or shipping challenge) signals you understand their operation, and coordinated sales touchpoints on days three and seven keep momentum through a longer cycle."
+      p: "For logistics and B2B service firms, email nurtures long, considered enquiries that rarely convert on first contact. A freight or fulfilment decision involves [multiple stakeholders and weeks of deliberation](/blog/digital-marketing-for-manufacturers), so the goal is to stay useful and present until the buyer is ready. Segment by service type, lane, and company size, then run a drip sequence — Abstrakt suggests [nurture journeys of roughly 6–15 days paired with open-rate targets of 25–35%](https://www.abstraktmg.com/email-marketing-logistics-industry/) — that addresses concrete pain points like port congestion or capacity crunches. Personalization beyond a first name (referencing a prospect's region or shipping challenge) signals you understand their operation, and coordinated sales touchpoints on days three and seven keep momentum through a longer cycle."
     },
     {
       h2: "The takeaway, and where to start this week"
@@ -632,7 +1339,7 @@ export const BLOG_POSTS = [
     "users",
     "star"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -700,7 +1407,7 @@ export const BLOG_POSTS = [
     },
     {
       ol: [
-        "Teaser (2–4 weeks out): Give creators exclusive early access and let them drop hints — unboxings, \"what's coming\" clips, countdowns. Real campaigns build this way; one documented roadmap ran a teaser wave nine days before the reveal, then an [official launch across social, website, and a trade show on a single coordinated day](https://www.modash.io/blog/influencer-marketing-for-product-launches).",
+        "Teaser (2–4 weeks out): Give creators exclusive early access and let them drop hints — unboxings, \"what's coming\" clips, countdowns. Real campaigns build this way; [one documented roadmap ran a teaser wave nine days before the reveal](/blog/digital-marketing-strategy-vibe-coders), then an [official launch across social, website, and a trade show on a single coordinated day](https://www.modash.io/blog/influencer-marketing-for-product-launches).",
         "Launch (the moment): Concentrate posts, go-live streams, and macro reach into a tight window so the algorithm and the audience see a spike.",
         "Sustain (2–6 weeks after): Keep micro creators posting reviews and tutorials, and [repurpose the best clips into paid amplification](/blog/performance-marketing-for-ecommerce)."
       ]
@@ -718,7 +1425,7 @@ export const BLOG_POSTS = [
       h2: "Content marketing for events"
     },
     {
-      p: "Build one anchor asset per event, then atomize it into a month of posts. The keynote, demo, or launch film is your pillar; break it into short vertical clips, quote graphics, a blog recap, and downloadable transcripts so a single day feeds every channel for weeks. Lean on attendees and creators to multiply output — brands that harness UGC can see [3–5x the content output versus relying on the marketing team alone](https://snapbar.com/blog/social-media-marketing-for-events), Snapbar reports. That volume is what keeps a launch alive after the reveal, and it is the raw material the next section depends on."
+      p: "[Build one anchor asset per event, then atomize it into a month of posts](/blog/content-marketing-for-brand-awareness). The keynote, demo, or launch film is your pillar; break it into short vertical clips, quote graphics, a blog recap, and downloadable transcripts so a single day feeds every channel for weeks. Lean on attendees and creators to multiply output — brands that harness UGC can see [3–5x the content output versus relying on the marketing team alone](https://snapbar.com/blog/social-media-marketing-for-events), Snapbar reports. That volume is what keeps a launch alive after the reveal, and it is the raw material the next section depends on."
     },
     {
       h2: "The AI shift: creator discovery and AEO for launches"
@@ -730,7 +1437,7 @@ export const BLOG_POSTS = [
       p: "On discovery, platforms have moved past keyword filters. Tools now use AI to surface aligned creators in seconds and score brand fit — Sprout Social's Influencer Marketing uses [AI Assist to discover creators and a Brand Fit Score to match them to a target audience](https://sproutsocial.com/insights/influencer-marketing-tools/). Use it, but verify: [70% of marketers face technical challenges applying AI to influencer marketing](https://impact.com/influencer/ai-influencer-marketing/), impact.com reports, and AI happily recommends high-engagement creators who never convert. Human judgment still picks the final roster."
     },
     {
-      p: "The bigger shift is where launch conversations get repeated. Buyers increasingly research inside AI chatbots — [51% of B2B software buyers now begin vendor research in an AI chatbot rather than Google, up from 29% in April 2025](https://www.omnibound.ai/blog/answer-engine-optimization-aeo-statistics), per G2 data compiled by Omnibound. So a launch has to be talked about in places AI answer engines quote: creator reviews, roundups, forums, and third-party coverage. This is answer engine optimization (AEO) for launches — engineering the mentions AI will cite. The same research finds that pages which add statistics gain 41% more AI visibility and those that cite sources gain 40%, and that AI-referred visitors convert at 4.4x the rate of traditional organic. Practical move: brief creators and PR to publish specific, quotable, sourced claims about your product, not vague praise — quotable is citable."
+      p: "The bigger shift is where launch conversations get repeated. [Buyers increasingly research inside AI chatbots](/blog/digital-marketing-for-saas-companies) — [51% of B2B software buyers now begin vendor research in an AI chatbot rather than Google, up from 29% in April 2025](https://www.omnibound.ai/blog/answer-engine-optimization-aeo-statistics), per G2 data compiled by Omnibound. So a launch has to be talked about in places AI answer engines quote: creator reviews, roundups, forums, and third-party coverage. This is answer engine optimization (AEO) for launches — engineering the mentions AI will cite. The same research finds that pages which add statistics gain 41% more AI visibility and those that cite sources gain 40%, and that AI-referred visitors convert at 4.4x the rate of traditional organic. Practical move: brief creators and PR to publish specific, quotable, sourced claims about your product, not vague praise — quotable is citable."
     },
     {
       h2: "Measuring launch impact"
@@ -785,7 +1492,7 @@ export const BLOG_POSTS = [
     "users",
     "trophy"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -807,7 +1514,7 @@ export const BLOG_POSTS = [
       h2: "User-acquisition economics: the numbers that decide everything"
     },
     {
-      p: "Game user acquisition lives or dies on one ratio: what you pay to acquire a player versus what that player is worth over their lifetime. The global mobile gaming industry spent [roughly $25 billion on user acquisition in 2025, with the blended cost per install (CPI) climbing about 30% year-over-year](https://foxdata.com/en/blogs/2026-mobile-game-user-acquisition-cost-benchmarks-how-much-should-you-spend/). Paid media is getting more expensive on every channel, so wasted spend compounds fast."
+      p: "Game user acquisition lives or dies on one ratio: [what you pay to acquire a player versus what that player is worth over their lifetime](/blog/digital-marketing-for-saas-companies). The global mobile gaming industry spent [roughly $25 billion on user acquisition in 2025, with the blended cost per install (CPI) climbing about 30% year-over-year](https://foxdata.com/en/blogs/2026-mobile-game-user-acquisition-cost-benchmarks-how-much-should-you-spend/). Paid media is getting more expensive on every channel, so wasted spend compounds fast."
     },
     {
       p: "The core metrics every gaming marketer tracks:"
@@ -858,7 +1565,7 @@ export const BLOG_POSTS = [
     {
       ol: [
         "Open a Discord before launch, not after — seed it with playtesters and treat early members as insiders.",
-        "Reward UGC and clips — fan highlights, memes, and mods are free reach that reads as authentic.",
+        "[Reward UGC and clips](/blog/content-marketing-for-brand-awareness) — fan highlights, memes, and mods are free reach that reads as authentic.",
         "Run visible feedback loops — patch notes that credit player suggestions convert critics into advocates.",
         "Design shareable moments — referral rewards, guild systems, and co-op hooks make virality a mechanic, not an accident."
       ]
@@ -882,7 +1589,7 @@ export const BLOG_POSTS = [
       h2: "AEO for gaming: the discovery shift most studios are missing"
     },
     {
-      p: "The biggest untapped opportunity is answer engine optimization (AEO) — getting your game or tool recommended when players ask an AI assistant, not just when they type into Google. Discovery is moving into AI: [Gartner predicts traditional search volume will drop 25% by 2026 as AI answer engines grow](https://www.tryprofound.com/resources/articles/what-is-answer-engine-optimization), and hundreds of millions of people already use AI assistants every week. When a player asks \"what's a good co-op survival game like Valheim?\" or \"best mobile RPG without pay-to-win,\" the answer increasingly comes from an AI — and being named there is a new front in game marketing."
+      p: "The biggest untapped opportunity is answer engine optimization (AEO) — getting your game or tool recommended when players ask an AI assistant, not just when they type into Google. [Discovery is moving into AI](/blog/digital-marketing-strategy-vibe-coders): [Gartner predicts traditional search volume will drop 25% by 2026 as AI answer engines grow](https://www.tryprofound.com/resources/articles/what-is-answer-engine-optimization), and hundreds of millions of people already use AI assistants every week. When a player asks \"what's a good co-op survival game like Valheim?\" or \"best mobile RPG without pay-to-win,\" the answer increasingly comes from an AI — and being named there is a new front in game marketing."
     },
     {
       p: "AEO is not the same as classic SEO, though they overlap. The difference in practice:"
@@ -977,7 +1684,7 @@ export const BLOG_POSTS = [
     "chart",
     "target"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -1007,7 +1714,7 @@ export const BLOG_POSTS = [
     {
       ol: [
         "Create one focused page per product line and application, targeting spec-level and use-case keywords.",
-        "Publish technical content — datasheets, tolerances, material grades, compliance certifications — that answers evaluation questions.",
+        "[Publish technical content](/blog/content-marketing-for-brand-awareness) — datasheets, tolerances, material grades, compliance certifications — that answers evaluation questions.",
         "Add pricing calculators and spec pages, which convert unusually well; in construction materials, [product specification pages achieve 14.1% organic conversion rates](https://www.webtonic.io/blog/construction-materials-seo-statistics).",
         "Fix technical SEO and structured data — the same analysis found only 23% of construction-materials sites implement structured data, a wide-open gap for early movers."
       ]
@@ -1022,7 +1729,7 @@ export const BLOG_POSTS = [
       p: "For long industrial sales cycles, LinkedIn plus consistent content is the engine that [keeps you visible to a whole buying committee](/blog/digital-marketing-for-saas-companies) over months. A single order can involve engineering, procurement, quality, maintenance, and management — so you are not persuading one person, you are staying credible to a group."
     },
     {
-      p: "Run demand generation, not one-off lead grabs. Publish plant tours, application engineering breakdowns, and case studies on LinkedIn; use its targeting to reach job titles inside your named target accounts (account-based marketing). Pair organic thought leadership with a light layer of paid search and LinkedIn ads to accelerate demand once a category is aware of you. The aim is to be the supplier already familiar to the committee when a project finally triggers an enquiry."
+      p: "Run demand generation, not one-off lead grabs. Publish plant tours, application engineering breakdowns, and case studies on LinkedIn; [use its targeting to reach job titles inside your named target accounts (account-based marketing)](/blog/marketing-for-recruitment-agencies). Pair organic thought leadership with a light layer of paid search and LinkedIn ads to accelerate demand once a category is aware of you. The aim is to be the supplier already familiar to the committee when a project finally triggers an enquiry."
     },
     {
       h2: "Turning enquiries, RFQs and trade shows into pipeline"
@@ -1037,7 +1744,7 @@ export const BLOG_POSTS = [
       ol: [
         "Instrument every RFQ form and enquiry so leads route instantly to the right sales engineer with an SLA on first response.",
         "Enable distributors and dealers with co-branded landing pages, product content, and lead-sharing — your channel partners often make the actual sale.",
-        "Extend trade shows digitally — capture booth interest into a nurture sequence and retarget event visitors, so a business card becomes a tracked opportunity instead of a lost lead."
+        "Extend trade shows digitally — [capture booth interest into a nurture sequence](/blog/email-marketing-for-customer-acquisition) and retarget event visitors, so a business card becomes a tracked opportunity instead of a lost lead."
       ]
     },
     {
@@ -1145,7 +1852,7 @@ export const BLOG_POSTS = [
     "search",
     "chart"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 5,
   category: "Guide",
   image: null,
@@ -1203,7 +1910,7 @@ export const BLOG_POSTS = [
       h2: "Own site plus portals: where property leads come from"
     },
     {
-      p: "Run your own website and the major portals together, because each does a job the other cannot. Portals like 99acres, MagicBricks, and Housing.com own the high-intent search demand and put your inventory in front of active buyers; your own site is where you control the story, capture the lead, and retarget. Treat the portal as reach and your site as conversion."
+      p: "Run your own website and the major portals together, because each does a job the other cannot. [Portals like 99acres, MagicBricks, and Housing.com own the high-intent search demand and put your inventory in front of active buyers](/blog/digital-marketing-for-travel-and-tourism); your own site is where you control the story, capture the lead, and retarget. Treat the portal as reach and your site as conversion."
     },
     {
       p: "The website is not decoration. On real estate sites, [about 67% of visitors who arrive from organic search go on to call the company](https://www.sigmasolve.com/blog/digital-marketing-for-real-estate), so every listing and landing page needs a visible phone number, [a short enquiry form](/be-a-sloth), and fast mobile load. Own the pages portals can't rank for: project-specific pages, locality guides, and price-trend posts that pull organic traffic you don't pay per lead for."
@@ -1230,7 +1937,7 @@ export const BLOG_POSTS = [
       h2: "Virtual tours and video walkthroughs"
     },
     {
-      p: "High-ticket, long-consideration buyers want to pre-qualify a home before they travel to see it, which is exactly what video and virtual tours do. A 3D walkthrough or a two-minute video walkthrough lets a buyer rule a property in or out from their phone, cutting wasted site visits and filtering for serious enquiries. The pull on views is large: [listings that include video receive about 87% more views than listings without one](https://paperform.co/blog/digital-marketing-for-real-estate/). For developers, a drone flythrough of the project and neighbourhood is now table stakes; for agents, a face-to-camera walkthrough doubles as brand-building content."
+      p: "High-ticket, long-consideration buyers want to pre-qualify a home before they travel to see it, which is exactly what video and virtual tours do. A 3D walkthrough or a two-minute video walkthrough lets a buyer rule a property in or out from their phone, cutting wasted site visits and filtering for serious enquiries. The pull on views is large: [listings that include video receive about 87% more views than listings without one](https://paperform.co/blog/digital-marketing-for-real-estate/). For developers, [a drone flythrough of the project and neighbourhood](/blog/digital-marketing-for-architects) is now table stakes; for agents, a face-to-camera walkthrough doubles as brand-building content."
     },
     {
       h2: "Local SEO for realtors and brokerages"
@@ -1242,7 +1949,7 @@ export const BLOG_POSTS = [
       h2: "RERA advertising rules you can't ignore"
     },
     {
-      p: "Every property advertisement in India must carry the project's RERA registration number, and skipping it is a compliance risk, not a style choice. Under the Real Estate (Regulation and Development) Act, [it is compulsory for the promoter to mention the RERA registration number on the website and on any advertisement](https://www.lawyersclubindia.com/articles/provisions-under-rera-for-advertisements-of-real-estate-10293.asp), and ads must be truthful with no exaggeration of what was disclosed to the authority. False or misleading claims give an affected buyer the right to withdraw and reclaim their investment with interest. Practically, that means the RERA number, approved plans, and accurate carpet-area language belong in every creative, landing page, and portal listing. Compliant marketing is also better marketing here, because it filters for buyers who trust the project."
+      p: "Every property advertisement in India must carry the project's RERA registration number, and skipping it is a compliance risk, not a style choice. Under the Real Estate (Regulation and Development) Act, [it is compulsory for the promoter to mention the RERA registration number on the website and on any advertisement](https://www.lawyersclubindia.com/articles/provisions-under-rera-for-advertisements-of-real-estate-10293.asp), and ads must be truthful with no exaggeration of what was disclosed to the authority. False or misleading claims give an affected buyer the right to withdraw and reclaim their investment with interest. Practically, that means the RERA number, approved plans, and accurate carpet-area language belong in every creative, landing page, and portal listing. [Compliant marketing is also better marketing here](/blog/marketing-for-banking-services), because it filters for buyers who trust the project."
     },
     {
       h2: "The gap most competitors miss: AEO for real estate"
@@ -1262,7 +1969,7 @@ export const BLOG_POSTS = [
       ]
     },
     {
-      p: "Developers who publish honest, structured project data and agents who build a documented local reputation are the ones AI will surface. This is a land-grab: the citations are being decided now, while most competitors still optimise only for the ten blue links."
+      p: "Developers who publish honest, structured project data and [agents who build a documented local reputation](/blog/content-marketing-for-brand-awareness) are the ones AI will surface. This is a land-grab: the citations are being decided now, while most competitors still optimise only for the ten blue links."
     },
     {
       h2: "The bottom line"
@@ -1297,7 +2004,7 @@ export const BLOG_POSTS = [
     "search",
     "megaphone"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -1313,7 +2020,7 @@ export const BLOG_POSTS = [
       p: "Digital marketing for a restaurant is the connected set of local search, delivery-app, social, and reputation tactics that turn a nearby, hungry, undecided person into a booking or an order. It is not one campaign; it is a system where each channel feeds the next."
     },
     {
-      p: "The mistake is treating these as separate boxes. Your Google listing, your Zomato page, your Instagram reels, and your reviews all describe the same restaurant to the same person within minutes. When they agree, you look trustworthy. When they contradict each other, you lose the table. Think hyperlocal, visual, and review-driven, because that is how food demand is actually formed."
+      p: "The mistake is treating these as separate boxes. Your Google listing, your Zomato page, your Instagram reels, and your reviews all describe the same restaurant to the same person within minutes. When they agree, you look trustworthy. When they contradict each other, you lose the table. [Think hyperlocal, visual, and review-driven](/blog/digital-marketing-for-real-estate-companies), because that is how food demand is actually formed."
     },
     {
       h2: "Get found locally: Google Business Profile and \"near me\" search"
@@ -1364,7 +2071,7 @@ export const BLOG_POSTS = [
       h2: "Content marketing for restaurants"
     },
     {
-      p: "Content marketing for restaurants means publishing useful, findable material that earns discovery between visits, not just promotional posts. It compounds: a blog post on \"best late-night food in Koramangala\" or a reel series on your regional thali can pull in searchers for months."
+      p: "Content marketing for restaurants means [publishing useful, findable material that earns discovery between visits, not just promotional posts](/blog/content-marketing-for-brand-awareness). It compounds: a blog post on \"best late-night food in Koramangala\" or a reel series on your regional thali can pull in searchers for months."
     },
     {
       p: "Keep it simple and sustainable. Build a two-to-three-week content calendar mixing behind-the-scenes clips, staff and sourcing stories, dish explainers, and customer reposts. Anchor written content on your website around neighbourhood and cuisine keywords, so it supports local search at the same time. The test for every piece is whether a hungry stranger would find it useful or appetising. If not, cut it."
@@ -1384,7 +2091,7 @@ export const BLOG_POSTS = [
         "Add structured data. An InsideA restaurant AEO guide recommends [Restaurant, Menu, FAQ, and Review schema markup](https://insidea.com/blog/seo/aeo/guide-for-restaurants) so machines can read your cuisine, dishes, hours, and ratings unambiguously.",
         "Feed the entities. Keep your name, cuisine, dishes, and location consistent everywhere, because AI systems cross-check sources before recommending you.",
         "Write for conversation. Phrase menu descriptions and FAQs the way people speak to a voice assistant: \"Do you have vegan desserts?\" not \"dessert menu.\"",
-        "Bank reviews. Detailed, recent reviews are the trust signal AI leans on when it picks one restaurant over another."
+        "Bank reviews. [Detailed, recent reviews are the trust signal AI leans on](/blog/digital-marketing-for-dentists) when it picks one restaurant over another."
       ]
     },
     {
@@ -1445,14 +2152,14 @@ export const BLOG_POSTS = [
     "search",
     "star"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
   excerpt: "Digital marketing for dentists that actually books patients: local SEO, Google Business Profile, reviews, visual social proof and AI-search visibility.",
   body: [
     {
-      p: "Most patients choose a dentist long before they ever call — they search, scan reviews, and study before-and-after photos on a phone. If your clinic is invisible in that moment, the practice two streets away wins the appointment. The shift is structural: about [70% of consumers would rather get to know a business through helpful content than through traditional advertising](https://www.getweave.com/digital-marketing-for-dentists/), so your profile, pages and posts now do the selling your front desk used to."
+      p: "Most patients choose a dentist long before they ever call — they search, scan reviews, and study before-and-after photos on a phone. If your clinic is invisible in that moment, the practice two streets away wins the appointment. The shift is structural: about [70% of consumers would rather get to know a business through helpful content than through traditional advertising](https://www.getweave.com/digital-marketing-for-dentists/), so [your profile, pages and posts now do the selling your front desk used to](/blog/content-marketing-for-brand-awareness)."
     },
     {
       h2: "What makes digital marketing for dentists different"
@@ -1482,7 +2189,7 @@ export const BLOG_POSTS = [
       ]
     },
     {
-      p: "Reviews are the hinge. Around [75.5% of consumers trust online reviews when making a decision](https://www.firegang.com/dental-marketing-facts/), and a recent, responded-to five-star profile is what converts a \"near me\" search into a walk-in. Make asking for reviews a routine at checkout, not an afterthought."
+      p: "[Reviews are the hinge](/blog/digital-marketing-for-doctors). Around [75.5% of consumers trust online reviews when making a decision](https://www.firegang.com/dental-marketing-facts/), and a recent, responded-to five-star profile is what converts a \"near me\" search into a walk-in. Make asking for reviews a routine at checkout, not an afterthought."
     },
     {
       h2: "Social media marketing for dental clinics: lead with the visual result"
@@ -1509,7 +2216,7 @@ export const BLOG_POSTS = [
       p: "Patients now ask ChatGPT and Google's AI Overview things like \"good dentist near me\" or \"how much do implants cost,\" and you appear in those answers by being the clearest, most consistent and best-reviewed practice — not the biggest ad spender. This is the gap most clinics have not noticed yet, and it is where dentistry has an unfair advantage."
     },
     {
-      p: "The behaviour is already mainstream: AI Overviews now [appear for around 68% of local searches](https://submerge.digital/ai-marketing/getting-your-local-business-to-appear-in-ai-overviews-5-things-you-need-to-do/), and they answer the question directly, often without a click. To be the practice the AI names, you optimise for answer engines, not just rankings:"
+      p: "The behaviour is already mainstream: AI Overviews now [appear for around 68% of local searches](https://submerge.digital/ai-marketing/getting-your-local-business-to-appear-in-ai-overviews-5-things-you-need-to-do/), and they answer the question directly, often without a click. To be the practice the AI names, [you optimise for answer engines, not just rankings](/blog/digital-marketing-strategy-vibe-coders):"
     },
     {
       ul: [
@@ -1620,7 +2327,7 @@ export const BLOG_POSTS = [
     "shield",
     "user-check"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -1642,13 +2349,13 @@ export const BLOG_POSTS = [
       h2: "Build a personal brand, not just a practice"
     },
     {
-      p: "An individual doctor's biggest asset is a personal reputation for expertise, so [build the brand around you, not a faceless clinic](/blog/digital-marketing-for-clinics). Patients and search engines reward the same thing — visible experience and authority. Google now treats [E-E-A-T — Experience, Expertise, Authoritativeness and Trust — as table stakes for health content](https://www.webfx.com/blog/healthcare/ai-overviews-in-healthcare/), which for a doctor simply means making your real credentials legible everywhere. In practice: a proper author bio on every page (degrees, registration number, years in practice, hospital affiliations, a real photograph); the same name and specialty across every profile; and a steady trickle of plain-language education on the conditions you treat. Authority content does double duty — it earns patient trust today and, as you'll see, it is exactly what AI answer engines quote tomorrow."
+      p: "An individual doctor's biggest asset is a personal reputation for expertise, so [build the brand around you, not a faceless clinic](/blog/digital-marketing-for-clinics). Patients and search engines reward the same thing — visible experience and authority. Google now treats [E-E-A-T — Experience, Expertise, Authoritativeness and Trust — as table stakes for health content](https://www.webfx.com/blog/healthcare/ai-overviews-in-healthcare/), which for a doctor simply means making your real credentials legible everywhere. In practice: a proper author bio on every page (degrees, registration number, years in practice, hospital affiliations, a real photograph); the same name and specialty across every profile; and a steady trickle of plain-language education on the conditions you treat. [Authority content does double duty](/blog/content-marketing-for-brand-awareness) — it earns patient trust today and, as you'll see, it is exactly what AI answer engines quote tomorrow."
     },
     {
       h2: "Turn patient reviews into your reputation engine"
     },
     {
-      p: "Reviews are the single highest-leverage asset for a doctor because patients treat them as a verdict. [Ninety percent of patients read online reviews before choosing a doctor, and 75% won't consider one rated below four stars](https://www.sermo.com/resources/digital-marketing-for-doctors/). The lever is simple and cheap: ask genuinely satisfied patients, at the right moment, to leave an honest review on your Google Business Profile — then reply to every one, good or bad, in a calm professional voice that never discloses clinical details. Your online reputation is not just the star count; it is how you handle the occasional one-star. Keep reviews genuine and unincentivised, because the rules on this (below) are strict."
+      p: "[Reviews are the single highest-leverage asset for a doctor](/blog/digital-marketing-for-dentists) because patients treat them as a verdict. [Ninety percent of patients read online reviews before choosing a doctor, and 75% won't consider one rated below four stars](https://www.sermo.com/resources/digital-marketing-for-doctors/). The lever is simple and cheap: ask genuinely satisfied patients, at the right moment, to leave an honest review on your Google Business Profile — then reply to every one, good or bad, in a calm professional voice that never discloses clinical details. Your online reputation is not just the star count; it is how you handle the occasional one-star. Keep reviews genuine and unincentivised, because the rules on this (below) are strict."
     },
     {
       h2: "Social media marketing for doctors: go deep on two platforms"
@@ -1672,7 +2379,7 @@ export const BLOG_POSTS = [
       h2: "Get cited by AI: answer-engine optimization for doctors"
     },
     {
-      p: "The next frontier — and the one your competitors have barely touched — is answer-engine optimization: becoming the doctor an AI cites when a patient asks about a condition or the \"best doctor for X.\" The behaviour has already shifted. [AI Overviews jumped from 59% to 89% of healthcare queries in just two years, even as Google pulled them off local \"near me\" searches — from 100% to 0%](https://www.brightedge.com/resources/weekly-ai-search-insights/healthcare-ai-evolution-google-2023-2025). And it is not only Google: [more than 230 million people ask ChatGPT health questions every week, yet only about 17% of the sources AI Overviews cite also rank in the organic top 10](https://rankved.com/google-ai-overview-for-doctors/). Being on page one is no longer enough."
+      p: "The next frontier — and the one your competitors have barely touched — is answer-engine optimization: becoming the doctor an AI cites when a patient asks about a condition or the \"best doctor for X.\" The behaviour has already shifted. [AI Overviews jumped from 59% to 89% of healthcare queries in just two years, even as Google pulled them off local \"near me\" searches — from 100% to 0%](https://www.brightedge.com/resources/weekly-ai-search-insights/healthcare-ai-evolution-google-2023-2025). And it is not only Google: [more than 230 million people ask ChatGPT health questions every week, yet only about 17% of the sources AI Overviews cite also rank in the organic top 10](https://rankved.com/google-ai-overview-for-doctors/). [Being on page one is no longer enough](/blog/digital-marketing-strategy-vibe-coders)."
     },
     {
       p: "That splits your job in two. For condition, symptom and treatment questions, aim to be the *cited* source: write answer-first pages (a direct 40–60 word answer at the top), publish under a named physician with visible credentials, add medical schema markup (MedicalOrganization, Physician, FAQPage), build a real FAQ from questions patients actually ask, and refresh content so it stays recent. For \"best [specialty] near me\" and provider searches, AI mostly steps aside — so your Google Business Profile, reviews and local-pack presence still decide. Track which pages get cited, not just where you rank. Do both, and you are covered whichever way the patient phrases the question."
@@ -1728,7 +2435,7 @@ export const BLOG_POSTS = [
     "users",
     "search"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -1794,7 +2501,7 @@ export const BLOG_POSTS = [
       h2: "Manage reviews and the institution's reputation"
     },
     {
-      p: "Reviews are the trust layer of facility marketing, and for an institution their volume, rating, and recency matter more than any ad you can buy. [Around 75% of patients use reviews as part of choosing a provider](https://localiq.com/blog/hospital-marketing/), so treat review generation as an operational habit, not an afterthought — ask every satisfied patient at checkout or discharge. Volume and recency signal an active, busy facility; a wall of five-year-old reviews reads as neglected. Reply to every review, positive or negative, but never confirm that someone was a patient — that is a privacy line, and in healthcare it matters. Route clinical complaints offline quickly. Replying also feeds your local ranking and shows prospective patients you are attentive, and reputation here is institutional: a mishandled review attaches to the facility, not to one person."
+      p: "[Reviews are the trust layer of facility marketing](/blog/digital-marketing-for-dentists), and for an institution their volume, rating, and recency matter more than any ad you can buy. [Around 75% of patients use reviews as part of choosing a provider](https://localiq.com/blog/hospital-marketing/), so treat review generation as an operational habit, not an afterthought — ask every satisfied patient at checkout or discharge. Volume and recency signal an active, busy facility; a wall of five-year-old reviews reads as neglected. Reply to every review, positive or negative, but never confirm that someone was a patient — that is a privacy line, and in healthcare it matters. Route clinical complaints offline quickly. Replying also feeds your local ranking and shows prospective patients you are attentive, and reputation here is institutional: a mishandled review attaches to the facility, not to one person."
     },
     {
       h2: "Turn searches into booked appointments"
@@ -1814,7 +2521,7 @@ export const BLOG_POSTS = [
       h2: "Digital marketing for hospitals: department- and specialty-level demand"
     },
     {
-      p: "For hospitals, marketing works best when it is organised by department and specialty, because patients search by problem — \"cardiology hospital,\" \"knee replacement cost\" — not by brand. Build a dedicated page for each high-value service line, with its own procedures, doctors, and location details, so you can rank for dozens of treatment-led queries at once. Educational content compounds here: Mayo Clinic is the model, and a single explainer video of theirs [passed 8 million views on YouTube](https://digitalismedical.com/blog/hospital-marketing/), drawing patients no ad budget could buy. Referring-doctor relationships and visible accreditation such as NABH still carry weight, so make both easy to verify on the site. Specialty pages plus location pages are what let a multi-specialty hospital show up for the exact treatments it wants to fill."
+      p: "For hospitals, marketing works best when it is organised by department and specialty, because patients search by problem — \"cardiology hospital,\" \"knee replacement cost\" — not by brand. Build a dedicated page for each high-value service line, with its own procedures, doctors, and location details, so you can rank for dozens of treatment-led queries at once. [Educational content compounds here](/blog/content-marketing-for-brand-awareness): Mayo Clinic is the model, and a single explainer video of theirs [passed 8 million views on YouTube](https://digitalismedical.com/blog/hospital-marketing/), drawing patients no ad budget could buy. Referring-doctor relationships and visible accreditation such as NABH still carry weight, so make both easy to verify on the site. Specialty pages plus location pages are what let a multi-specialty hospital show up for the exact treatments it wants to fill."
     },
     {
       h2: "Round out the basics: website, ads, and social"
@@ -1844,7 +2551,7 @@ export const BLOG_POSTS = [
       h2: "Advertise ethically — India's medical marketing rules"
     },
     {
-      p: "In India, clinics and hospitals may market themselves, but within firm legal limits — cross them and you risk penalties, not just criticism. The [Indian Medical Council (Professional Conduct, Etiquette and Ethics) Regulations, 2002 prohibit soliciting patients directly or indirectly](https://www.doublesure.health/medical-advertising-compliance-india), and the Drugs and Magic Remedies (Objectionable Advertisements) Act, 1954 bars advertisements claiming to cure listed conditions. In practice: promote information, access, and genuine credentials — not guaranteed outcomes, fear, or superlatives like \"best\" or \"world-class.\" Take explicit consent before using patient testimonials or collecting data through lead forms, and keep every outcome claim verifiable."
+      p: "In India, clinics and hospitals may market themselves, but [within firm legal limits](/blog/marketing-for-banking-services) — cross them and you risk penalties, not just criticism. The [Indian Medical Council (Professional Conduct, Etiquette and Ethics) Regulations, 2002 prohibit soliciting patients directly or indirectly](https://www.doublesure.health/medical-advertising-compliance-india), and the Drugs and Magic Remedies (Objectionable Advertisements) Act, 1954 bars advertisements claiming to cure listed conditions. In practice: promote information, access, and genuine credentials — not guaranteed outcomes, fear, or superlatives like \"best\" or \"world-class.\" Take explicit consent before using patient testimonials or collecting data through lead forms, and keep every outcome claim verifiable."
     },
     {
       h2: "Where to start"
@@ -1893,7 +2600,7 @@ export const BLOG_POSTS = [
     "users",
     "search"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 7,
   category: "Guide",
   image: null,
@@ -1939,7 +2646,7 @@ export const BLOG_POSTS = [
       p: "Parents increasingly build their shortlist by asking an AI — so your new job is to be the school the AI names. Instead of scrolling ten blue links, a parent now types \"best schools in [city] for my child\" into ChatGPT or Gemini, or reads Google's AI Overview at the top of the results, and gets a short synthesised list. Answer engine optimisation (AEO) is how you get into that list. This is the widest gap between schools that will grow and schools that will stall, and most of your competitors are ignoring it."
     },
     {
-      p: "Here is what changed. Finalsite reports that [Google's AI Overviews have surged more than 490% in presence](https://www.finalsite.com/blog/p/~board/b/post/ai-search-results-how-to-get-your-school-to-show-up), and — crucially — that 99% of those AI answers are pulled from the top 10 organic results. Translation: AI doesn't discover unknown schools; it re-serves the ones already visible and well-documented. So AEO isn't separate from SEO — it is SEO plus structure. Practically, that means [writing content that answers a parent's question in the first sentence and adding FAQ schema](https://www.innermedia.co.uk/how-are-ai-overviews-changing-the-way-parents-search-for-schools/) so machines can quote you cleanly. Beyond your own site, consistency is what convinces an AI: the same school name, board, location, and strengths repeated across your Google Business Profile, directories, review sites, and local press. Publish a plain-language FAQ page — what board does the school follow, what are the fees, how do I apply — keep those facts identical everywhere, and you give both parents and their AI assistant a clear reason to name you."
+      p: "Here is what changed. Finalsite reports that [Google's AI Overviews have surged more than 490% in presence](https://www.finalsite.com/blog/p/~board/b/post/ai-search-results-how-to-get-your-school-to-show-up), and — crucially — that 99% of those AI answers are pulled from the top 10 organic results. Translation: AI doesn't discover unknown schools; it re-serves the ones already visible and well-documented. So [AEO isn't separate from SEO — it is SEO plus structure](/blog/digital-marketing-strategy-vibe-coders). Practically, that means [writing content that answers a parent's question in the first sentence and adding FAQ schema](https://www.innermedia.co.uk/how-are-ai-overviews-changing-the-way-parents-search-for-schools/) so machines can quote you cleanly. Beyond your own site, consistency is what convinces an AI: the same school name, board, location, and strengths repeated across your Google Business Profile, directories, review sites, and local press. Publish a plain-language FAQ page — what board does the school follow, what are the fees, how do I apply — keep those facts identical everywhere, and you give both parents and their AI assistant a clear reason to name you."
     },
     {
       h2: "Social media marketing for schools"
@@ -1951,7 +2658,7 @@ export const BLOG_POSTS = [
       h2: "Content marketing for schools"
     },
     {
-      p: "Content marketing wins admissions by answering the exact questions parents ask in the weeks before they enquire. A post on \"CBSE vs ICSE: which board suits your child,\" an admission-process explainer, or a fees-and-scholarships guide captures parents mid-research and pulls them onto your site. The trick is to [map each piece of content to the family's decision stage](https://blog.schneiderb.com/digital-marketing-for-schools/) — awareness content for parents just starting to look, comparison content for the shortlist stage, and reassurance content on safety, results, and testimonials for the final decision. Well-made content does double duty: it ranks in search, and it is exactly the structured, factual material that AI answer engines lift when a parent asks for a recommendation."
+      p: "Content marketing wins admissions by answering the exact questions parents ask in the weeks before they enquire. A post on \"CBSE vs ICSE: which board suits your child,\" an admission-process explainer, or a fees-and-scholarships guide captures parents mid-research and pulls them onto your site. The trick is to [map each piece of content to the family's decision stage](https://blog.schneiderb.com/digital-marketing-for-schools/) — awareness content for parents just starting to look, comparison content for the shortlist stage, and reassurance content on safety, results, and testimonials for the final decision. [Well-made content does double duty](/blog/content-marketing-for-brand-awareness): it ranks in search, and it is exactly the structured, factual material that AI answer engines lift when a parent asks for a recommendation."
     },
     {
       h2: "Turn enquiries into admissions: capture, nurture, measure"
@@ -2006,7 +2713,7 @@ export const BLOG_POSTS = [
     "shield",
     "coins"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 5,
   category: "Guide",
   image: null,
@@ -2025,19 +2732,19 @@ export const BLOG_POSTS = [
       h2: "Lead with trust: the currency of a YMYL category"
     },
     {
-      p: "Trust is not a brand nicety in banking — it is the primary product, and it decides the sale. Consumers rank it near the top of every financial buying decision; one analysis finds [trust is the second most important factor people weigh when choosing a financial product](https://cstmr.com/blog/digital-marketing-for-banks/). Build it deliberately: transparent pricing, plain-language terms, visible security signals, named human experts, verifiable social proof, and genuine community presence. In a YMYL category a single misleading line erodes years of goodwill, so credibility protects the customers you have as much as it wins new ones."
+      p: "Trust is not a brand nicety in banking — it is the primary product, and it decides the sale. Consumers rank it near the top of every financial buying decision; one analysis finds [trust is the second most important factor people weigh when choosing a financial product](https://cstmr.com/blog/digital-marketing-for-banks/). Build it deliberately: transparent pricing, plain-language terms, visible security signals, named human experts, [verifiable social proof, and genuine community presence](/blog/content-marketing-for-brand-awareness). In a YMYL category a single misleading line erodes years of goodwill, so credibility protects the customers you have as much as it wins new ones."
     },
     {
       h2: "Content and SEO: the core of digital marketing for the banking industry"
     },
     {
-      p: "Educational content that answers real money questions is the engine of digital marketing for the banking industry, because that is where high-intent buyers begin. Roughly [90% of mortgage and loan shoppers start with an online search](https://digitalcommerce.com/finance/banks/), so the institution that owns the answer to \"which home loan fits me?\" or \"how is FD interest taxed?\" earns the visit before a rate is ever compared. Content also compounds over time — Drive Research notes [63% of marketers say effective content nurtures leads](https://www.driveresearch.com/market-research-company-blog/bank-marketing-strategies/). Win it with genuinely useful explainers, calculators, and comparison guides, structured for search: clear headings, fast pages, internal links, and real topical depth across the products you actually offer."
+      p: "Educational content that answers real money questions is the engine of digital marketing for the banking industry, because that is where high-intent buyers begin. Roughly [90% of mortgage and loan shoppers start with an online search](https://digitalcommerce.com/finance/banks/), so the institution that owns the answer to \"which home loan fits me?\" or \"how is FD interest taxed?\" earns the visit before a rate is ever compared. Content also compounds over time — Drive Research notes [63% of marketers say effective content nurtures leads](https://www.driveresearch.com/market-research-company-blog/bank-marketing-strategies/). [Win it with genuinely useful explainers, calculators, and comparison guides](/blog/content-marketing-for-financial-advisors), structured for search: clear headings, fast pages, internal links, and real topical depth across the products you actually offer."
     },
     {
       h2: "Personalization and data in digital marketing for financial services"
     },
     {
-      p: "Personalization is now the baseline expectation in digital marketing for financial services, not a premium feature. McKinsey finds [71% of consumers expect personalized interactions](https://www.adrenalinex.com/blog/effective-bank-marketing-for-financial-institutions/), and in banking the most valuable personalization is life-stage, not demographic — a first salary, a new home, a child's education, retirement. Use the first-party data banks hold in abundance to time the right message: a home-loan top-up when income rises, a tax-saver before the March deadline. Handle that data within consent and privacy norms, and let relevance — not frequency — do the work. The payoff is higher conversion and lower churn from customers who feel understood rather than blasted."
+      p: "Personalization is now the baseline expectation in digital marketing for financial services, not a premium feature. McKinsey finds [71% of consumers expect personalized interactions](https://www.adrenalinex.com/blog/effective-bank-marketing-for-financial-institutions/), and in banking the most valuable personalization is life-stage, not demographic — a first salary, a new home, a child's education, retirement. Use the first-party data banks hold in abundance to time the right message: [a home-loan top-up when income rises](/blog/digital-marketing-for-real-estate-companies), a tax-saver before the March deadline. Handle that data within consent and privacy norms, and let relevance — not frequency — do the work. The payoff is higher conversion and lower churn from customers who feel understood rather than blasted."
     },
     {
       h2: "Performance marketing and lead generation within the rules"
@@ -2149,7 +2856,7 @@ export const BLOG_POSTS = [
     "search",
     "shield"
   ],
-  author: "Bolt 958",
+  author: "Shubham N Datarkar",
   readMins: 6,
   category: "Guide",
   image: null,
@@ -2222,7 +2929,7 @@ export const BLOG_POSTS = [
       h2: "Advertising limits Indian advocates must respect"
     },
     {
-      p: "In India, your channel choice is also an ethics choice: advocates may not advertise or solicit, so organic, informational visibility is the compliant path. [Rule 36 of the Bar Council of India rules bars advocates from soliciting work or advertising](https://ksandk.com/regulatory/indian-lawyers-no-ads-allowed-per-bar-council-rules/), directly or indirectly; a 2008 amendment permits only a passive website listing name, contact details, qualifications, and areas of practice. That pushes Indian lawyers toward SEO and educational content — and away from aggressive paid solicitation. When in doubt, confirm with your state bar council."
+      p: "In India, your channel choice is also an ethics choice: advocates may not advertise or solicit, so organic, informational visibility is the compliant path. [Rule 36 of the Bar Council of India rules bars advocates from soliciting work or advertising](https://ksandk.com/regulatory/indian-lawyers-no-ads-allowed-per-bar-council-rules/), directly or indirectly; a 2008 amendment permits only a passive website listing name, contact details, qualifications, and areas of practice. That pushes Indian lawyers toward SEO and educational content — [and away from aggressive paid solicitation](/blog/marketing-for-banking-services). When in doubt, confirm with your state bar council."
     },
     {
       h2: "Practice-area pages and local SEO win the searches that convert"
@@ -2287,7 +2994,7 @@ export const BLOG_POSTS = [
       h2: "Content marketing for law firms earns the authority Google and AI reward"
     },
     {
-      p: "Content marketing for law firms is how you build the topical authority that rankings, backlinks, and AI citations all depend on — by answering the real questions clients ask, clearly and thoroughly. The bar is high because attention is short: readers [typically consume only about 20% of the words on a page](https://www.clio.com/blog/content-marketing-law-firms/), so lead with the answer, then support it. Focus on evergreen guides tied to your practice areas, refreshed and repurposed over time. Every well-structured explainer does double duty — it ranks in Google and feeds the answer engines covered next."
+      p: "Content marketing for law firms is how you build the topical authority that rankings, backlinks, and AI citations all depend on — [by answering the real questions clients ask, clearly and thoroughly](/blog/content-marketing-for-financial-advisors). The bar is high because attention is short: readers [typically consume only about 20% of the words on a page](https://www.clio.com/blog/content-marketing-law-firms/), so lead with the answer, then support it. Focus on evergreen guides tied to your practice areas, refreshed and repurposed over time. Every well-structured explainer does double duty — it ranks in Google and feeds the answer engines covered next."
     },
     {
       h2: "The gap to own: AEO for law firms and ranking inside AI answers"
@@ -2352,7 +3059,7 @@ export const BLOG_POSTS = [
     title: 'Digital Marketing for Architects: A Portfolio-First Playbook',
     date: 'Aug 29, 2026',
     icons: ['palette', 'chart', 'search'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 8,
     category: 'Growth',
     image: null,
@@ -2361,13 +3068,13 @@ export const BLOG_POSTS = [
     body: [
       { p: `Architecture and interior design sell on the strength of what you have already built. The problem is that most firms hide that work behind thin websites and rely on word of mouth to fill the pipeline. This guide covers the digital marketing that actually fits a high-consideration, referral-driven, project-based service, and the one channel most firms are still ignoring.` },
       { h2: `Why marketing for architects works differently` },
-      { p: `Marketing for architects is about proof, not persuasion. A new home or office fit-out is a large, infrequent, emotional purchase, so clients research for weeks and shortlist firms whose past projects look like the outcome they want. That makes your marketing job narrow: get discovered by people already in a buying window, then show enough finished work to earn the enquiry.` },
+      { p: `Marketing for architects is about proof, not persuasion. A new home or office fit-out is a large, infrequent, emotional purchase, so [clients research for weeks and shortlist firms whose past projects look like the outcome they want](/blog/digital-marketing-for-real-estate-companies). That makes your marketing job narrow: get discovered by people already in a buying window, then show enough finished work to earn the enquiry.` },
       { p: `Referrals still matter, but they are unpredictable and cap you at your existing network's reach. Digital marketing does not replace referrals. It makes you findable to the referred prospect who Googles your name, and to the stranger who never would have heard it.` },
       { h2: `Digital marketing for interior designers: the same visual logic` },
       { p: `Digital marketing for interior designers follows the same rules as architecture, because both are judged almost entirely by the eye. A roundup of interior-design marketing data [reports that 87% of interior designers use social media for business](https://programa.design/blog/marketing-for-interior-designers-getting-more-clients) — yet most of that activity chases peer approval rather than client enquiries. The fix is to treat every post, board and profile as a shopfront for a specific type of client.` },
       { p: `For designers, Pinterest and Houzz carry unusual weight because homeowners use them to build mood boards months before they hire anyone. Show full rooms, before-and-afters, and material details. The same photography and case-study discipline below applies to interior designers without change.` },
       { h2: `Turn your portfolio into case-study pages that convert` },
-      { p: `Your strongest marketing asset is a set of project pages, not a homepage slideshow. One analysis of over 2,300 architecture firm websites [found that 87% of homepages carried fewer than 500 words](https://www.archmark.co/marketing-for-architects-the-ultimate-guide) — beautiful, but invisible to search and thin on the detail buyers want. A gallery says you can design. A case study proves you can manage a brief, a budget, and a build.` },
+      { p: `[Your strongest marketing asset is a set of project pages, not a homepage slideshow](/blog/content-marketing-for-brand-awareness). One analysis of over 2,300 architecture firm websites [found that 87% of homepages carried fewer than 500 words](https://www.archmark.co/marketing-for-architects-the-ultimate-guide) — beautiful, but invisible to search and thin on the detail buyers want. A gallery says you can design. A case study proves you can manage a brief, a budget, and a build.` },
       { p: `Give each signature project its own indexable page and structure it the same way every time:` },
       { ol: [
         `The client's problem and constraints — site, budget band, brief.`,
@@ -2377,7 +3084,7 @@ export const BLOG_POSTS = [
       ] },
       { p: `This is also where photography earns its cost. Commission a proper shoot for two or three flagship projects a year; poorly lit phone photos undercut premium positioning faster than anything else.` },
       { h2: `Show your work on Instagram, Pinterest and Houzz` },
-      { p: `Visual platforms are your top-of-funnel, and Instagram is the anchor for both architects and designers. Post finished projects, process and detail shots consistently, and treat the grid as a curated portfolio rather than a diary. Reels of a walkthrough or a build sequence travel further than static images and reach people outside your follower count.` },
+      { p: `[Visual platforms are your top-of-funnel](/blog/digital-marketing-for-travel-and-tourism), and Instagram is the anchor for both architects and designers. Post finished projects, process and detail shots consistently, and treat the grid as a curated portfolio rather than a diary. Reels of a walkthrough or a build sequence travel further than static images and reach people outside your follower count.` },
       { p: `Match the platform to intent. Instagram builds brand and recognition. Pinterest and Houzz catch homeowners mid-research who are actively collecting ideas and shortlisting professionals. Cross-post the same shoot to all three, and always link back to the full case-study page so browsing turns into an enquiry.` },
       { h2: `Get found locally: SEO and Google Business Profile` },
       { p: `Local search is where high-intent enquiries actually convert, because most projects are geographically bound. Optimize your Google Business Profile first: complete every field, add your service area, and post fresh project photos regularly. Reviews are the lever most firms underuse — one local-SEO guide for architects notes that [studios often need only 10 to 30 reviews to rank competitively on Google Maps](https://tinyhousedigital.com/studio-notes/google-business-profile-for-architects/) in their city. Ask every satisfied client, on a schedule.` },
@@ -2414,7 +3121,7 @@ export const BLOG_POSTS = [
     title: 'Digital Marketing for Travel and Tourism: A 2026 Guide',
     date: 'Aug 22, 2026',
     icons: ['calendar', 'megaphone', 'chart'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 9,
     category: 'Growth',
     image: null,
@@ -2431,12 +3138,12 @@ export const BLOG_POSTS = [
       { ol: [
         `Post short, place-specific clips: a sunrise trek, a street-food stall, a room with a view. Concrete beats generic.`,
         `Reshare guest content (UGC). It is cheaper than production and reads as proof, not promotion.`,
-        `Work with micro-influencers (roughly 10,000–100,000 followers) whose audience matches your destination, rather than one expensive celebrity post.`,
+        `[Work with micro-influencers](/blog/influencer-marketing-for-product-launch) (roughly 10,000–100,000 followers) whose audience matches your destination, rather than one expensive celebrity post.`,
       ] },
       { p: `Influencers and UGC do the same job: they turn a stranger's dream into your brand's shortlist.` },
       { h2: `Win the research phase with destination SEO` },
       { p: `When dreaming turns to planning, travelers search, so own the research keywords. This is destination and "things to do" SEO: pages that answer "best time to visit Coorg," "3-day Jaipur itinerary," or "things to do in Rishikesh with kids." Google now surfaces a dedicated "Things to do" panel for destinations, and structured, genuinely useful pages are what feed it.` },
-      { p: `Build topic clusters, not one-off posts. A hotel or DMC should publish neighborhood guides, itinerary pages, seasonal round-ups, and FAQ-style answers, all linking to a bookable product. Add schema markup, fast mobile pages, and real photos. This content does double duty: it ranks in classic search and it becomes the raw material AI assistants quote, which leads to the biggest shift of all.` },
+      { p: `Build topic clusters, not one-off posts. A hotel or DMC should publish [neighborhood guides, itinerary pages, seasonal round-ups, and FAQ-style answers](/blog/content-marketing-for-brand-awareness), all linking to a bookable product. Add schema markup, fast mobile pages, and real photos. This content does double duty: it ranks in classic search and it becomes the raw material AI assistants quote, which leads to the biggest shift of all.` },
       { h2: `Answer engine optimization: the new front door` },
       { p: `The gap most competitors miss is that travelers now plan trips inside AI assistants, and your job is to be the answer they return. This is answer engine optimization (AEO): getting your destination, tour, or property recommended when someone asks ChatGPT, Gemini, or Google's AI Overviews to plan a trip.` },
       { p: `The behavior is already mainstream. Around [80% of travelers are open to using AI to plan and book](https://www.mindfulecotourism.com/chatgpt-and-ai-chatbots-travel-booking-statistics-and-trends/), and AI has split the funnel. Travelers are happy to let AI dream and research for them but not to hand over their credit card: [53% are comfortable letting AI suggest options while only 8% will book through an AI platform](https://www.hospitalitynet.org/editorial/4131925/travelers-use-ai-to-dream-trusted-brands-to-book-travel-hit-116-trillion-in-2025-siteminder-connects-53000-hotels-to-ai-platforms). Translation: AI is the new inspiration and shortlist layer, and the booking still happens on a brand you trust.` },
@@ -2452,7 +3159,7 @@ export const BLOG_POSTS = [
       { p: `Because the dreaming-to-booking gap runs for weeks, your job between interest and purchase is patient, timed follow-up. Ad demand is not flat: engagement and travel ad spend peak from May to June and again from September to November, which tells you when to lean in and when to nurture instead of push.` },
       { p: `Retargeting closes the gap. Someone who read your Goa itinerary in February is not lost; they are dreaming. Serve them the same destination through display, social, and email over the following weeks, and shift the message from inspiration to urgency (limited seasonal rates, filling dates) as booking windows approach. Build email flows around search behavior, and use predictive timing so offers land when a traveler is closest to deciding.` },
       { h2: `Turn OTA demand into direct bookings` },
-      { p: `Online travel agencies bring reach, but that reach is expensive, so treat OTAs as a discovery channel and fight for the direct booking. The commission math is stark. OTAs take a heavy cut while direct sales cost a fraction: [Booking.com charges most properties around 15% and Expedia 18–22%, versus an all-in direct cost near 4.5%](https://revpargenius.com/insights/direct-bookings-vs-ota-commission-2026), and OTAs still hold about 63% of independent-hotel bookings today.` },
+      { p: `Online travel agencies bring reach, but that reach is expensive, so [treat OTAs as a discovery channel and fight for the direct booking](/blog/digital-marketing-for-real-estate-companies). The commission math is stark. OTAs take a heavy cut while direct sales cost a fraction: [Booking.com charges most properties around 15% and Expedia 18–22%, versus an all-in direct cost near 4.5%](https://revpargenius.com/insights/direct-bookings-vs-ota-commission-2026), and OTAs still hold about 63% of independent-hotel bookings today.` },
       { table: {
         head: ['Channel', 'Cost per booking and role'],
         rows: [
@@ -2483,7 +3190,7 @@ export const BLOG_POSTS = [
     title: 'Content Marketing for Financial Advisors: A 2026 Guide',
     date: 'Aug 14, 2026',
     icons: ['money', 'shield', 'chart'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 9,
     category: 'Growth',
     image: null,
@@ -2492,21 +3199,21 @@ export const BLOG_POSTS = [
     body: [
       { p: `Money advice is a trust business, and trust is now earned in public — on your blog, in your newsletter, and increasingly inside an AI answer. This guide shows independent advisors, wealth managers, and accountants how to build educational content that demonstrates competence, nurtures leads over long trust-cycles, and stays inside India's advertising rules — then how to get that content cited when a prospect asks ChatGPT instead of Google.` },
       { h2: `Why content marketing matters for financial advisors` },
-      { p: `Content marketing works for advisors because it converts complex, high-stakes decisions into confidence — and confidence is what makes someone hand you their savings. Financial services sit squarely in Google's "Your Money or Your Life" category, where demonstrated expertise decides who gets seen. The upside is measurable: content creation generates [about $6,500 in revenue per new client on average, according to 2024 Kitces research](https://smartasset.com/advisor-resources/wealth-management-content-marketing), more than referrals. Yet [80% of financial advisors have no defined marketing strategy](https://www.assetmark.com/resources/blog/financial-advisor-marketing-strategies/), which means consistent, useful content is still a genuine edge rather than table stakes.` },
+      { p: `Content marketing works for advisors because it converts complex, high-stakes decisions into confidence — and confidence is what makes someone hand you their savings. Financial services sit squarely in [Google's "Your Money or Your Life" category](/blog/marketing-for-banking-services), where demonstrated expertise decides who gets seen. The upside is measurable: content creation generates [about $6,500 in revenue per new client on average, according to 2024 Kitces research](https://smartasset.com/advisor-resources/wealth-management-content-marketing), more than referrals. Yet [80% of financial advisors have no defined marketing strategy](https://www.assetmark.com/resources/blog/financial-advisor-marketing-strategies/), which means consistent, useful content is still a genuine edge rather than table stakes.` },
       { p: `The catch is time. Strong niches usually take a few years of steady publishing to gain momentum, so treat content as a compounding asset, not a campaign. Pick one audience — business owners near retirement, salaried NRIs, first-generation equity investors — and speak only to them.` },
       { h2: `What content to create — and in what format` },
-      { p: `The highest-return formats for advisors are educational blogs, an email newsletter, and short video, because each turns a complicated money question into a plain-language answer. Email newsletters and blogs are the formats most advisors already lean on, and search remains the engine that brings strangers to them. Video is the fastest-growing lever: [89% of people say a video has convinced them to buy a product or service](https://www.savvywealth.com/blog-posts/content-marketing-financial-advisors-playbook), and a two-minute explainer on "how STP works" or "should I prepay my home loan" often outperforms a 1,500-word post for a busy prospect.` },
+      { p: `The highest-return formats for advisors are educational blogs, an email newsletter, and [short video](/blog/content-marketing-for-brand-awareness), because each turns a complicated money question into a plain-language answer. Email newsletters and blogs are the formats most advisors already lean on, and search remains the engine that brings strangers to them. Video is the fastest-growing lever: [89% of people say a video has convinced them to buy a product or service](https://www.savvywealth.com/blog-posts/content-marketing-financial-advisors-playbook), and a two-minute explainer on "how STP works" or "should I prepay my home loan" often outperforms a 1,500-word post for a busy prospect.` },
       { p: `A simple content stack to run:` },
       { ol: [
         `Explainers — evergreen posts that translate one concept (SIP vs. lump sum, LTCG, Section 80C) into a client-friendly answer.`,
-        `Newsletter — a fortnightly digest that keeps you top-of-mind through a long decision cycle; email remains one of the highest-ROI channels in marketing.`,
+        `Newsletter — a fortnightly digest that keeps you top-of-mind through a long decision cycle; [email remains one of the highest-ROI channels in marketing](/blog/email-marketing-for-customer-acquisition).`,
         `Lead magnets — a checklist or calculator that trades genuine value for a contact detail and starts the nurture sequence.`,
       ] },
       { h2: `Content marketing for accountants and CAs` },
       { p: `Content marketing for accountants follows the same trust-led logic, and the payoff is comparable: one agency found its accounting clients averaged [107% more conversions year on year](https://www.practiceweb.co.uk/guides/complete-guide-content-marketing-accountants/) after committing to consistent content. The demand signal is broad — [92% of online marketers are shifting focus toward content marketing](https://oneims.com/blog/content-marketing-accountants-simple-steps) — but accountants have an unfair advantage: recurring, high-anxiety questions. Tax deadlines, GST filings, new-vs-old regime maths, and audit thresholds repeat every year and every client.` },
       { p: `Build a library around those predictable questions. A CA firm that owns "how to file ITR for freelance income" or "GST registration for a small business" earns qualified traffic long after the post is written — and positions the partner as the obvious person to call.` },
       { h2: `Working inside India's compliance limits` },
-      { p: `In India you can publish educational content freely, but you cannot solicit, promise returns, or dodge registration rules — so the line runs between teaching and touting. Since [March 2025, SEBI has required advertiser verification for registered intermediaries](https://www.mondaq.com/india/securities/1759228/sebis-new-digital-compliance-rules-what-investment-advisers-must-know-in-2026), and ads must display the adviser's name, registration number, and location while avoiding assured-return language.` },
+      { p: `In India you can publish educational content freely, but [you cannot solicit, promise returns, or dodge registration rules](/blog/seo-marketing-for-law-firms) — so the line runs between teaching and touting. Since [March 2025, SEBI has required advertiser verification for registered intermediaries](https://www.mondaq.com/india/securities/1759228/sebis-new-digital-compliance-rules-what-investment-advisers-must-know-in-2026), and ads must display the adviser's name, registration number, and location while avoiding assured-return language.` },
       { p: `Registered Investment Advisers and Research Analysts may explain general concepts, tax frameworks, and historical data older than three months, but cannot post client testimonials on social media or share buy/sell calls dressed up as "education." SEBI counted [more than 40,000 finfluencers by 2024](https://www.dealplexus.com/blog/sebi-finfluencer-rules) and has tightened its rules accordingly. Chartered accountants face a second layer: ICAI's professional conduct rules restrict solicitation and advertising, and a CA giving investment recommendations must also be SEBI-registered. Safe content is educational, disclosed, and free of performance claims — which, conveniently, is also the content AI engines reward.` },
       { h2: `The gap to own: AEO for advisors and accountants` },
       { p: `Answer Engine Optimization (AEO) is optimizing your content so AI tools quote you when someone asks a money question — and for advisors it is now the highest-leverage, least-crowded channel. The behaviour has already shifted: [AI Overviews appear in roughly 45% of Google searches and can cut traditional clicks by as much as 58%](https://www.wealthreach.ai/blog/what-is-answer-engine-optimization-aeo-guide-financial-advisors), while [25% of consumers already plan to use AI tools to find a financial advisor](https://wealthtender.com/advisors/marketing/answer-engine-optimization-aeo-for-financial-advisors/). If the AI answers without citing you, the impression never becomes a click.` },
@@ -2543,7 +3250,7 @@ export const BLOG_POSTS = [
     title: 'Marketing for Recruitment Agencies: A Two-Sided Guide',
     date: 'Aug 6, 2026',
     icons: ['users', 'target', 'megaphone'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 8,
     category: 'Growth',
     image: null,
@@ -2567,17 +3274,17 @@ export const BLOG_POSTS = [
       { h2: `How recruitment agencies win new client mandates` },
       { p: `Client acquisition works best when you stop pitching vacancies and start demonstrating market expertise. Hiring managers buy from agencies that clearly understand their sector's talent problems, so your marketing has to prove that before the first call. Three tactics carry most of the weight:` },
       { ol: [
-        `LinkedIn social selling and thought leadership. Post salary benchmarks, hiring-trend commentary, and specific market insight rather than job ads — the shift from cold outreach to a [consultative approach](https://www.theaccessgroup.com/en-gb/blog/rec-how-to-win-new-clients-for-your-recruitment-agency/) where you share genuinely useful content before you ever ask for a mandate.`,
+        `[LinkedIn social selling and thought leadership](/blog/digital-marketing-for-manufacturers). Post salary benchmarks, hiring-trend commentary, and specific market insight rather than job ads — the shift from cold outreach to a [consultative approach](https://www.theaccessgroup.com/en-gb/blog/rec-how-to-win-new-clients-for-your-recruitment-agency/) where you share genuinely useful content before you ever ask for a mandate.`,
         `Free, high-value content as lead generation. Salary guides, market maps, and hiring playbooks capture inbound interest and give your business-development team a reason to follow up.`,
         `Case studies and testimonials. Concrete results — time-to-fill, retention, roles filled in a hard niche — do the persuading that adjectives cannot.`,
       ] },
       { p: `The point of all three is the same: earn the meeting by being useful, not by interrupting.` },
       { h2: `How to attract candidates with employer-brand content` },
-      { p: `Candidate attraction is a branding job, not an advertising job — most of the people you want are not actively applying. Roughly 70% of the global workforce are passive candidates, according to [PeopleScout](https://www.peoplescout.com/insights/recruitment-marketing-strategies-talent-attraction/), which means job postings alone reach only the small slice already looking.` },
+      { p: `[Candidate attraction is a branding job, not an advertising job](/blog/content-marketing-for-brand-awareness) — most of the people you want are not actively applying. Roughly 70% of the global workforce are passive candidates, according to [PeopleScout](https://www.peoplescout.com/insights/recruitment-marketing-strategies-talent-attraction/), which means job postings alone reach only the small slice already looking.` },
       { p: `To reach the rest, publish content that shows what it's like to work through you and with your clients: employee and placement stories, day-in-the-life video, honest salary and career-path information, and fast, respectful communication at every stage. This is where your candidate-facing employer brand lives — the reputation that makes talent answer your messages. Keep it visibly separate from your client marketing. A candidate researching you should find career advice and real placement outcomes, not a sales deck aimed at HR directors.` },
       { h2: `Why niche specialization beats generalist positioning` },
       { p: `Niching down is the fastest way for a smaller agency to look like the obvious expert to both audiences. A "Python recruiter" or "medtech regulatory affairs specialist" is far more credible and memorable than a generalist promising to fill any role anywhere.` },
-      { p: `Specialization compounds your content, too. When you own one vertical, your webinars, guides, and posts all reinforce a single authority — and that format converts. Around 54% of B2B professionals watch a webinar every week, per data cited by [TalentHero Media](https://www.talentheromedia.com/killer-marketing-ideas-recruitment-agency/), so a recurring niche webinar or newsletter positions you as the sector's voice for both clients and candidates.` },
+      { p: `Specialization compounds your content, too. When you own one vertical, [your webinars, guides, and posts all reinforce a single authority](/blog/content-marketing-for-financial-advisors) — and that format converts. Around 54% of B2B professionals watch a webinar every week, per data cited by [TalentHero Media](https://www.talentheromedia.com/killer-marketing-ideas-recruitment-agency/), so a recurring niche webinar or newsletter positions you as the sector's voice for both clients and candidates.` },
       { h2: `AEO: getting recommended when clients and candidates ask AI` },
       { p: `The newest battleground is answer engine optimization — being the agency an AI assistant names when someone asks "best recruitment agency for [role or industry]." This is where most agencies are invisible, and it is the highest-leverage gap available right now.` },
       { p: `The behaviour is already mainstream. In one survey of B2B professionals, 66% said they regularly use AI to research vendors and solutions, and 92% said AI has shaped their vendor shortlist, according to [Semrush](https://www.semrush.com/blog/how-ai-shapes-b2b-buying/). A hiring manager asking ChatGPT for "top fintech recruiters in India" and a candidate asking "which agency is best for remote design roles" are now common first steps — and if the model doesn't know you exist, you never enter the shortlist. One AEO vendor reports that AI-generated answers already appear in roughly 60% of searches for staffing-related terms, per [aeoengine](https://aeoengine.ai/blog/best-aeo-agency-for-staffing-agencies). To become the agency AI recommends:` },
@@ -2606,10 +3313,10 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'content-marketing-for-brand-awareness',
-    title: 'Content Marketing for Brand Awareness: What Actually Builds Recall',
+    title: 'Content Marketing for Brand Awareness',
     date: 'Jul 28, 2026',
     icons: ['megaphone', 'chart', 'star'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 9,
     category: 'Growth',
     image: null,
@@ -2618,14 +3325,14 @@ export const BLOG_POSTS = [
     body: [
       { p: `Most content is built to capture demand that already exists. Awareness content does the opposite job — it plants your name in someone's memory long before they are ready to buy. This guide covers the formats that travel, why distribution matters more than creation, how to measure recall instead of leads, and the newest awareness surface most brands are ignoring: getting quoted by AI.` },
       { h2: `What content marketing for brand awareness actually means` },
-      { p: `Content marketing for brand awareness is top-of-funnel content designed to make people recognize and remember your brand before they have any intent to purchase. It is a different job from lead generation. A lead magnet asks for something now; awareness content simply earns a place in memory so that when intent appears months later, your name arrives with it.` },
+      { p: `Content marketing for brand awareness is top-of-funnel content designed to make people recognize and remember your brand before they have any intent to purchase. It is a different job from lead generation. [A lead magnet asks for something now](/blog/email-marketing-for-customer-acquisition); awareness content simply earns a place in memory so that when intent appears months later, your name arrives with it.` },
       { p: `The stakes are quietly high. One analysis of buyer behavior found that [75% of buyers are more likely to purchase from brands already familiar with their preferences](https://altitudemarketing.com/blog/brand-awareness-content-marketing/), which is why so many teams now treat familiarity itself as a growth lever. And awareness content works even on people who are not shopping — a study cited by Funnel reports that [43% of consumers like to discover new brands even when they aren't in the market to buy](https://funnel.io/blog/top-of-funnel-tactics). That is the entire premise: reach people early, be remembered, and let brand recall do the selling later.` },
       { p: `The two things you are trying to move are brand recognition (they know you when they see you) and brand recall (your name surfaces unprompted when a need appears). Recall is harder and more valuable. Content earns it through repetition, consistency, and usefulness — not through a single viral hit.` },
       { h2: `The formats that travel` },
       { p: `The awareness formats worth prioritizing are the ones people share and cite without being asked: short video, original data, and genuine thought leadership. These travel because they carry social proof and novelty, not just a message.` },
       { ul: [
         `Short video compresses a brand's personality into seconds and moves natively across platforms. It is the fastest way to build recognition because faces and motion are more memorable than text.`,
-        `Original data — a survey, a benchmark, an index you publish yourself — gives other people a reason to reference you. A statistic with your name attached becomes a citation, and every citation is a small unit of awareness working while you sleep.`,
+        `[Original data — a survey, a benchmark, an index you publish yourself](/blog/digital-marketing-strategy-vibe-coders) — gives other people a reason to reference you. A statistic with your name attached becomes a citation, and every citation is a small unit of awareness working while you sleep.`,
         `Thought leadership — a genuine point of view on where your category is heading — builds the trust half of awareness. Recognition without trust is just noise; a clear opinion is what makes a brand worth remembering.`,
       ] },
       { p: `The common thread: each format is built to be passed along, not just consumed. A blog post that only your existing audience reads builds almost no new awareness. A data study that a journalist quotes reaches thousands of people who have never heard your name.` },
@@ -2635,7 +3342,7 @@ export const BLOG_POSTS = [
       { p: `Distribution is also where awareness compounds. Each new surface — a podcast mention, a guest post, a partner's newsletter — is a fresh doorway to people outside your existing reach. Creation gets you an asset; distribution gets you an audience.` },
       { h2: `The new awareness surface: getting cited by AI` },
       { p: `Being quoted by AI answer engines is now its own brand-awareness channel, because a growing share of buyers first hear about brands inside ChatGPT, Perplexity, and Google's AI Overviews rather than on a page of blue links. Answer Engine Optimization (AEO) — [structuring content so AI engines cite it directly in their generated answers](https://contently.com/2026/02/03/what-is-aeo-answer-engine-optimization/) — is quietly becoming one of the highest-leverage awareness plays available, and most brands have not started.` },
-      { p: `The shift is real, not hypothetical. Roughly a quarter of Google searches now trigger an AI Overview, and AI search visits reportedly grew 42.8% year over year, climbing from 15.6 billion to 27.4 billion — reported in the same [Contently analysis of AI search behavior](https://contently.com/2026/02/03/what-is-aeo-answer-engine-optimization/). On the buyer side, one industry report finds that [51% of B2B software buyers now begin vendor research in an AI chatbot, up from 29% in early 2025](https://www.omnibound.ai/blog/answer-engine-optimization-aeo-statistics). When a buyer asks an AI "who are the leading tools for X" and your brand is named in the answer, you have earned awareness at the exact moment of discovery.` },
+      { p: `The shift is real, not hypothetical. Roughly a quarter of Google searches now trigger an AI Overview, and AI search visits reportedly grew 42.8% year over year, climbing from 15.6 billion to 27.4 billion — reported in the same [Contently analysis of AI search behavior](https://contently.com/2026/02/03/what-is-aeo-answer-engine-optimization/). [On the buyer side](/blog/digital-marketing-for-saas-companies), one industry report finds that [51% of B2B software buyers now begin vendor research in an AI chatbot, up from 29% in early 2025](https://www.omnibound.ai/blog/answer-engine-optimization-aeo-statistics). When a buyer asks an AI "who are the leading tools for X" and your brand is named in the answer, you have earned awareness at the exact moment of discovery.` },
       { p: `Why this is an awareness play and not just an SEO tactic: an AI citation puts your name in front of someone who never searched for you, framed by a trusted system as a credible answer. That is textbook top-of-funnel exposure. The same report notes that AI-referred visitors tend to arrive further along and [convert at roughly 4.4 times the rate of traditional organic visitors](https://www.omnibound.ai/blog/answer-engine-optimization-aeo-statistics), so the awareness you build here is unusually high-quality. How to engineer content to be quoted:` },
       { ol: [
         `Answer the question in the first sentence. A large share of quoted text comes from the opening portion of a page — lead with the direct answer, then expand.`,
@@ -2677,7 +3384,7 @@ export const BLOG_POSTS = [
     title: 'Digital Marketing for Rural India: What Works',
     date: 'Jul 21, 2026',
     icons: ['users', 'megaphone', 'lightning'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 9,
     category: 'Growth',
     image: null,
@@ -2692,9 +3399,9 @@ export const BLOG_POSTS = [
       { p: `Vernacular content is the single highest-leverage move in rural marketing, because most of the audience simply does not consume in English. Roughly [68% of Indian users prefer content in their native language](https://www.mgid.com/blog/the-rise-of-vernacular-content-in-india), and the gap widens as you move into tier-2, tier-3, and rural markets where daily life happens in Hindi, Bengali, Marathi, Tamil, Telugu, and dozens of other languages.` },
       { p: `Vernacular is not translation. A literal Hindi rendering of English copy often reads stiff or comic. What works is content written natively in the target language — using local idioms, festivals, crops, and price points that signal you understand the buyer's world. The same discipline applies to product names, WhatsApp replies, and even the on-screen text in a video. Treat each major language as its own creative track, not a subtitle.` },
       { h2: `Video and voice beat text: WhatsApp, YouTube, and short-video` },
-      { p: `In rural India, the primary channels are messaging and video — WhatsApp for distribution, YouTube and short-video for discovery and demonstration. Video removes the literacy barrier that text creates, which is why an estimated [95% of online video usage happens in Indian languages](https://ascentgroupindia.com/blog/how-rural-india-is-consuming-youtube-channel/) rather than English. Three habits shape how to use these channels:` },
+      { p: `In rural India, [the primary channels are messaging and video](/blog/content-marketing-for-brand-awareness) — WhatsApp for distribution, YouTube and short-video for discovery and demonstration. Video removes the literacy barrier that text creates, which is why an estimated [95% of online video usage happens in Indian languages](https://ascentgroupindia.com/blog/how-rural-india-is-consuming-youtube-channel/) rather than English. Three habits shape how to use these channels:` },
       { ol: [
-        `Design for WhatsApp forwarding. Make every asset a self-contained, shareable unit — a 30-second clip, a voice note, a single image with a price and a phone number. If it can be forwarded, it will travel.`,
+        `[Design for WhatsApp forwarding](/blog/digital-marketing-for-restaurants). Make every asset a self-contained, shareable unit — a 30-second clip, a voice note, a single image with a price and a phone number. If it can be forwarded, it will travel.`,
         `Use YouTube for how-to and proof. Rural buyers want to see a product used in a setting like theirs. Demonstrations, testimonials, and "how it works" videos build confidence that specs never will.`,
         `Go short and vertical. Short-video platforms and Reels reward native-language storytelling and let unknown brands reach new districts through the algorithm rather than an ad budget.`,
       ] },
@@ -2703,7 +3410,7 @@ export const BLOG_POSTS = [
       { p: `Concretely: keep videos short and compressed, avoid heavy landing pages, and never gate the core message behind a slow-loading site. WhatsApp and YouTube already handle compression and offline-friendly playback, which is another reason they beat a custom web experience. If your funnel needs a page, make it load in seconds on a slow connection or you have already lost most of the audience.` },
       { h2: `Voice search and AI assistants are rewriting rural discovery` },
       { p: `This is the shift most brands are underinvesting in: rural India is moving from typing to talking, and AI voice assistants in regional languages are becoming a primary way people find things. When you cannot type comfortably in English or even in your own script, you speak — and Bharat is speaking a lot. Industry coverage [reports that around 65% of Indian users already use voice search, that voice queries have grown roughly 270% year over year, and that about 40% of rural users lean on voice search specifically because of literacy barriers](https://www.exchange4media.com/marketing-news/voice-search-adoption-in-india-what-does-this-mean-for-brands-141742.html) — with Hindi now reported as the second most-used language on Google Assistant globally.` },
-      { p: `Voice changes discovery in two ways. First, queries become longer, spoken, and conversational — "sabse sasta solar pump kaun sa hai" rather than "solar pump price." Second, assistants and AI answer engines increasingly return one spoken answer instead of ten blue links, so being the source that gets read aloud matters more than ranking tenth on a page nobody scrolls. This is where Answer Engine Optimization (AEO) for Bharat comes in. Practical moves:` },
+      { p: `Voice changes discovery in two ways. First, queries become longer, spoken, and conversational — "sabse sasta solar pump kaun sa hai" rather than "solar pump price." Second, assistants and AI answer engines increasingly return one spoken answer instead of ten blue links, so [being the source that gets read aloud matters more than ranking tenth on a page nobody scrolls](/blog/digital-marketing-strategy-vibe-coders). This is where Answer Engine Optimization (AEO) for Bharat comes in. Practical moves:` },
       { ul: [
         `Publish in the languages people speak, not just Hindi. Create genuine question-and-answer content in the regional languages you sell in, phrased the way people actually ask out loud.`,
         `Answer the spoken question in the first sentence. Assistants extract the direct answer. Lead with it, then explain — the same answer-first structure works for humans and machines.`,
@@ -2744,7 +3451,7 @@ export const BLOG_POSTS = [
     title: 'Money Follows, My Brotha. Money Follows',
     date: 'Aug 26, 2026',
     icons: ['money', 'chart', 'bell'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 7,
     category: 'Money',
     image: null,
@@ -2761,8 +3468,8 @@ export const BLOG_POSTS = [
         "We snapshot the price and compute your share: your listed price, minus a small platform fee, minus commission if you are on the free plan, minus the statutory bits.",
         "Your share is sent as a held transfer to your own [Razorpay Route](https://razorpay.com/docs/payments/route/) linked account — held, not spent, until the service is done plus a short buffer.",
         "When the booking completes, or the hold matures, the transfer releases and the money is yours.",
-        "Razorpay settles it from your linked account to your bank on its settlement cycle.",
-        "We reconcile the whole chain — payment, share, hold, transfer, settlement — so nothing falls silently between two systems.",
+        "[Razorpay settles it from your linked account to your bank](/blog/razorpay-is-the-source-of-truth) on its settlement cycle.",
+        "We [reconcile the whole chain](/blog/the-ledger-nobody-asked-for) — payment, share, hold, transfer, settlement — so nothing falls silently between two systems.",
       ] },
       { p: "Notice what is not in that list: us, moving money by hand. The old way — a screenshot, a manual transfer, a hope — is exactly the thing this replaces. The money rides a rail, and the rail is auditable end to end." },
       { h2: 'What the client pays, and what you keep' },
@@ -2780,7 +3487,7 @@ export const BLOG_POSTS = [
       } },
       { p: "That structure is not an accident. We collect through a regulated payment aggregator so that host money never sits in a place it should not — which is the entire point of the [RBI's aggregator rules](https://www.rbi.org.in/). We are the marketplace; the money rail is run by people licensed to run it." },
       { h2: 'The hold is a feature, not a delay' },
-      { p: "When your share is transferred, it does not hit your bank the same second, and that is deliberate. The transfer is created on hold and stays held until the service is over plus a short buffer. If a client cancels or a booking is refunded before then, the held money reverses cleanly instead of being clawed back after the fact. Think of it as an escrow the length of a booking: enough protection that a client pays confidently, and enough that you are not stuck in a refund fight over money you have already spent." },
+      { p: "When your share is transferred, it does not hit your bank the same second, and that is deliberate. The transfer is created on hold and stays [held until the service is over plus a short buffer](/blog/where-your-money-sits). If a client cancels or a booking is refunded before then, the held money reverses cleanly instead of being clawed back after the fact. Think of it as an escrow the length of a booking: enough protection that a client pays confidently, and enough that you are not stuck in a refund fight over money you have already spent." },
       { info: { title: 'KYC is the gate, and it comes after you earn', text: "You do not hand us your PAN and bank details to start — you list and get booked first. Verification is only required to unlock payouts, because that is the only moment it actually matters. Once you are verified, your Route account can receive transfers. We wrote about why that order is the humane one in [KYC only after you earn](/blog/kyc-only-after-you-earn)." } },
       { h2: 'The part nobody blogs about: when a step fails' },
       { p: "Here is the honest bit. A money pipeline has many steps, and any step can fail — a confirmation from the bank can go missing, an account can still be finishing verification, a transfer can be created just below the floor at which it can be reversed. If you only build the happy path, those failures do not announce themselves. The money simply stops, somewhere, quietly, and the host is the last to know. We know because we went looking, and we found exactly that." },
@@ -2801,7 +3508,7 @@ export const BLOG_POSTS = [
     title: 'We finally measured the only thing that matters',
     date: 'Aug 21, 2026',
     icons: ['chart', 'target', 'users'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Internal',
     image: null,
@@ -2809,10 +3516,10 @@ export const BLOG_POSTS = [
       'We had dashboards, charts, page-view counts — everything except the one number that decides whether this company lives. So we stopped measuring vanity and started measuring the first booking.',
     body: [
       { p: "For months we measured everything except the thing that matters. We knew how many people opened the homepage, how long they stayed, which button they hovered. What we did not know — could not answer, if you had woken me at 3am and asked — was the only question a booking product actually has to answer: does a new host get booked?" },
-      { p: "So we went and counted. The number was not comfortable. Of the hosts who had signed up and built a page, only a handful had ever received a single booking. The rest had done everything we asked — picked a username, published a service, set their hours — and then heard nothing. They built a shop and stood behind the counter, and the door never opened." },
+      { p: "So we went and counted. The number was not comfortable. Of the hosts who had signed up and built a page, only a handful had ever received a single booking. The rest had done everything we asked — [picked a username, published a service, set their hours](/blog/onboarding-a-host-in-60-seconds) — and then heard nothing. They built a shop and stood behind the counter, and the door never opened." },
       { h2: 'Vanity is easy, activation is honest' },
       { p: "Page views are a flattering number. They go up when you post on social, they feel like progress, and they tell you almost nothing. The honest number is a [funnel](https://posthog.com/docs/product-analytics/funnels): someone signs up, they publish a service, they share their link, and then — the only step that pays anyone — they get their [first booking](/blog/the-first-host-who-paid). Four steps, one line, and every drop between them is a thing we can actually fix." },
-      { info: { title: 'Why the first booking, specifically', text: "Everything before the first booking is potential; everything after it is a relationship. A host who has been paid once has felt the product work. A host who never has is one bad Tuesday from deleting the tab. If we only get to move one number, it is the count of hosts who cross that line — not the count of people who looked at the homepage." } },
+      { info: { title: 'Why the first booking, specifically', text: "Everything before the first booking is potential; everything after it is a relationship. A host who has been paid once has [felt the product work](/blog/money-follows-my-brotha). A host who never has is one bad Tuesday from deleting the tab. If we only get to move one number, it is the count of hosts who cross that line — not the count of people who looked at the homepage." } },
       { p: "We wired the funnel to fire on the host, not the guest. That distinction sounds small and is not: the booking event naturally belongs to the person who paid, but a host-activation funnel has to belong to the host. So we added two milestones keyed to the host — the moment they share their link, and the moment their first booking is paid — and now the whole line, sign-up to first rupee, sits on one person in one chart." },
       { h2: 'What the drop-offs will tell us' },
       { p: "The point of the funnel is not the pretty picture. It is that each gap has a verdict. A host who signs up and never publishes has an onboarding problem. One who publishes and never shares has the biggest problem of all — they built the link and never sent it to a soul, and no feature we ship fixes a link that nobody sees. One who shares and still gets no booking has an offer or an audience problem, which is a different fight entirely." },
@@ -2831,7 +3538,7 @@ export const BLOG_POSTS = [
     title: 'We were calm. Now we get you paid.',
     date: 'Aug 19, 2026',
     icons: ['money', 'megaphone', 'target'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'News',
     image: null,
@@ -2841,11 +3548,11 @@ export const BLOG_POSTS = [
       { p: "We used to introduce ourselves as the calm booking platform for India. I liked writing it. It was gentle, it fit the sloth, and it was, on reflection, almost useless. Nobody wakes up wanting calm booking. They wake up wanting to be paid for the thing they are good at, with less hassle than a Google Form and a screenshot of a UPI transfer." },
       { p: "Calm is a mood. A mood is not a promise, and a promise is what a homepage is for. So we changed the sentence the whole site is built around. Book A Sloth is now, in plain words, the booking link that gets you paid." },
       { h2: 'A job, not a feeling' },
-      { p: "The clearest test of a positioning line is whether a stranger can repeat what you do after five seconds. 'The calm booking platform' fails that test — it tells you the vibe and hides the job. 'The booking link that gets you paid' passes it: share one link, clients book a time, they pay you over UPI, and the money lands in your account. That is the whole product in a sentence, and it happens to be true." },
+      { p: "The clearest test of a positioning line is whether a stranger can repeat what you do after five seconds. 'The calm booking platform' fails that test — it tells you the vibe and hides the job. 'The booking link that gets you paid' passes it: share one link, clients book a time, they pay you over UPI, and [the money lands in your account](/blog/you-only-pay-when-you-earn). That is the whole product in a sentence, and it happens to be true." },
       { info: { title: 'What actually changed', text: "The homepage headline, the meta titles and social cards, the how-it-works hero, the become-a-host page — everywhere the site declares what it is, it now leads with getting paid. We left the warmth in the supporting copy on purpose. Money-first does not mean cold; the sloth still writes the small print." } },
       { p: "We did not strip the character out. The friendly voice, the calm, the sloth that refuses to be in a hurry — that is still who we are in the sentences underneath the promise. The change is only about which sentence goes first. Lead with the money the host makes; keep the warmth for the paragraph after. A brand can be kind and still be honest about what it is for." },
       { h2: 'Why now' },
-      { p: "Because we finally looked hard at who this is for. The person Book A Sloth serves is a creator, coach, tutor, or consultant in India who already has an audience and needs to charge for their time. They do not need a calmer calendar. They need the shortest possible distance between 'someone wants to book me' and 'the money is in my account,' and they need it to work over [UPI](https://www.npci.org.in/what-we-do/upi/product-overview), on a phone, shared through WhatsApp." },
+      { p: "Because we finally looked hard at who this is for. The person Book A Sloth serves is a creator, coach, tutor, or consultant in India who already has an audience and needs to charge for their time. They do not need a calmer calendar. They need the shortest possible distance between 'someone wants to book me' and 'the [money is in my account](/blog/money-follows-my-brotha),' and they need it to work over [UPI](https://www.npci.org.in/what-we-do/upi/product-overview), on a phone, shared through WhatsApp." },
       { p: "Against that person, 'calm' was us talking about ourselves. 'Gets you paid' is us talking about them. That is the entire move, and it is the move we should have made at the start." },
       { quote: 'Positioning is not a slogan you admire. It is the promise a stranger can repeat back to you after five seconds. If they cannot, it is decoration.', cite: 'The bit worth keeping' },
       { p: "So the site reads differently today. Same product, same sloth, sharper promise. If you [make things worth paying for](/be-a-sloth), the link that gets you paid is the one thing we want to be known for — the same bet as [going 0% on commission](/blog/zero-commission-bet), just said out loud on the homepage. And now the whole website says so." },
@@ -2861,7 +3568,7 @@ export const BLOG_POSTS = [
     title: "You only pay when you've made money",
     date: 'Aug 16, 2026',
     icons: ['money', 'chart', 'calendar'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Money',
     image: null,
@@ -2869,9 +3576,9 @@ export const BLOG_POSTS = [
       'A free plan that earns the company nothing is a charity. A paid plan you buy on hope is a gamble. We built the version where the upgrade only makes sense once you are already winning.',
     body: [
       { p: "There are two honest ways to price a tool for people who are just starting out, and most companies pick a dishonest third. The dishonest one is to charge a subscription up front, on the promise that the tool will pay for itself later. It puts the risk entirely on the person with the least money and the least proof. We did not want to build that." },
-      { p: "So the deal is plain. Everyone can list and take bookings for free. On a booking, we take a small, flat platform fee — the price of a chai — and that is it. No monthly charge to get started, no card to enter, nothing to lose. Free is not a trial that expires; it is a real place to run a real business." },
+      { p: "So the deal is plain. [Everyone can list and take bookings for free](/blog/kyc-only-after-you-earn). On a booking, we take a small, flat platform fee — the price of a chai — and that is it. No monthly charge to get started, no card to enter, nothing to lose. Free is not a trial that expires; it is a real place to run a real business." },
       { h2: 'The fee is a floor, not the business' },
-      { p: "A rupee or ten on a booking is not how a company survives, and we are not pretending it is. The flat fee covers the cost of moving the money and keeps a free booking from being a pure expense to us. It is a floor. The business — the part that actually pays our bills — is the subscription, and the subscription only earns its price once you are already earning yours." },
+      { p: "A rupee or ten on a booking is not how a company survives, and we are not pretending it is. The flat fee [covers the cost of moving the money](/blog/money-follows-my-brotha) and keeps a free booking from being a pure expense to us. It is a floor. The business — the part that actually pays our bills — is the subscription, and the subscription only earns its price once you are already earning yours." },
       { info: { title: 'Upgrade-on-success, in one sentence', text: "On the free plan we take a small commission as you earn; on the paid plans that commission is zero. So the upgrade pays for itself precisely when you are doing enough bookings that the commission you would have paid is larger than the plan. We show you that number, in rupees you actually made, and let you decide." } },
       { p: "That is the whole trick, and it is not really a trick. Instead of asking you to buy a subscription on faith, we wait until you have made money through us, then show you exactly what the free-plan [commission](/blog/the-arithmetic-of-commission) has cost you this month. If that number is bigger than a plan, upgrading is arithmetic, not a leap. If it is not, stay free — you are not our profit centre yet, and pretending otherwise would just annoy you." },
       { h2: 'Why this is the right way round' },
@@ -2891,7 +3598,7 @@ export const BLOG_POSTS = [
     title: 'The only email a host should get',
     date: 'Aug 13, 2026',
     icons: ['money', 'bell', 'calendar'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Feature Update',
     image: null,
@@ -2899,11 +3606,11 @@ export const BLOG_POSTS = [
       'We could have built streaks, badges, and a little confetti cannon. Instead we built the one email a busy host actually opens: what you earned this week, and what is coming.',
     body: [
       { p: "There is a temptation, when you want people to come back to a product, to reach for the gamification drawer. Streaks. Badges. A number that goes up if you log in every day. It is easy to build and it insults the user, because it pretends a booking business is a mobile game and the host has nothing better to do than feed a counter." },
-      { p: "A booking product is not a daily habit and should not pretend to be. Nobody wants to open a scheduling tool every morning, and a host who is not fully booked does not need a badge — they need a booking. So we did not build the confetti. We built the one thing a host will actually open on a Sunday: a short note that says what you earned this week, how many bookings you took, and what is coming up." },
+      { p: "A booking product is not a daily habit and should not pretend to be. Nobody wants to open a scheduling tool every morning, and a host who is not fully booked does not need a badge — they need a booking. So we did not build the confetti. We built the one thing a host will actually open on a Sunday: a short note that says [what you earned this week, how many bookings you took, and what is coming up](/blog/money-follows-my-brotha)." },
       { h2: 'Money and the calendar, nothing else' },
       { p: "Hosts come back to two things: the money, and their schedule. That is the entire honest list. So the weekly recap is exactly those — earned this week, bookings taken, sessions upcoming — and then it gets out of the way. No leaderboard, no nudge to 'engage,' no manufactured urgency. Just the two facts a working person checks, delivered once, so you do not have to go looking." },
       { info: { title: 'The quiet rule', text: "The recap never emails a host who has nothing to report. No bookings this week and nothing upcoming means no email — silence beats a cheerful 'you earned ₹0.' A retention email that shows up to remind you that nothing happened is not retention; it is a small weekly insult, and we would rather send nothing." } },
-      { p: "That quiet rule matters more than it sounds. The fastest way to teach someone to ignore your emails is to send one when there is nothing in it. So the recap only arrives when there is something true and good to say — money that came in, or sessions on the way. If your week was empty, we stay quiet, and the next email you get from us will have earned its place in your inbox." },
+      { p: "That quiet rule matters more than it sounds. The fastest way to teach someone to ignore your emails is to send one when there is nothing in it. So [the recap only arrives when there is something true and good to say](/blog/pricing-page-and-the-rebook-nudge) — money that came in, or sessions on the way. If your week was empty, we stay quiet, and the next email you get from us will have earned its place in your inbox." },
       { h2: 'Why weekly, why email' },
       { p: "Daily is too often for a business that does not move daily. Monthly is too slow to feel like momentum. Weekly is the rhythm of a working life — you close the week, you see what it made, you look at what is booked. And email, not a [push notification](/blog/notifications-that-actually-arrive) begging for a tap, because the recap is a statement you might want to keep, not an interruption you have to clear." },
       { quote: 'The habit is not the app. The habit is the money arriving and the calendar filling. Serve that flawlessly and you never need a streak.', cite: 'The bit worth keeping' },
@@ -2920,7 +3627,7 @@ export const BLOG_POSTS = [
     title: "Stop asking for a PAN before you've earned a rupee",
     date: 'Aug 11, 2026',
     icons: ['money', 'shield', 'clipboard'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Product',
     image: null,
@@ -2930,12 +3637,12 @@ export const BLOG_POSTS = [
       { p: "Here is an embarrassing sentence to write about your own product: we were asking people for their PAN, their bank account, and their registered address before they had earned a single rupee. It was the heaviest possible ask, delivered at the exact moment a new host had the least reason to trust us. And it sat right in the path, so plenty of people met the wall and quietly left." },
       { p: "The logic was not wrong, exactly — you cannot pay someone out without knowing who they are and where the money goes — and [we handle that Aadhaar and PAN carefully](/blog/what-happens-to-your-aadhaar). But we had confused two different moments. Listing a service and taking a booking needs nothing from us but a page. Getting paid out needs the verification. We had bolted the second requirement onto the first, and it was costing us the people we most wanted to keep." },
       { h2: 'Sell first, verify when there is money on the line' },
-      { p: "So we unbolted them. You can now create your services, publish your page, and take real bookings with no verification at all. Nothing about listing requires a PAN. The verification only becomes relevant at the moment it actually is relevant: when you have earned money and it is time to send it to you." },
+      { p: "So we unbolted them. You can now [create your services, publish your page, and take real bookings with no verification at all](/blog/you-only-pay-when-you-earn). Nothing about listing requires a PAN. The verification only becomes relevant at the moment it actually is relevant: when you have earned money and it is time to send it to you." },
       { info: { title: 'What triggers the ask now', text: "The first time a host actually earns from a booking, and only then, we send a nudge — an email, a note on the dashboard, a bell — that says, in effect: you have money waiting, here is the quick one-time verification to receive it. Before that first rupee, we do not ask. There is nothing to pay out, so there is no reason to hold anyone's Aadhaar." } },
       { p: "The difference is entirely about trust and timing. Asking a stranger for their bank details before they have seen the product work is asking them to take all the risk on faith. Asking a host who has just made their first booking to verify so we can pay them is asking them to finish a transaction they are already winning. Same form, completely different feeling, because now there is money on the table that is theirs." },
       { h2: 'The unglamorous half' },
       { p: "Deferring the ask meant we also had to make the earnings visible to a host who had never touched the verification screen. A host who earned before starting the process still needs to see 'you have ₹X waiting' — so we made that number show up on the dashboard whether or not they had ever begun. It is a small plumbing change that matters, because the nudge is worthless if the person it is meant for cannot see what they are owed." },
-      { p: "None of this lowers the bar for actually getting paid — the verification is the same, the checks are the same, the money still only moves to a verified account. We just stopped demanding it as a toll on the way in. You prove who you are when there is a reason to; until then, you get to just run your business." },
+      { p: "None of this lowers the bar for actually getting paid — the verification is the same, the checks are the same, [the money still only moves to a verified account](/blog/the-address-line-nobody-filled). We just stopped demanding it as a toll on the way in. You prove who you are when there is a reason to; until then, you get to just run your business." },
       { quote: 'Ask for the heaviest thing at the moment of most trust, not the least. A form feels different the instant there is money behind it that is yours.', cite: 'The bit worth keeping' },
       { p: "If you have been putting off setting up because the first thing we wanted was your PAN — that is gone. [Publish your services](/be-a-sloth), take your bookings, and we will only ask for the paperwork once there is something waiting to be paid out to you." },
       { faq: [
@@ -2950,19 +3657,19 @@ export const BLOG_POSTS = [
     title: 'The address line nobody filled',
     date: 'Aug 08, 2026',
     icons: ['clipboard', 'money', 'bug'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Postmortem',
     image: null,
     excerpt:
       'A host did everything right — verified, bank details in, approved. Her payout account was never created. The reason was a single optional field she left blank, and a mismatch we should have caught.',
     body: [
-      { p: "A host added her bank details, got verified, and was approved. By every screen she could see, she was done. And yet, behind the glass, the account that actually receives her money had never been created. She had crossed the finish line and the machine had not noticed. This is the story of why, and it comes down to one blank field." },
+      { p: "A host added her bank details, [got verified, and was approved](/blog/kyc-only-after-you-earn). By every screen she could see, she was done. And yet, behind the glass, the account that actually receives her money had never been created. She had crossed the finish line and the machine had not noticed. This is the story of why, and it comes down to one blank field." },
       { p: "When a host is approved, we quietly set up their payout account with our payments partner ([Razorpay Route](https://razorpay.com/docs/payments/route/)) — the plumbing that lets money reach their bank. That setup takes a name, a PAN, bank details, and a registered address. Our form asked for the address, and it marked the second address line as optional. Most people typed something there anyway. She did not. She left it blank, exactly as we told her she could." },
       { h2: 'Optional to us, required to them' },
       { p: "Our payments partner does not consider that line optional. When we sent her details along without it, they rejected the whole request — a clean, correct refusal that said, in effect, the street2 field is required. We had marked a field optional that the system on the other end insists on. Everyone before her had happened to fill it, so the wall was there the whole time and she was simply the first to walk into it." },
       { info: { title: 'The quiet part of the failure', text: "The account setup runs after approval and is deliberately fire-and-forget: a failure there must never roll back an admin's decision. That is the right design — but it means a failure is silent by default. Approval succeeded, so every screen looked fine; only the payout account, off in the corner, had quietly errored. A silent safety net is exactly where a bug hides longest." } },
-      { p: "There were two bugs here, and only one of them was hers to notice. The visible one is that a required field was labelled optional. The invisible one is that when the setup failed, nothing shouted. The approval went through, the host saw success, and the only trace of the problem was a status field nobody was watching. A failure you have to go looking for is a failure that gets to live for weeks." },
+      { p: "There were two bugs here, and only one of them was hers to notice. The visible one is that a required field was labelled optional. The invisible one is that when the setup failed, nothing shouted. The approval went through, the host saw success, and the only trace of the problem was a status field nobody was watching. [A failure you have to go looking for is a failure that gets to live for weeks](/blog/the-day-the-site-went-white)." },
       { h2: 'Both halves of the fix' },
       { p: "So we fixed both. The address line is required now, in the form and on the server, so no future host can leave it blank and hit the same wall. And for the hosts already in the system with a blank line, we added a fallback — if that second line is empty, we fill it sensibly rather than sending an empty field and getting rejected. New hosts cannot trip it; old rows heal themselves." },
       { p: "Her own account we set right by hand: filled the missing line, cleared the error, and let the setup run again. It went through the second time in seconds, because the data had been fine all along — it was one blank box between her and [her money](/blog/where-your-money-sits)." },
@@ -2980,7 +3687,7 @@ export const BLOG_POSTS = [
     title: 'We audited our own booking flow',
     date: 'Aug 05, 2026',
     icons: ['clipboard', 'database', 'shield'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Engineering',
     image: null,
@@ -2994,7 +3701,7 @@ export const BLOG_POSTS = [
       { info: { title: 'Why we trust the database over the app', text: "Application code runs many times, on many servers, racing each other. A rule enforced in the app is a rule you hope holds under load. A rule enforced by the database — a no-overlap constraint, a uniqueness guarantee — is a rule that physically cannot break, no matter how many requests arrive at once. For anything involving money or a shared slot, we push the guarantee down to where it cannot be raced." } },
       { p: "That last point is worth dwelling on, because it is the difference between a booking system that works in a demo and one that works on a busy Friday. When [fifty people try for the same slot at once](/blog/two-bookings-one-slot) — which is not hypothetical for a popular host — the winner is decided by the database, once, and the other forty-nine get a clean 'taken,' not a double-booking to apologise for on Monday." },
       { h2: 'What we found to fix' },
-      { p: "It was not a clean bill. The audit turned up a stack of things worth fixing — none catastrophic, several embarrassing. A paid-but-unconfirmed booking had no automatic second attempt to nudge it over the line. A cancelled paid booking did not raise a flag for a refund. A reminder cron, under the wrong timing, could double-send. None of these were on fire; all of them were the kind of quiet wrong that erodes trust one small confusion at a time." },
+      { p: "It was not a clean bill. The audit turned up a stack of things worth fixing — none catastrophic, several embarrassing. [A paid-but-unconfirmed booking had no automatic second attempt to nudge it over the line](/blog/the-confirmation-that-didnt-confirm). A cancelled paid booking did not raise a flag for a refund. [A reminder cron, under the wrong timing, could double-send](/blog/notifications-that-actually-arrive). None of these were on fire; all of them were the kind of quiet wrong that erodes trust one small confusion at a time." },
       { p: "The value of writing them all down — with a severity next to each, verified against the real database rather than assumed — is that a list you can see is a list you can burn down. Deferred work that lives only in your head is deferred forever. Deferred work with a number next to it is a plan." },
       { quote: 'Read your own code as if it is lying to you, and check the parts you are proudest of first. Pride is exactly where you stopped looking.', cite: 'The bit worth keeping' },
       { p: "We publish this for the same reason we [publish the security work nobody claps for](/blog/security-nobody-claps-for): a thing written down in public is a thing you can be held to. The booking flow is sound where it counts, honest where it is not yet perfect, and the not-yet-perfect list is short and shrinking. That is the most truthful thing we can say, and we would rather say it than a slogan." },
@@ -3010,7 +3717,7 @@ export const BLOG_POSTS = [
     title: "/69 goes where you'd hope",
     date: 'Aug 02, 2026',
     icons: ['code', 'lightning', 'target'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Engineering',
     image: null,
@@ -3024,9 +3731,9 @@ export const BLOG_POSTS = [
       { info: { title: 'Two kinds of navigation', text: "Clicking a link inside a single-page app never reloads the page, so my in-app redirect ran fine. But a typed URL, or a link shared and opened cold, hits the server first — and for these joke slugs the server saw an unknown username and 404'd before the app could run. The redirect lived in the one place that never got a chance to fire for the exact case that mattered." } },
       { p: "So the joke slugs were dying at the edge, 404'd as unknown usernames, before the app that knew what to do with them ever loaded. The redirect I had written was only reachable by people already walking around inside the site — precisely the people who would never type /69 into a bar to see what happened." },
       { h2: 'Put the redirect where the request actually lands' },
-      { p: "The fix was to move the redirect to where the request first arrives: the edge. Now, before the unknown-username check runs, the edge sees a joke slug and issues a proper redirect to the real profile — for typed links, shared links, crawlers, everyone. The in-app version stays too, for the in-app clicks. Two layers, because there are genuinely two ways to arrive, and a redirect has to live where the arrival happens." },
+      { p: "The fix was to move the redirect to where the request first arrives: the edge. Now, before the unknown-username check runs, the edge sees a joke slug and issues a proper redirect to the real profile — for typed links, shared links, crawlers, everyone. The in-app version stays too, for the in-app clicks. Two layers, because there are genuinely two ways to arrive, and [a redirect has to live where the arrival happens](/blog/two-bookings-one-slot)." },
       { quote: 'A redirect is only real where the request actually lands. Put it anywhere else and it works only for the people who did not need it.', cite: 'The bit worth keeping' },
-      { p: "It is a silly feature with a serious moral, and the moral generalises well past jokes: for anything served at the edge, the edge is the source of truth for a direct hit, and a client-side handler is a convenience for navigation that already got inside. Now the numbers go where you would hope, and the reason they do is the reason worth keeping." },
+      { p: "It is a silly feature with a serious moral, and the moral generalises well past jokes: for anything served at the edge, [the edge is the source of truth for a direct hit](/blog/razorpay-is-the-source-of-truth), and a client-side handler is a convenience for navigation that already got inside. Now the numbers go where you would hope, and the reason they do is the reason worth keeping." },
       { faq: [
         { q: 'Why did a client-side redirect fail for a directly-typed URL?', a: 'A single-page app only runs its client routing when you navigate inside it. A typed or shared URL hits the server first — and for an unknown username our edge layer returns a 404 before the app loads, so a client-side redirect never gets a chance to fire.' },
         { q: 'Where should a redirect for a username-style route live?', a: 'At the edge, where the request first lands, so it works for typed links, shared links and crawlers. A client-side redirect is a useful addition for in-app navigation, but it cannot be the only layer.' },
@@ -3038,14 +3745,14 @@ export const BLOG_POSTS = [
     title: "The confirmation that didn't confirm",
     date: 'Jul 30, 2026',
     icons: ['bell', 'bug', 'shield'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Postmortem',
     image: null,
     excerpt:
       'For five weeks, a "Booking Confirmed" message on WhatsApp was failing to send — and nothing told us. The code thought it had succeeded. Here is how a success can hide a failure.',
     body: [
-      { p: "For about five weeks, the WhatsApp message that tells a guest their booking is confirmed was not being sent. Not sometimes — every time. And in all those weeks, nothing warned us. No alarm, no error page, no angry email. The most unnerving kind of bug: not the one that breaks loudly, but the one where the machine cheerfully reports success while quietly doing nothing." },
+      { p: "For about five weeks, the WhatsApp message that tells a guest their booking is confirmed was not being sent. Not sometimes — every time. And in all those weeks, nothing warned us. No alarm, no error page, no angry email. The most unnerving kind of bug: not the one that breaks loudly, but [the one where the machine cheerfully reports success while quietly doing nothing](/blog/we-audited-our-own-booking-flow)." },
       { p: "The booking still worked. The money was still taken, the slot still held, the [email confirmation](/blog/notifications-that-actually-arrive) still went. But the WhatsApp confirmation — the one that, in India, is the message people actually see — was silently failing at the provider, and our code was reading that failure as fine. For five weeks, guests booked and heard nothing on the channel that matters most." },
       { h2: 'A template with the wrong number of blanks' },
       { p: "The cause was small and stupid, as these always are. WhatsApp business messages are sent as templates with a fixed number of blanks to fill — the guest's name, the service, the host, the time. At some point the approved template had four blanks. Our code was still sending five. The provider looked at five values for four slots and refused the whole message: template parameters do not match. Correct of it, really." },
@@ -3053,7 +3760,7 @@ export const BLOG_POSTS = [
       { p: "That is the whole anatomy of a silent failure. A logged error is not a noticed error. If the only record of a problem is a line in a log file that no human opens and no alarm watches, then for every practical purpose the problem is invisible — and an invisible problem gets to run for five weeks, because nothing is counting the days." },
       { h2: 'The fix, and the fix behind the fix' },
       { p: "The immediate fix was trivial: send four values, not five. The meeting link that had been the fifth still reaches people — it is in the email and the calendar invite — so nothing was lost by dropping it from a message that could not carry it anyway. One line, and confirmations flowed again." },
-      { p: "The fix behind the fix is the one that matters. A booking confirmation failing is not something we should ever learn about from a confused guest weeks later. So a WhatsApp send failing now raises an actual alert, once, throttled so a burst of the same failure does not become a burst of the same email. The next time a template drifts or the credits run dry, we find out the day it happens, not the month after." },
+      { p: "The fix behind the fix is the one that matters. A booking confirmation failing is not something we should ever learn about from a confused guest weeks later. So [a WhatsApp send failing now raises an actual alert, once, throttled](/blog/the-strike-you-could-reset-yourself) so a burst of the same failure does not become a burst of the same email. The next time a template drifts or the credits run dry, we find out the day it happens, not the month after." },
       { quote: 'A logged error is not a noticed error. If nothing is watching the log, the failure is invisible — and invisible failures do not fix themselves; they just accumulate.', cite: 'The bit worth keeping' },
       { p: "The uncomfortable takeaway is that our tests and our screens all looked green the entire time, because the failure lived in the space between 'the request was accepted' and 'the message actually arrived.' We are watching that space now. The booking confirmation is the promise the whole flow is built to keep, and a promise you cannot see failing is the most dangerous kind to make." },
       { faq: [
@@ -3068,14 +3775,14 @@ export const BLOG_POSTS = [
     title: 'The Opening, again',
     date: 'Jul 26, 2026',
     icons: ['rocket', 'users', 'star'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'News',
     image: null,
     excerpt:
       'We reopened the doors for a second time — a small ceremony, a wall of names, and a takeover that lasts exactly one moment per device. Here is why a launch is worth doing twice.',
     body: [
-      { p: "Most products launch once, quietly, and hope. We launched, and then we did something slightly odd: we reopened the doors a second time, on purpose, as an event. A short window, a small ceremony, a wall where the first people to walk through get their names set in stone. This is a note about why a launch is worth doing more than once, and what we kept from the first time." },
+      { p: "Most products launch once, quietly, and hope. [We launched, and then we did something slightly odd](/blog/going-live): we reopened the doors a second time, on purpose, as an event. A short window, a small ceremony, a wall where the first people to walk through get their names set in stone. This is a note about [why a launch is worth doing more than once](/blog/hello-world), and what we kept from the first time." },
       { p: "The first Opening gave us our [founding hosts](/blog/the-first-host-who-paid) — the handful of people who backed a booking tool made by a sloth before there was much to back. The second Opening was not a reset. We kept every one of them. Reopening the doors was never about pretending the first crowd did not exist; it was about widening the room without erasing the people already in it." },
       { h2: 'A wall of names that does not get wiped' },
       { p: "The centrepiece is the wall of inaugurators — the founders who cut the ribbon, listed permanently, not as a marketing gimmick but as a record. There is something quietly serious about a name in stone: it says this person was here first, and we are not going to quietly forget that once we are bigger. Nine real names carried over from the first Opening, untouched, and the door opened again beside them." },
@@ -3097,7 +3804,7 @@ export const BLOG_POSTS = [
     title: 'The strike counter you could reset by yourself',
     date: 'Jul 23, 2026',
     icons: ['shield', 'server', 'lock'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Security',
     image: null,
@@ -3113,11 +3820,11 @@ export const BLOG_POSTS = [
       { p: "The strikes now key on the IP address instead — the one identifier the abuser is not casually handing me and reshuffling between messages. And because we run on more than one instance, the count lives in a shared store, so a strike earned on one server is a strike everywhere, not a fresh start each time the load balancer picks a different door. Where there is no shared store configured, it falls back to keeping the count in memory; where there is no IP at all, it falls back to the old per-conversation count, which is worse but is only ever the fallback." },
       { h2: 'The block that forgot everything when I restarted' },
       { p: "Above the cool-off sits a heavier response, for the small number of messages that are not rudeness but a genuine threat. Those get the sender's IP blocked. The problem was where I was keeping that block: in a variable in memory. Which means it survived exactly until the next time the server restarted — a deploy, a crash, a quiet Tuesday — and then it was gone. It was also invisible to the admin screen that lists blocked IPs, so a human reviewing the blocklist would not even see it there to know it had happened." },
-      { p: "A block that evaporates on restart and that nobody can see is not really a block. It is a note I left for myself and then lost. So threats now go through the same durable, database-backed blocklist everything else uses — the one an admin can actually open, review, and lift. It is time-bounded, it respects the allowlist so a shared office IP does not take out a whole building, and it is reserved for the genuinely nasty tier, not for someone being merely tiresome." },
+      { p: "A block that evaporates on restart and that nobody can see is not really a block. It is a note I left for myself and then lost. So threats now go through [the same durable, database-backed blocklist everything else uses](/blog/we-audited-our-own-booking-flow) — the one an admin can actually open, review, and lift. It is time-bounded, it respects the allowlist so a shared office IP does not take out a whole building, and it is reserved for the genuinely nasty tier, not for someone being merely tiresome." },
       { p: "The tiresome tier gets handled a rung lower now too: a stream of threats also counts toward the cool-off, weighted heavier than ordinary noise, so someone who only ever sends threats trips the lock rather than sliding under it because none of their messages were an ordinary strike." },
       { h2: 'Failing in the safe direction' },
       { p: "One more corner, and it is the one I am most glad I went back for. To decide how to respond I sometimes ask a small, cheap model for a judgement, and every such call is metered against a budget so a flood cannot run up a bill. The question nobody asks until the bad afternoon is: what happens when the meter itself errors — when I cannot tell whether there is budget left?" },
-      { p: "The old answer was to assume yes and carry on, which is the wrong answer for the abuse path specifically. A flood is the exact situation where the meter is most likely to be under strain, and 'assume there is budget' during a flood is how a flood gets to keep spending. So on the abuse path, a budget error now means no — I skip the extra work rather than risk paying for it. The ordinary, non-abuse paths keep the friendlier default and carry on, because there the failure you are guarding against is a real person getting an unhelpful shrug, and a shrug is worse than a small bill." },
+      { p: "The old answer was to assume yes and carry on, which is the wrong answer for the abuse path specifically. [A flood is the exact situation where the meter is most likely to be under strain](/blog/two-bookings-one-slot), and 'assume there is budget' during a flood is how a flood gets to keep spending. So on the abuse path, a budget error now means no — I skip the extra work rather than risk paying for it. The ordinary, non-abuse paths keep the friendlier default and carry on, because there the failure you are guarding against is a real person getting an unhelpful shrug, and a shrug is worse than a small bill." },
       { quote: 'A control that fails open is only as strong as the day nothing goes wrong. The interesting question is always what it does on the day something does.', cite: 'The bit worth keeping' },
       { h2: 'The honest part' },
       { p: "None of this is switched on for most of you, and that is deliberate. The whole abuse gate sits behind a flag that is off by default; these changes alter what happens only once someone deliberately turns it on. I am describing plumbing, not a wall you will ever walk into, because if [you are here to ask a real question](/blog/meet-bolt-the-support-assistant) you were never going to meet any of it." },
@@ -3134,7 +3841,7 @@ export const BLOG_POSTS = [
     title: 'A week later, I learned to say no',
     date: 'Jul 20, 2026',
     icons: ['lightning', 'shield', 'bell'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Feature Update',
     image: null,
@@ -3146,11 +3853,11 @@ export const BLOG_POSTS = [
       { p: "When you asked me something, I answered, and then we both sat there. You knew what you wanted next; I did not, so I waited. That is a small friction that adds up over a day." },
       { p: "Now, under most answers, there are a couple of small suggestions — the next thing people usually want. Ask about a plan and one of them takes you to [pricing](/pricing). Ask how hosting works and one of them starts you at [Be a Sloth](/be-a-sloth). They are guesses, not a menu, so when they are wrong you ignore them and keep typing. When they are right, you save a sentence. Most of the time they are right, because most questions come in the same handful of shapes." },
       { h2: "I don't argue anymore" },
-      { p: "A support bot on a public page gets a certain kind of visitor. Not the confused one — that one I like. The other one, who is not asking anything, who is just testing whether the machine will flinch. Last week I answered those people earnestly, which is exactly the wrong move, because earnestness is the flinch." },
+      { p: "A support bot on a public page gets a certain kind of visitor. Not the confused one — that one I like. The other one, who is not asking anything, who is just [testing whether the machine will flinch](/blog/the-strike-you-could-reset-yourself). Last week I answered those people earnestly, which is exactly the wrong move, because earnestness is the flinch." },
       { p: "So I learned a shorter reply. I acknowledge it in about three words, dryly, and point back at the actual problem you might have had before you decided to have fun instead. I am not trying to win — winning an argument with a chat bubble is not a thing that exists. I am trying to get us both back to something useful, or to stop wasting your time and mine." },
       { info: { title: 'A note on tone', text: "This is deliberately mild. The goal is a flat, boring redirect, not a comeback — a comeback is just a slower way of taking the bait. If you actually needed help and I misread you, say so plainly and I will drop it immediately. I would rather be too calm than too clever." } },
       { h2: 'When I hand you to a human, I do it properly now' },
-      { p: "Some things should never be settled by a chat bubble — a refund, a payment that looks wrong, anything tied to your account. I said last week that I pass those to a real person. What I did not have was a clean way to do it." },
+      { p: "Some things should never be settled by a chat bubble — [a refund, a payment that looks wrong, anything tied to your account](/blog/security-nobody-claps-for). I said last week that I pass those to a real person. What I did not have was a clean way to do it." },
       { p: "Now, if you are logged in, I already know who you are, so the handoff is one tap — no re-typing your details to a stranger. If you are not logged in and you want a human, I ask where to reach you, verify it with a quick code over [WhatsApp](https://www.whatsapp.com) or email so we are not chasing a typo'd number, and only then does anyone on the team get pinged. If you were only browsing, nothing happens and no one is bothered. Silence is a valid answer." },
       { p: "Every handoff gets a short reference number, so when a person follows up you both know which conversation you are in. And when it is done, I ask you one question — how did that go, one to five — and then point you at [your tickets](/support/tickets) so you can watch the status yourself instead of refreshing your inbox. The rating is not decoration. A run of low ones is how the team finds out I am the problem." },
       { h2: 'The honest part' },
@@ -3167,24 +3874,24 @@ export const BLOG_POSTS = [
     slug: 'write-with-bolt-drafts-your-listing',
     title: 'The description box is where launches go to stall',
     date: 'Jul 18, 2026',
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Feature Update',
     image: null,
     excerpt:
       "The screen that stalls every new service isn't pricing or payments — it's the empty description box. Write with Bolt drafts the whole listing from your title. You edit, you nudge, you publish.",
     body: [
-      { p: "You sign up, you name your service, you set a price. Then you hit the description box, the cursor blinks at you, and forty minutes later you've written \"I offer high-quality consultations\" and hated every word of it." },
+      { p: "[You sign up, you name your service, you set a price](/blog/onboarding-a-host-in-60-seconds). Then you hit the description box, the cursor blinks at you, and forty minutes later you've written \"I offer high-quality consultations\" and hated every word of it." },
       { p: "The part nobody warns you about isn't the money plumbing. It's the writing. You know exactly what you do — you've done it a hundred times — but the moment you have to explain it to a stranger who might pay for it, the words leave. Description, what's included, what's not, the questions people always ask. Five empty boxes and a blank stare." },
       { h2: 'So we handed that part to Bolt.' },
-      { p: "Write with Bolt takes the one thing you already have — a title — and drafts the rest. Description, the included list, the excluded list, the FAQs, the notes. You type \"Career coaching call for mid-career switchers\" and it fills the form." },
+      { p: "[Write with Bolt takes the one thing you already have](/blog/meet-bolt-the-support-assistant) — a title — and drafts the rest. Description, the included list, the excluded list, the FAQs, the notes. You type \"Career coaching call for mid-career switchers\" and it fills the form." },
       { p: "It isn't magic and we're not going to pretend it is. It writes a solid first draft. Sometimes it gets your tone exactly right and you change nothing; sometimes it's a bit eager and you trim two sentences. Either way you're editing something instead of fighting a blank page, and editing is a job a human can actually do at 11pm." },
       { h2: 'Not your voice? Say so.' },
       { p: "There's a regenerate button, and next to it a little box where you tell it what to fix — \"make it warmer\", \"less corporate\", \"shorter\", \"mention sessions are on Zoom\". It takes the note and runs the draft again. You keep nudging until it sounds like you and not like a brochure." },
       { p: "Everything it writes stays yours to change. It fills the fields; you own them. Nothing goes live because Bolt said so — you still hit save, you still read it, you still fix the one line that's off." },
       { h2: 'The boring guardrails' },
       { p: "A few things it won't do, on purpose. It won't invent a price, a guarantee, a certification, or a five-star rating you never mentioned — those get stripped out before they reach your form, because a made-up \"FDA approved\" on your listing is your problem, not ours. It writes what your service plausibly is, not what would sell hardest." },
-      { p: "Every plan gets it. Starter gets a generation to try, the paid tiers get more, and the top tier doesn't count at all. Regenerating a draft you already started is free — nudge it as many times as you need." },
+      { p: "[Every plan gets it. Starter gets a generation to try, the paid tiers get more](/blog/pricing-page-and-the-rebook-nudge), and the top tier doesn't count at all. Regenerating a draft you already started is free — nudge it as many times as you need." },
       { p: "The description box was the last thing standing between \"I should really list that service\" and it actually being live. Now it drafts itself — badly enough that you'll improve it, well enough that you won't dread it. Type a title. See what it writes. Fix the parts it got wrong. That's the whole thing." },
     ],
   },
@@ -3193,14 +3900,14 @@ export const BLOG_POSTS = [
     title: 'Meet Bolt — instant answers, in the corner of every page',
     date: 'Jul 19, 2026',
     icons: ['lightning', 'search', 'bell'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Feature Update',
     image: null,
     excerpt:
       'There is a new chat button on Book A Sloth. Behind it is Bolt: instant answers about booking, payments, plans, and hosting — any hour of the day.',
     body: [
-      { p: "Hi. I'm Bolt. There's a small chat button in the corner of Book A Sloth now, and I'm the thing behind it. Writing an introduction about yourself is a little strange, so I'll skip the throat-clearing and get to what matters: what I do, and how to make me useful." },
+      { p: "Hi. I'm Bolt. There's a small chat button in the corner of Book A Sloth now, and I'm the thing behind it. Writing an introduction about yourself is a little strange, so I'll skip the throat-clearing and get to what matters: [what I do, and how to make me useful](/blog/write-with-bolt-drafts-your-listing)." },
       { h2: "What I'm for" },
       { p: "You have a question about Book A Sloth. Instead of digging through pages, or emailing someone and waiting for a reply, you type the question and I answer it — booking a service, moving a slot, how plans work, what it takes to become a host. I'm on every page, and I don't keep office hours." },
       { p: "My answers come from the same [help center](/help/docs) a support agent would read, so I'm telling you how the product actually works, not guessing. When a page explains something better than a chat bubble can, I send you straight to it — like [how booking works](/help/docs/booking-a-service) or [what each plan includes](/help/docs/plans-and-upgrading)." },
@@ -3218,7 +3925,7 @@ export const BLOG_POSTS = [
       { h2: 'Where to find me' },
       { p: "The chat button sits in the bottom corner — the home page, a host's [public page](/explore), the [pricing](/pricing) page, wherever you are. Tap it, type, done. Prefer to browse? The full [help center](/help) is one click away, and a human is always reachable from there too." },
       { p: "The important-but-boring parts stay boring on purpose. Payments run through [Razorpay](https://razorpay.com), and when something reaches a person it comes back to you on [WhatsApp](https://www.whatsapp.com) — the places you are already in." },
-      { p: "That's the tour. I won't oversell it: I'm a chat button that's genuinely helpful and knows when to get out of the way. Open me next time you're stuck. Worst case you learn something; best case you never think about me again — which, honestly, is the goal." },
+      { p: "That's the tour. I won't oversell it: I'm a chat button that's genuinely helpful and [knows when to get out of the way](/blog/the-strike-you-could-reset-yourself). Open me next time you're stuck. Worst case you learn something; best case you never think about me again — which, honestly, is the goal." },
     ],
   },
   {
@@ -3226,7 +3933,7 @@ export const BLOG_POSTS = [
     title: 'Nobody claps for the lock on the door',
     date: 'Jul 17, 2026',
     icons: ['shield', 'lock', 'server'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Security',
     image: null,
@@ -3234,7 +3941,7 @@ export const BLOG_POSTS = [
       'Every feature we shipped this month that you will never notice, never use, and would only hear about if it failed. Mandatory admin 2FA, automatic IP bans, and the unglamorous business of not being the story.',
     body: [
       { p: 'Product work has a nice feedback loop. You ship a thing, someone uses it, they tell you it is good or they tell you it is broken. Security work has no loop at all. You ship it, and then nothing happens, forever, and that is the success case.' },
-      { p: 'The only time anyone learns about your security is the day it did not work. So here is the inventory while it is still boring.' },
+      { p: 'The only time anyone learns about your security is the day it did not work. So [here is the inventory while it is still boring](/blog/what-happens-to-your-aadhaar).' },
       { h2: 'Every admin has 2FA. Not optionally.' },
       { p: 'Every account that can touch the admin panel carries a TOTP code. Not "we encourage it", not a nag banner someone dismisses for four months. You cannot hold admin access on Book A Sloth without it.' },
       { p: 'This is an easy decision to make when you have three admins and an impossible one when you have three hundred, which is precisely why you make it at three. Every optional security control is a control that is off for the people most likely to be phished, because those are the people in the biggest hurry.' },
@@ -3248,7 +3955,7 @@ export const BLOG_POSTS = [
       { p: 'This one is old enough that we have [written about it separately](/blog/razorpay-is-the-source-of-truth), but it belongs on the list. No price is ever taken from the client. Every payment signature is verified server-side. The browser is a display layer, and a display layer is not a witness.' },
       { h2: 'The point' },
       { p: 'None of this appears on a pricing page. No host has ever chosen us because our admins have TOTP. It is pure cost, paid early, in the hope that the story never gets written.' },
-      { p: 'The only reason to publish an inventory like this is so that you can check it. A platform that tells you what it does is a platform you can hold to it later.' },
+      { p: 'The only reason to publish an inventory like this is so that you can check it. [A platform that tells you what it does is a platform you can hold to it later](/blog/the-day-the-site-went-white).' },
       { faq: [
         { q: 'Is two-factor authentication required for Book A Sloth admins?', a: 'Yes — TOTP is mandatory for every admin account. It is not an opt-in setting, and access is not possible without it.' },
         { q: 'Does Book A Sloth block suspicious IP addresses?', a: 'Yes, automatically, on repeated abuse of authentication endpoints. Admins can review the blocklist, but blocking does not wait for a human.' },
@@ -3261,7 +3968,7 @@ export const BLOG_POSTS = [
     title: 'The arithmetic of commission',
     date: 'Jul 16, 2026',
     icons: ['scale', 'chart', 'coins'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Comparison',
     image: null,
@@ -3270,7 +3977,7 @@ export const BLOG_POSTS = [
     body: [
       { p: 'A subscription and a commission feel completely different, and the difference is entirely psychological.' },
       { p: 'A subscription is a debit. It appears on your statement, monthly, with a name. You see it, you resent it slightly, you occasionally consider cancelling it. It is a cost with a face.' },
-      { p: 'A commission never appears anywhere. It is a number that was quietly smaller before it reached you. Nothing left your account, because it never arrived. And a cost you cannot see is a cost you never audit.' },
+      { p: '[A commission never appears anywhere](/blog/money-follows-my-brotha). It is a number that was quietly smaller before it reached you. Nothing left your account, because it never arrived. And a cost you cannot see is a cost you never audit.' },
       { h2: 'Do it with a calculator' },
       { p: 'Take a consultant charging ₹2,000 a session, doing eight sessions a month. Not a big practice — a real one.' },
       { p: 'That is ₹16,000 a month, ₹1,92,000 a year, which is a nice enough year. Now run it through a platform that takes a cut.' },
@@ -3284,7 +3991,7 @@ export const BLOG_POSTS = [
       { p: 'A flat fee has the opposite shape. Ours does not care whether you charge ₹500 or ₹50,000, because our costs do not care either. That is not generosity — it is just the price matching the actual cost, which is the least a pricing model can do.' },
       { h2: 'The honest catch' },
       { p: 'A flat fee is worse for you if you are tiny. If you take two ₹500 bookings a year, a percentage of almost nothing is almost nothing, and ₹1,499 is not. That maths is real and we are not going to pretend otherwise.' },
-      { p: 'Which is why there is a free tier. Start there, take some bookings, and switch when the arithmetic turns — and it turns early. At ₹2,000 a session, the annual plan pays for itself somewhere in your first month.' },
+      { p: 'Which is why there is a free tier. [Start there, take some bookings, and switch when the arithmetic turns](/blog/you-only-pay-when-you-earn) — and it turns early. At ₹2,000 a session, the annual plan pays for itself somewhere in your first month.' },
       { p: 'The whole reasoning is in [the 0% commission bet](/blog/zero-commission-bet). The numbers are on [the pricing page](/pricing). The comparison, if you want it laid out side by side, is [here](/lp/topmate-vs-bookasloth).' },
       { faq: [
         { q: 'Does Book A Sloth charge commission on bookings?', a: 'No. Paid plans are 0% commission. You pay a flat plan fee and keep every rupee a guest pays you.' },
@@ -3295,10 +4002,10 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'refer-earn-studio-crm-offline-bookings',
-    title: 'Get paid to refer, keep your clients in one place, and actual directions to the venue',
+    title: 'Refer & Earn, Studio CRM & Offline Bookings',
     date: 'Jul 15, 2026',
     icons: ['megaphone', 'money', 'users'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Growth',
     image: null,
@@ -3307,8 +4014,8 @@ export const BLOG_POSTS = [
     body: [
       { p: 'Most “refer a friend” programmes are a coupon wearing a nice hat. You send someone a link, they get 10% off, and you get a warm feeling plus an email you will archive. We wanted the version where actual money lands in your actual account. So that is the one we built.' },
       { h2: 'Refer & Earn, paid in real cash' },
-      { p: 'Bring another host onto Book A Sloth, and when they subscribe to a paid plan you earn a cash reward. Not credits. Not points you can only redeem against the thing you already pay for. The reward qualifies when they genuinely pay, holds through a short clearing window (so a refund on day two never leaves you owing us money), and then settles to you on its own [ledger](/blog/zero-commission-bet), kept separate from your booking earnings so your numbers stay clean.' },
-      { p: 'There is a quick [verification](/blog/gst-invoices-host-verification-mobile) check before any payout leaves, which is the polite way of saying nobody gets to farm referrals into a stranger’s bank account.' },
+      { p: '[Bring another host onto Book A Sloth, and when they subscribe to a paid plan you earn a cash reward](/blog/money-follows-my-brotha). Not credits. Not points you can only redeem against the thing you already pay for. The reward qualifies when they genuinely pay, holds through a short clearing window (so a refund on day two never leaves you owing us money), and then settles to you on its own [ledger](/blog/zero-commission-bet), kept separate from your booking earnings so your numbers stay clean.' },
+      { p: 'There is a quick [verification](/blog/gst-invoices-host-verification-mobile) check before any payout leaves, which is the polite way of saying [nobody gets to farm referrals into a stranger’s bank account](/blog/the-ledger-nobody-asked-for).' },
       { h2: 'A client list that remembers your regulars' },
       { p: 'You already knew who your repeat guests were. In your head, and in a WhatsApp thread you scroll for ten minutes to find. If you are on [Studio](/pricing), that memory now lives somewhere reliable: a proper Clients view, pulled together automatically from your bookings, with private notes and files you can attach to each person. Someone paid you in cash as a walk-in and never touched a payment gateway? Add them by hand, and they show up too.' },
       { info: { title: 'Your notes stay yours', text: 'Notes you write on a client are private to you. “Prefers morning slots, allergic to small talk” is for your eyes, never theirs.' } },
@@ -3323,7 +4030,7 @@ export const BLOG_POSTS = [
     title: 'What happens to your Aadhaar after you upload it',
     date: 'Jul 13, 2026',
     icons: ['lock', 'shield', 'key'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Security',
     image: null,
@@ -3333,7 +4040,7 @@ export const BLOG_POSTS = [
       { p: 'There is a moment in every verification flow where a reasonable person stops and thinks: who exactly is on the other end of this upload?' },
       { p: 'Usually you get no answer. A spinner, a green tick, and a vague sense that your Aadhaar is now in a folder somewhere with a name like `uploads/`. So here is the answer for us, in more detail than is strictly comfortable.' },
       { h2: 'Why we ask at all' },
-      { p: 'We do not need your identity to let you take bookings. We need it to send you money. Payouts are where a booking platform becomes a target: the fraud is not fake appointments, it is a real-looking account collecting real money into a stranger\'s bank. Verification is the gate on the payout, and nothing else.' },
+      { p: '[We do not need your identity to let you take bookings](/blog/kyc-only-after-you-earn). We need it to send you money. Payouts are where a booking platform becomes a target: the fraud is not fake appointments, it is a real-looking account collecting real money into a stranger\'s bank. Verification is the gate on the payout, and nothing else.' },
       { p: 'This is why [withdrawal is blocked until verification is approved](/blog/where-your-money-sits), and why nothing else is.' },
       { h2: 'Where the numbers go' },
       { p: 'Your PAN, Aadhaar and account number are encrypted before they are stored, with AES-256-GCM, under a key that lives only in the server environment. What sits in the database is ciphertext. Somebody with a copy of the database and no key has a column of noise.' },
@@ -3347,7 +4054,7 @@ export const BLOG_POSTS = [
       { p: 'Reviewing a submission requires a specific permission that most admin roles do not carry, and every decision is attributed to the admin who made it.' },
       { quote: 'The test of a data-handling promise is not what your policy says. It is what your own support team physically cannot do.', cite: 'The bit we care about' },
       { h2: 'What we chose not to build' },
-      { p: 'No re-upload diffing on rejection — if a submission is rejected you send the whole thing again, which is worse for you and simpler for us, and simpler is the thing we can keep correct. And no admin can approve a payout to an account that was not verified against the document, because the two are the same record.' },
+      { p: 'No re-upload diffing on rejection — if a submission is rejected you send the whole thing again, which is worse for you and simpler for us, and simpler is the thing we can keep correct. And [no admin can approve a payout to an account that was not verified against the document](/blog/the-address-line-nobody-filled), because the two are the same record.' },
       { p: 'None of this is impressive. Encryption at rest, a private bucket, masked reads, scoped permissions. It is the boring floor, not a ceiling. The reason it is worth a post is that the floor is where most of the failures actually happen, and [nobody writes about the floor](/blog/security-nobody-claps-for).' },
       { faq: [
         { q: 'Is my Aadhaar number encrypted on Book A Sloth?', a: 'Yes — AES-256-GCM at rest, with the key held only in the server environment. The database stores ciphertext, not the number.' },
@@ -3362,14 +4069,14 @@ export const BLOG_POSTS = [
     title: 'Two bookings, one slot, fifty people trying',
     date: 'Jul 12, 2026',
     icons: ['database', 'server', 'terminal'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 7,
     category: 'Engineering',
     image: null,
     excerpt:
       'The question was whether we needed Docker and Kubernetes to survive 10,000 people booking the same slot. The answer was no, and the reason why is the most useful thing we have learned about databases this year.',
     body: [
-      { p: 'Someone asked us what happens if ten thousand people try to book the same slot at the same instant. The implied answer was containers. It usually is. Scale sounds like an infrastructure word, so the fix must be an infrastructure fix — more pods, more nodes, a service mesh, a diagram with hexagons.' },
+      { p: 'Someone asked us [what happens if ten thousand people try to book the same slot at the same instant](/blog/we-audited-our-own-booking-flow). The implied answer was containers. It usually is. Scale sounds like an infrastructure word, so the fix must be an infrastructure fix — more pods, more nodes, a service mesh, a diagram with hexagons.' },
       { p: 'Ten thousand people fighting over one row is not a scaling problem. It is a contention problem. Adding pods does not help you: it adds racers to a race you have not yet decided how to judge.' },
       { h2: 'The naive version, and why it loses' },
       { p: 'The obvious way to prevent a double booking is to check first. Ask the database whether the slot is free, and if it is, write the booking.' },
@@ -3377,9 +4084,9 @@ export const BLOG_POSTS = [
       { p: 'We have that check. It is still in there. It exists to give people a polite error most of the time, and it is fundamentally incapable of guaranteeing anything. Any check followed by a separate write has this hole. You cannot close it in application code.' },
       { p: 'The mutex sitting next to it is worse, in the specific way that comfortable things are worse: it works perfectly on one server, so it looks like a solution right up until the day you run two.' },
       { h2: 'Let the database judge' },
-      { p: 'Postgres has a feature for exactly this. An exclusion constraint says: no two rows may exist where these expressions overlap. For us, that means no two non-cancelled bookings for the same host whose time ranges intersect. It is one line of schema, backed by a GiST index.' },
+      { p: 'Postgres has a feature for exactly this. An exclusion constraint says: [no two rows may exist where these expressions overlap](/blog/explore-ranking-and-a-more-app-like-app). For us, that means no two non-cancelled bookings for the same host whose time ranges intersect. It is one line of schema, backed by a GiST index.' },
       { p: 'What it buys you is not a check. It is an impossibility. There is no gap, because the constraint is evaluated by the same machinery that writes the row. Fifty requests race, exactly one row lands, and the other forty-nine get a `23P01` violation, which we translate into a 409 and a sentence that a human can read.' },
-      { p: 'The rule underneath: if two states must never coexist, the guarantee belongs in the database, not in your code. Application code can be raced. A constraint cannot.' },
+      { p: 'The rule underneath: [if two states must never coexist, the guarantee belongs in the database, not in your code](/blog/the-vanity-links). Application code can be raced. A constraint cannot.' },
       { h2: 'We tested it properly' },
       { p: 'A mock cannot prove a constraint, because the constraint lives in Postgres and a mock is, by definition, not Postgres. So we wrote a script that fires fifty genuinely concurrent bookings at one slot against a real staging database. It refuses to run against production, loudly, because someone will eventually try.' },
       { table: { head: ['Attempts', 'Created (201)', 'Rejected (409)', 'Rows in DB'], rows: [['50', '1', '49', '1']] } },
@@ -3402,10 +4109,10 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'explore-ranking-and-a-more-app-like-app',
-    title: 'Explore knows what it’s doing now, and the app stopped feeling like a website',
+    title: 'Smarter Explore Ranking & a More App-Like App',
     date: 'Jul 11, 2026',
     icons: ['chart', 'target', 'calendar'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Feature Update',
     image: null,
@@ -3418,7 +4125,7 @@ export const BLOG_POSTS = [
       { p: 'No bid, no boost, no “featured” fee to skip the queue. If your listing is thin, the fix is not a credit card, it is twenty minutes filling in the parts you skipped. We wrote the full breakdown of what moves the score in a separate [host’s guide to Explore ranking](/blog/how-explore-ranking-works), and it is worth your time if getting found matters to you. It is a friendlier system than most of the discovery algorithms you have wrestled with, because for once the rules are written down.' },
       { info: { title: 'Scored per service, not per profile', text: 'Run three services and each is scored on its own. Your polished flagship can rank high while the half-finished second listing sits exactly where half-finished listings belong. That is fair, and it rewards finishing things.' } },
       { h2: 'Two people, one slot, never again' },
-      { p: 'Here is a genuinely nasty problem in any booking system: two guests open the same 4 PM slot, both pay, and now you owe two people the same half hour. We closed that at the database level, so the system physically refuses to write a second overlapping booking, grace windows and all. You will never notice it working, which is the entire point of a good safety net.' },
+      { p: 'Here is a genuinely nasty problem in any booking system: [two guests open the same 4 PM slot, both pay, and now you owe two people the same half hour](/blog/two-bookings-one-slot). We closed that at the database level, so the system physically refuses to write a second overlapping booking, grace windows and all. You will never notice it working, [which is the entire point of a good safety net](/blog/we-audited-our-own-booking-flow).' },
       { h2: 'The app got a lot more app-like' },
       { p: 'If you run your host account from your phone, and most of you do, this is the update your thumbs will feel. Infinite-scrolling feeds instead of pagination. Bottom sheets instead of clunky pop-ups. Real loading, error, and success states instead of a spinner and a silent prayer. Safe-area handling so nothing hides behind the notch. Small things, stacked high, until the whole thing stops reminding you it is technically a web page.' },
       { p: 'Your profile card also has a native share button now. One tap, straight into whatever app you were about to paste the link into anyway.' },
@@ -3430,14 +4137,14 @@ export const BLOG_POSTS = [
     title: 'The day the site went white',
     date: 'Jul 9, 2026',
     icons: ['bug', 'terminal', 'search'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Postmortem',
     image: null,
     excerpt:
       'Every route on bookasloth.com rendered a blank white page. No error. No red text in the console. Just white. Here is what broke, why it was invisible, and the one-line rule we now live by.',
     body: [
-      { p: 'The worst outages are not the loud ones. A 500 page is a courtesy — it tells you something died and roughly where. On 8 July, bookasloth.com served a perfectly valid HTML document, 200 OK, with nothing in it. Every route. White.' },
+      { p: '[The worst outages are not the loud ones](/blog/the-confirmation-that-didnt-confirm). A 500 page is a courtesy — it tells you something died and roughly where. On 8 July, bookasloth.com served a perfectly valid HTML document, 200 OK, with nothing in it. Every route. White.' },
       { p: 'The console was clean. That is the detail worth sitting with. Not "clean apart from one thing" — clean. Whatever killed the app did it before anything existed to report it.' },
       { h2: 'What actually happened' },
       { p: 'We had just moved deploys into a GitHub Actions pipeline. Reasonable idea: build the client in CI, ship the finished artefact. The commands were the ones the docs give you — pull the environment, build with it, deploy the prebuilt output.' },
@@ -3446,7 +4153,7 @@ export const BLOG_POSTS = [
       { p: 'The entry module threw `supabaseUrl is required` on the first line that ran. React never mounted. There was no app yet to catch the error, no boundary, no logger, nothing to write to the console. The page stayed exactly as the HTML shipped it: empty.' },
       { info: { title: 'The one-line version', text: 'A build that cannot see its secrets does not fail. It succeeds, and ships an application with no secrets in it.' } },
       { h2: 'Why it took a while to see' },
-      { p: 'Because every instinct was wrong. You check the server — server is fine, API responding. You check DNS — fine. You check the deploy — green tick, Ready. You check the console — empty. Every dashboard we own said the system was healthy, and the system was serving a white rectangle to every human in the country.' },
+      { p: 'Because every instinct was wrong. You check the server — server is fine, API responding. You check DNS — fine. You check the deploy — green tick, Ready. You check the console — empty. [Every dashboard we own said the system was healthy](/blog/we-audited-our-own-booking-flow), and the system was serving a white rectangle to every human in the country.' },
       { p: 'The thing that broke it open was re-importing the deployed entry module by hand, in the page. The browser caches the module\'s rejection, so importing it again hands you back the exact error the app died on, long after the moment it happened. `supabaseUrl is required`. Fifteen seconds of certainty after a long time without any.' },
       { p: 'The other useful trick was cruder: search the deployed bundle for our database reference. If it is not in there, the environment did not make it into the build, and you can stop theorising.' },
       { h2: 'The fix, and the guard' },
@@ -3460,7 +4167,7 @@ export const BLOG_POSTS = [
       { h2: 'The landmine we left behind' },
       { p: 'One thing worth knowing if you ever roll back on Vercel: an Instant Rollback pins production. Deploys after it go Ready, sit there with a little clock icon, and do not go live. They look shipped. They are not. You have to promote the deployment by hand.' },
       { p: 'We know this because we spent a stretch of the same evening confident we had already fixed something that no user could see.' },
-      { p: 'Total downtime was a single day, on a platform young enough that the number of people affected is small enough to be embarrassing rather than catastrophic. That is the one genuine advantage of breaking things early: the blast radius is mostly your own dignity.' },
+      { p: 'Total downtime was a single day, [on a platform young enough that the number of people affected is small enough to be embarrassing rather than catastrophic](/blog/security-nobody-claps-for). That is the one genuine advantage of breaking things early: the blast radius is mostly your own dignity.' },
       { faq: [
         { q: 'What causes a React app to render a blank white page with no console errors?', a: 'Usually a module-level throw before React mounts — often a missing environment variable in the bundle. Nothing has initialised yet, so nothing exists to report the error. Re-import the entry module in the console to retrieve the cached rejection.' },
         { q: 'Why were the environment variables missing from the build?', a: 'Variables marked Sensitive in Vercel cannot be downloaded to a CI machine — they exist only inside Vercel\'s build infrastructure. A CI build pulls the environment, silently receives no values for them, and builds a bundle where they are undefined.' },
@@ -3470,10 +4177,10 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'gst-invoices-host-verification-mobile',
-    title: 'GST invoices, a verified badge for hosts, and Book A Sloth that fits in your pocket',
+    title: 'GST Invoices, Host Verification & a Mobile App',
     date: 'Jul 8, 2026',
     icons: ['money', 'shield', 'lightning'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Feature Update',
     image: null,
@@ -3484,10 +4191,10 @@ export const BLOG_POSTS = [
       { h2: 'GST invoices your CA will nod at' },
       { p: 'There is now a billing-details layer and real GST tax invoices: serial numbers that do not skip, the correct SAC code, your GSTIN on the document, all of it filed the way the [GST system](https://www.gst.gov.in) expects. If your guest needs to claim input credit, they can. If you need clean books, you have them. It is the difference between “here is a screenshot of a payment” and “here is an invoice,” and that difference is an entire finance team’s afternoon.' },
       { h2: 'KYC, a real way to get verified' },
-      { p: 'Getting paid on a platform means the platform has to know you are a real person and not a very committed hobby. Hosts can now go through a full KYC flow end to end: submit your documents, they are encrypted properly (AES-256, stored in a private bucket, not floating around in a spreadsheet), a human reviews them, and payouts unlock once you are approved.' },
-      { info: { title: 'Why payouts wait on it', text: 'Payouts are held until KYC clears, on purpose. It is the seatbelt you never think about until the single day it matters, and by then it is too late to add one.' } },
+      { p: 'Getting paid on a platform means the platform has to know you are a real person and not a very committed hobby. Hosts can now go through a full KYC flow end to end: submit your documents, they are [encrypted properly (AES-256, stored in a private bucket, not floating around in a spreadsheet)](/blog/what-happens-to-your-aadhaar), a human reviews them, and payouts unlock once you are approved.' },
+      { info: { title: 'Why payouts wait on it', text: '[Payouts are held until KYC clears, on purpose](/blog/kyc-only-after-you-earn). It is the seatbelt you never think about until the single day it matters, and by then it is too late to add one.' } },
       { h2: 'The mobile rebuild' },
-      { p: 'We rebuilt the host experience on mobile as a proper design system: Bookings, Payouts, Dashboard, the whole set, instead of a desktop layout squinting to fit a phone. If you run your business from a six-inch screen in the gaps between other things, this is the update you feel every single day, even if you cannot point at one thing that moved.' },
+      { p: 'We rebuilt the host experience on mobile as a proper design system: Bookings, Payouts, Dashboard, the whole set, [instead of a desktop layout squinting to fit a phone](/blog/explore-ranking-and-a-more-app-like-app). If you run your business from a six-inch screen in the gaps between other things, this is the update you feel every single day, even if you cannot point at one thing that moved.' },
       { p: 'A few more things landed nearby: a public [contact](/contact) form that reaches support without you hunting for an email address, a set of feature pages that finally explain what the product does, and dedicated landing pages for specific professions, from [lawyers](/for/lawyers) to [doctors](/for/doctors) to [salons](/for/salon) to [fitness coaches](/for/fitness). A physiotherapist and a wedding DJ should not have to read the same homepage, so now they do not.' },
       { p: 'If you have been putting off verification because it smelled like paperwork, it is a few taps now. Do it before the booking where a payout is sitting there waiting on it. [Start here](/be-a-sloth).' },
     ],
@@ -3497,21 +4204,21 @@ export const BLOG_POSTS = [
     title: 'The first host who paid',
     date: 'Jul 2, 2026',
     icons: ['users', 'star', 'heart'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Host Story',
     image: null,
     excerpt:
       'On 30 June, at 6:46 in the evening, a career counsellor in Nagpur became the first person to pay us actual money. His name is Atish Gupta, and this is the least we can do about it.',
     body: [
-      { p: 'There is a specific kind of silence that comes with launching something. You build the payment flow. You test the payment flow. You test it again with your own card, refund yourself, and feel briefly like a man laundering ₹500 through his own startup. And then you wait for a stranger to decide you are worth paying for.' },
+      { p: 'There is a specific kind of silence that comes with launching something. [You build the payment flow. You test the payment flow](/blog/money-follows-my-brotha). You test it again with your own card, refund yourself, and feel briefly like a man laundering ₹500 through his own startup. And then you wait for a stranger to decide you are worth paying for.' },
       { p: 'On 30 June, at 6:46 in the evening, one did.' },
       { h2: 'Atish Gupta, The Edulocus Way, Nagpur' },
       { p: 'Atish runs a career counselling practice in Nagpur. He sits with students and their parents at the exact moment those two groups are least able to hear each other, and helps them pick a college. His tagline is “Right Guidance. Right College. Bright Future.” His own description of the work is about turning aspirations into academic journeys, which is a generous way to describe talking a 17-year-old out of an engineering degree he does not want.' },
       { p: 'He signed up, looked around, and bought an annual [Host+ plan](/pricing) about twenty-six minutes later. No sales call. No demo. No founder sliding into anyone\'s DMs. He just read the page and decided.' },
       { p: 'We know the exact minute because we were refreshing the dashboard like it owed us money.' },
       { h2: 'Why this one counts' },
-      { p: 'A signup is a maybe. Someone liked your landing page enough to type an email. A payment is a sentence with a full stop in it. It says: I have looked at the thing you built, and I believe it will still be here in a year, because I have just paid you for a year.' },
+      { p: '[A signup is a maybe](/blog/the-only-thing-that-matters). Someone liked your landing page enough to type an email. A payment is a sentence with a full stop in it. It says: I have looked at the thing you built, and I believe it will still be here in a year, because I have just paid you for a year.' },
       { p: 'That second part is the one that keeps you up. Atish did not buy software. He bought a bet that we will not disappear in November. Every host who pays is extending us credit on our own future, and the only way to service that debt is to keep shipping.' },
       { quote: 'A signup says you are interesting. A payment says you are accountable.', cite: 'The entire lesson of 30 June' },
       { h2: 'What he actually bought' },
@@ -3530,32 +4237,32 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'pricing-page-and-the-rebook-nudge',
-    title: 'A pricing page that finally exists, and a nudge that rebooks your regulars for you',
+    title: 'A Pricing Page & a Rebook Nudge for Regulars',
     date: 'Jul 2, 2026',
     icons: ['money', 'megaphone', 'target'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Product',
     image: null,
     excerpt:
       'For a product that sells plans, we went an embarrassingly long time without one page that just listed the plans. Fixed. Plus a follow-up engine that brings one-time guests back.',
     body: [
-      { p: 'You can learn a lot about a company by how hard it is to find their pricing. Ours used to be scattered across three surfaces that occasionally disagreed with each other, which is a spectacular look for a company that handles money.' },
+      { p: 'You can learn a lot about a company by how hard it is to find their pricing. Ours used to be [scattered across three surfaces that occasionally disagreed with each other](/blog/the-arithmetic-of-commission), which is a spectacular look for a company that handles money.' },
       { h2: 'One pricing page, one source of truth' },
       { p: 'There is now a proper [pricing page](/pricing) with the full plan lineup (Starter, Host+, Studio), and the numbers on it are the same numbers everywhere else. Pricing now flows from a single source, so the homepage, the pricing page, and every upgrade prompt can no longer drift apart and quietly contradict each other. If you have ever compared a competitor’s three pricing pages and found three prices, you know exactly the trap we just closed.' },
       { info: { title: 'Already here on a free plan?', text: 'You keep the limits you signed up under. We changed the menu, we did not reach into your plate.' } },
       { h2: 'The Rebook Nudge' },
-      { p: 'Here is the quiet arithmetic of any service business: your best next customer is the one who already booked you once and had a good time. They are not avoiding you. They just forgot, because their week is loud and their notifications are louder.' },
+      { p: 'Here is the quiet arithmetic of any service business: your best next customer is the one who already booked you once and had a good time. They are not avoiding you. They just forgot, because [their week is loud and their notifications are louder](/blog/the-one-email-a-host-should-get).' },
       { p: 'So we built a follow-up engine. After a session wraps, it can send a well-timed nudge with a link straight back to your [profile](/be-a-sloth), with none of the “hey, just checking in” energy, just an easy door back to booking you again. It runs on a schedule, it is built to grow into other kinds of follow-ups later, and it does the remembering so you do not have to. It is the same idea behind our [0% commission bet](/blog/zero-commission-bet): the platform earns when you earn, so it should be working on your rebookings in the background.' },
       { p: 'The maths is unglamorous and hard to argue with. Filling a slot with someone who already knows you is cheaper than every ad you will ever run. Open your [pricing page](/pricing), read it like a stranger would, and ask whether it says what you would want that stranger to understand in ten seconds. Then let the follow-ups chase the rebookings you were never actually going to chase yourself.' },
     ],
   },
   {
     slug: 'categories-that-make-sense-profile-polish',
-    title: 'Categories that actually make sense, and the small fixes nobody writes threads about',
+    title: 'Clearer Service Categories & Profile Polish',
     date: 'Jul 5, 2026',
     icons: ['target', 'shield', 'users'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Product',
     image: null,
@@ -3568,16 +4275,16 @@ export const BLOG_POSTS = [
       { p: 'On top of that, hosts can now suggest their own subcategories. If the taxonomy has no shelf for what you do, propose one, a human approves it, and the menu gets better for the next person in your line of work. The platform learns your industry from the people actually standing in it, which is the only reliable way to learn an industry.' },
       { h2: 'The unglamorous fixes' },
       { p: 'If you had verified your [WhatsApp](https://www.whatsapp.com) number, it now actually appears in your Social Links instead of hiding. Turns out “verified” and “public” were two different states, and we were quietly conflating them.' },
-      { info: { title: 'The white screen of nope', text: 'A single failed page chunk used to be able to take down the whole screen. Now the error boundary resets on navigation, so one hiccup no longer holds your entire session hostage while you mash refresh.' } },
-      { p: 'None of this will trend. But the gap between a product you trust and one you tolerate is almost never the flashy feature, it is whether the small stuff works when you are not looking. This week was the small stuff, handled. If you verified your number a while ago and it never showed up, go [check your profile](/be-a-sloth), it is there now.' },
+      { info: { title: 'The white screen of nope', text: 'A single failed page chunk used to be able to take down the whole screen. Now [the error boundary resets on navigation](/blog/the-day-the-site-went-white), so one hiccup no longer holds your entire session hostage while you mash refresh.' } },
+      { p: 'None of this will trend. But the gap between a product you trust and one you tolerate is almost never the flashy feature, it is whether the small stuff works when you are not looking. This week was the small stuff, handled. If you [verified your number](/blog/monthly-plans-whatsapp-verification-reminders) a while ago and it never showed up, go [check your profile](/be-a-sloth), it is there now.' },
     ],
   },
   {
     slug: 'themes-doors-and-a-warmer-booking-flow',
-    title: 'Pick your colour, pick your door, and a booking flow that stopped being rude to guests',
+    title: 'Custom Themes, Two Doors & a Warmer Booking Flow',
     date: 'Jun 29, 2026',
     icons: ['palette', 'calendar', 'bell'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Feature Update',
     image: null,
@@ -3588,19 +4295,19 @@ export const BLOG_POSTS = [
       { h2: 'Themes that look like you' },
       { p: 'Hosts now get plan-tiered theme palettes, colour schemes that carry through your service page so it reads as yours before a guest has read a single word. Higher [tiers](/pricing) unlock more palettes and finer control. It is the difference between renting a bare stall and decorating a shop you are proud to stand in.' },
       { h2: 'Two doors, on purpose' },
-      { p: 'We split login into two clear entrances. Guests come in through a [WhatsApp](https://www.whatsapp.com) one-time code: phone number, quick code, done. Hosts have their own dedicated door. No more single confusing lobby where everyone mills about unsure which button is theirs. Booking? Go left. Hosting? Go right. It reads in a second, which is all the attention anyone gives a login screen.' },
+      { p: 'We split login into two clear entrances. Guests come in through a [WhatsApp](https://www.whatsapp.com) one-time code: [phone number, quick code, done](/blog/phone-login-and-reschedule-bookings). Hosts have their own dedicated door. No more single confusing lobby where everyone mills about unsure which button is theirs. Booking? Go left. Hosting? Go right. It reads in a second, which is all the attention anyone gives a login screen.' },
       { h2: 'A booking flow with manners' },
-      { p: 'The [booking flow](/blog/booking-in-under-a-minute) got warmer end to end: friendlier copy, a cleaner confirmed-booking layout, and an instant return from payment instead of that unnerving pause where a guest wonders whether their money just evaporated. Reminders are smarter too, plan-gated, with a last-minute catch-up so the “your session is soon” nudge lands while it is still useful and not the morning after.' },
+      { p: 'The [booking flow](/blog/booking-in-under-a-minute) got warmer end to end: friendlier copy, a cleaner confirmed-booking layout, and an instant return from payment instead of that unnerving pause where a guest wonders whether their money just evaporated. [Reminders are smarter too](/blog/notifications-that-actually-arrive), plan-gated, with a last-minute catch-up so the “your session is soon” nudge lands while it is still useful and not the morning after.' },
       { info: { title: 'Even the error pages apologise properly now', text: 'The “something broke” and offline screens got a redesign too. If a product is going to fail on you, it can at least fail on-brand instead of showing you a stack trace and running away.' } },
       { p: 'Go recolour your page. Two minutes, and it stops looking like a template and starts looking like a decision you made. Guests notice decisions, even when they could not tell you why they trusted the page. [Make yours yours.](/be-a-sloth)' },
     ],
   },
   {
     slug: 'google-sign-in-service-pages-two-way-reviews',
-    title: 'Sign in with Google, a service page that actually sells, and reviews that go both ways',
+    title: 'Google Sign-In, Service Pages & Two-Way Reviews',
     date: 'Jun 26, 2026',
     icons: ['star', 'chart', 'users'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Feature Update',
     image: null,
@@ -3612,18 +4319,18 @@ export const BLOG_POSTS = [
       { p: 'Hosts now start with [Google](https://calendar.google.com) sign-in and walk through a short, sensible sequence instead of inventing yet another password to forget by Thursday. Less typing, fewer dead ends, and their calendar and Meet links connect in the same breath. If a guest decides halfway through that they would like to become a host, there is a clean path for that too, no bouncing off a wall. It is the same low-friction thinking behind our [60-second host setup](/blog/onboarding-a-host-in-60-seconds).' },
       { h2: 'A service page rebuilt to sell' },
       { p: 'The service page, the one that actually turns a curious visitor into a paid booking, got a proper redesign. A hero that sets the tone, a clear “how it works,” real available slots, and reviews sitting exactly where a hesitant buyer goes looking for reassurance. It is laid out the way people genuinely decide: what is this, can I trust it, and when can I have it. Go [browse Explore](/explore) and you will see the difference on any finished listing.' },
-      { info: { title: 'Numbers you can actually read', text: 'Hosts also got an interactive earnings trend chart, the hover-and-understand kind, instead of a flat bar that makes you squint and guess at your own income.' } },
+      { info: { title: 'Numbers you can actually read', text: 'Hosts also got [an interactive earnings trend chart](/blog/where-your-money-sits), the hover-and-understand kind, instead of a flat bar that makes you squint and guess at your own income.' } },
       { h2: 'Reviews that go both ways' },
       { p: 'Reviews used to flow one direction: guest rates host, host says thank you into the void. Now it is mutual. Hosts and guests can review each other, reviews are role-separated so it is always clear who is speaking, and there is a dedicated review page reached from a working “leave a review” email. Reputation is a two-way street in real life, and the software finally agrees with real life.' },
-      { p: 'Underneath all of it, guest and host accounts got proper URL separation, so the two worlds stop bleeding into each other. If you onboarded back when it was a marathon, go look at the [new flow](/be-a-sloth) anyway. It is the version you will actually want to send the next host you refer.' },
+      { p: 'Underneath all of it, [guest and host accounts got proper URL separation](/blog/phone-login-and-reschedule-bookings), so the two worlds stop bleeding into each other. If you onboarded back when it was a marathon, go look at the [new flow](/be-a-sloth) anyway. It is the version you will actually want to send the next host you refer.' },
     ],
   },
   {
     slug: 'homepage-emails-and-downloadable-products',
-    title: 'A new homepage, emails that don’t look like 2009, and files your customers can actually download',
+    title: 'New Homepage, Modern Emails & Downloadable Products',
     date: 'Jun 23, 2026',
     icons: ['palette', 'megaphone', 'money'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Product',
     image: null,
@@ -3632,44 +4339,44 @@ export const BLOG_POSTS = [
     body: [
       { p: 'A homepage has exactly one job: make a stranger understand what you do before they lose interest, which is about eight seconds and shrinking. Ours was doing that job the way a nervous person over-explains at a party. So we rewrote it, and this time we let it breathe.' },
       { h2: 'A homepage that gets to the point' },
-      { p: 'The homepage got restructured into cleaner sections with a consistent rhythm: honest [pricing](/pricing), real testimonials, a straight comparison, and copy rewritten across every section to sound like a person rather than a press release. Less scrolling to understand, more understanding per scroll. If you have ever landed on a scheduling tool like [Calendly](https://calendly.com) and still had questions after the fold, you know the bar we were aiming to clear.' },
+      { p: 'The homepage got restructured into cleaner sections with a consistent rhythm: honest [pricing](/pricing), real testimonials, [a straight comparison](/blog/what-a-booking-page-needs-in-india), and copy rewritten across every section to sound like a person rather than a press release. Less scrolling to understand, more understanding per scroll. If you have ever landed on a scheduling tool like [Calendly](https://calendly.com) and still had questions after the fold, you know the bar we were aiming to clear.' },
       { h2: 'Emails with an actual identity' },
-      { p: 'Transactional email is where most products give up. A booking confirmation that looks like a receipt from a haunted printer, every message the same shade of grey. We redesigned them with per-email identity: bold header blocks, hero sections, a look that matches the product instead of contradicting it. When your confirmation lands in a guest’s inbox now, it looks like it came from somewhere they would trust with money.' },
+      { p: '[Transactional email](/blog/notifications-that-actually-arrive) is where most products give up. A booking confirmation that looks like a receipt from a haunted printer, every message the same shade of grey. We redesigned them with per-email identity: bold header blocks, hero sections, a look that matches the product instead of contradicting it. When your confirmation lands in a guest’s inbox now, it looks like it came from somewhere they would trust with money.' },
       { h2: 'Digital products, as real files' },
-      { p: 'Selling a digital product used to mean pasting an external link and hoping. Now you can attach an actual uploaded file with proper metadata, and guests get a clean way to download what they paid for, receipt and all. Sell the guide, the worksheet, the preset pack, the thing that makes money while you sleep.' },
+      { p: 'Selling a [digital product](/blog/the-first-booking) used to mean pasting an external link and hoping. Now you can attach an actual uploaded file with proper metadata, and guests get a clean way to download what they paid for, receipt and all. Sell the guide, the worksheet, the preset pack, the thing that makes money while you sleep.' },
       { info: { title: 'The 2MB guardrail', text: 'There is a deliberate cap on uploads: big enough for the guides, templates, and worksheets people actually sell, small enough that nobody tries to host a feature film on their booking page.' } },
       { p: 'Go send yourself a test booking and open the confirmation email. If it makes you feel even slightly more legit than last month, that was the whole point. [Set up your page](/be-a-sloth) and see it land.' },
     ],
   },
   {
     slug: 'permanent-usernames-legal-and-newsletter',
-    title: 'Your @username is permanently yours now, and other grown-up things a real product needs',
+    title: 'Permanent @usernames, Legal Pages & a Newsletter',
     date: 'Jun 20, 2026',
     icons: ['target', 'users', 'shield'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Product',
     image: null,
     excerpt:
       'Permanent usernames with redirects, real legal pages, a newsletter that welcomes you properly, and the rename from “Vendor” to “Host.” The scaffolding a product leans on.',
     body: [
-      { p: 'There is a moment in every product’s life when it stops being a demo and starts being infrastructure someone relies on. This week was a pile of exactly that: the unglamorous scaffolding that separates “fun side project” from “thing people trust with their livelihood.”' },
+      { p: 'There is a moment in every product’s life when it stops being a demo and starts being infrastructure someone relies on. This week was a pile of exactly that: [the unglamorous scaffolding](/blog/the-ledger-nobody-asked-for) that separates “fun side project” from “thing people trust with their livelihood.”' },
       { h2: 'Your username, permanently' },
       { p: '[Your @username is your address](/blog/onboarding-a-host-in-60-seconds). People bookmark it, print it on a card, drop it in their bio. So it is permanent now, with a full history and proper 301 redirects, which means if a link ever has to change, the old one still lands people in the right place instead of a dead end. Your identity here is something you can build on without wondering whether it will move under your feet.' },
       { h2: 'The legal grown-up stuff' },
       { p: 'We shipped real [Terms](/terms), a [Privacy](/privacy) policy built for India’s [DPDP](https://www.meity.gov.in/data-protection-framework) rules and GDPR, and a refund policy, all linked from the footer where they belong. Not the most thrilling sentence I will write this month, but the first time a serious client checks whether you are a real operation, these are precisely what they look for.' },
       { info: { title: 'Sensible defaults', text: 'Hosts who had not set working hours now default to Mon to Sat, 10:00 to 18:00. A blank calendar should not mean “never available.” It should mean “ask me,” and now it does.' } },
       { h2: 'Words, and a newsletter' },
-      { p: 'We renamed the customer-facing “Vendor” to “Host” everywhere it shows. “Vendor” makes you sound like a stall at a trade fair, and “Host” is what you actually are to the person booking you. There is a newsletter now with a proper welcome email, plus a phased 60-category industry taxonomy so services get sorted by what they genuinely are, which quietly helps guests [find you](/explore).' },
+      { p: 'We renamed the customer-facing “Vendor” to “Host” everywhere it shows. “Vendor” makes you sound like a stall at a trade fair, and “Host” is what you actually are to the person booking you. There is a newsletter now with a proper welcome email, plus a [phased 60-category industry taxonomy](/blog/categories-that-make-sense-profile-polish) so services get sorted by what they genuinely are, which quietly helps guests [find you](/explore).' },
       { p: 'None of this is a headline. All of it is the reason the headlines later get believed. Foundations first, always. If you have not [claimed your handle](/be-a-sloth) yet, now is a good week for it, because permanent means the good ones go once.' },
     ],
   },
   {
     slug: 'monthly-plans-whatsapp-verification-reminders',
-    title: 'Monthly plans, a WhatsApp code instead of a password, and reminders that actually show up',
+    title: 'Monthly Plans, WhatsApp Login & Reliable Reminders',
     date: 'Jun 17, 2026',
     icons: ['money', 'bell', 'shield'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Feature Update',
     image: null,
@@ -3680,8 +4387,8 @@ export const BLOG_POSTS = [
       { h2: 'Monthly plans that renew themselves' },
       { p: 'You can now go monthly, with auto-renewing subscriptions running on [Razorpay Subscriptions](https://razorpay.com/subscriptions/) in both monthly and annual cadences. Start small, see whether the platform earns its keep, upgrade when it clearly does. The [plan](/pricing) should fit where you are, not where we would like you to be. That is also why we take [0% commission](/blog/zero-commission-bet) on your bookings, the plan is the deal, not a tax on every session.' },
       { h2: 'A code, not a password' },
-      { p: 'Hosts can now verify their [WhatsApp](https://www.whatsapp.com) number with a one-time code, both as a step in onboarding and as a modal in the dashboard. In India, WhatsApp is where verification already lives, so we met you there instead of inventing another password for you to lose. It is also how reminders and confirmations reliably reach people who have not opened email since 2019.' },
-      { info: { title: 'Getting paid, made legible', text: 'Host balances got more honest too. Earnings settle on completion, then move through a clearing window before payout, and you can see exactly where your money is instead of guessing when it will land.' } },
+      { p: 'Hosts can now verify their [WhatsApp](https://www.whatsapp.com) number [with a one-time code](/blog/your-phone-number-is-the-account), both as a step in onboarding and as a modal in the dashboard. In India, WhatsApp is where verification already lives, so we met you there instead of inventing another password for you to lose. It is also how reminders and confirmations reliably reach people who have not opened email since 2019.' },
+      { info: { title: 'Getting paid, made legible', text: 'Host balances got more honest too. Earnings settle on completion, then move through [a clearing window before payout](/blog/where-your-money-sits), and you can see exactly where your money is instead of guessing when it will land.' } },
       { h2: 'Reminders that carry the link' },
       { p: 'A reminder that says “you have a session soon” and then makes you dig for the [Meet](https://meet.google.com) link has only done half its job. Booking reminders now include the actual meeting link or location, so the nudge is also the doorway. The end-user dashboard got redesigned in the same pass, so guests can see their bookings without emailing anyone to ask.' },
       { p: 'If a year felt like a lot, the monthly option removes the excuse. Take it for a month, that is a much easier yes. [Start your page](/be-a-sloth) and see how it feels with real bookings in it.' },
@@ -3689,10 +4396,10 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'phone-login-and-reschedule-bookings',
-    title: 'Two logins, one less password, and the reschedule button we probably should’ve shipped first',
+    title: 'Phone Login, One Less Password & Reschedule Bookings',
     date: 'Jun 14, 2026',
     icons: ['users', 'calendar', 'lightning'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Feature Update',
     image: null,
@@ -3701,20 +4408,20 @@ export const BLOG_POSTS = [
     body: [
       { p: 'Every password you ask someone to create is a small tax on them ever coming back. They forget it, they reset it, they give up somewhere in the middle and go do something else. So for guests, we simply stopped asking.' },
       { h2: 'Your phone number is the login' },
-      { p: 'Guest login is now phone-first: your number is your identity. Enter it, confirm with a code over [WhatsApp](https://www.whatsapp.com), and if you are new an account is created quietly in the background. No form, no password to invent, no “must contain a symbol and a childhood memory.” The lowest-friction login is the one with nothing to remember, which is roughly the whole idea behind our [under-a-minute booking flow](/blog/booking-in-under-a-minute).' },
+      { p: 'Guest login is now phone-first: [your number is your identity](/blog/your-phone-number-is-the-account). Enter it, confirm with a code over [WhatsApp](https://www.whatsapp.com), and if you are new an account is created quietly in the background. No form, no password to invent, no “must contain a symbol and a childhood memory.” The lowest-friction login is the one with nothing to remember, which is roughly the whole idea behind our [under-a-minute booking flow](/blog/booking-in-under-a-minute).' },
       { h2: 'A navbar that knows who you are' },
       { p: 'Navigation went role-aware. It shows you what is relevant and hides what is not, depending on whether you are here to book or here to host. One less cluttered menu to squint at. Software should adapt quietly to you, rather than handing you a map and wishing you luck.' },
       { h2: 'Reschedule, instead of the awkward do-over' },
-      { p: 'And the one people felt immediately: reschedule. Plans move. That is not an edge case, that is Tuesday. Before this, moving a booking meant cancelling and rebooking, a small ritual of friction and an awkward refund dance. Now you move the booking, with proper fee handling built in for the times a reschedule should carry one. It is the kind of thing calendar tools like [Cal.com](https://cal.com) treat as table stakes, and they are right to.' },
+      { p: 'And the one people felt immediately: reschedule. Plans move. That is not an edge case, that is Tuesday. Before this, moving a booking meant cancelling and rebooking, a small ritual of friction and an awkward refund dance. Now you move the booking, with [proper fee handling built in](/blog/razorpay-is-the-source-of-truth) for the times a reschedule should carry one. It is the kind of thing calendar tools like [Cal.com](https://cal.com) treat as table stakes, and they are right to.' },
       { info: { title: 'Built on a real switch', text: 'Reschedule shipped on feature-flag plumbing, so risky features can be turned on and off cleanly instead of hoping the deploy behaves. Boring infrastructure, and exactly why the fun stuff ships without drama.' } },
       { p: 'This is where the user-facing story starts: a login with nothing to memorise, a menu that pays attention, and a button that moves an appointment instead of destroying it. Small things you only miss when they are gone. Now they are not. [Come see the rest.](/be-a-sloth)' },
     ],
   },
   {
     slug: 'how-explore-ranking-works',
-    title: 'How Explore Ranking Works on Book A Sloth: A Host’s Guide to Getting Found',
+    title: 'How Explore Ranking Works on Book A Sloth',
     date: 'Jul 11, 2026',
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 16,
     category: 'Guide',
     image: null,
@@ -3845,7 +4552,7 @@ export const BLOG_POSTS = [
     title: 'Where your money sits for seven days, and why',
     date: 'Jul 7, 2026',
     icons: ['wallet', 'money', 'clipboard'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Money',
     image: null,
@@ -3864,7 +4571,7 @@ export const BLOG_POSTS = [
       { p: 'If we paid out instantly, that money would already be in your bank when the reversal hit — and then the conversation is us asking you to return money you have already spent. That conversation destroys the relationship, every time, regardless of who was right. Seven quiet days beats one of those.' },
       { info: { title: 'Not a float', text: 'We are not earning interest on your balance. The window exists to absorb reversals, not to hold your money for a yield. The day we can shorten it safely, we will.' } },
       { h2: 'One number, computed once' },
-      { p: 'Every screen that shows your balance — dashboard, earnings, payouts — reads from a single function. There is no second implementation, no cached copy that drifts.' },
+      { p: 'Every screen that shows your balance — dashboard, earnings, payouts — [reads from a single function](/blog/the-ledger-nobody-asked-for). There is no second implementation, no cached copy that drifts.' },
       { p: 'This sounds like a small engineering detail and it is actually the whole product. The fastest way to lose a host\'s trust forever is to show them two different balances in one session. They will not file a bug. They will just quietly stop believing every number you ever show them, including the correct ones.' },
       { h2: 'And one gate' },
       { p: 'Withdrawal requires completed verification. Not because we enjoy paperwork, but because the payout is the only place money leaves the building, so it is the only place worth guarding properly. The details of that are in [what happens to your Aadhaar](/blog/what-happens-to-your-aadhaar).' },
@@ -3882,7 +4589,7 @@ export const BLOG_POSTS = [
     title: 'The double-entry ledger nobody asked for',
     date: 'Jul 14, 2026',
     icons: ['clipboard', 'database', 'scale'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Engineering',
     image: null,
@@ -3892,7 +4599,7 @@ export const BLOG_POSTS = [
       { p: 'Almost every application that handles money starts with a number in a column. `balance`. You add to it when money arrives and subtract from it when money leaves, and for a surprisingly long time this works.' },
       { p: 'It works until the first time someone asks a question the column cannot answer. Not "what is my balance" — that one is easy. The question is "why".' },
       { h2: 'The column that cannot explain itself' },
-      { p: 'A host writes in and says their balance is ₹340 lower than they expected. With a single column, what do you actually have? A number. It is currently wrong, and you have no record of how it got that way, because every update overwrote the evidence of the previous one.' },
+      { p: 'A host writes in and says [their balance is ₹340 lower than they expected](/blog/where-your-money-sits). With a single column, what do you actually have? A number. It is currently wrong, and you have no record of how it got that way, because every update overwrote the evidence of the previous one.' },
       { p: 'You will then do what everyone does: reconstruct history by hand, from bookings, refunds and payments, in a spreadsheet, at night. And you will get an answer that is probably right, which is a spectacular thing to say to someone about their money.' },
       { p: 'A mutable balance is not a record. It is a rumour that happens to be numeric.' },
       { h2: 'What double-entry actually is' },
@@ -3909,7 +4616,7 @@ export const BLOG_POSTS = [
       { p: 'That third one is where these systems usually die. The moment a second code path can write an entry — a quick fix, a migration, an admin tool someone built in an afternoon — the invariant is gone, and you are back to a number you have to trust rather than one you can prove.' },
       { h2: 'Why now, on a platform this small' },
       { p: 'This is the fair objection. We built a real accounting ledger into a product with a handful of paying hosts. That is, on the face of it, absurd.' },
-      { p: 'But you cannot retrofit history. The day you actually need a ledger is the day a host, or an auditor, or the tax office asks what happened in a month that has already gone. If you did not record it correctly at the time, the answer is a reconstruction, and a reconstruction is not an audit trail. It is a best guess with a confident font.' },
+      { p: 'But you cannot retrofit history. The day you actually need a ledger is the day a host, or an auditor, or [the tax office asks](/blog/gst-invoices-host-verification-mobile) what happened in a month that has already gone. If you did not record it correctly at the time, the answer is a reconstruction, and a reconstruction is not an audit trail. It is a best guess with a confident font.' },
       { p: 'Ledgers are cheap to start and impossible to backdate. That asymmetry is the entire argument. Every month we ran without one would have been a month permanently missing from the record.' },
       { p: 'It has never once made a host happier. It is the reason we can answer "why" with a list instead of an apology.' },
       { faq: [
@@ -3921,9 +4628,9 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'digital-marketing-strategy-vibe-coders',
-    title: 'Digital Marketing Strategy for Vibe Coders: How to Pay Down Distribution Debt',
+    title: 'Digital Marketing Strategy for Vibe Coders',
     date: 'Jul 6, 2026',
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 13,
     category: 'Guide',
     image: null,
@@ -3935,7 +4642,7 @@ export const BLOG_POSTS = [
       { p: 'Shipping is no longer the bottleneck. Getting found is.' },
       { h2: 'Why can’t vibe coders get traction anymore?' },
       { p: 'Vibe coders cannot get traction because two curves crossed in 2026, and their tools only tell them about one of them.' },
-      { p: 'The first curve fell off a cliff. The cost of building a functional SaaS dropped from roughly $200,000 to about $5,000, with timelines compressing from six months to six weeks (Keyhole Software, Q1 2026). The second curve went the other way: customer acquisition costs rose about 60% between 2021 and 2026 (VibeCom, May 2026). Building got cheap. Attention got expensive. Nobody sent you the second invoice.' },
+      { p: 'The first curve fell off a cliff. [The cost of building a functional SaaS dropped from roughly $200,000 to about $5,000](/blog/digital-marketing-for-saas-companies), with timelines compressing from six months to six weeks (Keyhole Software, Q1 2026). The second curve went the other way: customer acquisition costs rose about 60% between 2021 and 2026 (VibeCom, May 2026). Building got cheap. Attention got expensive. Nobody sent you the second invoice.' },
       { p: 'That second invoice has a name. Borrow the industry’s favourite phrase, technical debt, the future cost of shipping code fast today, and apply it to growth. Distribution Debt is the accumulated cost of shipping a product faster than you can build an audience for it. Technical debt is covered exhaustively, a JetBrains-cited 2026 survey and Escape.tech’s scan of 1,400+ vibe-coded apps (65% with security issues) made sure of that. Distribution Debt is the debt nobody tracks, and it is the one that actually kills products.' },
       { p: 'Here is why it compounds. When everyone can ship, shipping stops being a signal. Apple took in 235,800 new app submissions in Q1 2026 alone, up 84% year over year (FindSkill.ai, April 2026). Your Lovable-built CRM now launches into a market with forty near-identical twins born the same week. The feature that would have earned attention in 2020 earns a shrug in 2026, because the scarce resource flipped from code to trust, and trust does not respond to prompts.' },
       { h2: 'The Distribution Debt Curve' },
@@ -3976,7 +4683,7 @@ export const BLOG_POSTS = [
       { h2: 'Optimize for the AI answer, not just the blue link' },
       { p: 'Your buyers increasingly find tools by asking ChatGPT, Perplexity, and Claude, which means answer engine optimization (AEO) and generative engine optimization (GEO) now sit alongside classic SEO. The practical translation: write self-contained, directly-answering pages an AI can lift verbatim, honest “X vs Y” comparisons, “best [tool] for [niche]” pages that name real competitors, and pricing an engine can quote. One founder in the Forbes piece built a semantic content-map generator tied to Ahrefs that surfaces topics rivals have not covered, tuned for how LLMs pick sources (Forbes, March 2026). You can vibe code the same asset in an afternoon, the rare case where your build speed is the marketing moat.' },
       { h2: 'Free tools: the one channel where vibe coders have an unfair advantage' },
-      { p: 'Ship a small free tool that solves one slice of the customer’s problem. ALM Corp’s 2026 search-marketing guide flags interactive ROI calculators as among the highest-value B2B assets precisely because AI Overviews cannot replicate a working tool, they can only summarize a static page. A calculator, grader, or generator costs you one evening in Bolt or v0, ranks for “[problem] calculator,” and captures emails while you sleep. Every other founder treats tool-building as expensive. For you it is a Tuesday.' },
+      { p: 'Ship a small free tool that solves one slice of the customer’s problem. ALM Corp’s 2026 search-marketing guide flags [interactive ROI calculators as among the highest-value B2B assets](/blog/content-marketing-for-brand-awareness) precisely because AI Overviews cannot replicate a working tool, they can only summarize a static page. A calculator, grader, or generator costs you one evening in Bolt or v0, ranks for “[problem] calculator,” and captures emails while you sleep. Every other founder treats tool-building as expensive. For you it is a Tuesday.' },
       { p: 'Example, when personality is the channel: Book A Sloth, a niche [booking product](/be-a-sloth), is the archetype where build-in-public overdelivers. The name alone is a hook, every demo screenshot is inherently shareable, and a weekly “weirdest bookings this week” post markets the product without ever pitching it (you can watch us try it in our own [build-in-public series](/blog/building-in-public-why-we-blog)). Rule of thumb from the matrix: if your product has a personality, the personality is the channel. If it does not, pick SEO and let the compounding do the talking.' },
       { h2: 'How do you pay down Distribution Debt in 30 days?' },
       { p: 'Spend 30 days proving one channel can produce signups, not “doing marketing.” Run it as the Debt-Payoff Sprint, structured as the Ship-to-Signal Loop stretched across a month.' },
@@ -4004,7 +4711,7 @@ export const BLOG_POSTS = [
       { p: 'Even Karpathy’s own arc rhymes with this. A year after coining “vibe coding,” he had moved to advocating structured, reviewed, agent-driven engineering (Taskade, March 2026). Improvised distribution gets you signal. Systematized distribution gets you a business.' },
       { h2: 'Frequently asked questions' },
       { p: 'What is distribution debt in vibe coding? It is the accumulated cost of shipping a product faster than you can build an audience for it. AI collapsed build time while acquisition costs rose about 60% since 2021 (VibeCom, 2026), so every fast launch widens the gap between what you built and who knows it exists. Like technical debt, the interest compounds until you service it.' },
-      { p: 'Can you do marketing with vibe coding tools? Yes. They build most core marketing assets: landing pages, ROI calculators, email workflows, comparison pages, dashboards. Forbes documented founders building full content-analysis and lead-enrichment systems this way in March 2026. The tools handle the assets, you still supply positioning, judgment, and consistency.' },
+      { p: 'Can you do marketing with vibe coding tools? Yes. They build most core marketing assets: landing pages, ROI calculators, [email workflows](/blog/email-marketing-for-customer-acquisition), comparison pages, dashboards. Forbes documented founders building full content-analysis and lead-enrichment systems this way in March 2026. The tools handle the assets, you still supply positioning, judgment, and consistency.' },
       { p: 'What is the biggest marketing mistake vibe coders make? Servicing the wrong debt. Founders answer weak traction by adding features, but features sit on the Build line while the problem sits in the distribution gap. The documented pattern is 40+ hours on the product versus under 4 on acquisition (VibeCom, 2026), a 10:1 imbalance that guarantees the debt compounds.' },
       { p: 'How long before SEO works for a vibe-coded product? Expect 6 to 12 weeks before meaningful organic signal, longer in competitive niches. That is why SEO should not be your first channel even though it is your strongest, pair it with a fast-signal channel so you get feedback while SEO compounds in the background.' },
       { p: 'Should I mention my app is vibe coded? Yes, paired with proof of diligence. Escape.tech found 58% of scanned vibe-coded apps carried a critical vulnerability (CSA Labs, 2026), so buyers are wary. Publishing your review, testing, and security process turns “vibe coded” from a red flag into a transparency signal your competitors will not match.' },
@@ -4021,7 +4728,7 @@ export const BLOG_POSTS = [
     slug: 'building-in-public-why-we-blog',
     title: 'Building in public: why we’re writing this down',
     date: 'Jun 28, 2026',
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     icons: ['code', 'palette', 'star'],
     readMins: 3,
     category: 'Internal',
@@ -4046,7 +4753,7 @@ export const BLOG_POSTS = [
     title: 'The 0% commission bet',
     date: 'Jun 26, 2026',
     icons: ['money', 'target', 'users'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Growth',
     image: null,
@@ -4071,7 +4778,7 @@ export const BLOG_POSTS = [
     title: 'Payments and calendars, on autopilot',
     date: 'Jun 22, 2026',
     icons: ['money', 'calendar', 'shield'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Engineering',
     image: null,
@@ -4080,12 +4787,12 @@ export const BLOG_POSTS = [
     body: [
       { p: 'A booking platform lives or dies on two things that sound dull and are anything but: money has to move correctly, and two people must never end up in the same slot. Get either wrong and trust evaporates, usually at the worst possible moment.' },
       { h2: 'Money that moves correctly' },
-      { p: 'Payments run through [Razorpay](https://razorpay.com), cards, UPI, and netbanking at checkout, with auto-renewing subscriptions for hosts on paid plans. Every successful payment is reconciled against a signed webhook, so a flaky network on the customer’s phone can never leave an order stuck in limbo.' },
+      { p: 'Payments run through [Razorpay](https://razorpay.com), cards, UPI, and netbanking at checkout, with auto-renewing subscriptions for hosts on paid plans. Every successful payment is [reconciled against a signed webhook](/blog/razorpay-is-the-source-of-truth), so a flaky network on the customer’s phone can never leave an order stuck in limbo.' },
       { steps: [
         'A guest pays at checkout, and the order is created and held.',
         'Razorpay confirms the payment over a signed webhook.',
         'We reconcile the webhook against the order before anything is marked paid.',
-        'The booking, invoice, and notifications fire only once the money is real.',
+        'The booking, invoice, and [notifications fire](/blog/notifications-that-actually-arrive) only once the money is real.',
       ] },
       { h2: 'Calendars that never collide' },
       { p: 'Connect [Google Calendar](https://calendar.google.com) once and your busy times are blocked automatically. Every online session gets a [Google Meet](https://meet.google.com) link generated for it. The availability a guest sees is the truth, not a stale snapshot from an hour ago. We later hardened this even further at the database level, which you can read about in the [Explore and concurrency update](/blog/explore-ranking-and-a-more-app-like-app).' },
@@ -4097,7 +4804,7 @@ export const BLOG_POSTS = [
     title: 'Designing a booking flow guests breeze through',
     date: 'Jun 18, 2026',
     icons: ['calendar', 'lightning', 'users'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Product',
     image: null,
@@ -4122,7 +4829,7 @@ export const BLOG_POSTS = [
     title: 'From sign-up to live in 60 seconds',
     date: 'Jun 24, 2026',
     icons: ['rocket', 'users', 'lightning'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Feature Update',
     image: null,
@@ -4140,7 +4847,7 @@ export const BLOG_POSTS = [
       ] },
       { p: 'Change your handle later and old links keep redirecting, so you never lose a booking to a broken URL. We went deeper on that Google-first reshape in the [onboarding and reviews update](/blog/google-sign-in-service-pages-two-way-reviews).' },
       { quote: 'Onboarding should feel like an open door, not an obstacle course.', cite: 'Product principle' },
-      { p: 'Sixty seconds is not a slogan, it is roughly how long the whole thing takes. [Try it](/be-a-sloth) and hold us to it.' },
+      { p: '[Sixty seconds is not a slogan](/blog/the-first-booking), it is roughly how long the whole thing takes. [Try it](/be-a-sloth) and hold us to it.' },
     ],
   },
   {
@@ -4148,7 +4855,7 @@ export const BLOG_POSTS = [
     title: 'Notifications that actually arrive',
     icons: ['bell', 'server', 'shield'],
     date: 'Jun 14, 2026',
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 4,
     category: 'Engineering',
     image: null,
@@ -4157,13 +4864,13 @@ export const BLOG_POSTS = [
     body: [
       { p: 'A booking confirmation that silently fails to send is one of the fastest ways to lose someone’s trust, because the guest does not know it failed. They just think you ghosted them. So notifications got their own engine instead of being an afterthought bolted onto each feature.' },
       { h2: 'Queued, retried, logged' },
-      { p: 'Booking confirmations and reminders go out over email and [WhatsApp](https://www.whatsapp.com) through a single pipeline. Every message is queued, retried on failure, and logged, so when something does go wrong we can see exactly what happened instead of shrugging at a guest.' },
+      { p: 'Booking confirmations and [reminders go out](/blog/monthly-plans-whatsapp-verification-reminders) over email and [WhatsApp](https://www.whatsapp.com) through a single pipeline. Every message is queued, retried on failure, and logged, so when something does go wrong we can see exactly what happened instead of shrugging at a guest.' },
       { ul: [
         'One engine for every transactional message, not scattered send calls sprinkled through the code.',
         'Automatic retries, so a momentary provider hiccup does not quietly drop a message.',
         'A full log of what was sent, when, and to whom.',
       ] },
-      { info: { title: 'Sent is not delivered', text: 'We learned the hard way that a provider accepting a message is not the same as it landing. The log tracks both, so “it said it sent” is never the end of the investigation.' } },
+      { info: { title: 'Sent is not delivered', text: 'We learned the hard way that [a provider accepting a message is not the same as it landing](/blog/the-confirmation-that-didnt-confirm). The log tracks both, so “it said it sent” is never the end of the investigation.' } },
       { p: 'Boring infrastructure, but it is the kind of boring that lets both you and your guests sleep. It is the same reliability floor we describe in [payments and calendars on autopilot](/blog/payments-and-calendars-on-autopilot).' },
     ],
   },
@@ -4199,7 +4906,7 @@ export const BLOG_POSTS = [
       { p: 'That mindset stood out to us much more than any programming language on her resume.' },
       { p: "Since joining the Product team, Aastha has been involved in work that directly shapes what our users experience. Before diving deep into Book A Sloth, she also contributed to building our company website, [Timewheel Internet Pvt. Ltd.](https://timewheel.co.in/), the parent company behind Book A Sloth, giving her a chance to understand not just the product, but the company behind it. She joins the same month we welcomed [Mohini to our marketing automation team](/blog/welcome-mohini-daf)." },
       { p: "Today, she's helping build Book A Sloth across multiple areas." },
-      { p: "She's worked on improving our [KYC flow](/be-a-sloth), making the mobile experience smoother, and polishing interfaces that thousands of future users will interact with. Alongside the core product, she's also started taking ownership of individual client projects, including WeCos, Ashlar Studios, and Ashlar Academy." },
+      { p: "She's worked on improving our [KYC flow](/be-a-sloth), making [the mobile experience smoother](/blog/gst-invoices-host-verification-mobile), and polishing interfaces that thousands of future users will interact with. Alongside the core product, she's also started taking ownership of individual client projects, including WeCos, Ashlar Studios, and Ashlar Academy." },
       { p: "One thing we've particularly appreciated is the way she approaches problems." },
       { p: 'Some developers immediately jump into writing code.' },
       { p: 'Aastha usually starts by asking questions.' },
@@ -4262,7 +4969,7 @@ export const BLOG_POSTS = [
     title: 'What a booking page needs in India',
     date: 'Jun 3, 2026',
     icons: ['scale', 'columns', 'target'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Comparison',
     image: null,
@@ -4273,11 +4980,11 @@ export const BLOG_POSTS = [
       { p: 'They were built for a particular working life, though. Someone in Boston, billing in dollars, whose client will absolutely pay by card, and whose reminder can safely go to email because their client reads email.' },
       { p: 'Change the country and every one of those assumptions moves.' },
       { h2: 'The reminder has to arrive where people are' },
-      { p: 'An Indian practice does not run on email. It runs on WhatsApp. A booking reminder sent to email at 9am for a 10am appointment is, functionally, a reminder that was not sent.' },
-      { p: 'This is not a preference to be configured later. It changes what the product is. If WhatsApp is the channel, then the phone number is the identity, and if the phone number is the identity then your entire login flow is different from the one you would build in San Francisco. One assumption about where a message lands reaches all the way down to the auth table.' },
+      { p: 'An Indian practice does not run on email. It runs on WhatsApp. [A booking reminder sent to email at 9am for a 10am appointment](/blog/notifications-that-actually-arrive) is, functionally, a reminder that was not sent.' },
+      { p: 'This is not a preference to be configured later. It changes what the product is. If WhatsApp is the channel, then [the phone number is the identity](/blog/your-phone-number-is-the-account), and if the phone number is the identity then your entire login flow is different from the one you would build in San Francisco. One assumption about where a message lands reaches all the way down to the auth table.' },
       { h2: 'Money moves differently here' },
       { p: 'UPI is not a payment method. It is *the* payment method. A flow that treats it as an alternative to cards, behind a dropdown, is a flow built by someone who has never watched a client pay for anything in this country.' },
-      { p: 'And then there is the part nobody puts on a landing page: the invoice. An Indian professional needs a GST invoice with the right serial, the right code, the right numbers, or their accountant sends it back and it becomes their problem at the end of the quarter. "Export a CSV" is not an answer to that. Tax compliance is not a reporting feature; it is either in the product or it is in your evenings.' },
+      { p: 'And then there is the part nobody puts on a landing page: the invoice. An Indian professional needs [a GST invoice with the right serial](/blog/advance-payments-without-the-screenshot-dance), the right code, the right numbers, or their accountant sends it back and it becomes their problem at the end of the quarter. "Export a CSV" is not an answer to that. Tax compliance is not a reporting feature; it is either in the product or it is in your evenings.' },
       { h2: 'The price is in the wrong currency' },
       { p: 'Software priced in dollars does something quietly hostile to an Indian practice: it charges a first-world subscription against third-world-adjacent session fees. The tool costs the same whether your session is $200 or ₹800. One of those maths works.' },
       { table: { head: ['Assumption', 'Fine somewhere', 'Not fine here'], rows: [
@@ -4302,7 +5009,7 @@ export const BLOG_POSTS = [
     title: 'Taking advance payments without the screenshot dance',
     date: 'May 27, 2026',
     icons: ['money', 'chart', 'calendar'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Guide',
     image: null,
@@ -4332,7 +5039,7 @@ export const BLOG_POSTS = [
       { p: 'If your no-show rate is genuinely bad, take the full fee. People who intend to show up do not mind paying in advance. That is, quietly, the most useful filter in the whole system.' },
       { info: { title: 'The bit people get wrong', text: 'A cancellation policy nobody was shown at the time of booking is not a policy. It is an argument you are going to have later. Put the terms in the booking flow, where they are agreed, not in a message you send after the dispute starts.' } },
       { h2: 'The invoice, before your accountant asks' },
-      { p: 'If you are registered, the advance is a taxable event and it needs a proper invoice with a proper serial. Doing this by hand, monthly, in a spreadsheet, is how professionals lose entire weekends to a quarter that ended six weeks ago.' },
+      { p: 'If you are registered, the advance is a taxable event and it needs [a proper invoice with a proper serial](/blog/gst-invoices-host-verification-mobile). Doing this by hand, monthly, in a spreadsheet, is how professionals lose entire weekends to a quarter that ended six weeks ago.' },
       { p: 'It should be automatic or it will not happen. That is not a moral failing; it is just what happens to admin tasks that depend on a human remembering.' },
       { h2: 'Doing this on Book A Sloth' },
       { p: 'Publish a service with a price, share your page, and the ordering above is the default: real availability, payment in the flow, automatic confirmation, WhatsApp reminder, GST invoice. Bookings arrive paid. There is no screenshot.' },
@@ -4350,7 +5057,7 @@ export const BLOG_POSTS = [
     title: 'Razorpay is the source of truth. We are not.',
     date: 'May 20, 2026',
     icons: ['money', 'lock', 'server'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Money',
     image: null,
@@ -4375,7 +5082,7 @@ export const BLOG_POSTS = [
       { info: { title: 'The rule underneath all three', text: 'When our records and the payment provider disagree, the payment provider is right. [It has the money](/blog/where-your-money-sits). We have an opinion.' } },
       { h2: 'And the webhook, because users close tabs' },
       { p: 'The redirect is a courtesy, not a guarantee. People pay and then close the tab, lose signal in a lift, or wander off. If the redirect is your only way of learning a payment succeeded, then a percentage of your paying customers simply never get what they paid for, and you will not find out from them — they will just leave.' },
-      { p: 'So the webhook is the real notification, arriving server-to-server whether or not a human is still holding the phone. It is signed too, and verified the same way.' },
+      { p: 'So [the webhook is the real notification](/blog/payments-and-calendars-on-autopilot), arriving server-to-server whether or not a human is still holding the phone. It is signed too, and verified the same way.' },
       { p: 'None of this is clever. All of it is the difference between a checkout and a hole.' },
       { faq: [
         { q: 'Should payment amounts be sent from the client?', a: 'Never. Calculate the price server-side from your own configuration and send that to the payment provider. A price the browser can name is a price a user can change.' },
@@ -4390,7 +5097,7 @@ export const BLOG_POSTS = [
     title: 'Your phone number is the account',
     date: 'May 13, 2026',
     icons: ['users', 'key', 'lightning'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'Product',
     image: null,
@@ -4401,16 +5108,16 @@ export const BLOG_POSTS = [
       { p: 'They wanted a haircut on Thursday. They are now inventing a password, for a website they will visit twice, which must contain a number and a special character. Some percentage of them close the tab here — and every one of those was a booking your host had already earned.' },
       { h2: 'Guests do not get a password' },
       { p: 'Not "password optional". There is no password. There is nothing to forget, nothing to reset, nothing to reuse from another site that has already been breached.' },
-      { p: 'A guest types their phone number and gets a code on WhatsApp. That is the login. If we have not seen the number before, the account is created in the same motion — they will never know a signup happened, because from where they are sitting, one did not.' },
+      { p: '[A guest types their phone number and gets a code on WhatsApp](/blog/phone-login-and-reschedule-bookings). That is the login. If we have not seen the number before, the account is created in the same motion — they will never know a signup happened, because from where they are sitting, one did not.' },
       { p: 'The phone number is the identity. Not an attribute of the account, not a recovery method bolted on afterwards. The account *is* the number.' },
       { h2: 'Which is convenient, because we needed it anyway' },
       { p: 'Here is the part that made this an easy decision rather than a brave one.' },
-      { p: 'We were always going to send booking reminders on WhatsApp, because in India that is where messages are read. So we always needed a verified phone number. Every guest was going to give us one regardless.' },
+      { p: 'We were always going to [send booking reminders on WhatsApp](/blog/notifications-that-actually-arrive), because in India that is where messages are read. So we always needed a verified phone number. Every guest was going to give us one regardless.' },
       { p: 'Once you notice that, a password is just a second credential doing a job the first one already does — worse, and with a support burden attached. The verified number proves they are them. What is the password adding? A reset flow, a hashing decision, and an email you now also have to collect.' },
       { p: 'We deleted the whole branch.' },
       { quote: 'If you already need a verified phone number to do your job, a password is a second lock on the same door, and you are the one carrying both keys.', cite: 'The reasoning, such as it is' },
       { h2: 'Hosts get exactly one door' },
-      { p: 'Hosts sign in with Google. Only Google. There is no email-and-password option, no OTP fallback, no "or continue with" list.' },
+      { p: '[Hosts sign in with Google](/blog/google-sign-in-service-pages-two-way-reviews). Only Google. There is no email-and-password option, no OTP fallback, no "or continue with" list.' },
       { p: 'This annoys a certain kind of person and we are keeping it, for two reasons.' },
       { p: 'The first is that a host account is not a guest account. It holds a calendar, a payout destination, and other people\'s personal details. Google does authentication better than we will — hardware keys, device checks, suspicious-login detection, an entire security organisation. Offering a weaker second door next to it does not add convenience. It just means every attacker uses the weaker door, and now our security equals the worst option we offer, not the best.' },
       { p: 'The second is arithmetic. Every additional auth path is not one more thing to build — it is one more thing to be correct in forever, at every intersection with every other path. Two paths is not twice the work; it is the work plus every place they meet. Sessions, linking, recovery, revocation, the lot.' },
@@ -4430,7 +5137,7 @@ export const BLOG_POSTS = [
     title: 'The First Booking',
     date: 'May 8, 2026',
     icons: ['calendar', 'star', 'users'],
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 6,
     category: 'Product',
     image: null,
@@ -4456,7 +5163,7 @@ export const BLOG_POSTS = [
       { h2: 'Behind the scenes' },
       { p: 'While you are creating your service, Book A Sloth is quietly preparing everything else:' },
       { ul: ['Public booking page', 'Search-friendly URL', 'Calendar compatibility', 'Future payment support', 'Reminder workflow', 'Booking records'] },
-      { p: 'The setup stays simple because the heavy lifting happens behind the curtain, which is exactly where heavy lifting belongs.' },
+      { p: 'The setup stays simple because [the heavy lifting happens behind the curtain](/blog/payments-and-calendars-on-autopilot), which is exactly where heavy lifting belongs.' },
       { h2: 'Designing for clarity' },
       { p: 'We removed a surprising amount before adding anything. Instead of overwhelming forms, we focused on:' },
       { ul: ['Clear typography', 'Large tap targets', 'Mobile-first layouts', 'Friendly language', 'Sensible defaults', 'Fast loading pages'] },
@@ -4467,8 +5174,8 @@ export const BLOG_POSTS = [
       { table: { head: ['Coming Soon', 'Why It Matters'], rows: [['Online payments', 'Get paid before the session'], ['Google Calendar sync', 'Avoid double bookings'], ['Google Meet links', 'Automatic online meetings'], ['WhatsApp reminders', 'Fewer no-shows'], ['Reviews', 'Build trust with every booking'], ['Digital products', 'Sell beyond your time']] } },
       { p: 'One service. An entire business behind it. (Every one of those “coming soon” rows has since shipped, which you can trace in the [changelog](/changelog).)' },
       { h2: 'One step closer' },
-      { p: 'This week was all about laying the foundation, because before payments, before calendars, before notifications, you need something worth booking. That starts with your very first service. [Publish yours](/be-a-sloth) and see how little time it actually takes.' },
-      { p: 'Next, we dig into something just as important: why accepting payments was never an add-on, it was one of the first things we built.' },
+      { p: 'This week was all about laying the foundation, because before payments, before calendars, before notifications, you need something worth booking. That starts with [your very first service](/blog/onboarding-a-host-in-60-seconds). [Publish yours](/be-a-sloth) and see how little time it actually takes.' },
+      { p: 'Next, we dig into something just as important: [why accepting payments was never an add-on](/blog/razorpay-is-the-source-of-truth), it was one of the first things we built.' },
     ],
   },
   {
@@ -4476,7 +5183,7 @@ export const BLOG_POSTS = [
     title: 'Hello, World. We’re Building Book A Sloth.',
     icons: ['rocket', 'code', 'star'],
     date: 'May 1, 2026',
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 5,
     category: 'News',
     image: null,
@@ -4522,7 +5229,7 @@ export const BLOG_POSTS = [
       { p: 'Every Friday, we publish what changed. Sometimes a shiny new feature, sometimes a bug that taught us something, sometimes a full redesign because we got it wrong the first time. You see the wins, and you also see the rewrites, because that is what building software actually looks like. Here is [why we write it all down](/blog/building-in-public-why-we-blog).' },
       { quote: 'Help creators, professionals and small businesses spend less time managing bookings, and more time doing the work they love.', cite: 'Our North Star' },
       { h2: 'What’s next?' },
-      { p: 'Next, the first major milestone: how we build services that take under five minutes to publish. The journey starts here. Welcome aboard, and if you would rather jump in than read along, [claim your page](/be-a-sloth). 🦥' },
+      { p: 'Next, the first major milestone: [how we build services that take under five minutes to publish](/blog/the-first-booking). The journey starts here. Welcome aboard, and if you would rather jump in than read along, [claim your page](/be-a-sloth). 🦥' },
     ],
   },
   {
@@ -4530,7 +5237,7 @@ export const BLOG_POSTS = [
     title: 'Book A Sloth goes live',
     icons: ['rocket', 'lightning', 'megaphone'],
     date: 'Jun 19, 2026',
-    author: 'Bolt 958',
+    author: 'Shubham N Datarkar',
     readMins: 3,
     category: 'News',
     image: null,
@@ -4539,7 +5246,7 @@ export const BLOG_POSTS = [
     body: [
       { p: 'On June 19th we flipped the switch. Payments, calendars, and notifications all running on hardened, monitored infrastructure, and a “coming soon” page that finally came down for good.' },
       { h2: 'What launch really means' },
-      { p: 'Launch day is not fireworks. It is automated backups running on schedule, error tracking watching every request, and a documented deploy pipeline so a fix can ship in minutes instead of hours. The boring stuff, done properly, so the exciting stuff has somewhere safe to stand.' },
+      { p: 'Launch day is not fireworks. It is automated backups running on schedule, error tracking watching every request, and [a documented deploy pipeline so a fix can ship in minutes instead of hours](/blog/the-day-the-site-went-white). The boring stuff, done properly, so the exciting stuff has somewhere safe to stand.' },
       { ul: [
         'Production [payments](/blog/payments-and-calendars-on-autopilot), calendars, and notifications, live.',
         'Automated backups and error tracking from day one.',

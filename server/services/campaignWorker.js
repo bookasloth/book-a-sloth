@@ -71,7 +71,9 @@ async function processDue() {
         bodyHtml: custom ? campaign.html_content : undefined,
         subject: custom ? campaign.subject : undefined,
         previewText: custom ? campaign.preview_text : undefined,
-        audience: contact.contact_type === 'vendor' ? 'vendor' : 'customer',
+        // Honor the campaign's chosen shell (v3.153); fall back to contact type
+        // for legacy campaigns saved before the layout column existed.
+        audience: campaign.layout || (contact.contact_type === 'vendor' ? 'vendor' : 'customer'),
         to: contact.email, data,
         user: { name: contact.name, email: contact.email },
         campaignId: campaign.id, subjectOverride: campaign.subject_override || null,

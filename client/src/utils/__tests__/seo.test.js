@@ -46,13 +46,16 @@ describe('resolveServiceSeo — admin overrides win, fallbacks otherwise', () =>
       .toBe('noindex,nofollow');
   });
 
-  test('og image falls back thumbnail -> brand card', () => {
+  test('og image falls back og_image -> seo_image -> thumbnail -> default card', () => {
+    // generated per-service card (v3.154) wins over everything below it
+    expect(resolveServiceSeo({ service: { ...base, og_image: 'https://img/og.png', seo_image: 'https://img/seo.jpg', thumbnail_url: 'https://img/t.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
+      .toBe('https://img/og.png');
+    expect(resolveServiceSeo({ service: { ...base, seo_image: 'https://img/seo.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
+      .toBe('https://img/seo.jpg');
     expect(resolveServiceSeo({ service: { ...base, thumbnail_url: 'https://img/t.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
       .toBe('https://img/t.jpg');
     expect(resolveServiceSeo({ service: base, vendor: VENDOR, siteUrl: SITE }).image)
-      .toBe('https://bookasloth.com/og-image.png');
-    expect(resolveServiceSeo({ service: { ...base, seo_image: 'https://img/seo.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
-      .toBe('https://img/seo.jpg');
+      .toBe('https://bookasloth.com/service-og-default.png');
   });
 
   test('description is truncated to ~160 chars', () => {
@@ -103,6 +106,28 @@ describe('profileJsonLd', () => {
     expect(ld['@type']).toBe('ProfilePage');
     expect(ld.mainEntity).toMatchObject({ '@type': 'Person', name: 'John Doe', url: 'https://bookasloth.com/john-doe' });
   });
+  test('adds sameAs (http socials only) + dateModified when present', () => {
+    const ld = profileJsonLd({
+      host: {
+        name: 'John Doe', username: 'john-doe', updated_at: '2026-09-01T10:00:00.000Z',
+        social_links: { instagram: 'https://instagram.com/j', website: '', email: 'j@x.com', whatsapp: '9' },
+      },
+      siteUrl: SITE,
+    });
+    expect(ld.mainEntity.sameAs).toEqual(['https://instagram.com/j']);
+    expect(ld.dateModified).toBe('2026-09-01T10:00:00.000Z');
+  });
+  test('omits sameAs / dateModified when socials blank and no updated_at', () => {
+    const ld = profileJsonLd({ host: { name: 'J', username: 'j', social_links: {} }, siteUrl: SITE });
+    expect(ld.mainEntity).not.toHaveProperty('sameAs');
+    expect(ld).not.toHaveProperty('dateModified');
+  });
+  test('emits aggregateRating from the host own rating, omits it at zero', () => {
+    const withRating = profileJsonLd({ host: { name: 'J', username: 'j' }, siteUrl: SITE, rating: { avg: 4.8, count: 12 } });
+    expect(withRating.mainEntity.aggregateRating).toEqual({ '@type': 'AggregateRating', ratingValue: 4.8, reviewCount: 12 });
+    const noRating = profileJsonLd({ host: { name: 'J', username: 'j' }, siteUrl: SITE, rating: { avg: 0, count: 0 } });
+    expect(noRating.mainEntity).not.toHaveProperty('aggregateRating');
+  });
 });
 
 describe('resolveBlogSeo — no truncated titles/descriptions', () => {
@@ -138,7 +163,13 @@ describe('articleGraphJsonLd — one @graph, real Person, stable @id relationshi
     imageHeight: 630,
     datePublished: '2026-07-06T00:00:00+05:30',
     dateModified: '2026-07-08T00:00:00+05:30',
-    author: { name: 'Bolt 958', url: 'https://bolt958.xyz' },
+    author: {
+      name: 'Shubham N Datarkar',
+      url: 'https://bookasloth.com/sndatarkar',
+      jobTitle: 'Founder, Book A Sloth',
+      image: 'https://company-assets.bookasloth.in/images/about/shubham-datarkar.jpg',
+      sameAs: ['https://x.com/sndatarkar', 'https://www.instagram.com/sndatarkar', 'https://shubhamdatarkar.com'],
+    },
     breadcrumb: [
       { name: 'Home', path: '/' },
       { name: 'Blog', path: '/blog' },
@@ -163,7 +194,13 @@ describe('articleGraphJsonLd — one @graph, real Person, stable @id relationshi
     const g = articleGraphJsonLd({ siteUrl: SITE, ...base });
     const person = g['@graph'].find((n) => n['@type'] === 'Person');
     const article = g['@graph'].find((n) => n['@type'] === 'BlogPosting');
-    expect(person).toMatchObject({ name: 'Bolt 958', url: 'https://bolt958.xyz' });
+    expect(person).toMatchObject({
+      name: 'Shubham N Datarkar',
+      url: 'https://bookasloth.com/sndatarkar',
+      jobTitle: 'Founder, Book A Sloth',
+      sameAs: ['https://x.com/sndatarkar', 'https://www.instagram.com/sndatarkar', 'https://shubhamdatarkar.com'],
+    });
+    expect(person['@id']).toBe('https://bookasloth.com/sndatarkar#author');
     expect(article.author).toEqual({ '@id': person['@id'] });
     expect(article.author['@type']).toBeUndefined(); // not an inline Organization
   });

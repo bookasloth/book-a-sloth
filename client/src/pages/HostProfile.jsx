@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
 import { isVanitySlug, VANITY_TARGET } from "../config/vanityRedirects";
 import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from "../services/api";
+import { DEMO_PERSONAS, DEMO_USERNAME, personaView } from "../data/demoPersonas";
 import { analytics, EVENTS } from "../services/analytics";
 import BrandPreloader from "../components/preloader/BrandPreloader";
 import { useMinimalFooter } from "../context/ChromeContext";
@@ -9,7 +10,8 @@ import Seo from "../components/common/Seo";
 import ErrorPage from "./ErrorPage";
 import TransientError from "../components/error/TransientError";
 import { isNotFoundError } from "../utils/fetchError";
-import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, SITE_URL } from "../utils/seo";
+import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from "../utils/seo";
+import { profileFaqs } from "../utils/profileFaqs";
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -314,6 +316,11 @@ const HostProfile = () => {
   const [services,    setServices]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
+  // Demo persona switch (public /demo account only). Base host+services are kept
+  // so switching is a pure view override — never persisted. See data/demoPersonas.
+  const [isDemo,      setIsDemo]      = useState(false);
+  const [personaKey,  setPersonaKey]  = useState(null);
+  const demoBase = useRef(null);
   // Not-found (and other error) state gets the stripped minimal footer, header kept.
   useMinimalFooter(!!error);
   const [viewMode,    setViewMode]    = useState('grid');
@@ -352,8 +359,22 @@ const HostProfile = () => {
           navigate(`/${data.username}`, { replace: true });
           return;
         }
-        setHost(data.host);
-        setServices(data.services || []);
+        // Demo account: stash the untouched base, then open on the first persona
+        // so /demo reads as a real host immediately (the switch overrides the
+        // header + filters services without a refetch — never persisted).
+        if (data.host?.username === DEMO_USERNAME) {
+          const base = { host: data.host, services: data.services || [] };
+          demoBase.current = base;
+          setIsDemo(true);
+          const firstKey = DEMO_PERSONAS[0].key;
+          const view = personaView(base, firstKey);
+          setPersonaKey(firstKey);
+          setHost(view.host);
+          setServices(view.services);
+        } else {
+          setHost(data.host);
+          setServices(data.services || []);
+        }
         analytics.track(EVENTS.PROFILE_VIEWED, { host_id: data.host?.id, slug: profileSlug });
         getHostReviews(profileSlug).then(r => setReviewData(r.data)).catch(() => {});
         getHostProducts(profileSlug).then(r => setProducts(r.data || [])).catch(() => {});
@@ -380,6 +401,17 @@ const HostProfile = () => {
     const color = isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
     applyProfileTheme(pageRef.current, color);
   }, [host]);
+
+  // Apply a demo persona: override the header fields and show only that persona's
+  // services (tagged by category === key). key=null restores the base account.
+  const applyPersona = (key) => {
+    const base = demoBase.current;
+    if (!base) return;
+    const view = personaView(base, key);
+    setPersonaKey(key);
+    setHost(view.host);
+    setServices(view.services);
+  };
 
   // Track mobile breakpoint for the collapsible card (curtain only on phones).
   useEffect(() => {
@@ -424,12 +456,14 @@ const HostProfile = () => {
 
   // Admin-managed SEO → head tags + ProfilePage JSON-LD (only once host loaded).
   const seo = host ? resolveProfileSeo({ host, siteUrl: SEO_SITE }) : null;
+  const faqs = host ? profileFaqs({ host, services }) : [];
   const jsonLd = host ? [
-    profileJsonLd({ host, siteUrl: SEO_SITE, services }),
+    profileJsonLd({ host, siteUrl: SEO_SITE, services, rating: { avg: reviewData.avg, count: reviewData.count } }),
     breadcrumbJsonLd({ items: [
       { name: 'Home', path: '/' },
       { name: host.name || 'Host', path: `/${host.username}` },
     ], siteUrl: SEO_SITE }),
+    ...(faqs.length ? [faqJsonLd({ faqs })] : []),
   ] : null;
 
   // All hooks have run — safe to short-circuit the render for a vanity slug.
@@ -470,6 +504,28 @@ const HostProfile = () => {
       )}
 
       <div className="app-container pt-8">
+
+        {isDemo && (
+          <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border-4 p-2"
+            style={{ background: C.card, borderColor: `${tc}33` }}>
+            <span className="px-2 text-xs font-bold uppercase tracking-wide" style={{ color: C.secondary }}>
+              Demo · view as
+            </span>
+            {[{ key: null, label: 'Default' }, ...DEMO_PERSONAS].map((p) => {
+              const active = personaKey === p.key;
+              return (
+                <button key={p.key || 'base'} onClick={() => applyPersona(p.key)}
+                  className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
+                  style={active
+                    ? { background: tc, color: '#fff' }
+                    : { background: `${tc}12`, color: C.text }}>
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           {/* ── LEFT SIDEBAR — profile card ──────────────────────────────
@@ -742,6 +798,23 @@ const HostProfile = () => {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* FAQ — templated from real profile data (utils/profileFaqs); powers
+                the FAQPage schema + gives answer engines extractable Q&A. */}
+            {faqs.length > 0 && (
+              <div className="mt-10">
+                <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Frequently asked questions</h2>
+                <dl className="space-y-4">
+                  {faqs.map((f) => (
+                    <div key={f.q} className="rounded-xl p-4"
+                      style={{ background: C.card, border: `1px solid ${C.border}` }}>
+                      <dt className="text-sm font-semibold" style={{ color: C.text }}>{f.q}</dt>
+                      <dd className="mt-1 text-sm leading-relaxed" style={{ color: C.secondary }}>{f.a}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
             )}
 

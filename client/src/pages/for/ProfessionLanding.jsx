@@ -327,12 +327,6 @@ export default function ProfessionLanding() {
         image={seo.ogImage}
         jsonLd={jsonLd}
       />
-      {feeOnly && (
-        <div className="bg-primary/10 px-5 py-2.5 text-center text-xs font-medium text-primary sm:text-sm">
-          Paid bookings &amp; payouts are launching soon — set up your booking page and take free bookings today.
-        </div>
-      )}
-
       <ForHeader ctaText="Get Started" />
 
       {/* ════════════════ HERO (dark, themed, two-column) ════════════════ */}
@@ -505,10 +499,10 @@ export default function ProfessionLanding() {
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="h2" className="text-center text-3xl font-bold leading-tight sm:text-4xl">
-            Built for how legal work really runs.
+            {headings.testimonials?.title || 'Built for how you really work.'}
           </Reveal>
           <Reveal as="p" delay={0.08} className="mx-auto mt-3 max-w-[600px] text-center text-base text-neutral-500">
-            Advocates, CAs and consultants — booked, paid and reminded, without the admin.
+            {headings.testimonials?.subtitle || 'Booked, paid and reminded — without the admin.'}
           </Reveal>
           <div className="mt-12 grid gap-5 sm:grid-cols-3 sm:gap-6">
             {testimonials.map((t, i) => (
@@ -534,6 +528,44 @@ export default function ProfessionLanding() {
 
       {/* Contextual CTA #2 — social proof → conversion */}
       <MidCta text={midCtas.afterHow?.text} ctaText={midCtas.afterHow?.ctaText} />
+
+      {/* ════════════════ REAL-PAGE PROOF ════════════════ */}
+      {/* Not a staged mockup — a live, bookable Book A Sloth page the visitor can open.
+         Profession-neutral copy so one real page works on every /for/ landing. */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          <div className="text-center lg:text-left">
+            <Reveal as="span" className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 14%, transparent)', color: 'var(--lp-accent-cta)' }}>
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'var(--lp-accent-cta)' }} /> Live right now
+            </Reveal>
+            <Reveal as="h2" delay={0.05} className="mt-5 text-3xl font-bold leading-tight sm:text-4xl">
+              Not a mockup. <span style={{ color: 'var(--lp-accent-cta)' }}>A real Book A Sloth page.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-md text-base leading-relaxed text-neutral-500 lg:mx-0">
+              Everything you have seen is the actual product — profile, services, prices and a working Book Now button. Here is a live page you can open and book this second.
+            </Reveal>
+            <Reveal delay={0.14} className="mt-7">
+              <Link to="/sndatarkar" className="inline-flex items-center justify-center gap-2 rounded-[6px] border px-6 py-3.5 text-sm font-semibold transition-all hover:no-underline" style={{ borderColor: 'var(--lp-accent-cta)', color: 'var(--lp-accent-cta)' }}>
+                Open a real page <ArrowRight size={16} />
+              </Link>
+            </Reveal>
+          </div>
+          <Reveal delay={0.1} className="relative">
+            <picture>
+              <source media="(max-width: 640px)" srcSet="/images/real-page-mobile.webp" />
+              <img
+                src="/images/real-page.webp"
+                alt="A real, live Book A Sloth booking page — profile, services, prices and a Book Now button"
+                width="1440"
+                height="900"
+                loading="lazy"
+                decoding="async"
+                className="w-full rounded-xl border border-black/5 shadow-[0_30px_70px_-30px_rgba(26,26,26,0.35)]"
+              />
+            </picture>
+          </Reveal>
+        </div>
+      </section>
 
       {/* ════════════════ PRICING TEASER ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--lp-tint)' }}>

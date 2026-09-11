@@ -286,6 +286,78 @@ describe('isPublicHostRead — public host/service detail GETs are exempt', () =
   });
 });
 
+describe('prerender build exemption (x-prerender-token)', () => {
+  const TOKEN = 'build-secret-abc123';
+
+  test('a banned IP with the correct token passes through (build runner never banned)', () => {
+    const isBlocked = jest.fn(() => true);
+    const { mod } = load({ env: { PRERENDER_BUILD_TOKEN: TOKEN }, blocklist: { isBlocked } });
+    const req = { ip: '1.2.3.4', path: '/api/host/sndatarkar', headers: { 'x-prerender-token': TOKEN } };
+    const res = mockRes();
+    const next = jest.fn();
+
+    mod.ipGuard(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(isBlocked).not.toHaveBeenCalled(); // identity exemption short-circuits before the lookup
+  });
+
+  test('a banned IP with a WRONG token is still blocked', () => {
+    const { mod } = load({ env: { PRERENDER_BUILD_TOKEN: TOKEN }, blocklist: { isBlocked: jest.fn(() => true) } });
+    const req = { ip: '1.2.3.4', path: '/api/host/sndatarkar', headers: { 'x-prerender-token': 'nope' } };
+    const res = mockRes();
+
+    mod.ipGuard(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  test('the token header is inert when PRERENDER_BUILD_TOKEN is unset (fails safe)', () => {
+    // Empty string is falsy → isPrerenderBuild treats it as unset, same as absent.
+    const { mod } = load({ env: { PRERENDER_BUILD_TOKEN: '' }, blocklist: { isBlocked: jest.fn(() => true) } });
+    const req = { ip: '1.2.3.4', path: '/api/host/sndatarkar', headers: { 'x-prerender-token': TOKEN } };
+    const res = mockRes();
+
+    mod.ipGuard(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  test('an authed write route (/api/host/services) is NOT exempted by identity without a token', () => {
+    const { mod } = load({ env: { PRERENDER_BUILD_TOKEN: TOKEN }, blocklist: { isBlocked: jest.fn(() => true) } });
+    const req = { ip: '1.2.3.4', path: '/api/host/services', headers: {} };
+    const res = mockRes();
+
+    mod.ipGuard(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(403); // path is not exempt; no token → still ban-enforced
+  });
+
+  test('offenseTracker does NOT record a 429 from the build runner (correct token)', () => {
+    const recordRateLimitViolation = jest.fn(() => Promise.resolve());
+    const { mod } = load({ env: { PRERENDER_BUILD_TOKEN: TOKEN }, blocklist: { recordRateLimitViolation } });
+    const req = { ip: '3.81.219.26', path: '/api/host/sndatarkar', headers: { 'x-prerender-token': TOKEN } };
+    const res = mockRes();
+
+    mod.offenseTracker(req, res, jest.fn());
+    res.statusCode = 429;
+    res._finish();
+
+    expect(recordRateLimitViolation).not.toHaveBeenCalled();
+  });
+
+  test('offenseTracker DOES record a 429 when the token is wrong', () => {
+    const recordRateLimitViolation = jest.fn(() => Promise.resolve());
+    const { mod } = load({ env: { PRERENDER_BUILD_TOKEN: TOKEN }, blocklist: { recordRateLimitViolation } });
+    const req = { ip: '3.81.219.26', path: '/api/host/sndatarkar', headers: { 'x-prerender-token': 'nope' } };
+    const res = mockRes();
+
+    mod.offenseTracker(req, res, jest.fn());
+    res.statusCode = 429;
+    res._finish();
+
+    expect(recordRateLimitViolation).toHaveBeenCalledWith('3.81.219.26');
+  });
+});
+
 describe('getClientIp', () => {
   test('uses req.ip when no CLIENT_IP_HEADER is configured', () => {
     const { mod } = load();

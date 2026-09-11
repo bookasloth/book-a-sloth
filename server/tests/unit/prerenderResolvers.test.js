@@ -39,6 +39,71 @@ describe('resolveProfileMeta', () => {
     expect(m.redirectTo).toBe('https://bookasloth.com/newname');
   });
 
+  test('JSON-LD carries sameAs (http socials only) + dateModified for AEO/entity clarity', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: {
+        host: {
+          username: 'jane', name: 'Jane', is_indexable: true,
+          updated_at: '2026-09-01T10:00:00.000Z',
+          social_links: {
+            instagram: 'https://instagram.com/jane', linkedin: 'https://linkedin.com/in/jane',
+            website: '', email: 'jane@x.com', whatsapp: '123456',
+          },
+        },
+        services: [],
+      },
+    });
+    const m = await resolveProfileMeta('jane');
+    const person = m.buildHtmlArgs.jsonLd.mainEntity;
+    expect(person.sameAs).toEqual(['https://instagram.com/jane', 'https://linkedin.com/in/jane']);
+    expect(m.buildHtmlArgs.jsonLd.dateModified).toBe('2026-09-01T10:00:00.000Z');
+  });
+
+  test('no sameAs / dateModified keys when socials blank and no updated_at', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: { host: { username: 'jane', name: 'Jane', is_indexable: true, social_links: {} }, services: [] },
+    });
+    const m = await resolveProfileMeta('jane');
+    expect(m.buildHtmlArgs.jsonLd.mainEntity).not.toHaveProperty('sameAs');
+    expect(m.buildHtmlArgs.jsonLd).not.toHaveProperty('dateModified');
+  });
+
+  test('emits aggregateRating from the host OWN reviews when present', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: {
+        host: { username: 'jane', name: 'Jane', is_indexable: true },
+        services: [],
+        reviews: [{ rating: 5 }, { rating: 4 }, { rating: 5 }],
+        avgRating: 4.7,
+      },
+    });
+    const m = await resolveProfileMeta('jane');
+    expect(m.buildHtmlArgs.jsonLd.mainEntity.aggregateRating)
+      .toEqual({ '@type': 'AggregateRating', ratingValue: 4.7, reviewCount: 3 });
+  });
+
+  test('emits a FAQPage shell node (booking + payment) for non-JS crawlers', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: {
+        host: { username: 'jane', name: 'Jane', is_indexable: true, profession: 'Coach' },
+        services: [{ title: 'Intro', price: 500 }],
+      },
+    });
+    const m = await resolveProfileMeta('jane');
+    expect(m.buildHtmlArgs.faqJsonLd['@type']).toBe('FAQPage');
+    const questions = m.buildHtmlArgs.faqJsonLd.mainEntity.map((q) => q.name);
+    expect(questions.some((q) => /how do i book jane/i.test(q))).toBe(true);
+    expect(questions.some((q) => /payment secure/i.test(q))).toBe(true);
+  });
+
+  test('no aggregateRating when the host has zero reviews (never a platform default)', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: { host: { username: 'jane', name: 'Jane', is_indexable: true }, services: [], reviews: [], avgRating: 0 },
+    });
+    const m = await resolveProfileMeta('jane');
+    expect(m.buildHtmlArgs.jsonLd.mainEntity).not.toHaveProperty('aggregateRating');
+  });
+
   test('robots is noindex,nofollow when is_indexable is false', async () => {
     buildHostProfile.mockResolvedValueOnce({
       payload: { host: { username: 'jane', name: 'Jane', is_indexable: false }, services: [] },

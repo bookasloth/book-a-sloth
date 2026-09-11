@@ -38,7 +38,7 @@ const DIMS = [
       if (s.hasEntitySchema) sc += 0.4; else miss.push('no Organization/Person/Service schema');
       if (s.hasAuthor) sc += 0.25; else miss.push('no named author/provider');
       if (s.entity?.name || s.title) sc += 0.15; else miss.push('unclear subject');
-      if ((s.entity?.sameAs || []).length) sc += 0.2; else miss.push('no sameAs / external identity links');
+      if ((s.entity?.sameAs || s.sameAs || []).length) sc += 0.2; else miss.push('no sameAs / external identity links');
       return { score: sc, reason: miss.length ? `Weak entity signals: ${miss.join(', ')}.` : 'Clear entity: who/what the page is about is well established.', fix: miss.length ? 'Name the person/organization, add ProfilePage/Organization schema and sameAs links.' : null };
     },
   },

@@ -71,9 +71,39 @@ function extract(page, { gsc = null, queries = [], robots = {} } = {}) {
   const hasInvalidJsonLd = (body.jsonLd || []).some((n) => n && n.__invalid);
 
   const externalCitations = uniqueHosts(body.links?.external || []);
-  const author = body.entity?.author
-    || (body.jsonLd || []).map((n) => n?.author?.name || (typeof n?.author === 'string' ? n.author : null)).find(Boolean)
-    || null;
+
+  // Author. Blog/article JSON-LD is a @graph: the article node references the author
+  // by @id ({ author: { '@id': '…#author' } }) and a separate Person node carries the
+  // name + sameAs. Resolve the reference, and fall back to any standalone Person node —
+  // otherwise every referenced-author page reads as "no author".
+  const nodes = body.jsonLd || [];
+  const byId = new Map(nodes.filter((n) => n && n['@id']).map((n) => [n['@id'], n]));
+  const nodeName = (a) => {
+    if (!a) return null;
+    if (typeof a === 'string') return a;
+    if (a.name) return a.name;
+    if (a['@id'] && byId.get(a['@id'])) return byId.get(a['@id']).name || null;
+    return null;
+  };
+  const typesOf = (n) => { const t = n && n['@type']; return Array.isArray(t) ? t : (t ? [t] : []); };
+  let author = body.entity?.author || null;
+  let authorNode = null;
+  if (!author) {
+    for (const n of nodes) {
+      const nm = nodeName(n?.author);
+      if (nm) { author = nm; authorNode = (n.author && n.author['@id'] && byId.get(n.author['@id'])) || (typeof n.author === 'object' ? n.author : null); break; }
+    }
+  }
+  if (!author) {
+    authorNode = nodes.find((n) => typesOf(n).includes('Person') && n.name) || null;
+    if (authorNode) author = authorNode.name;
+  }
+
+  // External identity links (sameAs) for entity_clarity: prefer the author Person's
+  // links, else the Organization node's. Blogs carry no DB `entity`, so read jsonLd.
+  const toArr = (v) => (Array.isArray(v) ? v : (v ? [v] : []));
+  const orgNode = nodes.find((n) => typesOf(n).includes('Organization'));
+  const sameAs = [...new Set([...toArr(authorNode?.sameAs), ...toArr(orgNode?.sameAs)])];
 
   // Intent coverage: of the top ranking queries, how many have their terms present in
   // the page's title/headings/body. Direct measure of "does the page address what it
@@ -109,6 +139,7 @@ function extract(page, { gsc = null, queries = [], robots = {} } = {}) {
     bodySource: body.source,
     jsonLd: body.jsonLd, jsonLdTypes, hasEntitySchema, hasInvalidJsonLd,
     externalCitations, author, hasAuthor: !!author,
+    sameAs, hasSameAs: sameAs.length > 0,
     entity: body.entity,
     reviewCount: body.evidence?.reviewCount || 0,
     stats: countStats(body.bodyText),

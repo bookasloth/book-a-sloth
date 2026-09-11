@@ -85,11 +85,35 @@ export const BENTO = [
   { big: "24×7", label: "reminders that cut no-shows",   sub: "Automatic WhatsApp + email nudges before every slot.", color: "c-cyan",    span: false },
 ];
 
-/* ─── Block 7: FAQ (objection handling) ─── */
+/* ─── Block: Book A Sloth vs Topmate comparison table ─────────────────
+   Honest stance: BAS wins the money/India rows, real parity rows are
+   marked, and ONE row concedes Topmate's larger discovery network today
+   (`win: false`). Competitor cells kept qualitative on purpose — no hard
+   fee % that would rot. Re-verify the Topmate column when it changes.
+   `win`: true = BAS advantage · null = parity (both ✓) · false = Topmate edge.
+   ──────────────────────────────────────────────────────────────────── */
+export const COMPARE_TM = [
+  { f: "Commission on paid bookings",        bas: "0% — flat ₹10 / day",  tm: "Takes a cut of earnings", win: true },
+  { f: "GST invoices — automatic",           bas: "Yes",                  tm: "No",                      win: true },
+  { f: "WhatsApp reminders",                 bas: "Built in",             tm: "Email-first",             win: true },
+  { f: "Flat price (never scales w/ earnings)", bas: "Yes — ₹10 / day",  tm: "Fee grows as you earn",   win: true },
+  { f: "Your client list & data",            bas: "100% yours, no lock-in", tm: "Held on the platform",  win: true },
+  { f: "UPI / INR payments at booking",      bas: "Yes",                  tm: "Yes",                     win: null },
+  { f: "1:1 sessions, webinars & products",  bas: "Yes",                  tm: "Yes",                     win: null },
+  { f: "Public creator page",                bas: "Yes (SlothPage)",      tm: "Yes",                     win: null },
+  { f: "Google Calendar + Meet",             bas: "Yes",                  tm: "Yes",                     win: null },
+  { f: "Creator discovery network",          bas: "Growing",              tm: "Larger today",            win: false },
+];
+
+/* ─── Block 7: FAQ (objection handling; answers front-loaded for AI/GEO) ─── */
 export const FAQ = [
+  { q: "Does Book A Sloth take a commission like Topmate?", a: "No. On every paid plan Book A Sloth takes 0% commission — just a flat ₹10 per booking plus your payment gateway's standard charge. Topmate takes a cut of what you earn, so the more you make, the more it costs you. With Book A Sloth the price stays flat." },
   { q: "Is it really 0% commission?", a: "Yes — on every paid plan, Book A Sloth takes 0% commission. The only per-booking cost is a flat ₹10 platform fee plus your payment gateway's standard charge. Nothing is skimmed as commission." },
   { q: "What does Rs. 10 / Day include?", a: "Unlimited bookings, up-front payments, WhatsApp + email reminders, your own SlothPage, and automatic Google Calendar + Meet. One flat price — it never scales with how much you earn." },
-  { q: "Can I move my existing clients over?", a: "Yes. Share your new SlothPage link — your clients book in seconds. No migration, no lock-in. Your client list stays yours." },
+  { q: "Can my clients pay by UPI, and do I get paid in ₹?", a: "Yes. Clients pay up-front by UPI or card through Razorpay, and your earnings settle straight to your Indian bank account in ₹ — no USD, no foreign-currency conversion." },
+  { q: "Do I get GST invoices automatically?", a: "Yes. Book A Sloth generates GST-ready invoices automatically for your bookings — no separate accounting tool needed. Topmate doesn't do this for you." },
+  { q: "How do I switch from Topmate?", a: "Just share your new SlothPage link. There's nothing to migrate and no lock-in — your clients book in seconds and your client list stays yours. You can even run both side by side while you move over." },
   { q: "Is there a free plan?", a: "Yes. The Starter plan is free with a small 5% commission — still far below Topmate. Upgrade to a 0%-commission paid plan whenever you're ready." },
   { q: "How do payouts work?", a: "Clients pay up-front through Razorpay when they book. Your earnings are settled to you after the session completes." },
+  { q: "Is Topmate better than Book A Sloth for anything?", a: "Honestly, yes — Topmate has a larger creator discovery network today, so if you rely on its marketplace to find you new audience, that's its edge. Book A Sloth wins on keeping more of your money: 0% commission on paid plans, a flat ₹10/day price, automatic GST invoices, and WhatsApp reminders built in." },
 ];

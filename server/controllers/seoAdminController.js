@@ -108,6 +108,15 @@ const getOpportunities = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── GET /admin/seo/link-graph ─────────────────────────────────
+// Internal-link network (nodes = crawled pages, edges = internal links) for the
+// interactive graph view. Read-only, from the latest done crawl (or ?crawlId).
+const getLinkGraph = async (req, res) => {
+  try {
+    res.json(await svc.linkGraph({ crawlId: req.query?.crawlId }));
+  } catch (e) { safeError(res, e); }
+};
+
 // ── GET /admin/seo/changes ────────────────────────────────────
 // "What changed since the previous crawl?" (Phase 1 historical baseline, §1h).
 const getChanges = async (req, res) => {
@@ -278,7 +287,7 @@ const postGscSync = async (req, res) => {
 
 module.exports = {
   getOverview, getIssues, getIssue, getPages, getPage,
-  getList, getDashboard, getOpportunities,
+  getList, getDashboard, getOpportunities, getLinkGraph,
   getCategories, getReports, getChanges,
   getFixes, getFix, postGenerateFixes, postDecideFix,
   postApplyFix, postMarkApplied, postRollbackFix, postRetestFix,

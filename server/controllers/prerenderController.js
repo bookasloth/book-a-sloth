@@ -31,7 +31,7 @@ const truncate = (s, n = 160) => {
  */
 const upscaleAvatar = (url) => String(url || '').replace(/=s\d+-c$/, '=s512-c');
 
-function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd, cardImage }) {
+function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd, faqJsonLd, cardImage }) {
   const site = trimSlash(SITE_URL);
   const img = image || `${site}/og-image.png`;
   const rob = robots || 'index,follow';
@@ -64,6 +64,7 @@ function buildHtml({ title, description, canonical, ogTitle, ogDescription, imag
 <meta name="twitter:description" content="${esc(ogDescription || description)}">
 <meta name="twitter:image" content="${esc(img)}">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
+${faqJsonLd ? `<script type="application/ld+json">${JSON.stringify(faqJsonLd)}</script>` : ''}
 <noscript><meta http-equiv="refresh" content="0;url=${esc(canonical)}"></noscript>
 </head>
 <body>
@@ -78,8 +79,19 @@ ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script
 // so the SEO crawler can get a host page's real meta/indexability in-process
 // (no HTTP round-trip, so Cloudflare's bot-UA block never applies to it).
 // Returns { status: 200, buildHtmlArgs } | { status: 404 } | { status: 301, redirectTo }.
+// FAQPage node from [{q,a}]. Kept here (not imported from client utils/seo) so the
+// server prerender shell has no client dependency; shape matches faqJsonLd there.
+function faqPageLd(faqs) {
+  const mainEntity = (faqs || []).filter((f) => f && f.q && f.a).map((f) => ({
+    '@type': 'Question', name: String(f.q),
+    acceptedAnswer: { '@type': 'Answer', text: String(f.a) },
+  }));
+  return mainEntity.length ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity } : null;
+}
+
 async function resolveProfileMeta(username) {
   const { buildHostProfile } = require('./hostController');
+  const { sameAsFrom, profileFaqs } = require('../services/seo/pageContentModel');
   const outcome = await buildHostProfile(username);
 
   if (outcome.notFound || outcome.redirect) {
@@ -90,6 +102,8 @@ async function resolveProfileMeta(username) {
   }
 
   const { host, services } = outcome.payload;
+  const avgRating = outcome.payload.avgRating || 0;
+  const reviewCount = (outcome.payload.reviews || []).length;
   const site = trimSlash(SITE_URL);
   const name = host.name || 'Host';
 
@@ -114,10 +128,14 @@ async function resolveProfileMeta(username) {
   // default 1200x630 when one's designed.
   const ogCard = host.og_image || `${site}/og-image.png`;
 
+  // sameAs (external identity links) + dateModified are AEO/entity-clarity signals:
+  // they tell answer engines who this Person is and how fresh the page is.
+  const sameAs = sameAsFrom(host);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
     url: canonical,
+    ...(host.updated_at ? { dateModified: host.updated_at } : {}),
     mainEntity: {
       '@type': 'Person',
       name,
@@ -125,6 +143,13 @@ async function resolveProfileMeta(username) {
       jobTitle: host.profession || undefined,
       description: host.seo_description || host.bio || undefined,
       image: avatar,
+      ...(sameAs.length ? { sameAs } : {}),
+      // Only the host's OWN reviews (never a platform default) — a rating here must
+      // be reviews of this person and is shown on the profile. Platform-wide rating
+      // lives on the homepage SoftwareApplication node instead.
+      ...(reviewCount > 0 && avgRating > 0 ? {
+        aggregateRating: { '@type': 'AggregateRating', ratingValue: avgRating, reviewCount },
+      } : {}),
       ...(Array.isArray(services) && services.length ? {
         makesOffer: services.filter(s => s && s.title).map(s => ({
           '@type': 'Offer',
@@ -149,6 +174,9 @@ async function resolveProfileMeta(username) {
     cardImage: true, // ogCard is always a known 1200x630 card (generated or site default)
     robots: host.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
     jsonLd,
+    // Same templated FAQ the client renders (utils/profileFaqs mirror) — emitted as
+    // a second JSON-LD script so non-JS crawlers + AI answer bots get the FAQPage.
+    faqJsonLd: faqPageLd(profileFaqs(host, services)),
   };
 
   // payload is passed through (additive) so the SEO crawler can build a DB-derived
@@ -232,13 +260,20 @@ async function resolveServiceMeta(username, serviceSlug) {
     } : {}),
   };
 
+  // A generated service card (og_image) and the static default floor are both known
+  // 1200x630 assets → flag cardImage so buildHtml emits the og:image size hints. A
+  // real seo_image/thumbnail is whatever size the host uploaded, so it stays hint-less.
+  const hostImage = service.seo_image || service.thumbnail_url;
   const buildHtmlArgs = {
     title,
     description,
     canonical,
     ogTitle: service.og_title || service.seo_title || baseTitle,
     ogDescription: service.og_description || description,
-    image: service.seo_image || service.thumbnail_url,
+    // Ordered fallback mirroring client resolveServiceSeo (utils/seo.js): generated
+    // service card -> admin override -> host thumbnail -> static default floor.
+    image: service.og_image || hostImage || `${site}/service-og-default.png`,
+    cardImage: Boolean(service.og_image) || !hostImage,
     robots: service.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
     jsonLd,
   };

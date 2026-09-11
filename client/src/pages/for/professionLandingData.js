@@ -64,13 +64,13 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Lawyers, Advocates & Chartered Accountants',
-      headline: 'Your consultations,',
-      headlineAccent: 'booked and paid',
-      headlineTail: 'before the first call.',
+      headline: 'Appointment booking software',
+      headlineAccent: 'for lawyers',
+      headlineTail: '— consultations booked and paid before the first call.',
       subline:
         'You practise law. Book A Sloth handles everything around it — clients pick a slot, pay your fee upfront, and get reminded — so you stay in court, not in your inbox.',
       ctaText: 'Set Up My Booking Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       // Hero product-mockup content — a themed booking page for this profession.
       mock: {
         practice: 'Adv. Meera Kulkarni',
@@ -211,14 +211,15 @@ export const PROFESSION_LANDING = {
       icon: Landmark,
       urgency: 'Every missed call is a client who booked someone else.',
       headline: 'Run a practice, not an inbox.',
-      subline: 'Set up your consultation booking page in minutes. Free to start, no card required.',
+      subline: 'Set up your consultation booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
       ctaText: 'Create My Booking Page',
     },
 
     // ── Section headings (profession-specific, not homepage reuse) ───────────
     headings: {
-      problems: { eyebrow: 'The daily friction', title: 'Practising law is hard enough.', titleAccent: 'The scheduling shouldn’t be.' },
-      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'clerk who never sleeps.' },
+      problems: { eyebrow: 'The daily friction', title: 'Practising law is hard enough.', titleAccent: 'Client scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'Appointment booking software that works like a', titleAccent: 'clerk who never sleeps.' },
+      testimonials: { title: 'Built for how legal work really runs.', subtitle: 'Advocates, CAs and consultants — booked, paid and reminded, without the admin.' },
     },
 
     // Footer tagline — "Made for India's <this>"
@@ -279,13 +280,13 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Doctors, Clinics & Independent Practitioners',
-      headline: 'Your patients,',
-      headlineAccent: 'booked and reminded',
-      headlineTail: 'without the front-desk chaos.',
+      headline: 'Appointment booking software',
+      headlineAccent: 'for doctors & clinics',
+      headlineTail: '— patients book, pay, and actually show up.',
       subline:
         'You care for patients. Book A Sloth handles everything around it — patients pick a slot, pay upfront, and get reminded — so it’s fewer no-shows, fewer phone calls, and more time with patients.',
       ctaText: 'Set Up My Clinic Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Dr. Aisha Rao',
         practiceTag: 'Physician · General Medicine',
@@ -310,7 +311,7 @@ export const PROFESSION_LANDING = {
     // ── Authority stat band ──────────────────────────────────────────────────
     stats: [
       { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after clinic hours' },
-      { icon: TrendingDown, value: 'Fewer', label: 'No-shows, thanks to auto reminders' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Appointments go no-show industry-wide — reminders win them back' },
       { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
       { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
     ],
@@ -424,14 +425,15 @@ export const PROFESSION_LANDING = {
       icon: HeartPulse,
       urgency: 'Every missed call is a patient who booked another clinic.',
       headline: 'More care, less front desk.',
-      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
       ctaText: 'Create My Clinic Page',
     },
 
     // ── Section headings ─────────────────────────────────────────────────────
     headings: {
-      problems: { eyebrow: 'The daily friction', title: 'Caring for patients is the job.', titleAccent: 'The scheduling shouldn’t be.' },
-      features: { eyebrow: 'What you get', title: 'A booking page that runs like your', titleAccent: 'best front-desk nurse.' },
+      problems: { eyebrow: 'The daily friction', title: 'Caring for patients is the job.', titleAccent: 'Clinic scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'Appointment booking software that runs like your', titleAccent: 'best front-desk nurse.' },
+      testimonials: { title: 'Built for how clinics really run.', subtitle: 'Doctors, dentists and physios — booked, paid and reminded, without the front desk.' },
     },
 
     madeFor: "India's Doctors & Clinics",
@@ -490,13 +492,13 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Business Consultants, Advisors & Strategists',
-      headline: 'Your strategy sessions,',
-      headlineAccent: 'booked and paid',
-      headlineTail: 'before the first email reply.',
+      headline: 'Appointment booking software',
+      headlineAccent: 'for business consultants',
+      headlineTail: '— strategy sessions booked and paid before the first reply.',
       subline:
         'You advise. Book A Sloth handles everything around it — clients pick a slot, pay your fee upfront, and get reminded — so your time goes to strategy, not scheduling.',
       ctaText: 'Set Up My Booking Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Rahul Khanna',
         practiceTag: 'Business Strategy Consultant',
@@ -635,14 +637,15 @@ export const PROFESSION_LANDING = {
       icon: TrendingUp,
       urgency: 'Every slow email reply is a client who booked another consultant.',
       headline: 'Advise more. Schedule less.',
-      subline: 'Set up your consulting booking page in minutes. Free to start, no card required.',
+      subline: 'Set up your consulting booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
       ctaText: 'Create My Booking Page',
     },
 
     // ── Section headings ─────────────────────────────────────────────────────
     headings: {
-      problems: { eyebrow: 'The daily friction', title: 'Advising clients is the work.', titleAccent: 'The scheduling shouldn’t be.' },
-      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own executive assistant.' },
+      problems: { eyebrow: 'The daily friction', title: 'Advising clients is the work.', titleAccent: 'Client scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'Appointment booking software that works like your', titleAccent: 'own executive assistant.' },
+      testimonials: { title: 'Built for how consulting really works.', subtitle: 'Consultants and advisors — booked, paid and reminded, without the admin.' },
     },
 
     madeFor: "India's Business Consultants",
@@ -701,13 +704,13 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Salons, Spas & Beauty Studios',
-      headline: 'Your chairs,',
-      headlineAccent: 'booked and filled',
-      headlineTail: 'without the phone ringing off the hook.',
+      headline: 'Appointment booking software',
+      headlineAccent: 'for salons & spas',
+      headlineTail: '— chairs booked and filled without the phone ringing off the hook.',
       subline:
         'You make clients look their best. Book A Sloth handles everything around it — clients pick a slot, pay a deposit, and get reminded — so it’s fewer no-shows and more time behind the chair.',
       ctaText: 'Set Up My Salon Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Glow Studio',
         practiceTag: 'Hair · Skin · Nails',
@@ -846,14 +849,15 @@ export const PROFESSION_LANDING = {
       icon: Sparkles,
       urgency: 'Every missed call is a client who booked another salon.',
       headline: 'More time behind the chair.',
-      subline: 'Set up your salon’s booking page in minutes. Free to start, no card required.',
+      subline: 'Set up your salon’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
       ctaText: 'Create My Salon Page',
     },
 
     // ── Section headings ─────────────────────────────────────────────────────
     headings: {
       problems: { eyebrow: 'The daily friction', title: 'Making clients look great is the job.', titleAccent: 'The phone shouldn’t be.' },
-      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'best receptionist.' },
+      features: { eyebrow: 'What you get', title: 'Appointment booking software that works like your', titleAccent: 'best receptionist.' },
+      testimonials: { title: 'Built for how salons really run.', subtitle: 'Stylists, spas and studios — chairs booked and filled, without the phone.' },
     },
 
     madeFor: "India's Salons & Spas",
@@ -912,13 +916,13 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Freelancers, Designers, Developers & Writers',
-      headline: 'Your client calls,',
-      headlineAccent: 'booked and paid',
-      headlineTail: 'before you open the laptop.',
+      headline: 'Appointment booking software',
+      headlineAccent: 'for freelancers',
+      headlineTail: '— client calls booked and paid before you open the laptop.',
       subline:
         'You do the work. Book A Sloth handles everything around it — clients pick a slot, pay an advance upfront, and get reminded — so your day goes to the craft, not chasing invoices.',
       ctaText: 'Set Up My Booking Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Ananya Rao',
         practiceTag: 'Freelance UX Designer',
@@ -1057,14 +1061,15 @@ export const PROFESSION_LANDING = {
       icon: Laptop,
       urgency: 'Every unpaid invoice is time you’ll never bill again.',
       headline: 'Do the work. Skip the admin.',
-      subline: 'Set up your freelance booking page in minutes. Free to start, no card required.',
+      subline: 'Set up your freelance booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
       ctaText: 'Create My Booking Page',
     },
 
     // ── Section headings ─────────────────────────────────────────────────────
     headings: {
       problems: { eyebrow: 'The daily friction', title: 'Doing great work is the job.', titleAccent: 'Chasing payment shouldn’t be.' },
-      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own project manager.' },
+      features: { eyebrow: 'What you get', title: 'Appointment booking software that works like your', titleAccent: 'own project manager.' },
+      testimonials: { title: 'Built for how freelancers really work.', subtitle: 'Designers, writers and developers — booked and paid, without the admin.' },
     },
 
     madeFor: "India's Freelancers",
@@ -1129,7 +1134,7 @@ export const PROFESSION_LANDING = {
       subline:
         'You get clients results. Book A Sloth handles everything around it — clients pick a slot, pay for the session or package upfront, and get reminded — so it’s more training and less admin.',
       ctaText: 'Set Up My Booking Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Coach Arjun',
         practiceTag: 'Personal Trainer · Strength',
@@ -1268,7 +1273,7 @@ export const PROFESSION_LANDING = {
       icon: Zap,
       urgency: 'Every empty slot is income you can’t make back.',
       headline: 'More reps. Less admin.',
-      subline: 'Set up your training booking page in minutes. Free to start, no card required.',
+      subline: 'Set up your training booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
       ctaText: 'Create My Booking Page',
     },
 
@@ -1330,7 +1335,7 @@ export const PROFESSION_LANDING = {
       subline:
         'You teach. Book A Sloth handles everything around it — students and parents pick a slot, pay the fee upfront, and get reminded — so your time goes to lessons, not the timetable.',
       ctaText: 'Set Up My Booking Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Priya’s Maths Class',
         practiceTag: 'Maths Tutor · Grades 9–12',
@@ -1380,7 +1385,7 @@ export const PROFESSION_LANDING = {
       { q: 'How much does it cost?', a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
       { q: 'Is it suitable for coaching institutes and online educators?', a: 'Yes. Tutors, coaching institutes, music and language teachers, exam-prep coaches and online educators can all use Book A Sloth to run class bookings and payments from one link.' },
     ],
-    finalCta: { icon: GraduationCap, urgency: 'Every empty seat is a student who enrolled elsewhere.', headline: 'More teaching. Less timetabling.', subline: 'Set up your class booking page in minutes. Free to start, no card required.', ctaText: 'Create My Booking Page' },
+    finalCta: { icon: GraduationCap, urgency: 'Every empty seat is a student who enrolled elsewhere.', headline: 'More teaching. Less timetabling.', subline: 'Set up your class booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.', ctaText: 'Create My Booking Page' },
     headings: {
       problems: { eyebrow: 'The daily friction', title: 'Teaching well is the job.', titleAccent: 'The timetable shouldn’t be.' },
       features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own class coordinator.' },
@@ -1414,13 +1419,13 @@ export const PROFESSION_LANDING = {
     },
     hero: {
       eyebrow: 'For Photographers, Studios & Videographers',
-      headline: 'Your shoots,',
-      headlineAccent: 'booked and secured',
-      headlineTail: 'before you pack the gear.',
+      headline: 'Appointment booking software',
+      headlineAccent: 'for photographers',
+      headlineTail: '— shoots booked and secured before you pack the gear.',
       subline:
         'You make great images. Book A Sloth handles everything around it — clients pick a slot, pay a deposit upfront, and get reminded — so you stay behind the lens, not in your inbox.',
       ctaText: 'Set Up My Booking Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Studio Lumen',
         practiceTag: 'Portrait & Wedding Photography',
@@ -1470,10 +1475,11 @@ export const PROFESSION_LANDING = {
       { q: 'Do clients need an app to book?', a: 'No. Clients open your link, pick a date and pay — no app or account needed. It works straight from your Instagram bio or website.' },
       { q: 'Is it suitable for wedding, portrait and event photographers?', a: 'Yes. Wedding, portrait, product, event and pre-wedding photographers, plus videographers and studios, can all use Book A Sloth for shoot bookings and payments.' },
     ],
-    finalCta: { icon: Camera, urgency: 'Every unbooked date is a shoot that went to another photographer.', headline: 'More shooting. Less scheduling.', subline: 'Set up your photography booking page in minutes. Free to start, no card required.', ctaText: 'Create My Booking Page' },
+    finalCta: { icon: Camera, urgency: 'Every unbooked date is a shoot that went to another photographer.', headline: 'More shooting. Less scheduling.', subline: 'Set up your photography booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.', ctaText: 'Create My Booking Page' },
     headings: {
       problems: { eyebrow: 'The daily friction', title: 'Making great images is the job.', titleAccent: 'The booking shouldn’t be.' },
-      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own studio manager.' },
+      features: { eyebrow: 'What you get', title: 'Appointment booking software that works like your', titleAccent: 'own studio manager.' },
+      testimonials: { title: 'Built for how shoots really get booked.', subtitle: 'Photographers and studios — dates booked and secured, without the back-and-forth.' },
     },
     madeFor: "India's Photographers",
     testimonials: [
@@ -1504,13 +1510,13 @@ export const PROFESSION_LANDING = {
     },
     hero: {
       eyebrow: 'For Event Planners, Organisers & Decorators',
-      headline: 'Your consultations,',
-      headlineAccent: 'booked and dates held',
-      headlineTail: 'before the first meeting.',
+      headline: 'Appointment booking software',
+      headlineAccent: 'for event organisers',
+      headlineTail: '— consultations booked and dates held before the first meeting.',
       subline:
         'You create the celebration. Book A Sloth handles everything around it — clients book a consultation, pay an advance to hold the date, and get reminded — so you plan events, not your calendar.',
       ctaText: 'Set Up My Booking Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Celebrations by Neha',
         practiceTag: 'Wedding & Event Planner',
@@ -1560,10 +1566,11 @@ export const PROFESSION_LANDING = {
       { q: 'How much does it cost?', a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
       { q: 'Is it suitable for wedding planners and decorators?', a: 'Yes. Wedding and event planners, decorators, caterers and venue managers can all use Book A Sloth for consultation bookings, date holds and payments from one link.' },
     ],
-    finalCta: { icon: Sparkles, urgency: 'Every un-held date is an event that went to another planner.', headline: 'More celebrations. Less coordination.', subline: 'Set up your event booking page in minutes. Free to start, no card required.', ctaText: 'Create My Booking Page' },
+    finalCta: { icon: Sparkles, urgency: 'Every un-held date is an event that went to another planner.', headline: 'More celebrations. Less coordination.', subline: 'Set up your event booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.', ctaText: 'Create My Booking Page' },
     headings: {
-      problems: { eyebrow: 'The daily friction', title: 'Creating memorable events is the job.', titleAccent: 'The scheduling shouldn’t be.' },
-      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own event coordinator.' },
+      problems: { eyebrow: 'The daily friction', title: 'Creating memorable events is the job.', titleAccent: 'Event scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'Appointment booking software that works like your', titleAccent: 'own event coordinator.' },
+      testimonials: { title: 'Built for how events really come together.', subtitle: 'Planners and organisers — consultations booked and dates held, without the chaos.' },
     },
     madeFor: "India's Event Planners",
     testimonials: [
@@ -1594,13 +1601,13 @@ export const PROFESSION_LANDING = {
     },
     hero: {
       eyebrow: 'For Agencies, Studios & Creative Teams',
-      headline: 'Your discovery calls,',
-      headlineAccent: 'booked and routed',
-      headlineTail: 'before the email thread starts.',
+      headline: 'Appointment booking software',
+      headlineAccent: 'for agencies & studios',
+      headlineTail: '— discovery calls booked and routed before the email thread starts.',
       subline:
         'Your team does the work. Book A Sloth handles everything around it — clients pick a slot with the right person, pay if you charge, and get reminded — so your team pitches, not schedules.',
       ctaText: 'Set Up My Booking Page',
-      microcopy: 'Free to start · No card needed · Live in minutes',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
       mock: {
         practice: 'Northlight Studio',
         practiceTag: 'Design & Brand Agency',
@@ -1650,10 +1657,11 @@ export const PROFESSION_LANDING = {
       { q: 'How much does it cost?', a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
       { q: 'Is it suitable for design, marketing and dev studios?', a: 'Yes. Design, branding, marketing, development and creative studios of any size can use Book A Sloth to route discovery calls and collect payments from one shared link.' },
     ],
-    finalCta: { icon: TrendingUp, urgency: 'Every slow reply is a lead that booked a competitor.', headline: 'More pitches. Less scheduling.', subline: 'Set up your agency booking page in minutes. Free to start, no card required.', ctaText: 'Create My Booking Page' },
+    finalCta: { icon: TrendingUp, urgency: 'Every slow reply is a lead that booked a competitor.', headline: 'More pitches. Less scheduling.', subline: 'Set up your agency booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.', ctaText: 'Create My Booking Page' },
     headings: {
-      problems: { eyebrow: 'The daily friction', title: 'Winning great clients is the job.', titleAccent: 'The scheduling shouldn’t be.' },
-      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own client-services lead.' },
+      problems: { eyebrow: 'The daily friction', title: 'Winning great clients is the job.', titleAccent: 'Client scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'Appointment booking software that works like your', titleAccent: 'own client-services lead.' },
+      testimonials: { title: 'Built for how agencies really run.', subtitle: 'Studios and teams — discovery calls booked and routed, without the admin.' },
     },
     madeFor: "India's Agencies & Studios",
     testimonials: [
