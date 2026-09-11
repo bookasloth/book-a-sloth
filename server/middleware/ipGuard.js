@@ -12,6 +12,7 @@
  * must never take the site down.
  */
 
+const crypto = require('crypto');
 const config = require('../config/ipBlockConfig');
 const { isLoadTestMode } = require('../config/loadTestMode');
 const { isOpenAccess } = require('../config/openAccessWindow');
@@ -61,12 +62,39 @@ function isAuthenticatedAdmin(req) {
   }
 }
 
+// The Vercel prerender build bakes host/service/profession pages by fetching many
+// PUBLIC pages fast from ONE IP. That burst 429s the API, offenseTracker auto-bans
+// the build IP, and every dynamic page then 403s → renders the branded ErrorPage →
+// ships as the bare SPA shell to crawlers (the platform-wide soft_404 we hit).
+//
+// We CANNOT path-exempt these: the pages read /api/host/:username(/:slug),
+// /api/reviews/:username, /api/products/host/:username, /api/services-directory and
+// public /api/vendors badges — and /api/host also holds AUTHED writes
+// (/api/host/services, /api/host/availability) that must stay ban-enforced. So we
+// exempt the BUILD BY IDENTITY, exactly like the admin exemption above: a shared
+// secret it sends in `x-prerender-token`, set only on the Vercel build env + this
+// server. Unset → no exemption (fails safe to today's behaviour). A timing-safe
+// compare, and it never bypasses authMiddleware, so a leaked/guessed token still
+// can't write — worst case it lets one IP skip the read-path rate-ban.
+function isPrerenderBuild(req) {
+  const token = process.env.PRERENDER_BUILD_TOKEN;
+  if (!token) return false;
+  const sent = req && req.headers && req.headers['x-prerender-token'];
+  if (typeof sent !== 'string' || sent.length !== token.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(sent), Buffer.from(token));
+  } catch (_) {
+    return false;
+  }
+}
+
 function ipGuard(req, res, next) {
   try {
     if (!config.enabled) return next();
     if (isLoadTestMode()) return next();
     if (isOpenAccess()) return next();  // launch/event window — don't block any IP
     if (isExempt(req)) return next();
+    if (isPrerenderBuild(req)) return next();  // trusted build runner — never ban it
     if (ipBlocklist.isBlocked(getClientIp(req))) {
       return res.status(403).json({ message: 'Access denied.' });
     }
@@ -87,7 +115,7 @@ function offenseTracker(req, res, next) {
       // bursts those, and counting its 429s is exactly what auto-banned the build
       // IP and broke deploys. Authenticated admins are exempt too (still
       // rate-limited, never auto-banned).
-      if (res.statusCode === 429 && !isExempt(req) && !isAuthenticatedAdmin(req)) {
+      if (res.statusCode === 429 && !isExempt(req) && !isAuthenticatedAdmin(req) && !isPrerenderBuild(req)) {
         Promise.resolve(ipBlocklist.recordRateLimitViolation(getClientIp(req))).catch(() => {});
       }
     });
@@ -95,4 +123,4 @@ function offenseTracker(req, res, next) {
   next();
 }
 
-module.exports = { ipGuard, offenseTracker, isExempt, getClientIp };
+module.exports = { ipGuard, offenseTracker, isExempt, isPrerenderBuild, getClientIp };

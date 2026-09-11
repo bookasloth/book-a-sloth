@@ -321,8 +321,18 @@ async function prerender() {
   // getProfessionServices) is blocked → the page bakes its notfound/error fallback
   // (blog posts redirected to /blog, poisoning the canonical of all 8 posts). We
   // proxy those calls through node (no CORS) below so real content renders.
-  const API_BASE = (loadEnv(process.env.NODE_ENV || 'production', join(__dirname, '..'), '').VITE_API_URL
-    || process.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const buildEnv = loadEnv(process.env.NODE_ENV || 'production', join(__dirname, '..'), '');
+  const API_BASE = (buildEnv.VITE_API_URL || process.env.VITE_API_URL || '').replace(/\/+$/, '');
+
+  // Shared secret that tells the API's ipGuard "this is the trusted build runner —
+  // don't rate-ban it" (server/middleware/ipGuard.js isPrerenderBuild). Without it,
+  // baking the ~168 host/service/profession pages bursts the API from one IP, trips
+  // the 100/min limiter, auto-bans the build IP, and every dynamic page ships as the
+  // bare SPA shell (soft_404). NOT a VITE_ var — build/server only, never bundled.
+  const PRERENDER_TOKEN = buildEnv.PRERENDER_BUILD_TOKEN || process.env.PRERENDER_BUILD_TOKEN || '';
+  console.log(`[prerender] build token: ${PRERENDER_TOKEN
+    ? 'configured'
+    : 'MISSING — dynamic pages may self-ban; set PRERENDER_BUILD_TOKEN on the build env (must match the API server)'}`);
 
   const server = createStaticServer();
   await new Promise((resolve) => server.listen(PORT, resolve));
@@ -350,7 +360,14 @@ async function prerender() {
         // the browser's own (blocked) request — no worse than before this fix.
         if (API_BASE && url.startsWith(API_BASE) && req.method() === 'GET') {
           try {
-            const r = await fetch(url, { headers: { Accept: 'application/json' } });
+            const r = await fetch(url, {
+              headers: {
+                Accept: 'application/json',
+                // Identify this as the trusted build runner so ipGuard won't rate-ban
+                // the burst (server/middleware/ipGuard.js isPrerenderBuild).
+                ...(PRERENDER_TOKEN ? { 'x-prerender-token': PRERENDER_TOKEN } : {}),
+              },
+            });
             const body = Buffer.from(await r.arrayBuffer());
             return req.respond({
               status: r.status,
