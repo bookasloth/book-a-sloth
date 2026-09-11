@@ -29,20 +29,22 @@ import {
 // links are soft-404s, and the mega-nav is now the site-wide crawl anchor (the
 // footer went minimal), so these lists ARE the internal-linking surface.
 
+// `tone` pins each tile's colour to that feature page's own accent (featureData
+// accent → nearest TILE_MAP tone) so the mega-menu matches the page it opens.
 const PRODUCT_MENU = [
   { header: 'Products', items: [
-    { label: 'Online scheduling', href: '/features/online-scheduling', desc: 'Clients pick a time — no back-and-forth',   icon: CalendarCheck },
-    { label: 'Booking pages',     href: '/features/booking-pages',     desc: 'A clean public page for every service',     icon: LayoutDashboard },
-    { label: 'Payments',          href: '/features/payments',          desc: 'Get paid up front and kill no-shows',       icon: Wallet },
-    { label: 'Client management', href: '/features/client-management', desc: 'Clients, bookings and notes in one place',  icon: Users },
-    { label: 'Digital products',  href: '/features/digital-products',  desc: 'Sell guides & templates, no live call',     icon: Layers },
+    { label: 'Online scheduling', href: '/features/online-scheduling', desc: 'Clients pick a time — no back-and-forth',   icon: CalendarCheck,    tone: 'blue' },
+    { label: 'Booking pages',     href: '/features/booking-pages',     desc: 'A clean public page for every service',     icon: LayoutDashboard,  tone: 'orange' },
+    { label: 'Payments',          href: '/features/payments',          desc: 'Get paid up front and kill no-shows',       icon: Wallet,           tone: 'emerald' },
+    { label: 'Client management', href: '/features/client-management', desc: 'Clients, bookings and notes in one place',  icon: Users,            tone: 'orange' },
+    { label: 'Digital products',  href: '/features/digital-products',  desc: 'Sell guides & templates, no live call',     icon: Layers,           tone: 'blue' },
   ] },
   { header: 'Platform', items: [
-    { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Two-way sync, always up to date',           icon: CalendarCheck },
-    { label: 'Notifications',     href: '/features/notifications',     desc: 'Automatic WhatsApp + email reminders',      icon: Bell },
-    { label: 'Availability',      href: '/features/availability',      desc: 'Buffers, limits and hours that fit you',    icon: Clock },
-    { label: 'Reviews & ratings', href: '/features/reviews',           desc: 'Collect reviews that win more bookings',    icon: Star },
-    { label: 'Explore',           href: '/explore',                    desc: 'Get discovered in the marketplace',         icon: Search },
+    { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Two-way sync, always up to date',           icon: CalendarCheck,    tone: 'pink' },
+    { label: 'Notifications',     href: '/features/notifications',     desc: 'Automatic WhatsApp + email reminders',      icon: Bell,             tone: 'amber' },
+    { label: 'Availability',      href: '/features/availability',      desc: 'Buffers, limits and hours that fit you',    icon: Clock,            tone: 'violet' },
+    { label: 'Reviews & ratings', href: '/features/reviews',           desc: 'Collect reviews that win more bookings',    icon: Star,             tone: 'pink' },
+    { label: 'Explore',           href: '/explore',                    desc: 'Get discovered in the marketplace',         icon: Search,           tone: 'teal' },
   ] },
 ];
 
@@ -380,7 +382,7 @@ const MegaMenu = ({ sections, promo, colClass = MENU_COL }) => (
         <div key={col.header} className={colClass}>
           <p className="mb-2 px-3 text-[11px] font-normal uppercase tracking-wider text-gray-400">{col.header}</p>
           <div className="space-y-0.5">
-            {col.items.map((it, i) => <MegaItem key={it.href} item={it} tone={TILE_TONES[(offset + i) % TILE_TONES.length]} />)}
+            {col.items.map((it, i) => <MegaItem key={it.href} item={it} tone={it.tone || TILE_TONES[(offset + i) % TILE_TONES.length]} />)}
           </div>
         </div>
       );

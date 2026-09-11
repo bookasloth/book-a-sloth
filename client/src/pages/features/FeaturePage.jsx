@@ -71,19 +71,18 @@ function TAvatar({ src, name }) {
 }
 
 /* ── shared CTA (global .btn geometry; primary keeps HeroV2 hard shadow) ── */
-// One brand orange everywhere: #FE5100, the same fill as the product mock's
-// "Confirm and pay" button. (Note: #FE5100 + white is ~3.3:1, below WCAG AA;
-// chosen for brand consistency per request over the darker AA shade.)
+// Tinted with the page's own accent (--fp-accent) so every CTA matches the
+// feature it sits on, instead of a single brand orange.
 function Cta({ children = 'Get started free', variant = 'primary' }) {
   if (variant === 'primary') {
     return (
-      <Link to={ROUTE} className="btn inline-flex items-center justify-center gap-1.5 px-7 py-3.5 text-white shadow-[var(--shadow-hard-1)] hover:no-underline" style={{ background: '#FE5100' }}>
+      <Link to={ROUTE} className="btn inline-flex items-center justify-center gap-1.5 px-7 py-3.5 text-white shadow-[var(--shadow-hard-1)] hover:no-underline" style={{ background: 'var(--fp-accent)' }}>
         {children} <ArrowRight size={16} />
       </Link>
     );
   }
   return (
-    <Link to={ROUTE} className="btn btn--outline inline-flex items-center justify-center gap-1.5 px-7 py-3.5 hover:no-underline">
+    <Link to={ROUTE} className="btn btn--outline inline-flex items-center justify-center gap-1.5 px-7 py-3.5 hover:no-underline" style={{ color: 'var(--fp-accent)', borderColor: 'var(--fp-accent)' }}>
       {children}
     </Link>
   );
@@ -505,7 +504,7 @@ function Testimonials() {
             e.currentTarget.releasePointerCapture?.(e.pointerId);
           }}
           onPointerCancel={() => { dragRef.current.active = false; setDragging(false); setDragDX(0); tPausedRef.current = false; }}
-          className="relative z-10 cursor-grab touch-pan-y select-none overflow-hidden rounded-[6px] py-12 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:cursor-grabbing"
+          className="relative z-10 cursor-grab touch-pan-y select-none overflow-hidden rounded-[6px] py-12 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--fp-accent)] focus-visible:ring-offset-2 active:cursor-grabbing"
         >
           <div
             className={`flex ${tAnim && !dragging ? "transition-transform duration-700 ease-out motion-reduce:transition-none" : ""}`}
@@ -519,7 +518,7 @@ function Testimonials() {
                   style={{ width: `${tCardW}px` }}
                   className={`relative flex h-[14rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[6px] p-7 text-left transition-[opacity,box-shadow,border-color] duration-500 sm:p-9 ${isActive ? "border border-black/5 bg-white opacity-100 shadow-[0_30px_70px_-30px_rgba(26,26,26,0.35)]" : "border border-transparent bg-transparent opacity-40"}`}
                 >
-                  {isActive && <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-primary" />}
+                  {isActive && <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px]" style={{ background: 'var(--fp-accent)' }} />}
                   <blockquote className="text-[15px] font-semibold leading-snug text-ink sm:text-[18px]">&ldquo;{t.quote}&rdquo;</blockquote>
                   <figcaption className="flex items-center gap-3">
                     <TAvatar src={t.avatar} name={t.name} />
