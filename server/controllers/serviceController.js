@@ -133,7 +133,10 @@ const LEGACY_SELECT_COLS =
 // Admin-managed SEO columns (v3.19). Surfaced on PUBLIC reads so the page can
 // render admin overrides + robots/canonical; vendors can't set them (not in
 // buildPayload). is_indexable also drives the noindex meta on the service page.
-const SEO_COLS = 'seo_title,seo_description,og_title,og_description,seo_image,is_indexable';
+// og_image (v3.154) is the generated per-service share card — surfaced here so
+// the resolver can prefer it over seo_image/thumbnail. schemaMissing() degrades
+// to V2 cols if the migration isn't applied yet.
+const SEO_COLS = 'seo_title,seo_description,og_title,og_description,seo_image,og_image,is_indexable';
 
 // Fetch a public service trying richest columns first, degrading gracefully if
 // the SEO migration (or v2 columns) aren't applied yet: V2+SEO -> V2 -> LEGACY.
@@ -332,6 +335,11 @@ const updateService = async (req, res) => {
       const base = slugify(req.body.title);
       updates.slug = await uniqueSlug(base, req.user.id, req.params.id);
     }
+
+    // OG card (v3.154): title/price are the service-card's own fields, so an edit
+    // to either stales it — mark dirty for the next generator sweep. Schema-safe:
+    // updateSafe's legacy fallback drops og_status if the column isn't applied yet.
+    if (req.body.title !== undefined || req.body.price !== undefined) updates.og_status = 'dirty';
 
     // Free-service sub-cap: only a LIVE service flipping paid→₹0 enters the free
     // set and must fit the cap. Editing an already-free service (or an inactive

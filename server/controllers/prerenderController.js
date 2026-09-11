@@ -260,18 +260,20 @@ async function resolveServiceMeta(username, serviceSlug) {
     } : {}),
   };
 
-  // No host image → fall back to the service share card (a known 1200x630 asset,
-  // so flag cardImage to emit the og:image size hints). A real thumbnail stays
-  // hint-less (whatever size the host uploaded).
-  const serviceImage = service.seo_image || service.thumbnail_url;
+  // A generated service card (og_image) and the static default floor are both known
+  // 1200x630 assets → flag cardImage so buildHtml emits the og:image size hints. A
+  // real seo_image/thumbnail is whatever size the host uploaded, so it stays hint-less.
+  const hostImage = service.seo_image || service.thumbnail_url;
   const buildHtmlArgs = {
     title,
     description,
     canonical,
     ogTitle: service.og_title || service.seo_title || baseTitle,
     ogDescription: service.og_description || description,
-    image: serviceImage || `${site}/service-og-default.jpg`,
-    cardImage: !serviceImage,
+    // Ordered fallback mirroring client resolveServiceSeo (utils/seo.js): generated
+    // service card -> admin override -> host thumbnail -> static default floor.
+    image: service.og_image || hostImage || `${site}/service-og-default.png`,
+    cardImage: Boolean(service.og_image) || !hostImage,
     robots: service.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
     jsonLd,
   };

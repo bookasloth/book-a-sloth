@@ -23,9 +23,10 @@ const truncate = (s, n = 160) => {
 const robotsFor = (indexable) => (indexable === false ? 'noindex,nofollow' : 'index,follow');
 
 const brandCard = (siteUrl) => `${trimSlash(siteUrl)}/og-image.png`;
-// Service-specific share card: used when a service has no seo_image / thumbnail_url.
-// Distinct from brandCard so a plain service still shares a service-branded 1200x630.
-const serviceCard = (siteUrl) => `${trimSlash(siteUrl)}/service-og-default.jpg`;
+// Static per-service OG floor (Phase 1). The final fallback below a generated
+// service card / admin seo_image / host thumbnail. A service-branded 1200x630
+// card, distinct from brandCard. See v3.154.
+const serviceDefaultCard = (siteUrl) => `${trimSlash(siteUrl)}/service-og-default.png`;
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -59,7 +60,9 @@ export const resolveServiceSeo = ({ service = {}, vendor = {}, siteUrl = SITE_UR
     description,
     ogTitle: service.og_title || service.seo_title || baseTitle,
     ogDescription: service.og_description || description,
-    image: service.seo_image || service.thumbnail_url || serviceCard(site),
+    // Ordered fallback: generated service card -> admin override -> host
+    // thumbnail -> the static /service-og-default.png floor (Phase 1). See v3.154.
+    image: service.og_image || service.seo_image || service.thumbnail_url || serviceDefaultCard(site),
     canonical,
     indexable: service.is_indexable !== false,
     robots: robotsFor(service.is_indexable),
