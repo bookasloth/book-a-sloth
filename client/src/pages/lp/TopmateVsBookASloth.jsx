@@ -14,6 +14,7 @@ import LpFlash from "../../components/lp/LpFlash";
 import LpAccordion from "../../components/lp/LpAccordion";
 import LpTestimonials from "../../components/lp/LpTestimonials";
 import LpBento from "../../components/lp/LpBento";
+import LpCompareTable from "../../components/lp/LpCompareTable";
 import LpFaq from "../../components/lp/LpFaq";
 
 /* ════════════════════════════════════════════════════════════════════
@@ -75,6 +76,7 @@ const TopmateVsBookASloth = () => {
       <LpAccordion />
       <LpTestimonials />
       <LpBento />
+      <LpCompareTable />
       <LpFaq />
 
       {/* ───── Final CTA ───── */}
