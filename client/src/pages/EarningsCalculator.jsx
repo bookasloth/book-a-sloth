@@ -194,8 +194,8 @@ export default function EarningsCalculator() {
   return (
     <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
       <Seo
-        title="Earnings Calculator | Book A Sloth"
-        description="See what you'd actually pocket on Book A Sloth. Drag your price and monthly bookings to watch your yearly take-home — and what the wrong plan quietly costs you."
+        title="Earnings Calculator — see what you keep | Book A Sloth"
+        description="Book A Sloth earnings calculator: set your price and monthly bookings to see exactly what you keep — and which plan (Starter, Host+ or Studio) leaves you the most."
         canonical={canonical}
         image={ogCard("earnings-calculator", "png")}
       />
@@ -320,9 +320,12 @@ export default function EarningsCalculator() {
 
           {/* CTA */}
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-            <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-95">
-              Start on {winner.plan.name} <ArrowUpRight size={16} />
-            </Link>
+            <div className="flex flex-col items-center gap-1 sm:items-start">
+              <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-95">
+                Start on {winner.plan.name} <ArrowUpRight size={16} />
+              </Link>
+              <span className="text-[11px] text-neutral-500">Free to set up · cancel anytime</span>
+            </div>
             <Link to="/pricing" className="text-xs text-neutral-500 hover:text-primary hover:underline">
               Compare every feature →
             </Link>
