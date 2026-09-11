@@ -266,7 +266,9 @@ async function resolveServiceMeta(username, serviceSlug) {
     canonical,
     ogTitle: service.og_title || service.seo_title || baseTitle,
     ogDescription: service.og_description || description,
-    image: service.seo_image || service.thumbnail_url,
+    // Ordered fallback mirroring client resolveServiceSeo (utils/seo.js): generated
+    // service card -> admin override -> host thumbnail -> static default floor.
+    image: service.og_image || service.seo_image || service.thumbnail_url || `${site}/service-og-default.png`,
     robots: service.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
     jsonLd,
   };

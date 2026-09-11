@@ -201,7 +201,7 @@ const updateServiceSafe = async (id, updates, userId) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url|category|primary_category)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category|primary_category|og_status)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
@@ -213,6 +213,8 @@ const updateServiceSafe = async (id, updates, userId) => {
     // writes the core fields.
     delete updatesCopy.category;
     delete updatesCopy.primary_category;
+    // og_status (v3.154 OG card) — drop it on a pre-migration schema.
+    delete updatesCopy.og_status;
     result = await supabaseAdmin
       .from("services")
       .update(updatesCopy)
@@ -706,6 +708,11 @@ const updateService = async (req, res) => {
       updates.category = chk.value;
       updates.primary_category = chk.primary;
     }
+
+    // OG card (v3.154): title/price are the service-card's own fields — an edit to
+    // either stales it, so mark dirty for the next generator sweep. Schema-safe:
+    // updateServiceSafe drops og_status on a pre-migration schema.
+    if (title !== undefined || price !== undefined) updates.og_status = 'dirty';
 
     const { data, error } = await updateServiceSafe(
       req.params.id,

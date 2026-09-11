@@ -23,6 +23,9 @@ const truncate = (s, n = 160) => {
 const robotsFor = (indexable) => (indexable === false ? 'noindex,nofollow' : 'index,follow');
 
 const brandCard = (siteUrl) => `${trimSlash(siteUrl)}/og-image.png`;
+// Static per-service OG floor (Phase 1). The final fallback below a generated
+// service card / admin seo_image / host thumbnail. See v3.154.
+const serviceDefaultCard = (siteUrl) => `${trimSlash(siteUrl)}/service-og-default.png`;
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +59,9 @@ export const resolveServiceSeo = ({ service = {}, vendor = {}, siteUrl = SITE_UR
     description,
     ogTitle: service.og_title || service.seo_title || baseTitle,
     ogDescription: service.og_description || description,
-    image: service.seo_image || service.thumbnail_url || brandCard(site),
+    // Ordered fallback: generated service card -> admin override -> host
+    // thumbnail -> the static /service-og-default.png floor (Phase 1). See v3.154.
+    image: service.og_image || service.seo_image || service.thumbnail_url || serviceDefaultCard(site),
     canonical,
     indexable: service.is_indexable !== false,
     robots: robotsFor(service.is_indexable),
