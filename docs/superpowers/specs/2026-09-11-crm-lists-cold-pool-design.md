@@ -132,8 +132,30 @@ board sets), most consumers inherit the exclusion from one edit. **Task:** audit
   classification. It is pointed at a "Topmate" list (`list_id`, `status='list'`) instead of
   dropping into the pipeline: a small edit to its `upsertLead` opts, not a rewrite.
 
-Column handling for v1 = **fixed columns** (name/phone/email/whatsapp/business/profession/
-city/tags/source), same shape the generic importer already accepts. Mapping UI deferred (§11).
+**Upload format (v1 = fixed columns, no mapping UI — §11).** CSV, or `.xlsx` (first sheet
+parsed client-side → rows JSON, the shape `/import` already takes). Row 1 = headers,
+matched **case-insensitively**; one contact per row.
+
+| Header | Required | → lead field |
+|---|---|---|
+| `email` | one of email/phone | `email` (dedupe key) |
+| `phone` | one of email/phone | `phone` (dedupe key) |
+| `name` | – | `name` |
+| `whatsapp` | – | `whatsapp_phone` (blank → `phone`) |
+| `business` | – | `business_name` |
+| `profession` | – | `profession` |
+| `website` | – | `website` |
+| `linkedin` | – | `linkedin` |
+| `instagram` | – | `instagram` |
+| `city` | – | `city` |
+| `tags` | – | `tags` (`,` or `|` split) |
+
+- **Socials:** `website` / `linkedin` / `instagram` are real `leads` columns (filterable,
+  usable in sends). Other socials (`twitter`/`x`, `youtube`, `facebook`, any `*_url`) →
+  `attributes` jsonb.
+- **Unknown columns → stashed in `attributes` (jsonb)** so raw data is never lost.
+- A row with **neither email nor phone is skipped** (can't dedupe / can't contact).
+- Duplicate email/phone (in-file or vs an existing lead) → **merged into one lead**.
 
 ## 7. Cold send (reuse, build nothing)
 
@@ -180,7 +202,9 @@ UPDATE leads
 - **`/admin/sales/lists`** — index of lists (name, source, cold count, promoted count,
   created). "New list" + "Import CSV → list".
 - **List detail** — a **plain data table** (no board, no columns/drag), one row per cold
-  contact: name, business, email, phone, tags, imported-at. Rows are checkbox-selectable;
+  contact: `☐ · Name · Business · Email · Phone · Links · Tags · Added`. The **Links** cell
+  shows small click-through icons (website / linkedin / instagram) only when present; full
+  socials + attributes in the row detail. Rows are checkbox-selectable;
   bulk **Promote → New** and **Send cold campaign** actions on the selection. Filter/search
   across the fields. Reuse the `SalesLeads.jsx` table + `TagChip` + bulk bar (the table
   parts only — not the kanban board).
