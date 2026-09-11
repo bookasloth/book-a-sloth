@@ -505,10 +505,10 @@ export default function ProfessionLanding() {
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="h2" className="text-center text-3xl font-bold leading-tight sm:text-4xl">
-            Built for how legal work really runs.
+            {headings.testimonials?.title || 'Built for how you really work.'}
           </Reveal>
           <Reveal as="p" delay={0.08} className="mx-auto mt-3 max-w-[600px] text-center text-base text-neutral-500">
-            Advocates, CAs and consultants — booked, paid and reminded, without the admin.
+            {headings.testimonials?.subtitle || 'Booked, paid and reminded — without the admin.'}
           </Reveal>
           <div className="mt-12 grid gap-5 sm:grid-cols-3 sm:gap-6">
             {testimonials.map((t, i) => (
