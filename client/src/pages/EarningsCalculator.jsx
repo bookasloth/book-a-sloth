@@ -30,6 +30,13 @@ const VALUE_CHIPS = {
   studio: ["Unlimited bookings", "Client CRM", "Advanced analytics"],
 };
 
+// One-line "who's this for" per plan, so a card sells a fit — not just a price.
+const POSITION = {
+  starter: "Test the waters, free.",
+  hostplus: "Booking regularly? Kill the commission.",
+  studio: "Outgrowing the limits.",
+};
+
 const inr0 = (n) =>
   "₹" + new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number(n) || 0);
 const inr2 = (n) =>
@@ -94,6 +101,10 @@ function PlanCard({ result, winnerKey, cycle }) {
   const Icon = ICON[plan.key] ?? Sparkles;
   const accent = ACCENT[plan.key];
   const isWinner = winnerKey === plan.key;
+  // Studio rarely wins on take-home (its higher fee makes it look "worse" than
+  // Host+ until you're over the cap). Below the cap, stop competing on rupees —
+  // sell what it's actually for: capacity + features.
+  const studioCapacity = plan.key === "studio" && !isWinner && !result.outgrows;
   return (
     <div
       className={`relative flex flex-col rounded-[6px] border bg-white p-5 transition-all sm:p-6 ${
@@ -115,21 +126,33 @@ function PlanCard({ result, winnerKey, cycle }) {
           <p className="text-[11px] text-neutral-500">{plan.note}</p>
         </div>
       </div>
+      <p className="mt-2 text-xs font-medium text-neutral-600">{POSITION[plan.key]}</p>
 
-      <div className="mt-5">
-        <p className="text-xs text-neutral-500">You keep, per year</p>
-        <p className="text-2xl font-extrabold" style={{ color: accent }}>{inr0(result.netAnnual)}</p>
-        {plan.monthly > 0 && (
-          <p className="text-[11px] text-neutral-400">
-            {inr0(result.grossAnnual)} earned − {inr0(result.fee)} plan fee{cycle === "annual" ? " (yearly)" : " (monthly ×12)"}
-          </p>
-        )}
-      </div>
+      {studioCapacity ? (
+        <div className="mt-4">
+          <p className="text-xs text-neutral-500">Same take-home as Host+</p>
+          <p className="mt-1 text-sm font-semibold text-ink">Unlock CRM, unlimited bookings &amp; analytics when you outgrow Host+&rsquo;s limits.</p>
+        </div>
+      ) : (
+        <div className="mt-4">
+          <p className="text-xs text-neutral-500">You keep, per year</p>
+          <p className="text-2xl font-extrabold" style={{ color: accent }}>{inr0(result.netAnnual)}</p>
+        </div>
+      )}
 
-      <dl className="mt-4 space-y-1.5 border-t border-black/5 pt-4 text-xs">
-        <div className="flex justify-between"><dt className="text-neutral-500">Take-home / session</dt><dd className="font-semibold text-ink">{inr2(result.perBookingTakeHome)}</dd></div>
-        <div className="flex justify-between"><dt className="text-neutral-500">Your guest pays</dt><dd className="font-semibold text-ink">{inr2(result.guestPays)}</dd></div>
-      </dl>
+      {/* Math collapsed by default so the card reads as a plan, not a spreadsheet.
+          Open on the recommended card so the proof is one glance away. */}
+      <details className="mt-3" {...(isWinner ? { open: true } : {})}>
+        <summary className="cursor-pointer select-none text-[11px] font-semibold text-neutral-500 hover:text-ink">See the math</summary>
+        <div className="mt-2 space-y-1.5 border-t border-black/5 pt-3 text-xs">
+          {plan.monthly > 0 && (
+            <p className="text-[11px] text-neutral-400">
+              {inr0(result.grossAnnual)} earned − {inr0(result.fee)} plan fee{cycle === "annual" ? " (yearly)" : " (monthly ×12)"}
+            </p>
+          )}
+          <div className="flex justify-between"><span className="text-neutral-500">Take-home / session</span><span className="font-semibold text-ink">{inr2(result.perBookingTakeHome)}</span></div>
+        </div>
+      </details>
 
       {result.capped && (
         <p className="mt-3 rounded-[6px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
@@ -177,7 +200,7 @@ export default function EarningsCalculator() {
         image={ogCard("earnings-calculator", "png")}
       />
       <div className="app-container py-10 sm:py-14">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-3xl pb-24 sm:pb-0">
           {/* HERO + INPUTS (fused) */}
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
             Your booking page, payments &amp; reminders — for people who get paid for their time
@@ -267,12 +290,19 @@ export default function EarningsCalculator() {
             </button>
           </div>
 
-          {/* PLAN CARDS */}
+          {/* PLAN CARDS — winner first (matters most on the mobile stack) */}
           <div className="mt-4 grid gap-5 sm:grid-cols-3">
-            {results.map((r) => (
-              <PlanCard key={r.plan.key} result={r} winnerKey={winnerKey} cycle={cycle} />
-            ))}
+            {[...results]
+              .sort((a, b) => (b.plan.key === winnerKey) - (a.plan.key === winnerKey))
+              .map((r) => (
+                <PlanCard key={r.plan.key} result={r} winnerKey={winnerKey} cycle={cycle} />
+              ))}
           </div>
+
+          {/* Guest price, once — it never varies by plan, so showing it 3× was noise */}
+          <p className="mt-3 text-center text-[11px] leading-relaxed text-neutral-500">
+            Your guest pays <strong>{inr2(winner.guestPays)}</strong> — your {inr0(earning)} price plus a flat ₹10 booking fee. You never eat it; your take-home is your price minus taxes.
+          </p>
 
           {/* CEILING NUDGE (honest top-plan moment) */}
           {ceiling !== "none" && (
@@ -293,15 +323,16 @@ export default function EarningsCalculator() {
             <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-95">
               Start on {winner.plan.name} <ArrowUpRight size={16} />
             </Link>
-            <Link to="/pricing" className="text-sm font-semibold text-primary hover:underline">
-              See full plan comparison →
+            <Link to="/pricing" className="text-xs text-neutral-500 hover:text-primary hover:underline">
+              Compare every feature →
             </Link>
           </div>
 
           {/* OBJECTION RESOLVER + footnote */}
-          <div className="mt-8 grid gap-2.5 rounded-[6px] border border-black/5 bg-white/60 p-4 text-xs leading-relaxed text-neutral-600 sm:grid-cols-3">
-            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Real payout math, not a sales number.</p>
+          <div className="mt-8 grid gap-2.5 rounded-[6px] border border-black/5 bg-white/60 p-4 text-xs leading-relaxed text-neutral-600 sm:grid-cols-2">
+            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Free to start — test the waters at zero cost.</p>
             <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Cancel anytime — no lock-in.</p>
+            <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Real payout math, not a sales number.</p>
             <p className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 flex-shrink-0 text-primary" /> Same take-home whether or not you're GST-registered.</p>
           </div>
           <div className="mt-3 flex gap-2.5 text-[11px] leading-relaxed text-neutral-500">
@@ -312,6 +343,13 @@ export default function EarningsCalculator() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Sticky CTA on mobile — keep the action one thumb-reach away */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 p-3 backdrop-blur sm:hidden">
+        <Link to={ROUTE_START} className="flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-5 py-3 text-sm font-semibold text-white">
+          Start on {winner.plan.name} <ArrowUpRight size={16} />
+        </Link>
       </div>
     </div>
   );
