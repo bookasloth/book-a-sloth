@@ -6,16 +6,27 @@ import EarningsCalculator from '../pages/EarningsCalculator';
 const setup = () => render(<EarningsCalculator />, { wrapper: MemoryRouter });
 
 describe('EarningsCalculator', () => {
-  it('shows a winner headline with a yearly take-home on mount', () => {
+  it('recommends a plan with the delta-vs-free on mount (Host+ at default)', () => {
     setup();
-    expect(screen.getByText(/keep the most/i)).toBeTruthy();
-    expect(screen.getAllByText(/\/year/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/your plan/i)).toBeTruthy();
+    expect(screen.getAllByText(/host\+/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/more a year/i)).toBeTruthy();
   });
 
   it('shows the Starter commission loss line', () => {
     setup();
     // default 1500 x 5% x 144 = 10,800
     expect(screen.getAllByText(/walks out the door|commission/i).length).toBeGreaterThan(0);
+  });
+
+  it('flips the commission card to a "stay free" message when Starter wins', () => {
+    setup();
+    const price = screen.getByLabelText('Price per session');
+    const sessions = screen.getByLabelText('Sessions per month');
+    fireEvent.change(price, { target: { value: '200' } });
+    fireEvent.change(sessions, { target: { value: '1' } });
+    expect(screen.getByText(/staying free is the math/i)).toBeTruthy();
+    expect(screen.queryByText(/walks out the door/i)).toBeNull();
   });
 
   it('no ceiling nudge at low volume', () => {

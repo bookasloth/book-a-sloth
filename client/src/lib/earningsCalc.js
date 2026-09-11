@@ -81,3 +81,24 @@ export function starterCommissionPerYear(earning, sessionsPerMonth) {
   const rate = CALC_PLANS.find((p) => p.key === 'starter').charge.commissionRate;
   return round2(rate * (Number(earning) || 0) * annualBookings(sessionsPerMonth));
 }
+
+// The recommendation's headline number: how much more the winning plan keeps per
+// year than the free Starter plan. This — not three near-identical absolutes — is
+// what justifies paying. 0 when Starter itself is the winner (nothing to beat).
+export function deltaVsFree(results, winnerKey) {
+  const winner = results.find((r) => r.plan.key === winnerKey);
+  const starter = results.find((r) => r.plan.key === 'starter');
+  if (!winner || !starter) return 0;
+  return round2(winner.netAnnual - starter.netAnnual);
+}
+
+// Sessions/month at which Host+ (0% commission, flat annual fee) starts beating
+// free Starter for a given per-session price: Host+ wins once a year of saved 5%
+// commission clears its fee → ceil(fee / (rate·price·12)). Powers the honest
+// "stay free until ~N/mo" message when Starter is the winner.
+export function hostplusCrossover(earning) {
+  const rate = CALC_PLANS.find((p) => p.key === 'starter').charge.commissionRate;
+  const price = Math.max(0, Number(earning) || 0);
+  if (price <= 0) return Infinity;
+  return Math.ceil(ANNUAL_FEE.hostplus / (rate * price * 12));
+}
