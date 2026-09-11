@@ -49,19 +49,20 @@ const PRODUCT_MENU = [
 ];
 
 // Profession landing pages. Only slugs with real professionLandingData — dead
-// links would be soft-404s.
+// links would be soft-404s. `tone` pins each tile to that landing page's own
+// theme accent (professionLandingData theme.accent → nearest TILE_MAP tone).
 const WHOFOR_MENU = [
   { header: 'By profession', items: [
-    { label: 'Doctors',    href: '/for/doctors',             desc: 'Clinics & consults', icon: HeartPulse },
-    { label: 'Consultant', href: '/for/business-consultant', desc: 'Advisory calls',     icon: Briefcase },
-    { label: 'Lawyers',    href: '/for/lawyers',             desc: 'Legal consults',     icon: Scale },
-    { label: 'Salons',     href: '/for/salon',               desc: 'Beauty & grooming',  icon: Scissors },
+    { label: 'Doctors',    href: '/for/doctors',             desc: 'Clinics & consults', icon: HeartPulse, tone: 'emerald' },
+    { label: 'Consultant', href: '/for/business-consultant', desc: 'Advisory calls',     icon: Briefcase,  tone: 'amber' },
+    { label: 'Lawyers',    href: '/for/lawyers',             desc: 'Legal consults',     icon: Scale,      tone: 'amber' },
+    { label: 'Salons',     href: '/for/salon',               desc: 'Beauty & grooming',  icon: Scissors,   tone: 'pink' },
   ] },
   { header: 'By type', items: [
-    { label: 'Freelancers',   href: '/for/freelancers',   desc: 'Solo & independent',  icon: User },
-    { label: 'Agencies',      href: '/for/agencies',      desc: 'Teams & studios',     icon: Building2 },
-    { label: 'Events',        href: '/for/events',        desc: 'Workshops & meetups', icon: Ticket },
-    { label: 'Photographers', href: '/for/photographers', desc: 'Shoots & sessions',   icon: Camera },
+    { label: 'Freelancers',   href: '/for/freelancers',   desc: 'Solo & independent',  icon: User,      tone: 'teal' },
+    { label: 'Agencies',      href: '/for/agencies',      desc: 'Teams & studios',     icon: Building2, tone: 'cyan' },
+    { label: 'Events',        href: '/for/events',        desc: 'Workshops & meetups', icon: Ticket,    tone: 'violet' },
+    { label: 'Photographers', href: '/for/photographers', desc: 'Shoots & sessions',   icon: Camera,    tone: 'fuchsia' },
   ] },
 ];
 const WHOFOR_PROMO = { title: 'For teams & enterprise', desc: 'Scale scheduling across your org.', href: '/enterprise', cta: 'Talk to sales' };
