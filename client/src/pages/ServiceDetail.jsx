@@ -493,13 +493,8 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
             : 'none',
         }}
       >
-        {service.thumbnail_url
-          ? <img src={service.thumbnail_url} alt={service.title} className="w-full aspect-[16/10] object-cover"/>
-          : <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-              <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-            </div>}
+        <img src={service.thumbnail_url || '/service-og-default.jpg'} alt={service.title}
+             className="w-full aspect-[16/10] object-cover"/>
       </div>
       <div className="p-5">
         {/* Pricing — service price + platform fee & tax breakdown */}

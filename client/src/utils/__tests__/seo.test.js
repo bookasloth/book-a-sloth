@@ -46,13 +46,16 @@ describe('resolveServiceSeo — admin overrides win, fallbacks otherwise', () =>
       .toBe('noindex,nofollow');
   });
 
-  test('og image falls back thumbnail -> brand card', () => {
+  test('og image falls back og_image -> seo_image -> thumbnail -> default card', () => {
+    // generated per-service card (v3.154) wins over everything below it
+    expect(resolveServiceSeo({ service: { ...base, og_image: 'https://img/og.png', seo_image: 'https://img/seo.jpg', thumbnail_url: 'https://img/t.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
+      .toBe('https://img/og.png');
+    expect(resolveServiceSeo({ service: { ...base, seo_image: 'https://img/seo.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
+      .toBe('https://img/seo.jpg');
     expect(resolveServiceSeo({ service: { ...base, thumbnail_url: 'https://img/t.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
       .toBe('https://img/t.jpg');
     expect(resolveServiceSeo({ service: base, vendor: VENDOR, siteUrl: SITE }).image)
-      .toBe('https://bookasloth.com/og-image.png');
-    expect(resolveServiceSeo({ service: { ...base, seo_image: 'https://img/seo.jpg' }, vendor: VENDOR, siteUrl: SITE }).image)
-      .toBe('https://img/seo.jpg');
+      .toBe('https://bookasloth.com/service-og-default.png');
   });
 
   test('description is truncated to ~160 chars', () => {

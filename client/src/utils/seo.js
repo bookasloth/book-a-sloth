@@ -24,7 +24,8 @@ const robotsFor = (indexable) => (indexable === false ? 'noindex,nofollow' : 'in
 
 const brandCard = (siteUrl) => `${trimSlash(siteUrl)}/og-image.png`;
 // Static per-service OG floor (Phase 1). The final fallback below a generated
-// service card / admin seo_image / host thumbnail. See v3.154.
+// service card / admin seo_image / host thumbnail. A service-branded 1200x630
+// card, distinct from brandCard. See v3.154.
 const serviceDefaultCard = (siteUrl) => `${trimSlash(siteUrl)}/service-og-default.png`;
 
 // ── Service ──────────────────────────────────────────────────────────────────
