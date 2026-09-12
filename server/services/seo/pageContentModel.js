@@ -68,6 +68,42 @@ function profileFaqs(host = {}, services = []) {
   return faqs;
 }
 
+// Templated service FAQ — MIRRORS client/src/utils/serviceFaqs.js. Host-authored
+// service.faqs ([{question,answer}]) always win; otherwise a data-derived set so the
+// bot shell + FAQPage schema always carry real, extractable Q&A. Returns {q,a}.
+function serviceFaqs(service = {}, vendor = {}) {
+  const authored = (service.faqs || [])
+    .filter((f) => f && (f.question || f.q) && (f.answer || f.a))
+    .map((f) => ({ q: String(f.question || f.q), a: String(f.answer || f.a) }));
+  if (authored.length) return authored;
+
+  const name = clean(service.title) || 'this service';
+  const provider = clean(vendor.name);
+  const faqs = [{
+    q: `How do I book ${name}?`,
+    a: `Choose a time that suits you on this page and pay securely online.${provider ? ` Your session with ${provider} is confirmed instantly,` : ` Your booking is confirmed instantly,`} with reminders before it starts.`,
+  }];
+
+  const price = Number(service.price);
+  if (price > 0) {
+    faqs.push({ q: `How much does ${name} cost?`, a: `${name} costs ₹${price.toLocaleString('en-IN')}, paid securely online when you book.` });
+  } else if (service.price === 0) {
+    faqs.push({ q: `Is ${name} free?`, a: `Yes — ${name} is free to book on Book A Sloth.` });
+  }
+  if (service.duration) {
+    faqs.push({ q: `How long is ${name}?`, a: `${name} runs for about ${service.duration} minutes, held ${service.meeting_mode === 'offline' ? 'in person' : 'online'}.` });
+  }
+  const inc = (service.included_items || []).filter(Boolean);
+  if (inc.length) {
+    faqs.push({ q: `What's included in ${name}?`, a: `${name} includes: ${inc.join(', ')}.` });
+  }
+  faqs.push({
+    q: `Is payment secure?`,
+    a: `Yes — payments are processed securely online and you receive booking confirmation and reminders automatically.`,
+  });
+  return faqs;
+}
+
 function hostContent(payload) {
   const { host = {}, services = [] } = payload || {};
   const name = clean(host.name) || 'Host';
@@ -98,7 +134,7 @@ function hostContent(payload) {
   ]);
 
   return {
-    headings, images, wordCount, bodyText,
+    headings, images, wordCount, bodyText, faqs,
     links: { internal: [...new Set(internal)], external: sameAsFrom(host) },
     entity: {
       type: 'Person', name, author: name, sameAs: sameAsFrom(host),
@@ -120,13 +156,19 @@ function serviceContent(payload) {
   const thumb = service.seo_image || service.thumbnail_url;
   if (thumb) images.push({ src: thumb, alt: title });
 
+  // FAQ questions become extractable headings; answers feed body text — this is
+  // what lifts the crawler's structure + answer-coverage dimensions.
+  const faqs = serviceFaqs(service, vendor);
+  for (const f of faqs) headings.push({ tag: 'h3', text: f.q });
+
   const { bodyText, wordCount } = wc([
     service.short_description, service.description, providerName,
+    ...faqs.flatMap((f) => [f.q, f.a]),
     ...reviews.map((r) => r?.comment || r?.text),
   ]);
 
   return {
-    headings, images, wordCount, bodyText,
+    headings, images, wordCount, bodyText, faqs,
     links: { internal: [...new Set(internal)], external: [] },
     entity: {
       type: 'Service', name: title, author: providerName,
@@ -150,4 +192,4 @@ function build(pageType, payload) {
   }
 }
 
-module.exports = { build, sameAsFrom, profileFaqs };
+module.exports = { build, sameAsFrom, profileFaqs, serviceFaqs };

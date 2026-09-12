@@ -8,7 +8,7 @@ jest.mock('../../controllers/serviceController', () => ({ buildPublicServiceByPr
 const { buildHostProfile } = require('../../controllers/hostController');
 const { buildPublicServiceByProfileAndSlug } = require('../../controllers/serviceController');
 const {
-  resolveProfileMeta, resolveServiceMeta, renderProfileMeta,
+  resolveProfileMeta, resolveServiceMeta, renderProfileMeta, renderServiceMeta,
 } = require('../../controllers/prerenderController');
 
 describe('resolveProfileMeta', () => {
@@ -168,6 +168,36 @@ describe('resolveServiceMeta', () => {
     const m = await resolveServiceMeta('jane', 'intro');
     expect(m.buildHtmlArgs.robots).toBe('noindex,nofollow');
   });
+
+  test('emits a templated FAQPage when the host authored none (booking + payment + price)', async () => {
+    buildPublicServiceByProfileAndSlug.mockResolvedValueOnce({
+      payload: {
+        service: { title: 'Intro Call', slug: 'intro', is_indexable: true, price: 500, duration: 30 },
+        vendor: { username: 'jane', name: 'Jane' }, reviews: [],
+      },
+    });
+    const m = await resolveServiceMeta('jane', 'intro');
+    expect(m.buildHtmlArgs.faqJsonLd['@type']).toBe('FAQPage');
+    const qs = m.buildHtmlArgs.faqJsonLd.mainEntity.map((q) => q.name);
+    expect(qs.some((q) => /how do i book intro call/i.test(q))).toBe(true);
+    expect(qs.some((q) => /how much does intro call cost/i.test(q))).toBe(true);
+    expect(qs.some((q) => /payment secure/i.test(q))).toBe(true);
+  });
+
+  test('host-authored service.faqs win over the templated fallback', async () => {
+    buildPublicServiceByProfileAndSlug.mockResolvedValueOnce({
+      payload: {
+        service: {
+          title: 'Intro Call', slug: 'intro', is_indexable: true,
+          faqs: [{ question: 'Do you record?', answer: 'Yes, on request.' }],
+        },
+        vendor: { username: 'jane', name: 'Jane' }, reviews: [],
+      },
+    });
+    const m = await resolveServiceMeta('jane', 'intro');
+    const qs = m.buildHtmlArgs.faqJsonLd.mainEntity.map((q) => q.name);
+    expect(qs).toEqual(['Do you record?']);
+  });
 });
 
 // Confirms the bot-handler behavior is unchanged after extracting the resolver:
@@ -182,5 +212,46 @@ describe('renderProfileMeta (bot handler, unchanged behavior)', () => {
     expect(res.send).toHaveBeenCalledTimes(1);
     expect(res.send.mock.calls[0][0]).toContain('Jane');
     expect(res.set).toHaveBeenCalledWith('Content-Type', 'text/html');
+  });
+});
+
+// The shell now ships a REAL body (headings + service list + visible FAQ Q&A) instead
+// of the old "Redirecting…" stub — this is what lifts the AEO answer-structure score.
+describe('rendered body carries extractable answer content', () => {
+  test('host shell body has h1, a service list and visible FAQ answers', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: {
+        host: { username: 'jane', name: 'Jane', is_indexable: true, profession: 'Coach', bio: 'I help founders.' },
+        services: [{ title: 'Intro Call', slug: 'intro', price: 500, short_description: 'A quick chat.' }],
+      },
+    });
+    const res = { status: jest.fn().mockReturnThis(), set: jest.fn(), send: jest.fn(), redirect: jest.fn() };
+    await renderProfileMeta({ params: { username: 'jane' } }, res);
+    const html = res.send.mock.calls[0][0];
+    expect(html).toContain('<h1>Jane</h1>');
+    expect(html).toContain('/jane/intro');            // internal crosslink
+    expect(html).toContain('Frequently asked questions');
+    expect(html).toMatch(/pay securely online/i);      // a real FAQ answer, not just the question
+    expect(html).not.toContain('Redirecting to');      // stub is gone
+  });
+
+  test('service shell body has h1, included list and visible FAQ answers', async () => {
+    buildPublicServiceByProfileAndSlug.mockResolvedValueOnce({
+      payload: {
+        service: {
+          title: 'Intro Call', slug: 'intro', is_indexable: true, price: 500, duration: 30,
+          short_description: 'A quick chat.', included_items: ['Notes', 'Recording'],
+        },
+        vendor: { username: 'jane', name: 'Jane' }, reviews: [],
+      },
+    });
+    const res = { status: jest.fn().mockReturnThis(), set: jest.fn(), send: jest.fn(), redirect: jest.fn() };
+    await renderServiceMeta({ params: { username: 'jane', serviceSlug: 'intro' } }, res);
+    const html = res.send.mock.calls[0][0];
+    expect(html).toContain('<h1>Intro Call</h1>');
+    expect(html).toContain("What's included");
+    expect(html).toContain('Recording');
+    expect(html).toMatch(/how long is intro call/i);   // templated FAQ question rendered
+    expect(html).not.toContain('Redirecting to');
   });
 });

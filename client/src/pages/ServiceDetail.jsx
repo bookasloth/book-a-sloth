@@ -13,6 +13,7 @@ import TransientError from '../components/error/TransientError';
 import { isNotFoundError } from '../utils/fetchError';
 import { useMinimalFooter } from '../context/ChromeContext';
 import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from '../utils/seo';
+import { serviceFaqs } from '../utils/serviceFaqs';
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -892,7 +893,13 @@ export default function ServiceDetail() {
     }
   };
 
-  const hasFAQs = Array.isArray(service.faqs) && service.faqs.length > 0;
+  // Host-authored FAQ wins; otherwise a data-derived templated FAQ so the page (and
+  // its FAQPage schema) always carries real, extractable Q&A. Same rule server-side
+  // (prerenderController + pageContentModel) so bot HTML matches what guests see.
+  const faqs = (Array.isArray(service.faqs) && service.faqs.length)
+    ? service.faqs
+    : serviceFaqs({ service, vendor });
+  const hasFAQs = faqs.length > 0;
   const hasDeliverables = (service.included_items?.length || 0) + (service.excluded_items?.length || 0) > 0;
 
   // Hero trust signals (derived from existing data — no schema change)
@@ -913,8 +920,8 @@ export default function ServiceDetail() {
       { name: vendor.name || vendor.username, path: `/${vendor.username}` },
       { name: service.title, path: `/${vendor.username}/${service.slug}` },
     ], siteUrl: SEO_SITE }),
-    ...(Array.isArray(service.faqs) && service.faqs.length
-      ? [faqJsonLd({ faqs: service.faqs.map(f => ({ q: f.question, a: f.answer })) })]
+    ...(faqs.length
+      ? [faqJsonLd({ faqs: faqs.map(f => ({ q: f.question, a: f.answer })) })]
       : []),
   ];
 
@@ -1143,7 +1150,7 @@ export default function ServiceDetail() {
                       <span className="ml-1.5 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">{reviews.length}</span>
                     )}
                     {t === 'FAQ' && hasFAQs && (
-                      <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{service.faqs.length}</span>
+                      <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{faqs.length}</span>
                     )}
                   </button>
                 ))}
@@ -1159,7 +1166,7 @@ export default function ServiceDetail() {
                     <AvailableSlotsPreview hostId={vendor?.id} serviceId={service.id} onViewAll={handleBookNow}/>
                   </>
                 )}
-                {tab === 'FAQ'          && <FAQTab faqs={service.faqs}/>}
+                {tab === 'FAQ'          && <FAQTab faqs={faqs}/>}
                 {tab === 'How it Works' && <HowItWorksTab duration={service.duration} online={service.meeting_mode !== 'offline'}/>}
                 {tab === 'Reviews'      && <ReviewsTab reviews={reviews} avgRating={avgRating} ratingBreakdown={ratingBreakdown}/>}
               </div>
@@ -1181,7 +1188,7 @@ export default function ServiceDetail() {
                 </section>
                 <section className="p-6">
                   <h2 className="text-base font-bold text-gray-900 mb-4">FAQ</h2>
-                  <FAQTab faqs={service.faqs}/>
+                  <FAQTab faqs={faqs}/>
                 </section>
                 <section className="p-6">
                   <h2 className="text-base font-bold text-gray-900 mb-4">How it Works</h2>
