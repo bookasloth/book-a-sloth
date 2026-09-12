@@ -17,6 +17,7 @@ const whatsapp = require('./whatsappService');
 const email = require('./emailService');
 const { logActivity } = require('./activity');
 const senderRegistry = require('../email/senderRegistry');
+const { MARKETING_PROVIDER } = require('../email/providers');
 
 const isMissingColumn = (e) => e?.code === '42703' || e?.code === 'PGRST204'
   || /column .* does not exist|could not find the '.*' column/i.test(e?.message || '');
@@ -87,7 +88,7 @@ async function enqueue({
     subject: subject || null,
     body_preview: bodyPreview || null,
     variables,
-    provider: channel === 'whatsapp' ? 'aisensy' : 'brevo',
+    provider: channel === 'whatsapp' ? 'aisensy' : MARKETING_PROVIDER,
     status: 'queued',
     next_attempt_at: now,
     campaign_id: campaignId,

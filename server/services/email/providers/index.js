@@ -24,12 +24,15 @@ const PROVIDERS = {
   brevo: brevoProvider,
 };
 
-// The provider name for BULK / sales-automation mail. Callers pass this to route a
-// send off Resend onto the dedicated bulk transport — see deliver() and
-// crm/emailService. One constant so the call sites never drift; swapping the bulk
-// provider (Brevo → SES → …) is a one-line change here. NB: HTTP-API only — PaaS
-// hosts block outbound SMTP, so a raw-SMTP bulk provider times out on Render.
-const MARKETING_PROVIDER = 'brevo';
+// The provider for BULK / marketing / sales-automation mail — deliberately the
+// OTHER provider from transactional (email_settings.provider), so the two never
+// share one free-tier daily cap and a marketing burst can't starve booking mail.
+// Current split (both free tiers): transactional → Brevo (300/day, must-deliver
+// booking/OTP mail), marketing → Resend (100/day, bursty but delay-tolerant — the
+// campaign worker throttles, and a big blast fails on THIS non-critical path
+// instead of taking down confirmations). One constant so call sites never drift;
+// swapping providers is a one-line change. HTTP-API only — PaaS blocks outbound SMTP.
+const MARKETING_PROVIDER = 'resend';
 
 /**
  * Resolve a provider by name (default SMTP), wrapped with the universal
