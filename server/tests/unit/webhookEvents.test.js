@@ -36,10 +36,28 @@ test('campaign open with no crm_message still stamps lead engagement + activity'
   state.lead = { id: 'lead1', status: 'list', converted_at: null }; // cold lead, no crm_message
   const r = await recordDeliveryEvent({ channel: 'email', event: 'email.opened', providerMessageId: 'rs_x', email: 'a@b.com' });
   expect(r.matched).toBe(true);
-  expect(updatesTo('leads')[0].patch.last_engaged_at).toBeTruthy();
+  const lu = updatesTo('leads')[0].patch;
+  expect(lu.last_engaged_at).toBeTruthy();
+  expect(lu.email_status).toBe('opened'); // B1: left axis stamped
+  expect(lu.opens).toBe(1);               // B1: counter bumped from 0
   expect(insertsTo('lead_activities')[0].row.type).toBe('email_opened');
   expect(insertsTo('crm_message_events')).toHaveLength(0); // no message row exists
   expect(openAutoCalls).toHaveLength(0); // opens don't open a task
+});
+
+test('B1: email_status + counters — a click bumps clicks off the existing count', async () => {
+  state.lead = { id: 'lead1', status: 'list', converted_at: null, opens: 2, clicks: 1 };
+  await recordDeliveryEvent({ channel: 'email', event: 'email.clicked', email: 'a@b.com' });
+  const lu = updatesTo('leads')[0].patch;
+  expect(lu.email_status).toBe('clicked');
+  expect(lu.clicks).toBe(2); // 1 → 2
+  expect(lu.opens).toBeUndefined(); // a click doesn't touch opens
+});
+
+test('B1: a bounce stamps email_status=bounced on the lead', async () => {
+  state.lead = { id: 'lead1', status: 'list', converted_at: null };
+  await recordDeliveryEvent({ channel: 'email', event: 'email.bounced', email: 'a@b.com' });
+  expect(updatesTo('leads')[0].patch.email_status).toBe('bounced');
 });
 
 test('campaign click by a not-converted lead opens an idempotent follow-up task', async () => {
