@@ -21,6 +21,15 @@ describe('<PublicCenterNav> mega-menus', () => {
     expect(openCount(container)).toBe(0);
   });
 
+  // The panels are visually hidden until opened, but their <a> links MUST be in the
+  // DOM from the first render — otherwise the prerendered HTML has no nav links and
+  // these pages read as orphaned in the SEO audit (crawlers/Google never open a menu).
+  test('mega-menu links are in the DOM without opening any menu (crawlable)', () => {
+    const { container } = renderNav();
+    ['/for/agencies', '/for/freelancers', '/lp/acuity-alternative', '/about', '/earnings-calculator', '/wall-of-love']
+      .forEach((href) => expect(container.querySelector(`a[href="${href}"]`), `${href} link missing from prerendered nav`).toBeTruthy());
+  });
+
   test('hovering a trigger opens exactly one panel', () => {
     const { container } = renderNav();
     const wrappers = container.querySelectorAll('[data-navmenu]');

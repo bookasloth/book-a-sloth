@@ -268,12 +268,13 @@ const TagPill = ({ text }) =>
 const NavDropdown = ({ id, label, icon: Icon, align = 'left', activeKey, onOpen, onClose, children }) => {
   const open = activeKey === id;
   const centered = align === 'center';
-  // Lazy-mount the panel contents on first open, so the menus don't fetch their
-  // images (e.g. Compare's competitor favicons) on every page load — only once
-  // the user actually opens a menu. Kept mounted afterwards so the exit
-  // animation still runs.
-  const [mounted, setMounted] = useState(false);
-  if (open && !mounted) setMounted(true);
+  // Panel contents render ALWAYS (not lazy-mounted on first open) so every nav link
+  // is in the server-rendered / prerendered HTML — crawlers and Google's first pass
+  // follow them even though the panel is visually hidden (opacity-0) until opened.
+  // (This was the fix for landing/compare pages that were only reachable via the
+  // menu and so read as orphaned in the SEO audit.) The one thing that used to make
+  // lazy-mount worthwhile — Compare's competitor favicons — stays deferred to `open`
+  // inside CompareItem, so we still don't fetch those images on every page load.
   return (
     <div
       data-navmenu
@@ -308,7 +309,7 @@ const NavDropdown = ({ id, label, icon: Icon, align = 'left', activeKey, onOpen,
           open ? 'translate-y-0 scale-100 opacity-100' : '-translate-y-1 scale-[0.98] opacity-0 pointer-events-none',
         ].join(' ')}
       >
-        {mounted && children}
+        {children}
       </div>
     </div>
   );
@@ -408,7 +409,7 @@ const MegaMenu = ({ sections, promo, colClass = MENU_COL }) => (
 // competitor); if that is blocked the img hides and a brand-colour monogram
 // shows instead. The competitor's primary brand colour (--bc) drives the
 // two-layer curtain + the name on hover.
-const CompareItem = ({ item }) => {
+const CompareItem = ({ item, active }) => {
   const [imgOk, setImgOk] = useState(true);
   const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=64`;
   return (
@@ -424,9 +425,11 @@ const CompareItem = ({ item }) => {
 
       {/* Sloth favicon  vs  competitor favicon (sized to match the other menu tiles) */}
       <span className="relative z-10 flex flex-shrink-0 items-center gap-1.5">
-        <img src="/sloth.png" alt="Book A Sloth" width="36" height="36" className="h-9 w-9 rounded-lg bg-gray-50 p-1" />
+        <img src="/sloth.png" alt="Book A Sloth" width="36" height="36" loading="lazy" className="h-9 w-9 rounded-lg bg-gray-50 p-1" />
         <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">vs</span>
-        {imgOk ? (
+        {/* Only fetch the competitor favicon once the menu is actually open — the
+            panel now always renders (for crawlable links), so gate the network here. */}
+        {active && imgOk ? (
           <img src={favicon} alt="" width="36" height="36" loading="lazy" onError={() => setImgOk(false)} className="h-9 w-9 rounded-lg bg-gray-50 p-1" />
         ) : (
           <span className="flex h-9 w-9 items-center justify-center rounded-lg text-[14px] font-bold text-white" style={{ backgroundColor: item.color }}>
@@ -439,7 +442,7 @@ const CompareItem = ({ item }) => {
   );
 };
 
-const CompareMega = () => {
+const CompareMega = ({ active }) => {
   // Three columns (two cards each) so Compare matches the Resources width.
   const per = Math.ceil(COMPARE_MENU.length / 3);
   const cols = [0, 1, 2].map((n) => COMPARE_MENU.slice(n * per, n * per + per));
@@ -449,7 +452,7 @@ const CompareMega = () => {
       <div className="flex gap-5">
         {cols.map((group, i) => (
           <div key={i} className={`${MENU_COL} space-y-0.5`}>
-            {group.map((c) => <CompareItem key={c.href} item={c} />)}
+            {group.map((c) => <CompareItem key={c.href} item={c} active={active} />)}
           </div>
         ))}
       </div>
@@ -499,7 +502,7 @@ export const PublicCenterNav = () => {
       </NavDropdown>
 
       <NavDropdown id="compare" label="Compare" {...menuProps}>
-        <CompareMega />
+        <CompareMega active={activeKey === 'compare'} />
       </NavDropdown>
 
       <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
