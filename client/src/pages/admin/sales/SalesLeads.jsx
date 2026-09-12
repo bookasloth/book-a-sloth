@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { PageHeader, Card, Btn, Badge, Table, Skeleton } from '../../../components/admin/ui';
+import AdminFilters from '../../../components/admin/ui/AdminFilters';
 import LeadDrawer from './LeadDrawer';
 import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
@@ -346,22 +347,20 @@ export default function SalesLeads() {
         </div>
       </div>
 
-      {/* Single compact filter toolbar: search + stage/source/tag + clear */}
+      {/* Single compact filter toolbar: search + stage/source/tag chip-builder + clear */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <input className="fb-input text-sm flex-1 min-w-[220px]" placeholder="Search name, business, phone, email…"
           value={q} onChange={(e) => setQ(e.target.value)} />
-        <select className="fb-input text-sm w-auto min-w-[130px]" value={stage} onChange={(e) => { setStage(e.target.value); setPage(1); }}>
-          <option value="">Any stage</option>
-          {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-        </select>
-        <select className="fb-input text-sm w-auto min-w-[130px]" value={source} onChange={(e) => { setSource(e.target.value); setPage(1); }}>
-          <option value="">Any source</option>
-          {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select className="fb-input text-sm w-auto min-w-[120px]" value={tag} onChange={(e) => { setTag(e.target.value); setPage(1); }}>
-          <option value="">Any tag</option>
-          {tagCatalog.map((tg) => <option key={tg.id} value={tg.name}>{tg.name}</option>)}
-        </select>
+        <AdminFilters
+          showClear={false}
+          value={{ stage: stage || undefined, source: source || undefined, tag: tag || undefined }}
+          onChange={(next) => { setStage(next.stage || ''); setSource(next.source || ''); setTag(next.tag || ''); setPage(1); }}
+          config={[
+            { key: 'stage', label: 'Stage', options: ALL_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] })) },
+            { key: 'source', label: 'Source', options: SOURCES.map((s) => ({ value: s, label: s })) },
+            { key: 'tag', label: 'Tag', options: tagCatalog.map((tg) => ({ value: tg.name, label: tg.name })) },
+          ]}
+        />
         {filtersActive && <Btn variant="outline" size="sm" onClick={clearFilters}>Clear</Btn>}
       </div>
 
