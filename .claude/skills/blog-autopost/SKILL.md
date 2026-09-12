@@ -37,8 +37,9 @@ Drafts folder (marketing): `D:\My Marketing\Book A Sloth\Blog` (Windows) /
    gate. This is why the daily run doesn't stall on the first interlinked post.
 3. **Gate.** If `NEEDS WORK` → do NOT merge. Leave PR open, log the reason, move the draft to
    `_posted/` ONLY on success (not here — leave it so a human can retry). Exit 0.
-4. **Verify scope (hard safety).** `gh pr diff <pr> --name-only` MUST list exactly
-   `client/src/data/blogPosts.js` and nothing else. Any other path → abort merge, log, exit 1.
+4. **Verify scope (hard safety).** `gh pr diff <pr> --name-only` MUST be a SUBSET of exactly two
+   paths — `client/src/data/blogPosts.js` and `client/src/data/blogClusters.js` (the post + its
+   link-graph taxonomy). Any other path → abort merge, log, exit 1.
 5. **Merge.** `gh pr checks <pr>` must be green/neutral (no failure). Then
    `gh pr merge <pr> --squash --delete-branch`.
 6. **Publish (seed BOTH DBs).** `git checkout main && git pull`. Then:
@@ -64,8 +65,8 @@ Drafts folder (marketing): `D:\My Marketing\Book A Sloth\Blog` (Windows) /
    seed both DBs → log). Recap posts have no `_posted/` folder; the log line is the record.
 
 ## Hard rules (unattended safety)
-- **Only ever merge a diff limited to `client/src/data/blogPosts.js`.** Re-check with
-  `--name-only` right before merge; abort on any extra path.
+- **Only ever merge a diff limited to `client/src/data/blogPosts.js` + `client/src/data/blogClusters.js`.**
+  Re-check with `--name-only` right before merge; abort on any other path.
 - **Never merge on a failing quality gate or failing CI.**
 - **Never fabricate URLs/claims** — inherited from blog-seo-optimizer.
 - **Seed failure ≠ success.** A merged-but-unseeded post is INVISIBLE; treat as failure and shout.
