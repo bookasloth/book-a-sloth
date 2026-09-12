@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   itemActive, activeSection, itemBadge, sectionBadgeCount, formatBadge, visibleSections,
 } from './navHelpers';
+import { NAV as REAL_NAV } from './adminNav';
 
 // Minimal NAV fixture exercising the tricky cases: an exact index route that is
 // a prefix of its siblings, and a deep item under the same section.
@@ -53,6 +54,18 @@ describe('activeSection', () => {
   });
   it('returns null for an unknown route', () => {
     expect(activeSection('/nowhere', NAV)).toBe(null);
+  });
+  // Nav restructure: items keep their URLs but moved to new shells. activeSection
+  // matches by item.to, so the rail highlights the NEW section for a moved item.
+  it('maps moved items to their new sections (Marketing / Create / System)', () => {
+    expect(activeSection('/admin/sales/lists', REAL_NAV).key).toBe('marketing');   // Lists moved Sales → Marketing
+    expect(activeSection('/admin/campaigns', REAL_NAV).key).toBe('marketing');       // Campaigns moved Growth → Marketing
+    expect(activeSection('/admin/platform/communication', REAL_NAV).key).toBe('marketing');
+    expect(activeSection('/admin/content/blogs', REAL_NAV).key).toBe('create');      // Blogs moved Growth → Create
+    expect(activeSection('/admin/content/newsletter', REAL_NAV).key).toBe('create');
+    expect(activeSection('/admin/platform/appearance', REAL_NAV).key).toBe('system'); // Appearance moved Growth → System
+    expect(activeSection('/admin/sales/templates', REAL_NAV).key).toBe('growth');    // Templates moved Sales → Growth
+    expect(activeSection('/admin/sales/leads', REAL_NAV).key).toBe('sales');         // Leads stays in Sales
   });
 });
 
