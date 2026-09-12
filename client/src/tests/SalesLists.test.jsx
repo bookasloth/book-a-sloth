@@ -12,6 +12,8 @@ vi.mock('../services/api', () => ({
   crmListTags: vi.fn(() => Promise.resolve({ data: [{ id: 't1', name: 'grade-A' }, { id: 't2', name: 'topmate' }] })),
   adminCampCreateSegment: vi.fn(() => Promise.resolve({ data: { id: 'seg1' } })),
 }));
+// Stub the drawer so the row-click test doesn't mount the full LeadPanel.
+vi.mock('../pages/admin/sales/LeadDrawer', () => ({ default: ({ leadId }) => (leadId ? <div>drawer-open:{leadId}</div> : null) }));
 
 const detail = () => render(
   <MemoryRouter initialEntries={['/admin/sales/lists/L1']}>
@@ -37,6 +39,12 @@ test('list detail scopes the leads query to the list', async () => {
   expect(api.crmListLeads).toHaveBeenCalledWith(expect.objectContaining({ listId: 'L1' }));
 });
 
+test('clicking a contact row opens the lead drawer', async () => {
+  detail();
+  fireEvent.click(await screen.findByText('Ada'));
+  expect(await screen.findByText('drawer-open:x1')).toBeTruthy();
+});
+
 test('Create segment posts a prospect segment scoped to the list source tag', async () => {
   vi.spyOn(window, 'prompt').mockReturnValue('My Topmate Segment');
   detail();
@@ -46,6 +54,5 @@ test('Create segment posts a prospect segment scoped to the list source tag', as
   const arg = api.adminCampCreateSegment.mock.calls[0][0];
   expect(arg.name).toBe('My Topmate Segment');
   expect(arg.definition.contact_type).toBe('prospect');
-  // scopes to this list via its source tag
   expect(arg.definition.filters).toContainEqual({ field: 'tags', op: 'contains', value: 'topmate' });
 });
