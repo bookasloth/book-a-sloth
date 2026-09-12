@@ -38,6 +38,66 @@ const SIGN_DURGA = p(`— Durga`);
 const WA = { onboarding: 'Onboarding Nudge', firstBooking: 'Get First Booking', winback: 'Winback Offer - Additional Month' };
 
 const SEQUENCES = [
+  // ── Cold-pool engagement (B2) — enrolled by listEngagementService off the
+  //    email opens/clicks counters. Openers/clickers run while status='list';
+  //    'New marketing' takes over once a lead is promoted to 'new'. Sujata voice.
+  {
+    name: 'Openers nurture', sender_key: 'sujata',
+    description: 'Cold lead opened but has not clicked — nudge them to look properly.',
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 24, channel: 'email',
+        subject: 'Did that land, {{first_name}}?',
+        preview: 'One tap to see how Book A Sloth actually works.',
+        body: p(`You opened my last note — thanks. In case it got buried: Book A Sloth is one link your clients use to book <i>and</i> pay, so you stop chasing times and payments.`) + p(`<a href="${BL}">See how it works →</a>`) + SIGN_SUJATA },
+      { step_no: 2, delay_hours: 72, channel: 'email',
+        subject: 'The 2-minute version',
+        preview: 'Services, calendar and payments in one place.',
+        body: p(`Quick version: you list what you do, set your hours, share one link. Clients pick a slot and pay upfront. That's it.`) + p(`<a href="${BL}">Take a look →</a>`) + SIGN_SUJATA },
+      { step_no: 3, delay_hours: 120, channel: 'email',
+        subject: 'Last nudge from me, {{first_name}}',
+        preview: `If it's not for you, no worries at all.`,
+        body: p(`I won't keep emailing. If a cleaner way to take bookings sounds useful, the link's below — if not, all good.`) + p(`<a href="${BL}">Have a look →</a>`) + SIGN_SUJATA },
+    ],
+  },
+  {
+    name: 'Clickers nurture', sender_key: 'sujata',
+    description: 'Cold lead clicked once — warm; move them toward creating a page.',
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 24, channel: 'email',
+        subject: 'Glad that caught your eye, {{first_name}}',
+        preview: 'Your page takes about two minutes to set up.',
+        body: p(`You had a look — nice. Setting up your own page takes about two minutes: add a service, set a price, share the link.`) + p(`<a href="${BL}">Create your page →</a>`) + SIGN_SUJATA },
+      { step_no: 2, delay_hours: 72, channel: 'email',
+        subject: 'What happens after you set it up',
+        preview: 'One link. Clients book and pay. You get on with the work.',
+        body: p(`Once your page is live, a client picks a service, chooses a time and pays — you just show up. No back-and-forth, no payment chasing.`) + p(`<a href="${BL}">Get started →</a>`) + SIGN_SUJATA },
+    ],
+  },
+  {
+    name: 'New marketing', sender_key: 'sujata',
+    description: 'Lead promoted to New (engaged past the threshold) — push to sign up.',
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 0,   channel: 'email',
+        subject: 'Ready when you are, {{first_name}}',
+        preview: 'Create your booking page — free to start.',
+        body: p(`You clearly liked what you saw — so let's get you a page. It's free to start, and you can be taking bookings today.`) + p(`<a href="${BL}">Create your page →</a>`) + SIGN_SUJATA },
+      { step_no: 2, delay_hours: 48,  channel: 'email',
+        subject: 'How {{profession}}s use Book A Sloth',
+        preview: 'From enquiry to a paid booking, no chasing.',
+        body: p(`Someone asks to book you. Instead of trading messages and sharing UPI details, you send one link — they choose, book and pay.`) + p(`<a href="${BL}">See it in action →</a>`) + SIGN_SUJATA },
+      { step_no: 3, delay_hours: 96,  channel: 'email',
+        subject: 'Want me to set it up with you?',
+        preview: `Reply "HELP" and I'll get your page live with you.`,
+        body: p(`If you'd rather not do it alone, reply <b>HELP</b> and I'll walk your page to live with you. Won't take long.`) + SIGN_SUJATA },
+      { step_no: 4, delay_hours: 168, channel: 'email',
+        subject: 'Closing the loop, {{first_name}}',
+        preview: 'Your page is one step away whenever you want it.',
+        body: p(`Last one from me on this. Your page is a couple of taps away whenever the time's right.`) + p(`<a href="${BL}">Create your page →</a>`) + SIGN_SUJATA },
+    ],
+  },
   {
     name: 'Signed-up-not-activated', sender_key: 'tithi',
     description: 'Host signed up but has not finished onboarding — nudge to live.',
