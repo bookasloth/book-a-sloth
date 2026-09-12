@@ -19,7 +19,10 @@ Drafts folder (marketing): `D:\My Marketing\Book A Sloth\Blog` (Windows) /
 `/d/My Marketing/Book A Sloth/Blog` (Git-Bash). Archive subfolder: `.../Blog/_posted`.
 
 ## Preconditions (abort the run if any fail)
-- Clean git tree. On a fresh branch from `origin/main` (never run on `main`).
+- Runs in the DEDICATED worktree set up by `scripts/blog-autopost.ps1` (isolated from any
+  interactive/peer session sharing the primary checkout — a shared checkout caused a
+  wrong-branch commit during the build). Never run this in the primary OneDrive checkout.
+- Clean git tree. On the `autopost-runner` branch reset to `origin/main` (never run on `main`).
 - A single-run lock: if `scratch/.blog-autopost.lock` exists and is <6h old, exit (another run).
   Else write it (with timestamp) and remove it at the end.
 - `gh auth status` OK; `server/.env` and `server/.env.staging` present (seed needs them).
@@ -42,7 +45,9 @@ Drafts folder (marketing): `D:\My Marketing\Book A Sloth\Blog` (Windows) /
    link-graph taxonomy). Any other path → abort merge, log, exit 1.
 5. **Merge.** `gh pr checks <pr>` must be green/neutral (no failure). Then
    `gh pr merge <pr> --squash --delete-branch`.
-6. **Publish (seed BOTH DBs).** `git checkout main && git pull`. Then:
+6. **Publish (seed BOTH DBs).** Sync to the merged main WITHOUT checking out `main`
+   (the runner is in a dedicated worktree; `main` is held by the primary checkout):
+   `git fetch origin && git reset --hard origin/main`. Then:
    ```
    cd server
    node -r dotenv/config scripts/seedBlogs.js dotenv_config_path=.env           # prod  Mumbai
