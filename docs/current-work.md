@@ -1,5 +1,15 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-09-03_
+_Last updated: 2026-09-10_
+
+## SEO: Google WRS fetch-failure root cause (ipGuard/rate-limit) — 2026-09-10
+
+> **Status: PR open (`fix/api-fetch-google-wrs-root-cause`), not merged.** Follow-on to #1004/#1006/#1008 (which stopped a transient public-API fetch failure from forcing `noindex` on the BlogPost/HostProfile/ServiceDetail prerendered pages). This PR addresses the *server-side* root cause of those fetch failures.
+
+- **Confirmed root cause, code side:** every per-IP rate limiter in `middleware/security.js` except `adminLimiter`/`botLimiter` used express-rate-limit's default `keyGenerator` (plain `req.ip`) instead of `getClientIp()` — so setting `CLIENT_IP_HEADER` on Render (the documented fix in `docs/cloudflare-edge-setup.md`) would NOT have protected `apiLimiter` (global 100/min) or any of the other limiters from a shared-edge-IP bucket. Fixed: all of them now share one `ipKeyGenerator`.
+- **Confirmed root cause, recurring incident:** `docs/cloudflare-edge-setup.md` already documents a live incident (2026-07-23) where `CLIENT_IP_HEADER` being unset resolves `getClientIp` to Render's shared internal `10.x` proxy address, and a single auto-ban on it 403s the entire platform — recovered only by a manual SQL delete each time. Fixed at the code layer: `lib/ipBlocklist.js` now refuses to ever ban (or honour a ban on) a private/reserved IP, from any source (auto or manual), so this can't recur regardless of whether the `CLIENT_IP_HEADER` ops step is done.
+- **Also relaxed:** `GET /api/host/:username` and `GET /api/host/:username/:slug` (public host profile + service detail reads — no auth) are now exempt from `ipGuard`/`offenseTracker` and from `apiLimiter`'s cap, mirroring the existing `/api/blogs` exemption. Other `/api/host/*` routes (search, availability, categories, username, services) are unaffected.
+- **Still an OPS action, not code:** set `CLIENT_IP_HEADER=cf-connecting-ip` on Render (Step 9 of `docs/cloudflare-edge-setup.md`) — see that doc for how to find the right header.
+- **Part B (Cloudflare AI-bot block) verification could not be run from this session** — outbound network access to `bookasloth.com` / `book-a-sloth.onrender.com` is blocked by this sandbox's egress policy. See the PR description for what to check manually.
 
 ## Prod deploy + CRM sends state — 2026-09-03
 

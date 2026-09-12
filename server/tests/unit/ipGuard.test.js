@@ -236,6 +236,56 @@ describe('offenseTracker', () => {
   });
 });
 
+describe('isPublicHostRead — public host/service detail GETs are exempt', () => {
+  test.each([
+    '/api/host/somehost',
+    '/api/host/somehost/some-service-slug',
+  ])('%s (GET) is exempt', (path) => {
+    const { mod } = load({ blocklist: { isBlocked: jest.fn(() => true) } });
+    const res = mockRes();
+    const next = jest.fn();
+    mod.ipGuard({ ip: '1.2.3.4', method: 'GET', path, headers: {} }, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    '/api/host/availability',
+    '/api/host/categories',
+    '/api/host/search',
+    '/api/host/username',
+    '/api/host/services',
+  ])('%s (GET) is NOT exempt (reserved sub-route, auth-gated or a write path)', (path) => {
+    const { mod } = load({ blocklist: { isBlocked: jest.fn(() => true) } });
+    const res = mockRes();
+    const next = jest.fn();
+    mod.ipGuard({ ip: '1.2.3.4', method: 'GET', path, headers: {} }, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  test('a PUT to /api/host/:username is NOT exempt even though the path shape matches', () => {
+    const { mod } = load({ blocklist: { isBlocked: jest.fn(() => true) } });
+    const res = mockRes();
+    const next = jest.fn();
+    mod.ipGuard({ ip: '1.2.3.4', method: 'PUT', path: '/api/host/somehost', headers: {} }, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  test('offenseTracker does not record a 429 from a public host/service read', () => {
+    const recordRateLimitViolation = jest.fn(() => Promise.resolve());
+    const { mod } = load({ blocklist: { recordRateLimitViolation } });
+    const req = { ip: '9.8.7.6', method: 'GET', path: '/api/host/somehost/some-service', headers: {} };
+    const res = mockRes();
+
+    mod.offenseTracker(req, res, jest.fn());
+    res.statusCode = 429;
+    res._finish();
+
+    expect(recordRateLimitViolation).not.toHaveBeenCalled();
+  });
+});
+
 describe('prerender build exemption (x-prerender-token)', () => {
   const TOKEN = 'build-secret-abc123';
 
