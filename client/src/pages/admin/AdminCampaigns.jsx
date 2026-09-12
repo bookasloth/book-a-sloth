@@ -14,7 +14,7 @@ const STATUS_TONE = { draft: 'neutral', scheduled: 'info',
   sending: 'warn', sent: 'ok',
   paused: 'info', failed: 'danger',
   // per-recipient states (campaign detail)
-  queued: 'neutral', delivered: 'ok', bounced: 'danger', skipped: 'neutral' };
+  queued: 'neutral', delivered: 'ok', opened: 'info', clicked: 'ok', bounced: 'danger', skipped: 'neutral' };
 const Pill = ({ s }) => <Badge tone={STATUS_TONE[s] || 'neutral'}><span className="capitalize">{s}</span></Badge>;
 
 const BLANK = { name: '', channel: 'email', segment_id: '', template_id: '', whatsapp_template_id: '', subject_override: '', throttle_per_min: 120 };
@@ -236,13 +236,18 @@ const AdminCampaigns = () => {
             {!detail ? <p className="text-xs adm-t3 p-4">Loading…</p> : (
               <>
                 <div className="flex flex-wrap gap-2 px-4 py-3 border-b adm-border">
-                  {[['total', 'Total'], ['queued', 'Queued'], ['sent', 'Sent'], ['delivered', 'Delivered'], ['bounced', 'Bounced'], ['failed', 'Failed'], ['skipped', 'Skipped']]
+                  {[['total', 'Total'], ['queued', 'Queued'], ['sent', 'Sent'], ['delivered', 'Delivered'], ['opened', 'Opened'], ['clicked', 'Clicked'], ['bounced', 'Bounced'], ['failed', 'Failed'], ['skipped', 'Skipped']]
                     .filter(([k]) => detail.summary[k])
-                    .map(([k, label]) => (
-                      <span key={k} className="text-[11px] px-2 py-1 rounded border adm-border adm-t2">
-                        {label}: <span className="font-semibold adm-t1">{detail.summary[k]}</span>
-                      </span>
-                    ))}
+                    .map(([k, label]) => {
+                      // Open/click rate against delivered — the number you actually read.
+                      const d = detail.summary.delivered || 0;
+                      const pct = (k === 'opened' || k === 'clicked') && d ? ` (${Math.round((detail.summary[k] / d) * 100)}%)` : '';
+                      return (
+                        <span key={k} className="text-[11px] px-2 py-1 rounded border adm-border adm-t2">
+                          {label}: <span className="font-semibold adm-t1">{detail.summary[k]}{pct}</span>
+                        </span>
+                      );
+                    })}
                 </div>
                 <div className="overflow-auto">
                   <table className="w-full text-xs">
