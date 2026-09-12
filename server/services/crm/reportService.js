@@ -119,7 +119,9 @@ async function fetchLeads() {
   const rows = [];
   for (let from = 0; from < MAX_ROWS; from += PAGE) {
     const { data, error } = await supabaseAdmin
-      .from('leads').select('*').range(from, from + PAGE - 1);
+      // Cold list leads were never worked — they'd dilute conversion_rate and
+      // by_source totals, so keep them out of the report snapshot.
+      .from('leads').select('*').neq('status', 'list').range(from, from + PAGE - 1);
     if (error) throw error;
     if (!data?.length) break;
     rows.push(...data);

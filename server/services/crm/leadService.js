@@ -562,7 +562,9 @@ async function dashboardStats() {
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
   const counts = await pipelineCounts();
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  // Cold (list) leads aren't in the pipeline — keep them out of the board total
+  // and conversionRate denominator; counts.list still exposes the raw count.
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) - (counts[rules.LIST] || 0);
 
   // Due-today = due in today's window but not yet overdue; overdue = past. Both
   // union follow-up tasks with the automation's next_action_at (see above).
