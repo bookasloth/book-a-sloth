@@ -80,6 +80,10 @@ const REGISTRY = [
   // CRM WhatsApp/email leaves the platform until an admin explicitly flips this.
   // The master switch for all outbound in the /admin/sales command center.
   { key: 'crm_admin_sends',      label: 'CRM Outbound Sends',   category: 'Sales CRM', scope: 'both', enabled: false, description: 'Master switch for admin CRM WhatsApp/email + sequences. Ships OFF. Off = every CRM send is skipped (recorded, not delivered).' },
+  // Ships OFF + FAIL-CLOSED. Automation switch for the warm second-touch job
+  // (a clicker who hasn't replied/converted gets one governed follow-up). Off =
+  // the job no-ops. The actual send is still gated by crm_admin_sends above.
+  { key: 'crm_second_touch',     label: 'CRM Auto Second-Touch', category: 'Sales CRM', scope: 'both', enabled: false, description: 'Automated warm follow-up to campaign clickers who have not replied/converted. Ships OFF. Off = no auto second-touch is queued. Sends still require CRM Outbound Sends.' },
 ];
 
 const KEYS = REGISTRY.map((f) => f.key);
