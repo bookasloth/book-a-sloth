@@ -15,6 +15,8 @@
 
 const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://bookasloth.com';
 
+const { profileFaqs, serviceFaqs } = require('../services/seo/pageContentModel');
+
 const trimSlash = (s) => String(s || '').replace(/\/+$/, '');
 const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const truncate = (s, n = 160) => {
@@ -31,7 +33,7 @@ const truncate = (s, n = 160) => {
  */
 const upscaleAvatar = (url) => String(url || '').replace(/=s\d+-c$/, '=s512-c');
 
-function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd, faqJsonLd, cardImage }) {
+function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd, faqJsonLd, cardImage, bodyHtml }) {
   const site = trimSlash(SITE_URL);
   const img = image || `${site}/og-image.png`;
   const rob = robots || 'index,follow';
@@ -65,12 +67,95 @@ function buildHtml({ title, description, canonical, ogTitle, ogDescription, imag
 <meta name="twitter:image" content="${esc(img)}">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
 ${faqJsonLd ? `<script type="application/ld+json">${JSON.stringify(faqJsonLd)}</script>` : ''}
-<noscript><meta http-equiv="refresh" content="0;url=${esc(canonical)}"></noscript>
 </head>
 <body>
-<p>Redirecting to <a href="${esc(canonical)}">${esc(title)}</a>...</p>
+${bodyHtml || `<p>Redirecting to <a href="${esc(canonical)}">${esc(title)}</a>...</p>`}
 </body>
 </html>`;
+}
+
+// ── Visible body ──────────────────────────────────────────────────────────────
+// The shell used to ship a one-line "Redirecting…" stub, so AI answer engines and
+// non-JS crawlers had NO extractable prose — only <head> JSON-LD — and the AEO
+// "answer structure" dimension scored ~0 on host + service pages (the two largest
+// URL classes). These builders render the SAME data the <head> schema + the public
+// SPA already carry into a real body: headings, service list, visible FAQ Q&A,
+// reviews, internal links. Bot-only route, so no human-UX change; content is sourced
+// from the same helpers the SPA renders, so served HTML matches what guests see.
+
+const inr = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
+
+function faqSection(faqs) {
+  const items = (faqs || []).filter((f) => f && f.q && f.a);
+  if (!items.length) return '';
+  return `<section><h2>Frequently asked questions</h2>${
+    items.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')
+  }</section>`;
+}
+
+function reviewSection(reviews, heading) {
+  const items = (reviews || []).map((r) => r && (r.comment || r.text)).filter(Boolean).slice(0, 3);
+  if (!items.length) return '';
+  return `<section><h2>${esc(heading)}</h2>${
+    items.map((t) => `<blockquote>${esc(t)}</blockquote>`).join('')
+  }</section>`;
+}
+
+function hostBody(payload) {
+  const { host = {}, services = [], reviews = [] } = payload || {};
+  const site = trimSlash(SITE_URL);
+  const name = host.name || 'Host';
+  const out = [`<h1>${esc(name)}</h1>`];
+  if (host.profession) out.push(`<p>${esc(host.profession)}${host.location ? ` · ${esc(host.location)}` : ''}</p>`);
+  if (host.bio) out.push(`<p>${esc(host.bio)}</p>`);
+
+  const bookable = (services || []).filter((s) => s && s.title);
+  if (bookable.length) {
+    out.push(`<section><h2>Services you can book with ${esc(name)}</h2><ul>`);
+    for (const s of bookable) {
+      const url = s.slug ? `${site}/${esc(host.username)}/${esc(s.slug)}` : null;
+      const label = url ? `<a href="${url}">${esc(s.title)}</a>` : esc(s.title);
+      const price = Number(s.price) > 0 ? ` — ${inr(s.price)}` : (s.price === 0 ? ' — Free' : '');
+      const desc = s.short_description ? `: ${esc(s.short_description)}` : '';
+      out.push(`<li>${label}${price}${desc}</li>`);
+    }
+    out.push(`</ul></section>`);
+  }
+
+  out.push(faqSection(profileFaqs(host, services)));
+  out.push(reviewSection(reviews, `What guests say about ${name}`));
+  return out.filter(Boolean).join('\n');
+}
+
+function serviceBody(payload) {
+  const { service = {}, vendor = {}, reviews = [] } = payload || {};
+  const site = trimSlash(SITE_URL);
+  const title = service.title || 'Service';
+  const out = [`<h1>${esc(title)}</h1>`];
+
+  if (vendor.name) {
+    const vurl = vendor.username ? `${site}/${esc(vendor.username)}` : null;
+    out.push(`<p>With ${vurl ? `<a href="${vurl}">${esc(vendor.name)}</a>` : esc(vendor.name)}</p>`);
+  }
+
+  const meta = [];
+  if (Number(service.price) > 0) meta.push(inr(service.price));
+  else if (service.price === 0) meta.push('Free');
+  if (service.duration) meta.push(`${service.duration} min`);
+  meta.push(service.meeting_mode === 'offline' ? 'In person' : 'Online');
+  out.push(`<p>${esc(meta.join(' · '))}</p>`);
+
+  if (service.short_description) out.push(`<p>${esc(service.short_description)}</p>`);
+  if (service.description) out.push(`<p>${esc(service.description)}</p>`);
+
+  const inc = (service.included_items || []).filter(Boolean);
+  if (inc.length) {
+    out.push(`<section><h2>What's included</h2><ul>${inc.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></section>`);
+  }
+
+  out.push(faqSection(serviceFaqs(service, vendor)));
+  out.push(reviewSection(reviews, `Reviews of ${title}`));
+  return out.filter(Boolean).join('\n');
 }
 
 // ── Profile ─────────────────────────────────────────────────────────────────
@@ -190,7 +275,7 @@ const renderProfileMeta = async (req, res) => {
     if (m.status === 404) return res.status(404).send('Not found');
     if (m.status === 301) return res.redirect(301, m.redirectTo);
 
-    const html = buildHtml(m.buildHtmlArgs);
+    const html = buildHtml({ ...m.buildHtmlArgs, bodyHtml: hostBody(m.payload) });
     res.set('Content-Type', 'text/html');
     res.set('Cache-Control', 'public, max-age=120, s-maxage=300');
     res.send(html);
@@ -276,6 +361,9 @@ async function resolveServiceMeta(username, serviceSlug) {
     cardImage: Boolean(service.og_image) || !hostImage,
     robots: service.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
     jsonLd,
+    // Visible FAQ (host-authored ∪ templated) is now rendered in the body, so emit the
+    // matching FAQPage schema — mirrors the host shell and the client ServiceDetail.
+    faqJsonLd: faqPageLd(serviceFaqs(service, vendor)),
   };
 
   // payload passed through (additive) for the crawler's content model (see profile).
@@ -288,7 +376,7 @@ const renderServiceMeta = async (req, res) => {
     const m = await resolveServiceMeta(username, serviceSlug);
     if (m.status === 404) return res.status(404).send('Not found');
 
-    const html = buildHtml(m.buildHtmlArgs);
+    const html = buildHtml({ ...m.buildHtmlArgs, bodyHtml: serviceBody(m.payload) });
     res.set('Content-Type', 'text/html');
     res.set('Cache-Control', 'public, max-age=120, s-maxage=300');
     res.send(html);
