@@ -402,6 +402,9 @@ const SCHEDULED_JOBS = [
   { name: 'crm-attribution', min: Number(process.env.CRM_ATTRIBUTION_INTERVAL_MIN) || 60, run: async () => { const r = await crmAttribution.run(); if (r.linked || r.updated) console.log(`CRM attribution: ${r.linked} linked, ${r.updated} refreshed`); } },
   { name: 'crm-lifecycle-engine', min: Number(process.env.CRM_LIFECYCLE_INTERVAL_MIN) || 15, run: async () => { const r = await crmLifecycleEngine.run(); if (r.moved || r.enrolled || r.tasks || r.churned) console.log(`CRM lifecycle: ${r.moved} moved, ${r.enrolled} enrolled, ${r.tasks} tasks, ${r.churned || 0} churned (scanned ${r.scanned}${r.dryRun ? ', dryrun' : ''})`); } },
   { name: 'crm-guest-engine', min: Number(process.env.CRM_GUEST_ENGINE_INTERVAL_MIN) || 60, run: async () => { const r = await crmGuestEngine.run(); if (r.recs) console.log(`CRM guest engine: ${r.recs} recs from ${r.customers} customers (scanned ${r.scanned})`); } },
+  // B2: cold-pool engagement. DRY-RUN by default; go-live = CRM_LIST_ENGAGEMENT_DRY_RUN=false
+  // + enable crm_list_engagement flag + seed openers/clickers/new-marketing sequences.
+  { name: 'crm-list-engagement', min: Number(process.env.CRM_LIST_ENGAGEMENT_INTERVAL_MIN) || 30, run: async () => { const r = await require('./services/crm/listEngagementService').run({ dryRun: process.env.CRM_LIST_ENGAGEMENT_DRY_RUN !== 'false' }); if (r.promoted || r.enrolled) console.log(`CRM list engagement: ${r.promoted} promoted, ${r.enrolled} enrolled (scanned ${r.scanned}${r.dryRun ? ', dryrun' : ''})`); } },
   // Phase 3: warm second-touch to campaign clickers. DRY-RUN by default (only
   // logs would-sends); go-live = CRM_SECOND_TOUCH_DRY_RUN=false + enable the
   // crm_second_touch flag (+ crm_admin_sends already on). Enqueues only — sendGate
