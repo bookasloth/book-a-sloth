@@ -36,7 +36,7 @@ export default function SeoNetwork() {
   const [hover, setHover] = useState(null);
   const [catFilter, setCatFilter] = useState('');
   const [showLabels, setShowLabels] = useState(false);
-  const [layout, setLayout] = useState('force'); // 'force' | 'anchored'
+  const [layout, setLayout] = useState('tidy'); // 'tidy' | 'force' | 'anchored'
 
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
@@ -48,8 +48,9 @@ export default function SeoNetwork() {
   const dirtyRef = useRef(true);
   const rafRef = useRef(0);
   const drawRef = useRef(() => {});
-  const flagsRef = useRef({ catFilter: '', showLabels: false, focusId: null, layout: 'force' });
-  const layoutRef = useRef('force');
+  const flagsRef = useRef({ catFilter: '', showLabels: false, focusId: null, layout: 'tidy' });
+  const layoutRef = useRef('tidy');
+  const frozenRef = useRef(false);
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
@@ -95,12 +96,17 @@ export default function SeoNetwork() {
     }
     const parent = new Map();
     if (root) { parent.set(root.id, null); const q = [root.id]; while (q.length) { const u = q.shift(); for (const v of adj.get(u) || []) if (!parent.has(v)) { parent.set(v, u); q.push(v); } } }
+    // A link whose target is linked by a big share of the site (homepage, nav/footer
+    // targets) is chrome, not relatedness — flag it so Tidy can de-weight it.
+    const ubiq = Math.max(24, nodes.length * 0.22);
+    edges.forEach((e) => { e.weak = (e.t.inbound || 0) > ubiq; });
 
     let rootLabel = 'Homepage';
     try { if (root) rootLabel = new URL(root.url).host; } catch { /* keep default */ }
 
     simRef.current = { nodes, edges, byId, parent, rootId: root ? root.id : null, rootLabel, alpha: 1 };
     if (layoutRef.current === 'anchored') applyAnchored(simRef.current);
+    else if (layoutRef.current === 'tidy') parkUnlinked(simRef.current);
     dirtyRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.data]);
@@ -118,13 +124,16 @@ export default function SeoNetwork() {
     dirtyRef.current = true;
   }, [catFilter, showLabels, hover, selectedId, layout]);
 
-  // Switch layout: (re)pin the anchored hubs or release them, reset the view so the
-  // fixed anchor points sit where they're computed, and reheat so spokes re-settle.
+  // Switch layout: pin/release anchored hubs or the parked ring, reset the view, and
+  // reheat so the graph re-settles into the chosen shape.
   useEffect(() => {
     layoutRef.current = layout;
+    frozenRef.current = false;
     const s = simRef.current;
     if (s) {
-      if (layout === 'anchored') applyAnchored(s); else clearAnchors(s);
+      clearAnchors(s); releaseParked(s);
+      if (layout === 'anchored') applyAnchored(s);
+      else if (layout === 'tidy') parkUnlinked(s);
       viewRef.current = { ...viewRef.current, ox: 0, oy: 0, z: 1 };
       s.alpha = 1;
     }
@@ -150,7 +159,9 @@ export default function SeoNetwork() {
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     cv.style.width = `${W}px`; cv.style.height = `${H}px`;
     viewRef.current = { ...viewRef.current, W, H, dpr };
-    const s = simRef.current; if (s && layoutRef.current === 'anchored') placeAnchors(s);
+    const s = simRef.current;
+    if (s && layoutRef.current === 'anchored') placeAnchors(s);
+    else if (s && layoutRef.current === 'tidy') { releaseParked(s); parkUnlinked(s); }
     dirtyRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -159,9 +170,13 @@ export default function SeoNetwork() {
     const s = simRef.current; if (!s) return;
     const { nodes, edges } = s; const { W, H } = viewRef.current;
     const cx = W / 2, cy = H / 2, drag = dragRef.current?.node || null;
-    // Anchored layout: homepage + the 8 hubs are fixed; softer gravity lets each hub's
-    // spokes cluster around it instead of all being pulled to the centre.
-    const grav = layoutRef.current === 'anchored' ? GRAV * 0.4 : GRAV;
+    const lay = layoutRef.current, tidy = lay === 'tidy';
+    // Tidy: forces scale to the canvas (fill the space), collision stops overlap, and
+    // ubiquitous nav/footer links are de-weighted so real clusters separate.
+    // Anchored: homepage + the 8 hubs are fixed; softer gravity clusters spokes on their hub.
+    let REPc = REP, LENc = LEN;
+    if (tidy) { const k = Math.sqrt((W * H) / Math.max(1, nodes.length)); LENc = clamp(k * 0.8, 28, 120); REPc = clamp(k * k * 0.5, 300, 3200); }
+    const grav = lay === 'anchored' ? GRAV * 0.4 : (tidy ? GRAV * 0.55 : GRAV);
     const pinned = (n) => n === drag || n.fixed;
     s.alpha *= 0.986; if (s.alpha < 0.02) s.alpha = 0; const a = s.alpha; if (a === 0) return;
     for (const n of nodes) { if (pinned(n)) continue; n.vx += (cx - n.x) * grav * a; n.vy += (cy - n.y) * grav * a; }
@@ -169,12 +184,16 @@ export default function SeoNetwork() {
       for (let j = i + 1; j < nodes.length; j++) { const nj = nodes[j];
         let dx = ni.x - nj.x, dy = ni.y - nj.y, d2 = dx * dx + dy * dy;
         if (d2 < 1) { d2 = 1; dx = Math.random() * 2 - 1; dy = Math.random() * 2 - 1; }
-        const d = Math.sqrt(d2), f = (REP * a) / d, fx = dx / d * f, fy = dy / d * f;
+        const d = Math.sqrt(d2), f = (REPc * a) / d, fx = dx / d * f, fy = dy / d * f;
         ni.vx += fx; ni.vy += fy; nj.vx -= fx; nj.vy -= fy;
+        // Collision: never let two dots overlap.
+        if (tidy) { const md = ni.r + nj.r + 3; if (d < md) { const p = (md - d) * 0.5, ux = dx / d, uy = dy / d; ni.vx += ux * p; ni.vy += uy * p; nj.vx -= ux * p; nj.vy -= uy * p; } }
       }
     }
-    for (const e of edges) { const dx = e.t.x - e.s.x, dy = e.t.y - e.s.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const f = (d - LEN) * SPRING * a, fx = dx / d * f, fy = dy / d * f;
+    for (const e of edges) {
+      if (tidy && e.weak) continue; // de-weight ubiquitous hub links
+      const dx = e.t.x - e.s.x, dy = e.t.y - e.s.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const f = (d - LENc) * SPRING * a, fx = dx / d * f, fy = dy / d * f;
       if (!pinned(e.s)) { e.s.vx += fx; e.s.vy += fy; } if (!pinned(e.t)) { e.t.vx -= fx; e.t.vy -= fy; }
     }
     for (const n of nodes) { if (pinned(n)) { n.vx = n.vy = 0; continue; } n.vx *= DECAY; n.vy *= DECAY; n.x += n.vx; n.y += n.vy; }
@@ -200,8 +219,10 @@ export default function SeoNetwork() {
 
     // Edges
     ctx.lineWidth = 0.9 / z;
+    const tidyE = lay === 'tidy';
     for (const e of s.edges) {
-      const faded = focus ? 0.05 : (cat ? (dim(e.s.page_type) && dim(e.t.page_type) ? 0.05 : 0.16) : 0.16);
+      let faded = focus ? 0.05 : (cat ? (dim(e.s.page_type) && dim(e.t.page_type) ? 0.05 : 0.16) : 0.16);
+      if (tidyE && e.weak && !focus) faded = 0.03; // hush the hub spokes so real clusters read
       ctx.strokeStyle = rgba(th.muted, faded);
       ctx.beginPath(); ctx.moveTo(e.s.x, e.s.y); ctx.lineTo(e.t.x, e.t.y); ctx.stroke();
     }
@@ -291,7 +312,7 @@ export default function SeoNetwork() {
     const d = dragRef.current, p = toWorld(e.clientX, e.clientY);
     if (d) {
       if (Math.abs(p.sx - d.dsx) + Math.abs(p.sy - d.dsy) > 4) d.moved = true;
-      if (d.node) { d.node.x = p.x; d.node.y = p.y; d.node.vx = d.node.vy = 0; if (simRef.current) simRef.current.alpha = Math.max(simRef.current.alpha, 0.35); }
+      if (d.node) { d.node.x = p.x; d.node.y = p.y; d.node.vx = d.node.vy = 0; if (!frozenRef.current && simRef.current) simRef.current.alpha = Math.max(simRef.current.alpha, 0.35); }
       else { viewRef.current.ox = d.ox + (p.sx - d.dsx); viewRef.current.oy = d.oy + (p.sy - d.dsy); }
       dirtyRef.current = true; return;
     }
@@ -325,7 +346,24 @@ export default function SeoNetwork() {
     v.z = clamp(Math.min((v.W - pad) / gw, (v.H - pad) / gh), 0.15, 3);
     v.ox = v.W / 2 - (a + c) / 2 * v.z; v.oy = v.H / 2 - (b + d) / 2 * v.z; dirtyRef.current = true;
   }
-  const reheat = () => { if (simRef.current) { simRef.current.alpha = 1; dirtyRef.current = true; } };
+  // Re-layout: unfreeze, re-pin the anchored/tidy structure, and re-settle.
+  const reheat = () => {
+    const s = simRef.current; if (!s) return;
+    frozenRef.current = false;
+    if (layoutRef.current === 'anchored') { clearAnchors(s); applyAnchored(s); }
+    else if (layoutRef.current === 'tidy') { releaseParked(s); parkUnlinked(s); }
+    s.alpha = 1; dirtyRef.current = true;
+  };
+  // Expand: blow the whole structure outward from its centre so no dots overlap, and
+  // freeze it there (drag/scroll to explore, Fit to reframe, Re-layout to snap back).
+  // Repeatable — each click spreads ~1.8× farther.
+  const expand = () => {
+    const s = simRef.current; if (!s || !s.nodes.length) return;
+    let cx = 0, cy = 0; for (const n of s.nodes) { cx += n.x; cy += n.y; } cx /= s.nodes.length; cy /= s.nodes.length;
+    const F = 1.8;
+    for (const n of s.nodes) { n.x = cx + (n.x - cx) * F; n.y = cy + (n.y - cy) * F; n.vx = n.vy = 0; }
+    frozenRef.current = true; s.alpha = 0; dirtyRef.current = true;
+  };
 
   // ── Anchored layout: homepage centred, top hubs pinned around the edge ────────
   // 8 evenly-spaced points on an inset ellipse = the 4 side-midpoints + 4 corners.
@@ -367,6 +405,26 @@ export default function SeoNetwork() {
     s.nodes.forEach((n) => { n.fixed = false; n.__anchor = false; n.r = n.__root ? Math.max(9, nodeRadius(n)) : nodeRadius(n); });
   }
 
+  // ── Tidy layout: park the unlinked pages (orphans + meta-only) in a ring around
+  //    the edge so they stop scattering into the whitespace and the core stays clean.
+  function parkUnlinked(s) {
+    const deg = new Map(s.nodes.map((n) => [n.id, 0]));
+    s.edges.forEach((e) => { deg.set(e.s.id, deg.get(e.s.id) + 1); deg.set(e.t.id, deg.get(e.t.id) + 1); });
+    const unlinked = s.nodes.filter((n) => !n.__root && deg.get(n.id) === 0);
+    const { W, H } = viewRef.current;
+    const cx = W / 2, cy = H / 2, rx = W * 0.46, ry = H * 0.44;
+    const perRing = Math.max(30, Math.floor((rx * 2) / 15));
+    unlinked.forEach((n, i) => {
+      const ring = Math.floor(i / perRing), inRing = i % perRing;
+      const count = Math.min(perRing, unlinked.length - ring * perRing);
+      const ang = (inRing / count) * Math.PI * 2 - Math.PI / 2;
+      n.fixed = true; n.__parked = true;
+      n.x = cx + Math.cos(ang) * (rx + ring * 26);
+      n.y = cy + Math.sin(ang) * (ry + ring * 20);
+    });
+  }
+  function releaseParked(s) { s.nodes.forEach((n) => { if (n.__parked) { n.fixed = false; n.__parked = false; } }); }
+
   // ── Derived stats ───────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const nodes = state.data?.nodes || [];
@@ -404,6 +462,7 @@ export default function SeoNetwork() {
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <select className="fb-input text-sm" value={layout} onChange={(e) => setLayout(e.target.value)} aria-label="Graph layout">
+          <option value="tidy">Layout: Tidy</option>
           <option value="force">Layout: Free</option>
           <option value="anchored">Layout: Anchored</option>
         </select>
@@ -414,6 +473,7 @@ export default function SeoNetwork() {
         <Btn size="sm" variant={showLabels ? 'primary' : 'outline'} onClick={() => setShowLabels((v) => !v)}>Hub labels</Btn>
         <div className="flex gap-1.5 ml-auto">
           <Btn size="sm" variant="outline" onClick={fitView}>Fit</Btn>
+          <Btn size="sm" variant="outline" onClick={expand}>Expand ↔</Btn>
           <Btn size="sm" variant="outline" icon="refresh" onClick={reheat}>Re-layout</Btn>
         </div>
       </div>
