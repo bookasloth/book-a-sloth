@@ -179,7 +179,7 @@ export const NAV = [
     { label:'Refer & Earn',       icon:'affiliate', to:'/admin/referrals', perm:'referrals.view' },
     { label:'Invite Links',       icon:'link2',     to:'/admin/invite-links', perm:'referrals.view' },
   ]},
-  { key:'gst', label:'GST', icon:'rupee', color:'#0ea5e9', items:[
+  { key:'gst', label:'GST', icon:'file', color:'#0ea5e9', items:[
     { label:'Overview',           icon:'trendUp',   to:'/admin/gst', exact:true, perm:'gst.view' },
     { label:'Action Center',      icon:'alert',     to:'/admin/gst/issues', perm:'gst.view' },
     { label:'Transactions',       icon:'dollar',    to:'/admin/gst/transactions', perm:'gst.view' },
