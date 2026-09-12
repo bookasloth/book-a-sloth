@@ -5,7 +5,7 @@ import {
   crmGetLead, crmLeadTimeline, crmLeadMessages, crmAddLeadNote, crmCreateFollowUp,
   crmCompleteFollowUp, crmAddTag, crmRemoveTag, crmSetDnc, crmLogCall, crmSendWhatsApp, crmSendEmail,
   crmListTemplates, crmListTags, crmCreateTag, crmUpdateLead,
-  crmListSequences, crmEnroll, crmListLeads, crmMergeLead,
+  crmListSequences, crmEnroll, crmListLeads, crmMergeLead, crmListLists,
 } from '../../../services/api';
 import { FUNNEL, STATUS_LABEL, STATUS_TONE, PLAN_INTEREST, PLAN_INTEREST_LABEL, rupees, relTime, leadScore } from './salesConstants';
 import { guardedSetStatus } from './statusMove';
@@ -27,6 +27,8 @@ const STEP_STAGES = FUNNEL.filter((s) => s !== 'paid');
 
 const initialsOf = (name) => (name || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 const fmtDateTime = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—');
+// Scraped URLs are admin-supplied but unsanitized — only render http(s) as a link (blocks javascript: etc).
+const isHttpUrl = (u) => typeof u === 'string' && u.startsWith('http');
 
 // Map a timeline entry to an icon + tint from its source/title (no new data).
 function timelineIcon(item) {
@@ -197,6 +199,23 @@ export default function LeadPanel({ leadId, onChanged, onClose, variant = 'page'
     catch { toast.error('Failed'); }
   };
 
+  // ── Cold-list actions (drawer, status='list') ──
+  const [lists, setLists] = useState(null);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const loadLists = () => { if (lists === null) crmListLists().then(({ data }) => setLists(Array.isArray(data) ? data : [])).catch(() => setLists([])); };
+  const moveToList = async (lid) => {
+    try { await crmUpdateLead(leadId, { list_id: lid }); setMoveOpen(false); toast.success('Moved to list'); refresh(); }
+    catch (e) { toast.error(e.response?.data?.message || 'Could not move'); }
+  };
+  // ── Edit contact details (drawer) ──
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({});
+  const startEdit = () => { setForm({ name: lead.name || '', email: lead.email || '', phone: lead.phone || '', business_name: lead.business_name || '', website: lead.website || '', linkedin: lead.linkedin || '', instagram: lead.instagram || '', city: lead.city || '', profession: lead.profession || '' }); setEditing(true); };
+  const saveDetails = async () => {
+    try { await crmUpdateLead(leadId, form); setEditing(false); toast.success('Details saved'); refresh(); }
+    catch (e) { toast.error(e.response?.data?.message || 'Save failed'); }
+  };
+
   // Collapse runs of identical consecutive timeline rows (e.g. six "Status →
   // activated" re-syncs) into one row with a count, so the log stays readable.
   const dedupedTimeline = useMemo(() => {
@@ -263,6 +282,13 @@ export default function LeadPanel({ leadId, onChanged, onClose, variant = 'page'
         <div className="mt-1.5 space-y-0.5 text-[12px] adm-t2">
           {lead.email && <p className="flex items-center gap-1.5 truncate"><Mail size={12} className="adm-t3" />{lead.email}</p>}
           {lead.phone && <p className="flex items-center gap-1.5"><Phone size={12} className="adm-t3" />{lead.phone}</p>}
+          {(isHttpUrl(lead.website) || isHttpUrl(lead.linkedin) || isHttpUrl(lead.instagram)) && (
+            <p className="flex items-center gap-2 flex-wrap">
+              {isHttpUrl(lead.website) && <a className="text-[#FE5100]" href={lead.website} target="_blank" rel="noreferrer">Website ↗</a>}
+              {isHttpUrl(lead.linkedin) && <a className="text-[#FE5100]" href={lead.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>}
+              {isHttpUrl(lead.instagram) && <a className="text-[#FE5100]" href={lead.instagram} target="_blank" rel="noreferrer">Instagram ↗</a>}
+            </p>
+          )}
           <p className="flex items-center gap-1.5 adm-t3"><Clock size={12} />Source: {lead.source}{lead.city ? ` · ${lead.city}` : ''}</p>
         </div>
         <div className="flex items-center gap-3 mt-1.5">
@@ -341,6 +367,36 @@ export default function LeadPanel({ leadId, onChanged, onClose, variant = 'page'
           {Identity}
           {NextAction}
         </div>
+
+        {/* Cold-list actions — only for a lead sitting in a list (status='list'). */}
+        {lead.status === 'list' && (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 p-2.5">
+            <Btn size="sm" onClick={() => setStatus('new')}>Promote → New</Btn>
+            <Btn variant="outline" size="sm" onClick={() => setStatus('disqualified')}>Disqualify</Btn>
+            <Btn variant="outline" size="sm" onClick={toggleDnc}>{lead.do_not_contact ? 'Clear DNC' : 'Do Not Contact'}</Btn>
+            <div className="relative">
+              <Btn variant="outline" size="sm" onClick={() => { loadLists(); setMoveOpen((v) => !v); }}>Move to list ▾</Btn>
+              {moveOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMoveOpen(false)} />
+                  <div className="absolute z-20 mt-1 w-56 rounded-xl adm-card shadow-lg max-h-56 overflow-auto">
+                    {lists === null ? <p className="px-3 py-2 text-[12px] adm-t3">Loading…</p>
+                      : lists.filter((l) => l.id !== lead.list_id).length === 0 ? <p className="px-3 py-2 text-[12px] adm-t3">No other lists.</p>
+                      : lists.filter((l) => l.id !== lead.list_id).map((l) => (
+                        <button key={l.id} type="button" onClick={() => moveToList(l.id)} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1">{l.name}</button>
+                      ))}
+                  </div>
+                </>
+              )}
+            </div>
+            {editing
+              ? <div className="ml-auto flex gap-2"><Btn size="sm" onClick={saveDetails}>Save</Btn><Btn variant="outline" size="sm" onClick={() => setEditing(false)}>Cancel</Btn></div>
+              : <Btn variant="outline" size="sm" className="ml-auto" onClick={startEdit}>Edit details</Btn>}
+          </div>
+        )}
+
+        {editing && <EditDetails form={form} setForm={setForm} />}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <StatCard icon={IndianRupee} iconCls="bg-emerald-50 text-emerald-600" label="Revenue">
             <p className="text-lg font-bold adm-t1">{rupees(lead.revenue_paise)}</p>
@@ -502,6 +558,23 @@ function AboutRow({ label, value }) {
     <div className="flex items-baseline justify-between gap-3">
       <span className="text-[11px] adm-t3">{label}</span>
       <span className="text-[13px] adm-t1 text-right truncate">{value}</span>
+    </div>
+  );
+}
+
+// Inline edit form for a lead's core contact fields (server EDITABLE columns).
+// Fields are mapped, not defined as a nested component, so inputs keep focus
+// across keystrokes.
+const EDIT_FIELDS = [['Name', 'name'], ['Business', 'business_name'], ['Email', 'email'], ['Phone', 'phone'], ['Website', 'website'], ['LinkedIn', 'linkedin'], ['Instagram', 'instagram'], ['City', 'city'], ['Profession', 'profession']];
+function EditDetails({ form, setForm }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      {EDIT_FIELDS.map(([label, k]) => (
+        <div key={k}>
+          <label className="block text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-0.5">{label}</label>
+          <input className="fb-input text-sm w-full" value={form[k] ?? ''} onChange={(e) => setForm((s) => ({ ...s, [k]: e.target.value }))} />
+        </div>
+      ))}
     </div>
   );
 }

@@ -65,7 +65,7 @@ const dismissRecommendation = async (req, res) => {
 };
 
 // Fields an admin may edit directly on a lead (status/owner/tags/dnc have their own routes).
-const EDITABLE = ['name', 'phone', 'whatsapp_phone', 'email', 'business_name', 'website', 'instagram', 'linkedin', 'city', 'profession', 'lost_reason', 'expected_value_paise', 'plan_interest'];
+const EDITABLE = ['name', 'phone', 'whatsapp_phone', 'email', 'business_name', 'website', 'instagram', 'linkedin', 'city', 'profession', 'lost_reason', 'expected_value_paise', 'plan_interest', 'list_id'];
 
 // ── Dashboard ─────────────────────────────────────────────────
 const dashboard = async (req, res) => {

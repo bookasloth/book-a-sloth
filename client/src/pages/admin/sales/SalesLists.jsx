@@ -4,6 +4,7 @@ import { PageHeader, Card, Btn, Table, Skeleton } from '../../../components/admi
 import { crmListLists, crmCreateList, crmGetList, crmListLeads, crmBulk, crmImportCommit } from '../../../services/api';
 import { relTime } from './salesConstants';
 import TagChip from './TagChip';
+import LeadDrawer from './LeadDrawer';
 import toast from 'react-hot-toast';
 
 const PAGE_SIZE = 25;
@@ -74,6 +75,7 @@ function ListDetail({ listId }) {
   const [loading, setLoading] = useState(true);
   const [sel, setSel] = useState(new Set());
   const [showImport, setShowImport] = useState(false);
+  const [drawerId, setDrawerId] = useState(null);
 
   useEffect(() => { crmGetList(listId).then(({ data }) => setList(data)).catch(() => setList(null)); }, [listId]);
   const load = useCallback(() => {
@@ -133,7 +135,7 @@ function ListDetail({ listId }) {
 
       {loading ? <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-xl" />)}</div>
         : rows.length === 0 ? <Card className="rounded-2xl p-10 text-center adm-t3">No contacts yet. Import a CSV.</Card>
-        : <Table columns={columns} rows={rows} rowKey={(r) => r.id} />}
+        : <Table columns={columns} rows={rows} rowKey={(r) => r.id} onRowClick={(r) => setDrawerId(r.id)} />}
 
       {!loading && (rows.length > 0 || page > 1) && (
         <div className="flex items-center justify-between mt-4">
@@ -145,6 +147,7 @@ function ListDetail({ listId }) {
         </div>
       )}
 
+      <LeadDrawer leadId={drawerId} onClose={() => setDrawerId(null)} onChanged={() => { load(); }} />
       {showImport && <ImportModal listId={listId} onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); }} />}
     </div>
   );
