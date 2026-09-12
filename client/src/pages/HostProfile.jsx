@@ -12,6 +12,7 @@ import TransientError from "../components/error/TransientError";
 import { isNotFoundError } from "../utils/fetchError";
 import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from "../utils/seo";
 import { profileFaqs } from "../utils/profileFaqs";
+import FaqAccordion from "../components/FaqAccordion";
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -806,15 +807,7 @@ const HostProfile = () => {
             {faqs.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Frequently asked questions</h2>
-                <dl className="space-y-4">
-                  {faqs.map((f) => (
-                    <div key={f.q} className="rounded-xl p-4"
-                      style={{ background: C.card, border: `1px solid ${C.border}` }}>
-                      <dt className="text-sm font-semibold" style={{ color: C.text }}>{f.q}</dt>
-                      <dd className="mt-1 text-sm leading-relaxed" style={{ color: C.secondary }}>{f.a}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <FaqAccordion faqs={faqs} colors={C} />
               </div>
             )}
 
