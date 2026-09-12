@@ -70,6 +70,196 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "interview-calling-message",
+  "title": "Interview Calling Message: 20+ Templates (Email & SMS)",
+  "date": "Sep 12, 2026",
+  "icons": [
+    "clipboard",
+    "users",
+    "calendar"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "20+ copy-paste interview calling message templates for email, SMS and WhatsApp, plus the fastest way to schedule interviews without the back-and-forth.",
+  "body": [
+    {
+      "p": "An interview calling message is a short, clear note that invites a candidate to interview — it names the role, the format (phone, video, or in-person), and the time, then asks them to confirm. A good one is warm, specific, and takes under 30 seconds to read. Below are 20+ copy-paste templates for email, SMS, and WhatsApp, plus a phone script and the fastest way to schedule without the endless back-and-forth."
+    },
+    {
+      "p": "Recruiters send this message dozens of times a week. The difference between a reply rate of 30% and 70% is usually just clarity and speed. Here's how to get both."
+    },
+    {
+      "h2": "What is an interview calling message?"
+    },
+    {
+      "p": "An interview calling message is any short communication — email, SMS, WhatsApp, or a phone call — that invites a shortlisted candidate to attend an interview. Its only job is to get a fast \"yes, I'll be there\" with a confirmed slot. Speed matters: [67% of HR managers say they lose qualified candidates to a slow hiring process](https://simpletexting.com/blog/sample-sms-for-interview-invitation/), and a message that's hard to reply to is part of that slowness."
+    },
+    {
+      "p": "The best channel depends on urgency. Email suits formal roles and detailed logistics. SMS and WhatsApp suit high-volume hiring and hourly roles, where candidates reply from their phones in minutes."
+    },
+    {
+      "h2": "What every interview invitation message should include"
+    },
+    {
+      "p": "Every strong interview message answers six questions before the candidate has to ask. Miss one and you trigger a reply-and-wait loop that costs you a day."
+    },
+    {
+      "steps": [
+        "Who you are — recruiter name and company.",
+        "What role — the exact position title.",
+        "Format — phone, video, or in-person.",
+        "When — specific date/time options, not \"let me know your availability.\"",
+        "Where / how — address, meeting link, or a booking link.",
+        "Confirm — one clear ask: reply YES, or pick a slot."
+      ]
+    },
+    {
+      "p": "Give candidates two or three fixed slots, or a self-booking link. Open-ended \"when are you free?\" is the single biggest cause of scheduling ping-pong."
+    },
+    {
+      "h2": "Interview calling message templates — email"
+    },
+    {
+      "p": "Use email for professional and senior roles where the candidate expects detail and a paper trail. Keep the subject line specific so it gets opened."
+    },
+    {
+      "p": "**1. Standard interview invitation**"
+    },
+    {
+      "quote": "Subject: Interview invitation — [Role] at [Company]\n\nHi [Name],\n\nThanks for applying for the [Role] position at [Company]. We'd like to invite you for an interview.\n\nCould you make one of these?\n• [Tue, 12th — 11:00 AM]\n• [Wed, 13th — 3:00 PM]\n\nIt'll be a [30-minute video] call with [Interviewer, Title]. Reply with your preferred slot and I'll send the calendar invite.\n\nBest,\n[Your name]"
+    },
+    {
+      "p": "**2. With a self-scheduling link (recommended)**"
+    },
+    {
+      "quote": "Subject: Let's schedule your [Role] interview\n\nHi [Name],\n\nGreat news — we'd like to interview you for [Role]. Rather than trade emails, just pick a slot that works for you here: [booking link].\n\nIt's a [30-minute] [video] interview with [Interviewer]. See you soon!\n\n[Your name]"
+    },
+    {
+      "p": "**3. Formal / senior role**"
+    },
+    {
+      "quote": "Subject: Interview — [Role], [Company]\n\nDear [Name],\n\nFollowing the review of your application for [Role], we would be pleased to invite you to a [first-round] interview with [Interviewer, Title].\n\nPlease let us know your availability across [Thursday–Friday next week], and we will confirm the final time and details.\n\nWarm regards,\n[Your name], [Company]"
+    },
+    {
+      "h2": "Interview invitation SMS templates"
+    },
+    {
+      "p": "Use SMS for hourly, retail, field, and high-volume hiring, where candidates may not check email daily. Keep it under two lines and always include the company name so it doesn't read as spam."
+    },
+    {
+      "p": "**4. Short invite**"
+    },
+    {
+      "quote": "Hi [Name], this is [You] from [Company] about the [Role] role. Can you interview [Tue 11 AM or Wed 3 PM]? Reply with a time. Thanks!"
+    },
+    {
+      "p": "**5. With booking link**"
+    },
+    {
+      "quote": "Hi [Name] — [Company] here. We'd love to interview you for [Role]. Pick a slot: [link]. Reply if you need help."
+    },
+    {
+      "p": "**6. Same-day / urgent**"
+    },
+    {
+      "quote": "Hi [Name], [Company] here. A [Role] interview slot opened today at [4 PM]. Can you make it? Reply YES/NO."
+    },
+    {
+      "h2": "WhatsApp interview message templates"
+    },
+    {
+      "p": "WhatsApp is ideal for Indian hiring — read rates are high and candidates reply fast, often within minutes. Keep it friendly, add the company name, and attach the JD or location pin where useful."
+    },
+    {
+      "p": "**7. Friendly invite**"
+    },
+    {
+      "quote": "Hi [Name] 👋 This is [You] from [Company]. We'd like to interview you for the [Role] position. Are you free [Tue 11 AM] or [Wed 3 PM]? Just reply with a time 🙂"
+    },
+    {
+      "p": "**8. With booking link**"
+    },
+    {
+      "quote": "Hi [Name], congrats — you're shortlisted for [Role] at [Company]! Pick an interview slot here: [link]. Reply if you have any questions."
+    },
+    {
+      "p": "**9. Walk-in / in-person**"
+    },
+    {
+      "quote": "Hi [Name], [Company] here. Interview for [Role] on [Fri 10 AM] at [address / 📍pin]. Please bring [ID + resume]. Reply YES to confirm."
+    },
+    {
+      "h2": "The interview call script (when you actually phone them)"
+    },
+    {
+      "p": "When you call a candidate directly, state your name, company, and role in the first line, then confirm they can talk. A clear opener respects their time and doubles your connect rate."
+    },
+    {
+      "quote": "\"Hi [Name], this is [You] calling from [Company] about your application for [Role]. Is this a good time for a quick minute? … Great — we'd like to invite you for an interview. Would [Tuesday at 11] or [Wednesday at 3] work better? … Perfect, I'll send you a confirmation on WhatsApp/email with the details right now.\""
+    },
+    {
+      "p": "Always follow a call with a written confirmation. A verbal \"yes\" without a message is a no-show waiting to happen."
+    },
+    {
+      "h2": "Stop sending 40 of these by hand"
+    },
+    {
+      "p": "The fastest way to schedule interviews is to stop proposing times entirely and let candidates book their own slot. Sending individual messages to 40 shortlisted candidates — then juggling their replies — is the real time sink, not writing the message."
+    },
+    {
+      "p": "This is exactly what a booking link fixes. Instead of \"are you free Tuesday or Wednesday?\", you share one link. Candidates see your live availability, pick a slot, and get an instant confirmation and reminder. No double-booking, no back-and-forth, no chasing."
+    },
+    {
+      "p": "That's how [Book A Sloth](/) is built: [set up a booking page in about five minutes](/blog/how-to-book-an-appointment-online), drop the link into any of the templates above, and let candidates self-schedule while automated WhatsApp and email reminders cut your no-show rate. Pair it with a clean interview schedule template and the whole round runs itself. [Start free on Book A Sloth](/be-a-sloth)."
+    },
+    {
+      "h2": "Conclusion: clarity first, then automate"
+    },
+    {
+      "p": "My honest take after building scheduling tools: the template matters less than the friction around it. A perfectly worded email that ends in \"let me know your availability\" still triggers three days of ping-pong. A plain one with a booking link gets you a confirmed slot in minutes."
+    },
+    {
+      "p": "Three things to do this week:"
+    },
+    {
+      "steps": [
+        "Save the templates above as canned responses in email, SMS, and WhatsApp so an invite takes seconds.",
+        "Kill \"when are you free?\" — always offer two fixed slots or a self-booking link.",
+        "For high-volume rounds, use one booking link so candidates schedule themselves and you stop being the calendar."
+      ]
+    },
+    {
+      "p": "Send fewer messages. Fill more slots."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is a good interview calling message?",
+          "a": "A good interview calling message names the recruiter and company, states the role and interview format, offers specific time slots (or a booking link), and asks for a quick confirmation. It should be readable in under 30 seconds."
+        },
+        {
+          "q": "Should I invite candidates to an interview by email, SMS, or WhatsApp?",
+          "a": "Use email for senior or formal roles, and SMS or WhatsApp for high-volume and hourly hiring where candidates reply faster from their phones. In India, WhatsApp usually gets the quickest response."
+        },
+        {
+          "q": "How do I write an interview invitation without back-and-forth scheduling?",
+          "a": "Offer two or three fixed time slots, or share a self-scheduling link so candidates pick from your live availability. Open-ended \"let me know when you're free\" is the main cause of scheduling delays."
+        },
+        {
+          "q": "How far in advance should I send an interview invitation?",
+          "a": "Send it as soon as the candidate is shortlisted, and aim to give at least 24–48 hours' notice for the slot. Speed protects you — good candidates get hired quickly elsewhere."
+        },
+        {
+          "q": "Do I need to confirm after the candidate replies?",
+          "a": "Yes. Always send a written confirmation with the date, time, format, and location or link. A verbal or one-word \"yes\" without a confirmation message is the leading cause of interview no-shows."
+        }
+      ]
+    }
+  ]
+},
+{
   "slug": "how-to-become-paid-mentor",
   "title": "How to Become a Paid Mentor (Online, 1:1) in India",
   "date": "Sep 11, 2026",
