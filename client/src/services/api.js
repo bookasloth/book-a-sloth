@@ -743,7 +743,7 @@ export const crmCreateSequence   = (data)        => API.post('/admin/crm/sequenc
 export const crmEnroll           = (id, sequenceId) => API.post(`/admin/crm/leads/${id}/enroll`, { sequenceId });
 export const crmBulk             = (data)        => API.post('/admin/crm/leads/bulk', data);
 export const crmImportPreview    = (rows)        => API.post('/admin/crm/import/preview', { rows });
-export const crmImportCommit     = (rows)        => API.post('/admin/crm/import/commit', { rows });
+export const crmImportCommit     = (rows, listId) => API.post('/admin/crm/import/commit', { rows, listId });
 export const crmLeadsExportCsv   = (params)      => API.get('/admin/crm/leads/export.csv', { params, responseType: 'blob' });
 export const crmRefreshAttribution = ()          => API.post('/admin/crm/attribution/refresh');
 export const crmListTemplates    = (channel)     => API.get('/admin/crm/templates', { params: channel ? { channel } : {} });
@@ -753,6 +753,9 @@ export const crmDeleteTemplate   = (id)          => API.delete(`/admin/crm/templ
 export const crmListViews        = ()            => API.get('/admin/crm/views');
 export const crmCreateView       = (data)        => API.post('/admin/crm/views', data);
 export const crmDeleteView       = (id)          => API.delete(`/admin/crm/views/${id}`);
+export const crmListLists        = ()            => API.get('/admin/crm/lists');
+export const crmCreateList       = (data)        => API.post('/admin/crm/lists', data);
+export const crmGetList          = (id)          => API.get(`/admin/crm/lists/${id}`);
 export const crmListTags         = ()            => API.get('/admin/crm/tags');
 export const crmCreateTag        = (data)        => API.post('/admin/crm/tags', data);
 export const crmUpdateTag        = (id, data)    => API.patch(`/admin/crm/tags/${id}`, data);
