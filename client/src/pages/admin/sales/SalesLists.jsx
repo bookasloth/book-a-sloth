@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Btn, Table, Skeleton } from '../../../components/admin/ui';
-import { crmListLists, crmCreateList, crmGetList, crmListLeads, crmBulk, crmImportCommit } from '../../../services/api';
+import { crmListLists, crmCreateList, crmGetList, crmListLeads, crmBulk, crmImportCommit, crmListTags, adminCampCreateSegment } from '../../../services/api';
 import { relTime } from './salesConstants';
 import TagChip from './TagChip';
 import toast from 'react-hot-toast';
@@ -74,14 +74,24 @@ function ListDetail({ listId }) {
   const [loading, setLoading] = useState(true);
   const [sel, setSel] = useState(new Set());
   const [showImport, setShowImport] = useState(false);
+  // Filters
+  const [tag, setTag] = useState('');
+  const [q, setQ] = useState('');
+  const [dq, setDq] = useState('');            // debounced search
+  const [tagCatalog, setTagCatalog] = useState([]);
 
   useEffect(() => { crmGetList(listId).then(({ data }) => setList(data)).catch(() => setList(null)); }, [listId]);
+  useEffect(() => { crmListTags().then(({ data }) => setTagCatalog(Array.isArray(data) ? data : [])).catch(() => setTagCatalog([])); }, []);
+  // Debounce the search box (300ms) so we don't query per keystroke.
+  const t = useRef();
+  useEffect(() => { clearTimeout(t.current); t.current = setTimeout(() => { setDq(q); setPage(1); }, 300); return () => clearTimeout(t.current); }, [q]);
+
   const load = useCallback(() => {
     setLoading(true);
-    crmListLeads({ listId, page, pageSize: PAGE_SIZE })
+    crmListLeads({ listId, tag: tag || undefined, q: dq || undefined, page, pageSize: PAGE_SIZE })
       .then(({ data }) => { setRows(data.rows || []); setTotal(data.total || 0); })
       .catch(() => { setRows([]); setTotal(0); }).finally(() => setLoading(false));
-  }, [listId, page]);
+  }, [listId, tag, dq, page]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setSel(new Set()); }, [rows]);
 
@@ -94,6 +104,23 @@ function ListDetail({ listId }) {
     try { const { data } = await crmBulk({ ids: [...sel], action, value, payload });
       toast.success(`${data.done}/${data.total} ${action === 'status' ? 'promoted' : 'queued'}`); setSel(new Set()); load(); }
     catch { toast.error('Bulk action failed'); }
+  };
+
+  // Save the current filter as a reusable CAMPAIGN segment over the prospect
+  // contacts synced from this list's leads. Scoped by the list's source tag (every
+  // contact here carries it) AND the active tag filter — both 'contains', so the
+  // resolver ANDs them. Free-text search is view-only (segments filter by tag, not text).
+  const createSegment = async () => {
+    const scopeTag = list?.source;
+    if (!scopeTag) return toast.error('This list has no source tag to scope a segment');
+    const name = prompt('Name this campaign segment:', tag ? `${list.name} · ${tag}` : list.name);
+    if (!name || !name.trim()) return;
+    const filters = [{ field: 'tags', op: 'contains', value: scopeTag }];
+    if (tag) filters.push({ field: 'tags', op: 'contains', value: tag });
+    try {
+      await adminCampCreateSegment({ name: name.trim(), description: `List "${list.name}"${tag ? ` · tag ${tag}` : ''}`, definition: { contact_type: 'prospect', filters } });
+      toast.success(`Segment "${name.trim()}" saved — pick it in Campaigns`);
+    } catch (e) { toast.error(e.response?.data?.message || 'Could not save segment'); }
   };
 
   const Links = ({ r }) => (
@@ -121,6 +148,18 @@ function ListDetail({ listId }) {
     <div className="p-4 sm:p-6 max-w-6xl">
       <PageHeader title={list?.name || 'List'} subtitle={`${total} cold contact${total === 1 ? '' : 's'} · ${list?.source || '—'}`}
         actions={<Btn variant="outline" size="sm" onClick={() => setShowImport(true)}>Import CSV</Btn>} />
+
+      {/* Filters + segment. Search is view-only; the segment captures the tag filter. */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <input className="fb-input text-sm flex-1 min-w-[200px]" placeholder="Search name, business, phone, email…"
+          value={q} onChange={(e) => setQ(e.target.value)} />
+        <select className="fb-input text-sm w-auto min-w-[130px]" value={tag} onChange={(e) => { setTag(e.target.value); setPage(1); }}>
+          <option value="">Any tag</option>
+          {tagCatalog.map((tg) => <option key={tg.id} value={tg.name}>{tg.name}</option>)}
+        </select>
+        {(tag || q) && <Btn variant="outline" size="sm" onClick={() => { setTag(''); setQ(''); setDq(''); setPage(1); }}>Clear</Btn>}
+        <Btn size="sm" className="ml-auto" onClick={createSegment}>↗ Create segment</Btn>
+      </div>
 
       {sel.size > 0 && (
         <Card className="mb-3 rounded-xl p-3 flex flex-wrap items-center gap-2">
