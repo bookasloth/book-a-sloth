@@ -9,6 +9,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const leadService = require('../services/crm/leadService');
+const listService = require('../services/crm/listService');
 const timeline = require('../services/crm/timeline');
 const messageService = require('../services/crm/messageService');
 const followUpService = require('../services/crm/followUpService');
@@ -81,10 +82,10 @@ const reports = async (req, res) => {
 // ── Leads ─────────────────────────────────────────────────────
 const listLeads = async (req, res) => {
   try {
-    const { status, source, owner, tag, city, profession, q, followup, createdSince, hasValue, leadType, page, pageSize } = req.query;
+    const { status, source, owner, tag, city, profession, q, followup, createdSince, hasValue, leadType, listId, page, pageSize } = req.query;
     res.json(await leadService.listLeads({
       status, source, owner, tag, city, profession, q,
-      followup, createdSince, hasValue: hasValue === 'true' || hasValue === '1', leadType,
+      followup, createdSince, hasValue: hasValue === 'true' || hasValue === '1', leadType, listId,
       page: Number(page) || 1, pageSize: Math.min(Number(pageSize) || 25, 100),
     }));
   } catch (e) { safeError(res, e); }
@@ -315,22 +316,59 @@ const importPreview = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+const KNOWN_SOCIALS = ['twitter', 'x', 'youtube', 'facebook'];
+
 const importCommit = async (req, res) => {
   try {
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    // Resolve the target list: an existing id, or create one from listName.
+    let listId = req.body?.listId || null;
+    if (!listId && req.body?.listName) {
+      const created = await listService.createList({ name: req.body.listName, source: req.body.source || 'import', createdBy: actor(req) });
+      listId = created.id;
+    }
     let created = 0, merged = 0, skipped = 0;
     for (const r of rows) {
       if (!r.phone && !r.email) { skipped++; continue; }
+      // Stash unknown/extra socials so nothing is lost.
+      const attributes = {};
+      for (const k of KNOWN_SOCIALS) if (r[k]) attributes[k === 'x' ? 'twitter' : k] = r[k];
+      const patch = {
+        name: r.name || '', phone: r.phone || '', whatsapp_phone: r.whatsapp || r.phone || '',
+        email: r.email || '', business_name: r.business || '', profession: r.profession || '',
+        website: r.website || '', linkedin: r.linkedin || '', instagram: r.instagram || '',
+        city: r.city || '', tags: Array.isArray(r.tags) ? r.tags : (r.tags ? String(r.tags).split(/[,|]/).map((t) => t.trim()).filter(Boolean) : []),
+      };
+      if (Object.keys(attributes).length) patch.attributes = attributes;
+      if (listId) { patch.status = 'list'; patch.list_id = listId; }   // cold on create; merge won't regress an existing lead
       try {
-        const { created: isNew } = await leadService.upsertLead({
-          name: r.name || '', phone: r.phone || '', whatsapp_phone: r.whatsapp || r.phone || '',
-          email: r.email || '', business_name: r.business || '', profession: r.profession || '',
-          city: r.city || '', tags: Array.isArray(r.tags) ? r.tags : (r.tags ? String(r.tags).split(',').map((t) => t.trim()) : []),
-        }, { source: r.source || 'import', createdBy: actor(req) });
+        const { created: isNew } = await leadService.upsertLead(patch, {
+          source: listId ? (req.body.source || 'import') : (r.source || 'import'),
+          createdBy: actor(req),
+          skipMetaLead: true,   // scraped prospects must not fire Meta CAPI "Lead"
+        });
         if (isNew) created++; else merged++;
       } catch (_) { skipped++; }
     }
-    res.json({ created, merged, skipped });
+    res.json({ created, merged, skipped, listId });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── Lists (cold contact pools) ─────────────────────────────────
+const listLists = async (req, res) => {
+  try { res.json(await listService.listLists()); } catch (e) { safeError(res, e); }
+};
+const createList = async (req, res) => {
+  try {
+    const { name, source, consentBasis, description } = req.body || {};
+    res.status(201).json(await listService.createList({ name, source, consentBasis, description, createdBy: actor(req) }));
+  } catch (e) { res.status(400).json({ message: e.message }); }
+};
+const getListById = async (req, res) => {
+  try {
+    const l = await listService.getList(req.params.id);
+    if (!l) return res.status(404).json({ message: 'List not found' });
+    res.json(l);
   } catch (e) { safeError(res, e); }
 };
 
@@ -478,6 +516,7 @@ module.exports = {
   listFollowUps, createFollowUp, completeFollowUp, cancelFollowUp,
   listSequences, createSequence, enroll,
   bulk, importPreview, importCommit, exportCsv, refreshAttribution,
+  listLists, createList, getListById,
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   listTags, createTag, updateTag, deleteTag,
   listViews, createView, deleteView,
