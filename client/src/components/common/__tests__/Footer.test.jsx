@@ -16,14 +16,16 @@ describe('<Footer>', () => {
     ).toBe('/be-a-sloth');
   });
 
-  test('is minimal — no link columns (discovery lives in the navbar now)', () => {
-    renderFooter();
-    // The old 4-column link grid moved into the navbar mega-menus.
-    expect(screen.queryByRole('link', { name: 'About' })).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Payments' })).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Enterprise' })).toBeNull();
-    expect(screen.queryByRole('link', { name: 'vs Calendly' })).toBeNull();
-    // No newsletter form.
+  test('links the Solutions + Compare discovery hubs (not a heavy column sitemap)', () => {
+    const { container } = renderFooter();
+    // Discovery now lives on dedicated hub pages; the footer just links into them
+    // in static HTML so the crawler reaches /for/* + /lp/* via those hubs.
+    expect(screen.getByRole('link', { name: 'Solutions' }).getAttribute('href')).toBe('/solutions');
+    expect(screen.getByRole('link', { name: 'Compare' }).getAttribute('href')).toBe('/compare');
+    // The old 5-column discovery grid is gone, and so are the per-profession links.
+    expect(container.querySelector('nav[aria-label="Site"]')).toBeNull();
+    expect(container.querySelector('a[href="/for/doctors-india"]')).toBeNull();
+    // Still no newsletter form.
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
   });
 

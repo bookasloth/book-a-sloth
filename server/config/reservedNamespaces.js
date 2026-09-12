@@ -21,6 +21,7 @@ const ROUTES = [
   'opening', 'inaugurators', // "The Opening" launch event + permanent Inaugurators Wall
 
   'earnings-calculator',
+  'solutions', 'compare', // SEO discovery hubs — client /solutions + /compare routes
   'sitemap', 'robots', 'health', 'manifest', 'favicon', 'get-in-touch',
 ];
 
