@@ -379,6 +379,7 @@ export default function SalesLeads() {
           <Btn size="sm" onClick={() => setBulkMode('email')}>Email</Btn>
           <Btn variant="outline" size="sm" onClick={() => setBulkMode('enroll')}>Enrol</Btn>
           <Btn variant="outline" size="sm" onClick={() => { if (confirm('Mark selected as Do Not Contact?')) bulk('dnc'); }}>Do Not Contact</Btn>
+          <Btn variant="outline" size="sm" onClick={() => { if (confirm('Move selected back to a List (cold)? Paying customers are skipped.')) bulk('status', 'list'); }}>Move to List</Btn>
           <button className="text-[12px] adm-t3 ml-auto" onClick={() => setSel(new Set())}>Clear selection</button>
         </Card>
       )}
