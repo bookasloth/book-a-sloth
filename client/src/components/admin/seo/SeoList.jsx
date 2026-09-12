@@ -8,6 +8,7 @@ import { IC } from '../adminNav';
 import { Table, Badge, Skeleton } from '../ui';
 import { adminSeoList } from '../../../services/api';
 import SeoInspector from './SeoInspector';
+import AdminFilters from '../ui/AdminFilters';
 import { ScoreChip, Delta, fmtNum, fmtPct, fmtPos } from './seoShared';
 
 const PAGE_SIZE = 50;
@@ -87,11 +88,14 @@ export default function SeoList({ type, title, subtitle }) {
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search URL or title…"
             className="fb-input text-sm w-full pl-8" />
         </div>
-        <select className="fb-input text-sm" value={indexable} onChange={(e) => setIndexable(e.target.value)}>
-          <option value="">All</option>
-          <option value="true">Indexable</option>
-          <option value="false">Non-indexable</option>
-        </select>
+        <AdminFilters
+          value={{ indexable: indexable || undefined }}
+          onChange={(next) => setIndexable(next.indexable || '')}
+          config={[{ key: 'indexable', label: 'Index', search: false, options: [
+            { value: 'true', label: 'Indexable' },
+            { value: 'false', label: 'Non-indexable' },
+          ] }]}
+        />
         <span className="text-[12px] adm-t3 ml-auto">{state.total} page{state.total === 1 ? '' : 's'}</span>
       </div>
 

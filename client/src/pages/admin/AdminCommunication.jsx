@@ -7,6 +7,7 @@ import {
   adminEmailLogs, adminEmailRetry, adminEmailSettings, adminEmailSaveSettings, adminEmailEvents,
 } from '../../services/api';
 import { PageHeader, Card, Btn, Badge } from '../../components/admin/ui';
+import AdminFilters from '../../components/admin/ui/AdminFilters';
 
 const STATUS_TONE = {
   active: 'ok', draft: 'neutral',
@@ -118,13 +119,14 @@ const AdminCommunication = () => {
           <div className="flex flex-wrap gap-2 mb-4">
             <input className="fb-input text-sm w-56" placeholder="Search templates…" value={filters.search}
               onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
-            <select className="fb-input text-sm w-40" value={filters.category} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}>
-              <option value="">All categories</option>
-              {['Authentication','Security','Booking','Profile','Badge','Subscription','Celebrations'].map((c) => <option key={c}>{c}</option>)}
-            </select>
-            <select className="fb-input text-sm w-32" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
-              <option value="">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option>
-            </select>
+            <AdminFilters
+              value={{ category: filters.category || undefined, status: filters.status || undefined }}
+              onChange={(next) => setFilters((f) => ({ ...f, category: next.category || '', status: next.status || '' }))}
+              config={[
+                { key: 'category', label: 'Category', options: ['Authentication','Security','Booking','Profile','Badge','Subscription','Celebrations'].map((c) => ({ value: c, label: c })) },
+                { key: 'status', label: 'Status', search: false, options: [{ value: 'active', label: 'Active' }, { value: 'draft', label: 'Draft' }, { value: 'archived', label: 'Archived' }] },
+              ]}
+            />
           </div>
           <div className="adm-card rounded-xl overflow-hidden">
             <table className="adm-table w-full text-sm">
@@ -198,9 +200,11 @@ const AdminCommunication = () => {
           <div className="flex flex-wrap gap-2 p-3 border-b adm-border">
             <input className="fb-input text-sm w-52" placeholder="Search by email…" value={logFilter.email} onChange={(e) => setLogFilter((f) => ({ ...f, email: e.target.value }))} />
             <input className="fb-input text-sm w-44" placeholder="Event key…" value={logFilter.event} onChange={(e) => setLogFilter((f) => ({ ...f, event: e.target.value }))} />
-            <select className="fb-input text-sm w-32" value={logFilter.status} onChange={(e) => setLogFilter((f) => ({ ...f, status: e.target.value }))}>
-              <option value="">All</option><option value="sent">Sent</option><option value="queued">Queued</option><option value="failed">Failed</option>
-            </select>
+            <AdminFilters
+              value={{ status: logFilter.status || undefined }}
+              onChange={(next) => setLogFilter((f) => ({ ...f, status: next.status || '' }))}
+              config={[{ key: 'status', label: 'Status', search: false, options: [{ value: 'sent', label: 'Sent' }, { value: 'queued', label: 'Queued' }, { value: 'failed', label: 'Failed' }] }]}
+            />
             <Btn variant="outline" size="sm" onClick={loadLogs}>Refresh</Btn>
           </div>
           <div className="overflow-x-auto">
