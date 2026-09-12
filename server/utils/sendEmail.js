@@ -18,10 +18,12 @@ const { isLoadTestMode } = require('../config/loadTestMode');
 const { loadSettings } = require('../services/email/communicationEngine');
 const { getProvider } = require('../services/email/providers');
 
-const sendEmail = async ({ to, subject, html, text, attachments, fromName, fromEmail, replyTo }) => {
+const sendEmail = async ({ to, subject, html, text, attachments, fromName, fromEmail, replyTo, provider: providerName }) => {
   if (isLoadTestMode()) return; // no email egress in load mode
   const settings = await loadSettings();
-  const provider = getProvider(settings.provider);
+  // `provider` override lets a bulk caller (CRM sales automation) force the
+  // marketing SMTP transport; ad-hoc transactional callers omit it → global provider.
+  const provider = getProvider(providerName || settings.provider);
   const res = await provider.sendEmail({
     to, subject, html, text, attachments,
     // Optional per-send persona override (CRM Tithi/Sujata); else the global default.

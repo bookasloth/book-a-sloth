@@ -87,7 +87,7 @@ async function enqueue({
     subject: subject || null,
     body_preview: bodyPreview || null,
     variables,
-    provider: channel === 'whatsapp' ? 'aisensy' : 'resend',
+    provider: channel === 'whatsapp' ? 'aisensy' : 'marketing_smtp',
     status: 'queued',
     next_attempt_at: now,
     campaign_id: campaignId,
