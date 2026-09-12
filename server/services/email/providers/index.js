@@ -14,20 +14,22 @@
 const smtpProvider = require('./smtpProvider');
 const resendProvider = require('./resendProvider');
 const sesProvider = require('./sesProvider');
-const marketingSmtpProvider = require('./marketingSmtpProvider');
+const brevoProvider = require('./brevoProvider');
 const { isPlaceholderEmail } = require('../placeholderEmail');
 
 const PROVIDERS = {
   smtp: smtpProvider,
   resend: resendProvider,
   ses: sesProvider,
-  marketing_smtp: marketingSmtpProvider,
+  brevo: brevoProvider,
 };
 
 // The provider name for BULK / sales-automation mail. Callers pass this to route a
-// send onto the dedicated marketing SMTP transport (off Resend) — see deliver()
-// and crm/emailService. One constant so the two call sites never drift.
-const MARKETING_PROVIDER = 'marketing_smtp';
+// send off Resend onto the dedicated bulk transport — see deliver() and
+// crm/emailService. One constant so the call sites never drift; swapping the bulk
+// provider (Brevo → SES → …) is a one-line change here. NB: HTTP-API only — PaaS
+// hosts block outbound SMTP, so a raw-SMTP bulk provider times out on Render.
+const MARKETING_PROVIDER = 'brevo';
 
 /**
  * Resolve a provider by name (default SMTP), wrapped with the universal
