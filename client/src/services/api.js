@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAttribution } from '../utils/attribution';
+import { batchedImport } from '../utils/batchImport';
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
@@ -743,7 +744,10 @@ export const crmCreateSequence   = (data)        => API.post('/admin/crm/sequenc
 export const crmEnroll           = (id, sequenceId) => API.post(`/admin/crm/leads/${id}/enroll`, { sequenceId });
 export const crmBulk             = (data)        => API.post('/admin/crm/leads/bulk', data);
 export const crmImportPreview    = (rows)        => API.post('/admin/crm/import/preview', { rows });
-export const crmImportCommit     = (rows, listId) => API.post('/admin/crm/import/commit', { rows, listId });
+// Batches large imports (see utils/batchImport) so the payload never trips the
+// server's JSON body limit — both import modals call this and get it for free.
+export const crmImportCommit     = (rows, listId) =>
+  batchedImport((body) => API.post('/admin/crm/import/commit', body), rows, listId);
 export const crmLeadsExportCsv   = (params)      => API.get('/admin/crm/leads/export.csv', { params, responseType: 'blob' });
 export const crmRefreshAttribution = ()          => API.post('/admin/crm/attribution/refresh');
 export const crmListTemplates    = (channel)     => API.get('/admin/crm/templates', { params: channel ? { channel } : {} });
