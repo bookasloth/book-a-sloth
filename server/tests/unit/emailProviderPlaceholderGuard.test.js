@@ -32,3 +32,11 @@ test('an array recipient whose first address is a placeholder is also skipped', 
 test('the wrapper preserves the provider name', () => {
   expect(getProvider('resend').name).toBe('resend');
 });
+
+test('reply-to is forced to the support inbox, overriding any caller/persona value', async () => {
+  await getProvider('resend').sendEmail({
+    to: 'ada@gmail.com', subject: 'x', html: 'y', replyTo: 'aastha@bookasloth.in',
+  });
+  expect(resend.sendEmail).toHaveBeenCalledTimes(1);
+  expect(resend.sendEmail.mock.calls[0][0].replyTo).toBe('bolt@bookasloth.in');
+});

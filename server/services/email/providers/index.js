@@ -34,6 +34,12 @@ const PROVIDERS = {
 // swapping providers is a one-line change. HTTP-API only — PaaS blocks outbound SMTP.
 const MARKETING_PROVIDER = 'resend';
 
+// Every outbound email replies to ONE monitored inbox, overriding whatever
+// reply-to a caller/persona set (Aastha, Tithi, Durga, …). Forced here because
+// this wrapper is the single send chokepoint, so no path can leak a reply to an
+// unwatched persona box. Env-overridable if a flow ever needs its own reply-to.
+const REPLY_TO = process.env.SUPPORT_REPLY_TO || 'bolt@bookasloth.in';
+
 /**
  * Resolve a provider by name (default SMTP), wrapped with the universal
  * placeholder-recipient guard: a phone-only user's synthetic
@@ -41,6 +47,8 @@ const MARKETING_PROVIDER = 'resend';
  * a benign no-op success (never call the real provider → no bounce) for EVERY email
  * path — CRM, transactional and campaign alike — from this one chokepoint. Success
  * (not an error) so inline callers that throw on failure aren't broken.
+ *
+ * The same chokepoint forces reply-to to the support inbox on every send.
  */
 function getProvider(name) {
   const provider = PROVIDERS[(name || 'smtp').toLowerCase()] || smtpProvider;
@@ -49,7 +57,7 @@ function getProvider(name) {
     sendEmail: async (opts = {}) => {
       const to = Array.isArray(opts.to) ? opts.to[0] : opts.to;
       if (isPlaceholderEmail(to)) return { success: true, skipped: true, id: null, reason: 'placeholder_recipient' };
-      return provider.sendEmail(opts);
+      return provider.sendEmail({ ...opts, replyTo: REPLY_TO });
     },
   };
 }
