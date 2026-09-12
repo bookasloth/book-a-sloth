@@ -44,6 +44,12 @@ reimplements the rubric. Spec: `docs/superpowers/specs/2026-09-10-blog-seo-geo-a
    pillar↔spoke cluster; pick internal targets by shared cluster + compatible intent (link up to
    pillar, sideways to siblings, to intent-matched product pages `/be-a-sloth`, host profiles,
    `/pricing`). 3–5 when justified; never pad.
+   **Only link `/blog/<slug>` targets that are ALREADY published** (present in the step-2 posts
+   list). An incoming draft often links *forward* to sibling drafts not yet posted (they publish
+   later on the daily cadence) — those are broken links and fail the gate. For each internal
+   `/blog/` link in the draft, if the slug is not published: **delink it** (keep the sentence as
+   plain text) or **repoint** it to an intent-matched published page (`/be-a-sloth`, `/pricing`,
+   the cluster pillar). Never emit an internal `/blog/<slug>` that is not live.
 
 6. **Optimize** the post object: title ≤60 (keyword front-loaded); excerpt 140–160; format
    matches intent + closes the gap map; answer-first intro; H2 keyword variants; extractable

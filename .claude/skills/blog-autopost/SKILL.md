@@ -32,6 +32,9 @@ Drafts folder (marketing): `D:\My Marketing\Book A Sloth\Blog` (Windows) /
 2. **Optimize.** Invoke `blog-seo-optimizer` on that file. Let it run its full pipeline
    (parse → cannibalization → SERP → links → optimize → verify → score → gate) and open its PR.
    Capture its final decision (`READY FOR PR` / `NEEDS WORK`) and the PR URL.
+   NOTE: drafts in the queue cross-link each other; the optimizer delinks any `/blog/<slug>`
+   target not yet published (step 5) so a forward-link to an unposted sibling never fails the
+   gate. This is why the daily run doesn't stall on the first interlinked post.
 3. **Gate.** If `NEEDS WORK` → do NOT merge. Leave PR open, log the reason, move the draft to
    `_posted/` ONLY on success (not here — leave it so a human can retry). Exit 0.
 4. **Verify scope (hard safety).** `gh pr diff <pr> --name-only` MUST list exactly
