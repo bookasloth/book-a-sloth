@@ -297,6 +297,18 @@ const bulk = async (req, res) => {
 // ── Import / Export ───────────────────────────────────────────
 const validEmail = (e) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
+// Server-side email hygiene net (the crawler should clean upstream, but a CSV can
+// skip it). Strips scraper artefacts (leaked >, >, &gt;), drops placeholders
+// and role-noise, repairs provider concat bugs (gmail.comviews → gmail.com), and
+// requires a real user@domain.tld shape. Returns '' when unusable so the row falls
+// back to phone identity or is skipped. Mirrors the crawler's clean_email.
+const cleanEmail = (raw) => {
+  let e = String(raw || '').trim().toLowerCase().replace(/^(?:\\?u003e|&gt;|>)+/i, '').replace(/\s+/g, '');
+  if (/^(you|your-?email|email|name|test)@|@(example|test)\.|@company\.com$|no-?reply/i.test(e)) return '';
+  e = e.replace(/@(gmail|yahoo|outlook|hotmail|live|icloud|proton|ymail|rediffmail)\.com[a-z]+$/i, '@$1.com');
+  return /^[^\s@]+@[^\s@]+\.[a-z]{2,24}$/i.test(e) ? e : '';
+};
+
 const importPreview = async (req, res) => {
   try {
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
@@ -329,13 +341,14 @@ const importCommit = async (req, res) => {
     }
     let created = 0, merged = 0, skipped = 0;
     for (const r of rows) {
-      if (!r.phone && !r.email) { skipped++; continue; }
+      const email = cleanEmail(r.email);   // server-side hygiene net — a junk email becomes '' → row keeps phone or is skipped
+      if (!r.phone && !email) { skipped++; continue; }
       // Stash unknown/extra socials so nothing is lost.
       const attributes = {};
       for (const k of KNOWN_SOCIALS) if (r[k]) attributes[k === 'x' ? 'twitter' : k] = r[k];
       const patch = {
         name: r.name || '', phone: r.phone || '', whatsapp_phone: r.whatsapp || r.phone || '',
-        email: r.email || '', business_name: r.business || '', profession: r.profession || '',
+        email, business_name: r.business || '', profession: r.profession || '',
         website: r.website || '', linkedin: r.linkedin || '', instagram: r.instagram || '',
         city: r.city || '', tags: Array.isArray(r.tags) ? r.tags : (r.tags ? String(r.tags).split(/[,|]/).map((t) => t.trim()).filter(Boolean) : []),
       };
@@ -515,7 +528,7 @@ module.exports = {
   getRelationships, completeRecommendation, snoozeRecommendation, dismissRecommendation,
   listFollowUps, createFollowUp, completeFollowUp, cancelFollowUp,
   listSequences, createSequence, enroll,
-  bulk, importPreview, importCommit, exportCsv, refreshAttribution,
+  bulk, importPreview, importCommit, exportCsv, refreshAttribution, cleanEmail,
   listLists, createList, getListById,
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   listTags, createTag, updateTag, deleteTag,
