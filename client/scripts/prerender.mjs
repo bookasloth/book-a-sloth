@@ -76,6 +76,11 @@ const PRERENDER_ROUTES = [
   '/host-fees',
   '/earnings-calculator',
   '/wall-of-love',
+  // SEO discovery hubs — crawlable directories that link every /for/* profession
+  // page and /lp/* competitor page (which hide the global nav). Prerender so the
+  // internal links land in static HTML for non-JS crawlers.
+  '/solutions',
+  '/compare',
   // Marketing/event pages with bespoke OG cards — prerender so social scrapers
   // (which don't run JS) get the card + real title, not the default og:image.
   '/how-it-works',

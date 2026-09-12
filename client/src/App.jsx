@@ -62,6 +62,10 @@ const Careers        = lazy(() => import('./pages/Careers'));
 const JobDetail      = lazy(() => import('./pages/JobDetail'));
 const Enterprise     = lazy(() => import('./pages/Enterprise'));
 const HowItWorks     = lazy(() => import('./pages/HowItWorks'));
+// SEO discovery hubs — crawlable directories that internally link every
+// /for/* profession page (Solutions) and /lp/* competitor page (Compare).
+const Solutions      = lazy(() => import('./pages/Solutions'));
+const Compare        = lazy(() => import('./pages/Compare'));
 
 // Paid-traffic landing pages (/lp/*) — own header/footer, global nav hidden
 const TopmateVsBookASloth = lazy(() => import('./pages/lp/TopmateVsBookASloth'));
@@ -423,6 +427,9 @@ function App() {
           <Route path="/blogs" element={<BlogsRedirect />} />
           <Route path="/blogs/:slug" element={<BlogsRedirect />} />
           <Route path="/about" element={<About />} />
+          {/* SEO discovery hubs — link every profession + competitor landing page */}
+          <Route path="/solutions" element={<Solutions />} />
+          <Route path="/compare" element={<Compare />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/careers/:jobSlug" element={<JobDetail />} />
           <Route path="/privacy" element={<Privacy />} />

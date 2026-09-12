@@ -7,8 +7,13 @@ const BOLT_URL = 'https://www.instagram.com/bookasloth';
 // Minimal footer: link discovery now lives in the navbar mega-menus, so the
 // footer is just the CTA band + a centered legal strip + socials + operator bar.
 
-// Single centered inline row (support + legal, no label).
+// Single centered inline row (support + legal, no label). Solutions + Compare
+// lead the row: they are hub pages (/solutions, /compare) that carry crawlable
+// internal links to every profession (/for/*) and competitor (/lp/*) landing
+// page, keeping those out of the SEO orphan list without a heavy footer sitemap.
 const LEGAL = [
+  { t: 'Solutions', href: '/solutions' },
+  { t: 'Compare', href: '/compare' },
   { t: 'FAQ', href: '/#faq' },
   { t: 'Documentation', href: '/help/docs' },
   { t: 'Terms', href: '/terms' },
@@ -89,11 +94,13 @@ export default function Footer({ variant = 'full' }) {
           </div>
         </div>
 
-        {/* Minimal footer: no link columns (nav mega-menus own discovery now) —
-            just a centered legal strip + socials, dropped in the minimal variant. */}
+        {/* Link discovery lives in the navbar mega-menus + the /solutions and
+            /compare hub pages now, so the full footer is just a centered legal
+            strip + socials. Both are dropped in the minimal variant. */}
         {!minimal && (
         <>
-        {/* Support + Legal — one centered inline row */}
+        {/* Support + Legal — one centered inline row (leads with the Solutions +
+            Compare hubs so every page carries a static link into them). */}
         <div className="border-t border-white/10 py-8">
           <InlineRow items={LEGAL} />
         </div>

@@ -73,6 +73,9 @@ const STATIC_ROUTES = [
   { path: '/pricing',                  changefreq: 'monthly', priority: '0.7' },
   { path: '/enterprise',               changefreq: 'monthly', priority: '0.7' },
   { path: '/about',                    changefreq: 'monthly', priority: '0.5' },
+  // SEO discovery hubs — internally link every /for/* and /lp/* landing page.
+  { path: '/solutions',                changefreq: 'monthly', priority: '0.7' },
+  { path: '/compare',                  changefreq: 'monthly', priority: '0.7' },
   { path: '/careers',                  changefreq: 'weekly',  priority: '0.5' },
   ...JOB_SLUGS.map((s) => ({ path: `/careers/${s}`, changefreq: 'weekly', priority: '0.5' })),
   { path: '/blog',                     changefreq: 'daily',   priority: '0.6' },
