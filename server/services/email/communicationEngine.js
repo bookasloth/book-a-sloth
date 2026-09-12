@@ -15,7 +15,7 @@
 const { supabaseAdmin } = require('../../config/supabase');
 const { buildGlobals, resolveTemplate, resolveString } = require('./placeholderResolver');
 const { renderLayout } = require('./emailLayout');
-const { getProvider } = require('./providers');
+const { getProvider, MARKETING_PROVIDER } = require('./providers');
 const { makeToken } = require('./unsubscribeToken');
 const senderRegistry = require('./senderRegistry');
 
@@ -129,8 +129,12 @@ async function insertLog(row) {
   return data?.id || null;
 }
 
-async function deliver({ settings, to, subject, html, sender }) {
-  const provider = getProvider(settings.provider);
+// `providerName` overrides email_settings.provider for this one send — bulk
+// campaigns pass MARKETING_PROVIDER so they leave Resend's transactional quota
+// alone. Omitted → the global provider (Resend in prod). No fallback: a marketing
+// send that fails stays on the marketing provider and is retried by the queue.
+async function deliver({ settings, to, subject, html, sender, providerName }) {
+  const provider = getProvider(providerName || settings.provider);
   const res = await provider.sendEmail({
     to, subject, html,
     fromName: sender?.fromName ?? settings.from_name,
@@ -283,7 +287,10 @@ async function processQueue(limit = 25) {
       const { data: camp } = await supabaseAdmin.from('email_campaigns').select('sender_key').eq('id', campId).maybeSingle();
       rowSender = (camp && await senderRegistry.byKey(camp.sender_key)) || rowSender;
     }
-    const r = await deliver({ settings, to: row.recipient, subject: row.subject, html: row.html, sender: rowSender });
+    // Bulk campaigns go out on the dedicated marketing SMTP transport (off Resend);
+    // transactional + lifecycle queued rows keep the global provider.
+    const providerName = String(row.event_key || '').startsWith('CAMPAIGN:') ? MARKETING_PROVIDER : null;
+    const r = await deliver({ settings, to: row.recipient, subject: row.subject, html: row.html, sender: rowSender, providerName });
 
     if (r.success) {
       await supabaseAdmin.from('email_logs').update({
@@ -321,7 +328,8 @@ async function processQueue(limit = 25) {
         lines: [
           `Event: ${row.event_key}`, `To: ${row.recipient}`, `Attempts: ${attemptsMade}`,
           `Error: ${r.error || 'unknown'}`,
-          `Exhausted retries (${BACKOFFS_MIN.join('/')} min). Check the email provider (Resend) status/credits or the recipient address.`,
+          `Provider: ${r.provider || 'unknown'}`,
+          `Exhausted retries (${BACKOFFS_MIN.join('/')} min). Check the email provider (${r.provider || 'Resend'}) status/credits or the recipient address.`,
         ],
       });
     }
@@ -440,7 +448,9 @@ async function sendComposedTest({ bodyHtml, subject: composedSubject, previewTex
   const sendData = { unsubscribe_token: makeToken(to), first_name: 'there', name: 'there' };
   const { subject, html } = renderEmail(template, { data: sendData, user: {}, settings, audience });
   const sender = (await senderRegistry.byKey(senderKey)) || { fromName: settings.from_name, fromEmail: settings.from_email, replyTo: null };
-  const r = await deliver({ settings, to, subject: `[TEST] ${subject}`, html, sender });
+  // A composer test IS a campaign send — route it through the marketing SMTP
+  // transport so the test proves the real bulk path, not Resend.
+  const r = await deliver({ settings, to, subject: `[TEST] ${subject}`, html, sender, providerName: MARKETING_PROVIDER });
   await insertLog({
     event_key: 'CAMPAIGN:test', audience, recipient: to, subject, html,
     status: r.success ? 'test' : 'failed', provider: r.provider, provider_response: r.response || {},

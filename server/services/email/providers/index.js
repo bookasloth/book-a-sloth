@@ -14,13 +14,20 @@
 const smtpProvider = require('./smtpProvider');
 const resendProvider = require('./resendProvider');
 const sesProvider = require('./sesProvider');
+const marketingSmtpProvider = require('./marketingSmtpProvider');
 const { isPlaceholderEmail } = require('../placeholderEmail');
 
 const PROVIDERS = {
   smtp: smtpProvider,
   resend: resendProvider,
   ses: sesProvider,
+  marketing_smtp: marketingSmtpProvider,
 };
+
+// The provider name for BULK / sales-automation mail. Callers pass this to route a
+// send onto the dedicated marketing SMTP transport (off Resend) — see deliver()
+// and crm/emailService. One constant so the two call sites never drift.
+const MARKETING_PROVIDER = 'marketing_smtp';
 
 /**
  * Resolve a provider by name (default SMTP), wrapped with the universal
@@ -42,4 +49,4 @@ function getProvider(name) {
   };
 }
 
-module.exports = { getProvider, PROVIDERS };
+module.exports = { getProvider, PROVIDERS, MARKETING_PROVIDER };

@@ -15,6 +15,7 @@
  * Returns a normalized result; never throws.
  */
 const sendEmail = require('../../utils/sendEmail');
+const { MARKETING_PROVIDER } = require('../email/providers');
 const { canSend } = require('./sendGate');
 const { renderLayout } = require('../email/emailLayout');
 const { makeToken } = require('../email/unsubscribeToken');
@@ -68,7 +69,9 @@ async function send({ lead, subject, html, text, category, previewText, fromName
   } catch (_) { /* fail open: send the raw body rather than nothing */ }
 
   try {
-    const res = await sendEmail({ to: lead.email, subject, html: finalHtml, text, fromName, fromEmail, replyTo });
+    // CRM outbound = sales automation → the dedicated marketing SMTP transport,
+    // never Resend (keeps the transactional quota reserved).
+    const res = await sendEmail({ to: lead.email, subject, html: finalHtml, text, fromName, fromEmail, replyTo, provider: MARKETING_PROVIDER });
     // Resend provider returns { success, id }; SMTP returns { success, messageId }.
     const providerMessageId = res?.id || res?.messageId || null;
     return { success: true, providerMessageId };
