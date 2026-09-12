@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Btn, Table, Skeleton } from '../../../components/admin/ui';
 import { crmListLists, crmCreateList, crmGetList, crmListLeads, crmBulk, crmImportCommit } from '../../../services/api';
-import { rupees, relTime } from './salesConstants';
+import { relTime } from './salesConstants';
 import TagChip from './TagChip';
 import toast from 'react-hot-toast';
 
@@ -23,6 +23,9 @@ function parseCsv(text) {
   return rows;
 }
 const HEADER_MAP = { name: 'name', phone: 'phone', whatsapp: 'whatsapp', email: 'email', business: 'business', company: 'business', profession: 'profession', website: 'website', linkedin: 'linkedin', instagram: 'instagram', twitter: 'twitter', x: 'x', youtube: 'youtube', facebook: 'facebook', city: 'city', tags: 'tags' };
+
+// CSV-sourced URLs are admin-uploaded but unsanitized — only render http(s) as a link (blocks javascript: etc).
+const isHttpUrl = (u) => typeof u === 'string' && u.startsWith('http');
 
 export default function SalesLists() {
   const { id } = useParams();
@@ -95,9 +98,9 @@ function ListDetail({ listId }) {
 
   const Links = ({ r }) => (
     <div className="flex gap-1.5 text-[13px]">
-      {r.website && <a href={r.website} target="_blank" rel="noreferrer" title="Website" onClick={(e) => e.stopPropagation()}>🌐</a>}
-      {r.linkedin && <a href={r.linkedin} target="_blank" rel="noreferrer" title="LinkedIn" onClick={(e) => e.stopPropagation()}>in</a>}
-      {r.instagram && <a href={r.instagram} target="_blank" rel="noreferrer" title="Instagram" onClick={(e) => e.stopPropagation()}>ig</a>}
+      {isHttpUrl(r.website) && <a href={r.website} target="_blank" rel="noreferrer" title="Website" onClick={(e) => e.stopPropagation()}>🌐</a>}
+      {isHttpUrl(r.linkedin) && <a href={r.linkedin} target="_blank" rel="noreferrer" title="LinkedIn" onClick={(e) => e.stopPropagation()}>in</a>}
+      {isHttpUrl(r.instagram) && <a href={r.instagram} target="_blank" rel="noreferrer" title="Instagram" onClick={(e) => e.stopPropagation()}>ig</a>}
     </div>
   );
 
@@ -132,7 +135,7 @@ function ListDetail({ listId }) {
         : rows.length === 0 ? <Card className="rounded-2xl p-10 text-center adm-t3">No contacts yet. Import a CSV.</Card>
         : <Table columns={columns} rows={rows} rowKey={(r) => r.id} />}
 
-      {!loading && rows.length > 0 && (
+      {!loading && (rows.length > 0 || page > 1) && (
         <div className="flex items-center justify-between mt-4">
           <span className="text-[12px] adm-t3">{total} · page {page}/{totalPages}</span>
           <div className="flex gap-2">
