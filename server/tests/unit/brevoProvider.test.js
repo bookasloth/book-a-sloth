@@ -10,10 +10,14 @@ beforeEach(() => {
   global.fetch = jest.fn();
 });
 
-test('brevo is the registered marketing provider', () => {
-  const { getProvider, MARKETING_PROVIDER } = require('../../services/email/providers');
-  expect(MARKETING_PROVIDER).toBe('brevo');
+test('brevo provider is registered (carries transactional after the swap)', () => {
+  const { getProvider } = require('../../services/email/providers');
   expect(getProvider('brevo').name).toBe('brevo');
+});
+
+test('marketing routes to resend (transactional↔marketing swap)', () => {
+  const { MARKETING_PROVIDER } = require('../../services/email/providers');
+  expect(MARKETING_PROVIDER).toBe('resend');
 });
 
 test('sends the Brevo payload (persona sender kept) and returns the messageId', async () => {

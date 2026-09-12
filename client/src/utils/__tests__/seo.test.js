@@ -106,6 +106,27 @@ describe('profileJsonLd', () => {
     expect(ld['@type']).toBe('ProfilePage');
     expect(ld.mainEntity).toMatchObject({ '@type': 'Person', name: 'John Doe', url: 'https://bookasloth.com/john-doe' });
   });
+  test('adds publisher Organization, hasOccupation, and knowsAbout from profession + categories', () => {
+    const ld = profileJsonLd({
+      host: {
+        name: 'John Doe', username: 'john-doe', profession: 'Startup Advisor',
+        primary_category: 'startup-advisor', categories: ['startup-advisor', 'business_consultant'],
+      },
+      siteUrl: SITE,
+    });
+    expect(ld.publisher).toEqual({ '@type': 'Organization', name: 'Book A Sloth', url: 'https://bookasloth.com' });
+    expect(ld.mainEntity.hasOccupation).toEqual({
+      '@type': 'Occupation', name: 'Startup Advisor', occupationalCategory: 'Startup Advisor',
+    });
+    // humanized + deduped (primary_category also appears in categories)
+    expect(ld.mainEntity.knowsAbout).toEqual(['Startup Advisor', 'Business Consultant']);
+  });
+  test('omits hasOccupation / knowsAbout when profession + categories are absent', () => {
+    const ld = profileJsonLd({ host: { name: 'J', username: 'j' }, siteUrl: SITE });
+    expect(ld.mainEntity).not.toHaveProperty('hasOccupation');
+    expect(ld.mainEntity).not.toHaveProperty('knowsAbout');
+    expect(ld.publisher).toMatchObject({ '@type': 'Organization', name: 'Book A Sloth' });
+  });
   test('adds sameAs (http socials only) + dateModified when present', () => {
     const ld = profileJsonLd({
       host: {

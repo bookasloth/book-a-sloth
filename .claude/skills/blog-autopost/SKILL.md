@@ -19,7 +19,10 @@ Drafts folder (marketing): `D:\My Marketing\Book A Sloth\Blog` (Windows) /
 `/d/My Marketing/Book A Sloth/Blog` (Git-Bash). Archive subfolder: `.../Blog/_posted`.
 
 ## Preconditions (abort the run if any fail)
-- Clean git tree. On a fresh branch from `origin/main` (never run on `main`).
+- Runs in the DEDICATED worktree set up by `scripts/blog-autopost.ps1` (isolated from any
+  interactive/peer session sharing the primary checkout — a shared checkout caused a
+  wrong-branch commit during the build). Never run this in the primary OneDrive checkout.
+- Clean git tree. On the `autopost-runner` branch reset to `origin/main` (never run on `main`).
 - A single-run lock: if `scratch/.blog-autopost.lock` exists and is <6h old, exit (another run).
   Else write it (with timestamp) and remove it at the end.
 - `gh auth status` OK; `server/.env` and `server/.env.staging` present (seed needs them).
@@ -32,13 +35,19 @@ Drafts folder (marketing): `D:\My Marketing\Book A Sloth\Blog` (Windows) /
 2. **Optimize.** Invoke `blog-seo-optimizer` on that file. Let it run its full pipeline
    (parse → cannibalization → SERP → links → optimize → verify → score → gate) and open its PR.
    Capture its final decision (`READY FOR PR` / `NEEDS WORK`) and the PR URL.
+   NOTE: drafts in the queue cross-link each other; the optimizer delinks any `/blog/<slug>`
+   target not yet published (step 5) so a forward-link to an unposted sibling never fails the
+   gate. This is why the daily run doesn't stall on the first interlinked post.
 3. **Gate.** If `NEEDS WORK` → do NOT merge. Leave PR open, log the reason, move the draft to
    `_posted/` ONLY on success (not here — leave it so a human can retry). Exit 0.
-4. **Verify scope (hard safety).** `gh pr diff <pr> --name-only` MUST list exactly
-   `client/src/data/blogPosts.js` and nothing else. Any other path → abort merge, log, exit 1.
+4. **Verify scope (hard safety).** `gh pr diff <pr> --name-only` MUST be a SUBSET of exactly two
+   paths — `client/src/data/blogPosts.js` and `client/src/data/blogClusters.js` (the post + its
+   link-graph taxonomy). Any other path → abort merge, log, exit 1.
 5. **Merge.** `gh pr checks <pr>` must be green/neutral (no failure). Then
    `gh pr merge <pr> --squash --delete-branch`.
-6. **Publish (seed BOTH DBs).** `git checkout main && git pull`. Then:
+6. **Publish (seed BOTH DBs).** Sync to the merged main WITHOUT checking out `main`
+   (the runner is in a dedicated worktree; `main` is held by the primary checkout):
+   `git fetch origin && git reset --hard origin/main`. Then:
    ```
    cd server
    node -r dotenv/config scripts/seedBlogs.js dotenv_config_path=.env           # prod  Mumbai
@@ -61,8 +70,8 @@ Drafts folder (marketing): `D:\My Marketing\Book A Sloth\Blog` (Windows) /
    seed both DBs → log). Recap posts have no `_posted/` folder; the log line is the record.
 
 ## Hard rules (unattended safety)
-- **Only ever merge a diff limited to `client/src/data/blogPosts.js`.** Re-check with
-  `--name-only` right before merge; abort on any extra path.
+- **Only ever merge a diff limited to `client/src/data/blogPosts.js` + `client/src/data/blogClusters.js`.**
+  Re-check with `--name-only` right before merge; abort on any other path.
 - **Never merge on a failing quality gate or failing CI.**
 - **Never fabricate URLs/claims** — inherited from blog-seo-optimizer.
 - **Seed failure ≠ success.** A merged-but-unseeded post is INVISIBLE; treat as failure and shout.

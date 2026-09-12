@@ -46,6 +46,17 @@ const WA_MAP = {
   replied: { activity: 'whatsapp_reply', engaged: true, reply: true },
 };
 
+// Left axis of the two-axis lead model (v3.159 / B1): the last email's state,
+// stamped on the lead per event, alongside the opens/clicks counters that the
+// list-engagement threshold (B2) reads.
+const EMAIL_STATUS_OF = {
+  'email.sent': 'sent', 'email.delivered': 'delivered',
+  'email.opened': 'opened', 'email.clicked': 'clicked',
+  'email.bounced': 'bounced', 'email.complained': 'complained',
+};
+const isMissingSchema = (e) =>
+  e && /column .* does not exist|Could not find|does not exist/i.test(e.message || '');
+
 /** Resolve the lead behind a delivery event by channel identity. */
 async function resolveLeadId({ channel, phone, email }) {
   if (channel === 'whatsapp' && phone) {
@@ -118,13 +129,32 @@ async function recordDeliveryEvent({ channel, event, providerMessageId, payload 
       }
     }
 
-    // ── Lead-level: engagement + activity fire with or without a crm_message ──
-    // (a campaign blast logs to email_logs, not crm_messages).
+    // ── Lead-level: email axis + engagement, with or without a crm_message ──
+    // (a campaign blast logs to email_logs, not crm_messages). One write carries
+    // the email_status axis + opens/clicks counters (B1) and the engagement stamps.
     if (map && leadId) {
+      const patch = { updated_at: now };
+      const es = EMAIL_STATUS_OF[event];
+      if (es) patch.email_status = es;
       if (map.engaged) {
-        const leadPatch = { last_engaged_at: now, last_activity_at: now, updated_at: now };
-        if (map.reply) leadPatch.last_reply_at = now; // an actual inbound reply, not a passive open
-        await supabaseAdmin.from('leads').update(leadPatch).eq('id', leadId);
+        patch.last_engaged_at = now; patch.last_activity_at = now;
+        if (map.reply) patch.last_reply_at = now; // a real inbound reply, not a passive open
+      }
+      if (event === 'email.opened' || event === 'email.clicked') {
+        // ponytail: read-modify-write; a single lead's webhook events are effectively
+        // serial, so the increment race is negligible at this volume.
+        const { data: cur } = await supabaseAdmin.from('leads').select('opens, clicks').eq('id', leadId).maybeSingle();
+        if (event === 'email.opened') patch.opens = (cur?.opens || 0) + 1;
+        else patch.clicks = (cur?.clicks || 0) + 1;
+      }
+      if (Object.keys(patch).length > 1) {
+        const { error } = await supabaseAdmin.from('leads').update(patch).eq('id', leadId);
+        // v3.159 (email_status/opens/clicks) not applied on this DB yet → drop the
+        // new keys, keep the engagement stamps that predate B1.
+        if (error && isMissingSchema(error)) {
+          const { email_status, opens, clicks, ...safe } = patch;
+          if (Object.keys(safe).length > 1) await supabaseAdmin.from('leads').update(safe).eq('id', leadId);
+        }
       }
       if (map.activity) {
         await supabaseAdmin.from('lead_activities').insert({

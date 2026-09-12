@@ -44,6 +44,12 @@ reimplements the rubric. Spec: `docs/superpowers/specs/2026-09-10-blog-seo-geo-a
    pillar↔spoke cluster; pick internal targets by shared cluster + compatible intent (link up to
    pillar, sideways to siblings, to intent-matched product pages `/be-a-sloth`, host profiles,
    `/pricing`). 3–5 when justified; never pad.
+   **Only link `/blog/<slug>` targets that are ALREADY published** (present in the step-2 posts
+   list). An incoming draft often links *forward* to sibling drafts not yet posted (they publish
+   later on the daily cadence) — those are broken links and fail the gate. For each internal
+   `/blog/` link in the draft, if the slug is not published: **delink it** (keep the sentence as
+   plain text) or **repoint** it to an intent-matched published page (`/be-a-sloth`, `/pricing`,
+   the cluster pillar). Never emit an internal `/blog/<slug>` that is not live.
 
 6. **Optimize** the post object: title ≤60 (keyword front-loaded); excerpt 140–160; format
    matches intent + closes the gap map; answer-first intro; H2 keyword variants; extractable
@@ -68,16 +74,33 @@ reimplements the rubric. Spec: `docs/superpowers/specs/2026-09-10-blog-seo-geo-a
 11. **Quality gate + report.** Evaluate every gate condition (below) and emit the report with a
     `READY FOR PR` / `NEEDS WORK` decision.
 
-12. **Ship (only if READY FOR PR).** Ensure on a fresh branch from origin/main
+12. **Register in the link graph (MANDATORY — deploy gate).** Every published slug MUST appear in
+    `POST_TAGS` in `client/src/data/blogClusters.js` (enforced by `blogClusters.test`), and every
+    post must have ≥1 incoming internal link or `relatedPosts.test` fails as an ORPHAN — both are
+    client vitest = deploy gate. Existing clusters are saturated (3 `priorityLinks` each), so
+    jamming a post into one evicts a sibling and cascades new orphans (see landmine
+    `blog-relatedposts-orphan-fragility`). Correct approach:
+    - Add a `POST_TAGS['<slug>']` entry with real tags.
+    - For a NEW content line published as a batch (e.g. the marketing "work-guide" guides), give
+      the batch its OWN cluster (pillar = a strong published post) and add the slug to that
+      cluster's `priorityLinks` — the batch then interlinks within itself as each post publishes,
+      instead of displacing existing clusters. A lone first post of a new cluster is linked from
+      its pillar.
+    - Verify: `cd client && npx vitest run src/data/__tests__/blogClusters.test.js src/lib/__tests__/relatedPosts.test.js` — BOTH must pass (zero orphans across ALL posts, not just the new one).
+
+13. **Ship (only if READY FOR PR).** Ensure on a fresh branch from origin/main
     (`git switch -c feat/blog-<slug> origin/main` if not already). Write the post object into
-    `client/src/data/blogPosts.js` newest-first (preserve file formatting). Commit. `gh pr create`
-    with the report summary + the re-seed reminder in the body. STOP. On NEEDS WORK: leave files
-    written locally, emit the report, open no PR.
+    `client/src/data/blogPosts.js` newest-first (preserve file formatting) AND the taxonomy edits
+    into `client/src/data/blogClusters.js`. Commit. `gh pr create` with the report summary + the
+    re-seed reminder in the body. STOP. On NEEDS WORK: leave files written locally, emit the
+    report, open no PR.
 
 ## Quality gate — READY FOR PR requires ALL of:
 - `seo.score ≥ 90` AND `geo.score ≥ 90`.
 - No critical caps tripped (`seo.caps`/`geo.caps` empty of: HTTP≠200, noindex, robots block,
   cross-canonical, thin content).
+- Link graph clean — new slug in `POST_TAGS`; `blogClusters.test` + `relatedPosts.test` both pass
+  (no post left an orphan). See step 12.
 - Schema valid — `articleGraphJsonLd` output parsed (the scorer consumed it); FAQPage present
   only when FAQs exist; required BlogPosting fields set.
 - No broken links — every internal `/blog/slug` is a real published slug from step 2; every

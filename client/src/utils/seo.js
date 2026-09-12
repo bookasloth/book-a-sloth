@@ -129,10 +129,21 @@ const sameAsFromSocials = (social = {}) => [...new Set(
     .filter((v) => /^https?:\/\//i.test(v)),
 )];
 
+// Category slugs → human topic labels for Person.knowsAbout / occupationalCategory
+// (e.g. 'startup-advisor' → 'Startup Advisor'). MIRRORS the same helper in the
+// server prerender path (prerenderController.js) — keep both in sync. Topics are an
+// AEO/entity-clarity signal: they tell answer engines what this person is known for.
+const humanizeSlug = (s) => String(s || '').replace(/[-_]+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase());
+const knowsAboutFrom = (host = {}) => [...new Set(
+  [host.primary_category, ...(Array.isArray(host.categories) ? host.categories : [])]
+    .filter(Boolean).map(humanizeSlug),
+)];
+
 export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [], rating = null } = {}) => {
   const site = trimSlash(siteUrl);
   const url = host.username ? `${site}/${host.username}` : site;
   const sameAs = sameAsFromSocials(host.social_links);
+  const knowsAbout = knowsAboutFrom(host);
   const person = {
     '@type': 'Person',
     name: host.name || 'Host',
@@ -141,6 +152,16 @@ export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [], ra
     description: host.seo_description || host.bio || undefined,
     image: host.seo_image || host.profile_image || undefined,
     ...(sameAs.length ? { sameAs } : {}),
+    // Structured occupation + topics reinforce jobTitle as a real entity and tell
+    // answer engines what this person is known for (name-query relevance).
+    ...(host.profession ? {
+      hasOccupation: {
+        '@type': 'Occupation',
+        name: host.profession,
+        ...(host.primary_category ? { occupationalCategory: humanizeSlug(host.primary_category) } : {}),
+      },
+    } : {}),
+    ...(knowsAbout.length ? { knowsAbout } : {}),
     // Host's OWN rating only (shown on the profile). Never a platform default —
     // that would be reviews not about this person. Platform rating lives on the
     // homepage SoftwareApplication node.
@@ -161,6 +182,9 @@ export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [], ra
     '@type': 'ProfilePage',
     url,
     ...(host.updated_at ? { dateModified: host.updated_at } : {}),
+    // BAS publishes the profile page (accurate — NOT the person's employer, so never
+    // Person.worksFor). Links the page to the Organization entity for the graph.
+    publisher: { '@type': 'Organization', name: 'Book A Sloth', url: site },
     mainEntity: person,
   };
 };

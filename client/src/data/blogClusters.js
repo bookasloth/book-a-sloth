@@ -8,7 +8,8 @@
 export const POST_TAGS = {
   'how-to-become-paid-mentor': ['sell-your-time', 'growth'],
   'how-to-ask-client-for-payment-politely': ['sell-your-time', 'money'],
-  'how-to-book-an-appointment-online': ['sell-your-time', 'booking'],
+  'how-to-book-an-appointment-online': ['sell-your-time', 'booking', 'work-guide'],
+  'interview-calling-message': ['work-guide', 'scheduling', 'booking'],
   'topmate-alternative': ['sell-your-time', 'commission'],
   'digital-marketing-for-startups': ['marketing', 'startup', 'aeo'],
   'digital-marketing-for-saas-companies': ['marketing', 'saas', 'b2b', 'aeo'],
@@ -110,6 +111,13 @@ export const BLOG_CLUSTERS = [
   { key: 'sell-your-time', keyword: 'selling your time online', pillar: 'how-to-book-an-appointment-online',
     tags: ['sell-your-time'], priority: 95,
     priorityLinks: ['topmate-alternative', 'how-to-ask-client-for-payment-politely', 'how-to-become-paid-mentor'] },
+  // Marketing "work guide" batch (interview/scheduling/templates how-tos). Own cluster so the
+  // batch interlinks among itself as it publishes (1/day) instead of displacing saturated
+  // clusters — see docs blog-relatedposts-orphan-fragility. Pillar is the canonical booking guide.
+  { key: 'work-guide', keyword: 'work scheduling & template guides', pillar: 'how-to-book-an-appointment-online',
+    tags: ['work-guide'], priority: 96,
+    description: 'Practical how-to guides: interview messages, scheduling, templates, getting paid.',
+    priorityLinks: ['interview-calling-message'] },
   { key: 'commission', keyword: '0% commission', pillar: 'zero-commission-bet',
     tags: ['commission', 'pricing', 'earnings'], priority: 100,
     description: 'The 0%-commission / flat-fee pricing argument.',

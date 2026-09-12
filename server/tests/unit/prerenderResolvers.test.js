@@ -59,6 +59,26 @@ describe('resolveProfileMeta', () => {
     expect(m.buildHtmlArgs.jsonLd.dateModified).toBe('2026-09-01T10:00:00.000Z');
   });
 
+  test('JSON-LD carries publisher Org, hasOccupation + knowsAbout (mirrors client seo.js)', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: {
+        host: {
+          username: 'jane', name: 'Jane', is_indexable: true, profession: 'Startup Advisor',
+          primary_category: 'startup-advisor', categories: ['startup-advisor', 'business_consultant'],
+        },
+        services: [],
+      },
+    });
+    const m = await resolveProfileMeta('jane');
+    const ld = m.buildHtmlArgs.jsonLd;
+    expect(ld.publisher).toEqual({ '@type': 'Organization', name: 'Book A Sloth', url: expect.any(String) });
+    expect(ld.mainEntity.hasOccupation).toEqual({
+      '@type': 'Occupation', name: 'Startup Advisor', occupationalCategory: 'Startup Advisor',
+    });
+    expect(ld.mainEntity.knowsAbout).toEqual(['Startup Advisor', 'Business Consultant']);
+    expect(ld.mainEntity).not.toHaveProperty('worksFor'); // never falsely employed by BAS
+  });
+
   test('no sameAs / dateModified keys when socials blank and no updated_at', async () => {
     buildHostProfile.mockResolvedValueOnce({
       payload: { host: { username: 'jane', name: 'Jane', is_indexable: true, social_links: {} }, services: [] },
