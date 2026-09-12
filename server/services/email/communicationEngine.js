@@ -393,16 +393,28 @@ const EMAILLOG_DELIVERY = {
   'email.delivered': { status: 'delivered', stamp: 'delivered_at' },
   'email.bounced':   { status: 'bounced',   stamp: 'bounced_at' },
   'email.complained':{ status: 'bounced',   stamp: 'bounced_at' },
+  // Engagement (v3.157): stamp the timestamp only — an opened/clicked email is
+  // still 'delivered', so status is never touched. First touch wins.
+  'email.opened':    { stamp: 'opened_at',  engagement: true },
+  'email.clicked':   { stamp: 'clicked_at', engagement: true },
 };
 async function recordEmailLogDelivery({ providerMessageId, event }) {
   const map = EMAILLOG_DELIVERY[event];
   if (!map || !providerMessageId) return { ok: true, matched: false };
   try {
+    // Select the target stamp too so engagement events can honour first-touch and
+    // so a pre-migration DB (missing opened_at/clicked_at) trips isMissingSchema → no-op.
     const { data: row } = await supabaseAdmin
-      .from('email_logs').select('id, status').eq('provider_message_id', providerMessageId).maybeSingle();
+      .from('email_logs').select(`id, status, ${map.stamp}`).eq('provider_message_id', providerMessageId).maybeSingle();
     if (!row) return { ok: true, matched: false };
-    if (row.status === 'bounced') return { ok: true, matched: true }; // terminal
     const now = new Date().toISOString();
+    if (map.engagement) {
+      if (row[map.stamp]) return { ok: true, matched: true }; // first-touch wins
+      await supabaseAdmin.from('email_logs')
+        .update({ [map.stamp]: now, updated_at: now }).eq('id', row.id);
+      return { ok: true, matched: true };
+    }
+    if (row.status === 'bounced') return { ok: true, matched: true }; // terminal
     await supabaseAdmin.from('email_logs')
       .update({ status: map.status, [map.stamp]: now, updated_at: now }).eq('id', row.id);
     return { ok: true, matched: true };

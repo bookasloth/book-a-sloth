@@ -202,16 +202,34 @@ const campaignRecipients = async (req, res) => {
     const nameById = Object.fromEntries((contacts || []).map((c) => [c.id, c.name]));
 
     const logIds = [...new Set(list.map((r) => r.email_log_id).filter(Boolean))];
-    const { data: logs } = logIds.length
-      ? await supabaseAdmin.from('email_logs').select('id, status, delivered_at, bounced_at').in('id', logIds) : { data: [] };
-    const logById = Object.fromEntries((logs || []).map((l) => [l.id, l]));
+    // opened_at/clicked_at are v3.157; select fails soft on a pre-migration DB.
+    let logs = [];
+    if (logIds.length) {
+      let q = await supabaseAdmin.from('email_logs').select('id, status, delivered_at, bounced_at, opened_at, clicked_at').in('id', logIds);
+      if (q.error) q = await supabaseAdmin.from('email_logs').select('id, status, delivered_at, bounced_at').in('id', logIds);
+      logs = q.data || [];
+    }
+    const logById = Object.fromEntries(logs.map((l) => [l.id, l]));
 
     const summary = { total: list.length };
+    const bump = (k) => { summary[k] = (summary[k] || 0) + 1; };
     const rows = list.map((r) => {
       const log = r.email_log_id ? logById[r.email_log_id] : null;
-      const delivery = log ? (log.bounced_at ? 'bounced' : log.delivered_at ? 'delivered' : null) : null;
-      summary[r.status] = (summary[r.status] || 0) + 1;
-      if (delivery) summary[delivery] = (summary[delivery] || 0) + 1;
+      // Furthest state for the per-row pill (clicked ⊃ opened ⊃ delivered; bounced is exclusive).
+      const delivery = !log ? null
+        : log.bounced_at ? 'bounced'
+        : log.clicked_at ? 'clicked'
+        : log.opened_at ? 'opened'
+        : log.delivered_at ? 'delivered' : null;
+      bump(r.status);
+      // Count each engagement stamp independently so rates (open = opened/delivered)
+      // are computable — a clicked email is also delivered + opened.
+      if (log) {
+        if (log.delivered_at) bump('delivered');
+        if (log.bounced_at) bump('bounced');
+        if (log.opened_at) bump('opened');
+        if (log.clicked_at) bump('clicked');
+      }
       return { id: r.id, name: nameById[r.contact_id] || '', email: r.destination, status: r.status, delivery, sent_at: r.sent_at, error: r.error };
     });
     res.json({ recipients: rows.slice(0, 1000), summary, truncated: rows.length > 1000 });
