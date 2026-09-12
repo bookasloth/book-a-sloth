@@ -96,6 +96,18 @@ describe('changeStatus — manual override guard', () => {
     mockState.leadRow = { id: 'lead1', status: 'new', converted_at: null };
     await expect(leadService.changeStatus('lead1', 'bogus', 'admin1')).rejects.toThrow(/invalid status/);
   });
+
+  test('a paying customer (MONEY status) cannot be demoted to list', async () => {
+    mockState.leadRow = { id: 'lead1', status: 'paid', converted_at: '2026-01-01' };
+    await expect(leadService.changeStatus('lead1', 'list', 'admin1')).rejects.toThrow(/paying customer/);
+    expect(statusPatches()).toHaveLength(0);            // status='list' never written
+  });
+
+  test('a non-money lead can still be demoted to list (routine, no reason)', async () => {
+    mockState.leadRow = { id: 'lead1', status: 'qualified', converted_at: null };
+    await leadService.changeStatus('lead1', 'list', 'admin1');
+    expect(statusPatches().pop().patch.status).toBe('list');
+  });
 });
 
 describe('recomputeFromAccount — real-time resolution', () => {

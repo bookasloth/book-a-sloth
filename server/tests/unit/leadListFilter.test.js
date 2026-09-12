@@ -17,13 +17,13 @@ jest.mock('../../config/supabase', () => {
 });
 const { listLeads } = require('../../services/crm/leadService');
 
-const flatEq = (calls, method, col) => calls.some((f) => f.some((c) => c[0] === method && c[1] === col));
+const flatEq = (calls, method, col, val) => calls.some((f) => f.some((c) => c[0] === method && c[1] === col && (val === undefined || c[2] === val)));
 
 test('listLeads() without listId excludes cold (status=list)', async () => {
   const { __calls } = require('../../config/supabase');
   __calls.length = 0;
   await listLeads({});
-  expect(flatEq(__calls, 'neq', 'status')).toBe(true);   // .neq('status','list')
+  expect(flatEq(__calls, 'neq', 'status', 'list')).toBe(true);   // .neq('status','list')
 });
 
 test('listLeads({listId}) filters to that list and status=list', async () => {
@@ -31,5 +31,5 @@ test('listLeads({listId}) filters to that list and status=list', async () => {
   __calls.length = 0;
   await listLeads({ listId: 'LID' });
   expect(flatEq(__calls, 'eq', 'list_id')).toBe(true);
-  expect(flatEq(__calls, 'eq', 'status')).toBe(true);
+  expect(flatEq(__calls, 'eq', 'status', 'list')).toBe(true);
 });

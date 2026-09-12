@@ -434,6 +434,7 @@ async function changeStatus(id, status, actorAdminId, opts = {}) {
   // moves forward and to legitimate auto-exits (e.g. churn).
   if (actorAdminId && before) {
     const t = rules.manualTransition(before.status, status);
+    if (!t.allowed) throw new Error(t.reason || `cannot move ${before.status} → ${status}`);
     if (t.needsReason && !reason) {
       throw new Error(`reason required to move ${before.status} → ${status}`);
     }

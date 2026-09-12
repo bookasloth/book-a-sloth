@@ -345,7 +345,7 @@ const importCommit = async (req, res) => {
         const { created: isNew } = await leadService.upsertLead(patch, {
           source: listId ? (req.body.source || 'import') : (r.source || 'import'),
           createdBy: actor(req),
-          skipMetaLead: true,   // scraped prospects must not fire Meta CAPI "Lead"
+          skipMetaLead: true,   // all bulk imports skip Meta CAPI Lead — scraped/manual, not organic
         });
         if (isNew) created++; else merged++;
       } catch (_) { skipped++; }
