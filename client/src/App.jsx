@@ -226,6 +226,7 @@ const AdminFeatureStatus = lazy(() => import('./pages/admin/AdminFeatureStatus')
 const SalesDesk       = lazy(() => import('./pages/admin/sales/SalesDesk'));
 const RelationshipDesk = lazy(() => import('./pages/admin/sales/RelationshipDesk'));
 const SalesLeads      = lazy(() => import('./pages/admin/sales/SalesLeads'));
+const SalesLists      = lazy(() => import('./pages/admin/sales/SalesLists'));
 const SalesLeadDetail = lazy(() => import('./pages/admin/sales/SalesLeadDetail'));
 const SalesFollowUps  = lazy(() => import('./pages/admin/sales/SalesFollowUps'));
 const SalesPipeline   = lazy(() => import('./pages/admin/sales/SalesPipeline'));
@@ -603,6 +604,8 @@ function App() {
           <Route path="/admin/sales/relationships" element={<AdminWrapper><RelationshipDesk /></AdminWrapper>} />
           <Route path="/admin/sales/leads" element={<AdminWrapper><SalesLeads /></AdminWrapper>} />
           <Route path="/admin/sales/leads/:id" element={<AdminWrapper><SalesLeadDetail /></AdminWrapper>} />
+          <Route path="/admin/sales/lists" element={<AdminWrapper><SalesLists /></AdminWrapper>} />
+          <Route path="/admin/sales/lists/:id" element={<AdminWrapper><SalesLists /></AdminWrapper>} />
           <Route path="/admin/sales/follow-ups" element={<AdminWrapper><SalesFollowUps /></AdminWrapper>} />
           <Route path="/admin/sales/reports" element={<AdminWrapper><SalesReports /></AdminWrapper>} />
           <Route path="/admin/customer/:leadId" element={<AdminWrapper><CustomerDetail /></AdminWrapper>} />
