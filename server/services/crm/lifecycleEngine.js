@@ -36,7 +36,7 @@ const rules = require('./lifecycleRules');
 
 const BATCH = Number(process.env.LIFECYCLE_ENGINE_BATCH) || 500;
 const DRYRUN = process.env.LIFECYCLE_ENGINE_DRYRUN === 'true';
-const OPEN_EXCLUDE = ['lost', 'do_not_contact', 'paid'];
+const OPEN_EXCLUDE = ['lost', 'do_not_contact', 'paid', 'list']; // cold pool never enters the automation tick
 const STALE_SIGNUP_DAYS = 3;   // signed up but onboarding not finished this long → nurture
 const INACTIVE_DAYS = 30;      // no activity this long, never converted → win-back
 

@@ -52,6 +52,11 @@ router.get('/leads/export.csv', view, c.exportCsv);
 router.post('/leads/bulk', manage, c.bulk);
 router.post('/attribution/refresh', manage, c.refreshAttribution);
 
+// Lists (cold contact pools)
+router.get('/lists', view, c.listLists);
+router.post('/lists', manage, c.createList);
+router.get('/lists/:id', view, c.getListById);
+
 // Leads
 router.get('/leads', view, c.listLeads);
 router.post('/leads', manage, c.createLead);

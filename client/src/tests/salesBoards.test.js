@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BOARDS, ALL_STATUSES, STATUS_LABEL } from '../pages/admin/sales/salesConstants';
+import { BOARDS, ALL_STATUSES, STATUS_LABEL, RANK, needsReason } from '../pages/admin/sales/salesConstants';
 
 // Guardrail: pin each board's column layout to the agreed product spec. This is the
 // check that was missing when the Presale board drifted (extra "Responded" column,
@@ -52,4 +52,12 @@ describe('CRM board layout (pinned to spec)', () => {
       }
     }
   });
+});
+
+test('list (cold) is labelled but never a pipeline/board stage', () => {
+  expect(STATUS_LABEL.list).toBe('List');
+  expect(RANK.list).toBe(0);
+  expect(ALL_STATUSES).not.toContain('list');         // not in stage dropdowns / boards
+  expect(needsReason('qualified', 'list')).toBe(false); // demote to cold is routine
+  expect(needsReason('paid', 'list')).toBe(false);      // blocked server-side; no reason prompt either
 });

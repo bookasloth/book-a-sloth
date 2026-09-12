@@ -19,7 +19,7 @@ export const STATUS_LABEL = {
   paid: 'Subscribed', activated: 'Onboarded', won: 'Won', sloth: 'The Sloth',
   retained: 'Retained', ambassador: 'Ambassador', enterprised: 'Enterprised', champion: 'Champion',
   not_reachable: 'Not Reachable', not_interested: 'Not Interested', disqualified: 'Disqualified',
-  lost: 'Lost', churned: 'Churned', do_not_contact: 'Do Not Contact',
+  lost: 'Lost', churned: 'Churned', do_not_contact: 'Do Not Contact', list: 'List',
 };
 
 export const STATUS_TONE = {
@@ -27,11 +27,11 @@ export const STATUS_TONE = {
   paid: 'ok', activated: 'ok', won: 'ok', sloth: 'ok',
   retained: 'ok', ambassador: 'ok', enterprised: 'ok', champion: 'ok',
   not_reachable: 'danger', not_interested: 'danger', disqualified: 'danger', lost: 'danger', churned: 'danger',
-  do_not_contact: 'danger',
+  do_not_contact: 'danger', list: 'neutral',
 };
 
 // Advancement order (parity with server RANK). Terminals + dnc = 0.
-export const RANK = { new: 1, contacted: 2, replied: 3, qualified: 4, demo: 5, paid: 6, activated: 7, won: 8, sloth: 9, retained: 10, ambassador: 11, enterprised: 12, champion: 13 };
+export const RANK = { new: 1, contacted: 2, replied: 3, qualified: 4, demo: 5, paid: 6, activated: 7, won: 8, sloth: 9, retained: 10, ambassador: 11, enterprised: 12, champion: 13, list: 0 };
 [...EXIT, 'do_not_contact'].forEach((s) => { RANK[s] = 0; });
 
 export const MONEY = new Set(['paid', 'activated', 'won', 'sloth', 'retained', 'ambassador', 'enterprised', 'champion']);
@@ -41,6 +41,7 @@ export const TERMINAL = new Set(EXIT);
 // guard (lifecycleRules.manualTransition). The board opens the reason modal for these.
 export function needsReason(from, to) {
   if (!from || from === to) return false;
+  if (to === 'list') return false;  // demote to cold pool is routine (server blocks paying customers)
   // Manually ENTERING a money state (Subscribed/Won/…) asserts a payment the system
   // never verified — prompt for a reason there too, not just backward/exit moves.
   const entersMoney = MONEY.has(to) && !MONEY.has(from);

@@ -32,8 +32,10 @@ const RELATIONS = ['paid', 'activated', 'won', 'sloth'];        // Subscribed ·
 const MARKETING = ['sloth', 'retained', 'ambassador', 'enterprised', 'champion']; // sloth = shared handoff column
 const EXIT      = ['not_reachable', 'not_interested', 'disqualified', 'lost', 'churned'];
 const DNC       = 'do_not_contact';                             // orthogonal send-gate, not a board column
+const LIST      = 'list';   // cold pool — a lead not yet in the pipeline (flat Lists table, no board)
 
 const STATUSES = [
+  LIST,
   ...PRESALE,
   ...RELATIONS.filter((s) => s !== 'sloth'), 'sloth',           // sloth once
   ...MARKETING.filter((s) => s !== 'sloth'),
@@ -47,6 +49,7 @@ for (const s of ['paid', 'activated', 'won']) PIPELINE_OF[s] = 'relations';
 for (const s of ['sloth', 'retained', 'ambassador', 'enterprised', 'champion']) PIPELINE_OF[s] = 'marketing';
 for (const s of EXIT) PIPELINE_OF[s] = 'exit';
 PIPELINE_OF[DNC] = 'exit';
+PIPELINE_OF[LIST] = 'lists';   // its own group; NOT in BOARD_COLUMNS, so no kanban column renders it
 
 // Columns each board renders (Relations shows sloth as its read-only handoff tail).
 const BOARD_COLUMNS = { presale: PRESALE, relations: RELATIONS, marketing: MARKETING, exit: EXIT };
@@ -59,18 +62,19 @@ const RANK = {
 };
 for (const s of EXIT) RANK[s] = 0;
 RANK[DNC] = 0;
+RANK[LIST] = 0;   // below 'new' (1) — a cold lead is pre-pipeline
 
 // A lead that has produced revenue / is a paying customer. Never auto-regressed;
 // a manual move out of one requires a reason. converted_at is stamped on entry.
 const MONEY = new Set(['paid', 'activated', 'won', 'sloth', 'retained', 'ambassador', 'enterprised', 'champion']);
 const CONVERTED = MONEY;                                  // alias: entering any stamps converted_at
 const TERMINAL = new Set(EXIT);                           // lost · churned · not_reachable · not_interested · disqualified
-const NO_AUTO = new Set([...TERMINAL, DNC]);              // auto never moves a lead OUT of these
+const NO_AUTO = new Set([...TERMINAL, DNC, LIST]);        // auto never moves a cold/terminal/dnc lead
 
 // "Closed" leads — converted past sales/relations follow-up, or exited — excluded
 // from open-pipeline value, follow-up queues, and the Sales Desk. `activated`
 // (Onboarded) stays OPEN: Relations is still actively working it toward Won.
-const CLOSED = [...MONEY, ...TERMINAL, DNC].filter((s) => s !== 'activated');
+const CLOSED = [...MONEY, ...TERMINAL, DNC, LIST].filter((s) => s !== 'activated');
 const CLOSED_SQL = `(${CLOSED.join(',')})`;              // for supabase `.not('status','in', …)`
 
 // The reporting funnel spine (acquisition → success). Marketing/exit are excluded
@@ -149,6 +153,12 @@ function resolveAccountStatus(current, ctx = {}) {
 function manualTransition(from, to) {
   if (!STATUSES.includes(to)) return { allowed: false, needsReason: false, reason: `invalid status: ${to}` };
   if (from === to) return { allowed: true, needsReason: false };
+  // Demote to the cold pool is routine (no reason). A paying/converted customer
+  // must never fall into a list.
+  if (to === LIST) {
+    if (MONEY.has(from)) return { allowed: false, needsReason: false, reason: 'a paying customer cannot be moved to a list' };
+    return { allowed: true, needsReason: false };
+  }
   const backward = rankOf(to) < rankOf(from);
   const isExit = TERMINAL.has(to) || to === DNC;
   // Manually ENTERING a money state (Subscribed/Won/…) asserts a payment/booking the
@@ -158,7 +168,7 @@ function manualTransition(from, to) {
 }
 
 module.exports = {
-  PRESALE, RELATIONS, MARKETING, EXIT, DNC,
+  PRESALE, RELATIONS, MARKETING, EXIT, DNC, LIST,
   STATUSES, PIPELINE_OF, BOARD_COLUMNS, RANK, FUNNEL,
   MONEY, CONVERTED, TERMINAL, NO_AUTO, CLOSED, CLOSED_SQL,
   rankOf, pipelineOf, meetsSlothGate, resolveAccountStatus, manualTransition,
