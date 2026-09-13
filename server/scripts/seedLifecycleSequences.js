@@ -33,7 +33,10 @@ const p = (html) => `<p>${html}</p>`;
 const SIGN_TITHI = p(`— Tithi`);
 const SIGN_SUJATA = p(`— Sujata`);
 const SIGN_DURGA = p(`— Durga`);
-const SIGN_SHUBHAM = p(`— Shubham | Founder @ Book A Sloth`);
+// Founder's own booking page — his signature name links here. class="sig" keeps it
+// an inline text link (plainBody promotes bare links to buttons; sig links stay inline).
+const FOUNDER_URL = 'https://bookasloth.com/sndatarkar';
+const SIGN_SHUBHAM = p(`— <a href="${FOUNDER_URL}" class="sig">Shubham</a> | Founder @ Book A Sloth`);
 
 // Approved AiSensy Campaign Names (the human name sendCampaign uses).
 const WA = { onboarding: 'Onboarding Nudge', firstBooking: 'Get First Booking', winback: 'Winback Offer - Additional Month' };

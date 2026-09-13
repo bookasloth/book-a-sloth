@@ -42,11 +42,19 @@ function styleBody(html) {
 // hand-typed note rather than a designed email. Pairs with the 'cold' layout.
 const PLAIN_FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 function plainBody(html) {
-  const plainLinks = String(html || '').replace(
-    /<a\s+href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi,
-    (_m, href, label) => `<a href="${href}" style="color:#1a5fd0;text-decoration:underline;">${label}</a>`,
+  const linked = String(html || '').replace(
+    /<a\s+([^>]*?)href="([^"]*)"([^>]*?)>([\s\S]*?)<\/a>/gi,
+    (_m, pre, href, post, label) => {
+      // A `class="sig"` link (the founder's signature name) stays an inline text link;
+      // any other link (the CTA) becomes an orange filled button.
+      if (/\bclass="[^"]*\bsig\b[^"]*"/i.test(pre + post)) {
+        return `<a href="${href}" style="color:#1f2733;text-decoration:underline;">${label}</a>`;
+      }
+      return `<a href="${href}" style="display:inline-block;background:${BRAND};color:#ffffff;` +
+        `text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:6px;margin:6px 0;">${label}</a>`;
+    },
   );
-  return `<div style="font-family:${PLAIN_FONT};font-size:15px;line-height:1.62;color:#1f2733;text-align:left;">${plainLinks}</div>`;
+  return `<div style="font-family:${PLAIN_FONT};font-size:15px;line-height:1.62;color:#1f2733;text-align:left;">${linked}</div>`;
 }
 
 /**
