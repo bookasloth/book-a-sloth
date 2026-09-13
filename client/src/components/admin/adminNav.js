@@ -95,7 +95,7 @@ export const PATH_LABELS = {
   staff:'Staff & Roles', system:'System', audit:'Audit Logs', reserved:'Reserved Slugs',
   features:'Feature Status',
   sales:'Sales', leads:'Leads', lists:'Lists', pipeline:'Pipeline', 'follow-ups':'Follow-ups', reports:'Reports', templates:'Templates',
-  desk:'Desk', sequences:'Sequences',
+  desk:'Desk', sequences:'Sequences', growth:'Growth',
   security:'Security', 'blocked-ips':'Blocked IPs',
   dept:'Department', cxo:'CXO', marketing:'Marketing', operation:'Operation', engineering:'Engineering', 'sloth-house':'Sloth House',
 };
@@ -157,6 +157,7 @@ export const NAV = [
   ]},
   { key:'marketing', label:'Marketing', icon:'mail', color:'#6366f1', items:[
     { label:'Campaigns',          icon:'mail',      to:'/admin/campaigns', perm:'campaigns.view' },
+    { label:'Sequences',          icon:'send',      to:'/admin/marketing/sequences', perm:'leads.view' }, // cold acquisition drips
     { label:'Lists',              icon:'layers',    to:'/admin/sales/lists', perm:'leads.view' },
     { label:'Communication',      icon:'send',      to:'/admin/platform/communication', perm:'email.manage', badge:'failed_emails' },
   ]},
@@ -204,7 +205,7 @@ export const NAV = [
   ]},
   { key:'growth', label:'Growth', icon:'bars', color:'#FE5100', items:[
     { label:'Templates',          icon:'msgSq',     to:'/admin/sales/templates', perm:'leads.view' },
-    { label:'Sequences',          icon:'send',      to:'/admin/sales/sequences', perm:'leads.view' },
+    { label:'Sequences',          icon:'send',      to:'/admin/growth/sequences', perm:'leads.view' }, // host lifecycle drips
     { label:'Notifications',      icon:'bell',      to:'/admin/notifications', perm:'notifications.view', badge:'failed_notifications' },
     { label:'Badges',             icon:'star',      to:'/admin/badges', perm:'badges.manage' },
     { label:'Pages',              icon:'file',      to:'/admin/content/pages', perm:'cms.manage' },

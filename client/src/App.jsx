@@ -618,7 +618,11 @@ function App() {
           <Route path="/admin/customer/:leadId" element={<AdminWrapper><CustomerDetail /></AdminWrapper>} />
           <Route path="/admin/sales/pipeline" element={<AdminWrapper><SalesPipeline /></AdminWrapper>} />
           <Route path="/admin/sales/templates" element={<AdminWrapper><SalesTemplates /></AdminWrapper>} />
-          <Route path="/admin/sales/sequences" element={<AdminWrapper><SalesSequences /></AdminWrapper>} />
+          {/* Sequences, split by audience (v3.160): host lifecycle → Growth, cold acquisition → Marketing. */}
+          <Route path="/admin/growth/sequences" element={<AdminWrapper><SalesSequences audience="customer" title="Lifecycle Sequences" subtitle="Post-signup host journeys — onboarding, activation, win-back. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />
+          <Route path="/admin/marketing/sequences" element={<AdminWrapper><SalesSequences audience="lead" title="Acquisition Sequences" subtitle="Automated cold-lead nurture. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />
+          {/* Back-compat: the old combined route now lands on lifecycle. */}
+          <Route path="/admin/sales/sequences" element={<AdminWrapper><SalesSequences audience="customer" title="Lifecycle Sequences" /></AdminWrapper>} />
 
           {/* General settings */}
           <Route path="/admin/settings" element={<AdminWrapper><AdminSettings /></AdminWrapper>} />

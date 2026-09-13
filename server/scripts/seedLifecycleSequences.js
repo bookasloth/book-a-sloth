@@ -260,7 +260,7 @@ const SEQUENCES = [
     ],
   },
   {
-    name: 'New Lead nurture', sender_key: 'tithi',
+    name: 'New Lead nurture', sender_key: 'tithi', audience: 'lead',
     description: 'Cold lead (event/import/website). SEEDED INACTIVE — real channel is WhatsApp (needs approved AiSensy templates). Email draft kept ready.',
     is_active: false, stop_on_reply: true, stop_on_convert: true,
     steps: [
@@ -299,19 +299,28 @@ async function upsertSequence(seq) {
     name: seq.name, description: seq.description, is_active: seq.is_active,
     stop_on_reply: seq.stop_on_reply, stop_on_convert: seq.stop_on_convert,
     sender_key: seq.sender_key || null,
+    // v3.160 audience axis: only the cold lead nurture targets leads; every host
+    // lifecycle sequence defaults to 'customer'. Keeps the Growth/Marketing split
+    // correct across re-seeds. Stripped below if the column isn't present yet.
+    audience: seq.audience || 'customer',
     created_by: 'seed', updated_at: new Date().toISOString(),
   };
 
+  // Schema-fallback: a DB without the v3.160 `audience` column rejects the row —
+  // retry once without it so the seed still runs pre-migration.
+  const write = async (r) => existing
+    ? supabaseAdmin.from('crm_sequences').update(r).eq('id', existing.id).select('id').single()
+    : supabaseAdmin.from('crm_sequences').insert(r).select('id').single();
+
   let seqId;
-  if (existing) {
-    await supabaseAdmin.from('crm_sequences').update(row).eq('id', existing.id);
-    seqId = existing.id;
-    await supabaseAdmin.from('crm_sequence_steps').delete().eq('sequence_id', seqId);
-  } else {
-    const { data, error } = await supabaseAdmin.from('crm_sequences').insert(row).select('id').single();
-    if (error) throw error;
-    seqId = data.id;
+  let { data, error } = await write(row);
+  if (error && /audience/i.test(error.message || '')) {
+    const { audience, ...noAud } = row;
+    ({ data, error } = await write(noAud));
   }
+  if (error) throw error;
+  seqId = existing ? existing.id : data.id;
+  if (existing) await supabaseAdmin.from('crm_sequence_steps').delete().eq('sequence_id', seqId);
 
   const steps = seq.steps.map((s) => ({
     sequence_id: seqId, step_no: s.step_no, delay_hours: s.delay_hours,

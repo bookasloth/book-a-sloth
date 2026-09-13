@@ -1,82 +1,107 @@
 import { useEffect, useState } from 'react';
 import { PageHeader, Card, Btn, Badge } from '../../../components/admin/ui';
+import SequenceFlow from '../../../components/admin/SequenceFlow';
 import { crmListSequences, crmCreateSequence, crmListTemplates } from '../../../services/api';
 import toast from 'react-hot-toast';
 
 // Drip sequences the lifecycle engine (and manual enrolment) fire step by step
 // through the gated send queue. Names matching the engine's SEQ constants
 // (e.g. "New Lead nurture") are auto-enrolled; any others are manual-enrol only.
+//
+// `audience` scopes the page (v3.160): 'customer' = host lifecycle (Growth),
+// 'lead' = cold acquisition drips (Marketing). The list is filtered server-side
+// by this value; new sequences created here are stamped with it.
 
 const CHANNELS = ['email', 'whatsapp'];
 
-export default function SalesSequences() {
+export default function SalesSequences({
+  audience = null,
+  title = 'Sequences',
+  subtitle = 'Automated drip journeys. Steps fire through the gated send queue — nothing sends while the CRM kill-switch is off.',
+}) {
   const [sequences, setSequences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
+  const [openId, setOpenId] = useState(null); // sequence whose flowchart is expanded
 
-  const load = () => crmListSequences()
+  const load = () => crmListSequences(audience)
     .then(({ data }) => setSequences(Array.isArray(data) ? data : []))
     .catch(() => setSequences([]))
     .finally(() => setLoading(false));
-  useEffect(() => { load(); }, []);
+  useEffect(() => { setLoading(true); load(); }, [audience]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="p-6 max-w-4xl">
-      <PageHeader title="Sequences" subtitle="Automated drip journeys. Steps fire through the gated send queue — nothing sends while the CRM kill-switch is off."
+      <PageHeader title={title} subtitle={subtitle}
         actions={<Btn size="sm" onClick={() => setShowNew(true)}>+ New sequence</Btn>} />
 
       {loading ? <p className="adm-t3">Loading…</p> : sequences.length === 0 ? (
         <Card className="rounded-2xl p-10 text-center">
           <p className="text-2xl mb-2">🦥</p>
           <p className="adm-t1 font-semibold mb-1">No sequences yet</p>
-          <p className="adm-t3 text-sm mb-4">Build a nurture journey once; enrol leads into it from the lead panel.</p>
+          <p className="adm-t3 text-sm mb-4">Build a nurture journey once; enrol {audience === 'lead' ? 'leads' : 'hosts'} into it from the lead panel.</p>
           <Btn size="sm" onClick={() => setShowNew(true)}>+ New sequence</Btn>
         </Card>
       ) : (
         <div className="space-y-3">
-          {sequences.map((s) => <SequenceCard key={s.id} seq={s} />)}
+          {sequences.map((s) => (
+            <SequenceCard key={s.id} seq={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} />
+          ))}
         </div>
       )}
 
-      {showNew && <NewSequenceModal onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); load(); }} />}
+      {showNew && <NewSequenceModal audience={audience} onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); load(); }} />}
     </div>
   );
 }
 
-function SequenceCard({ seq }) {
+function SequenceCard({ seq, open, onToggle }) {
   const steps = [...(seq.crm_sequence_steps || [])].sort((a, b) => a.step_no - b.step_no);
   const channels = [...new Set(steps.map((s) => s.channel))];
   return (
     <Card className="rounded-2xl p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold adm-t1">{seq.name}</h3>
-            <Badge tone={seq.is_active ? 'ok' : 'neutral'}>{seq.is_active ? 'Active' : 'Inactive'}</Badge>
+      <button type="button" onClick={onToggle} className="w-full text-left" aria-expanded={open}>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="adm-t3 text-xs" aria-hidden>{open ? '▾' : '▸'}</span>
+              <h3 className="font-bold adm-t1">{seq.name}</h3>
+              <Badge tone={seq.is_active ? 'ok' : 'neutral'}>{seq.is_active ? 'Active' : 'Inactive'}</Badge>
+            </div>
+            {seq.description && <p className="text-[12px] adm-t3 mt-0.5">{seq.description}</p>}
           </div>
-          {seq.description && <p className="text-[12px] adm-t3 mt-0.5">{seq.description}</p>}
+          <div className="text-[11px] adm-t3 text-right shrink-0">
+            {steps.length} step{steps.length === 1 ? '' : 's'} · {channels.join(', ') || '—'}
+            <div className="mt-0.5">{open ? 'Hide flow' : 'View flow'}</div>
+          </div>
         </div>
-        <div className="text-[11px] adm-t3 text-right shrink-0">
-          {steps.length} step{steps.length === 1 ? '' : 's'} · {channels.join(', ') || '—'}
+      </button>
+
+      {open ? (
+        <div className="mt-4 pt-3 border-t" style={{ borderColor: 'var(--adm-border)' }}>
+          <SequenceFlow seq={seq} />
         </div>
-      </div>
-      <div className="flex flex-wrap gap-1.5 mt-2">
-        {steps.map((st) => (
-          <span key={st.id || st.step_no} className="text-[10px] px-2 py-0.5 rounded-md bg-gray-500/8 adm-t2">
-            {st.step_no}. {st.channel} · +{st.delay_hours}h {st.channel === 'whatsapp' ? (st.template_key || '') : (st.subject || '')}
-          </span>
-        ))}
-      </div>
-      <p className="text-[10px] adm-t3 mt-2">
-        Stops on: {[seq.stop_on_reply && 'reply', seq.stop_on_convert && 'convert'].filter(Boolean).join(', ') || 'never'}
-      </p>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {steps.map((st) => (
+              <span key={st.id || st.step_no} className="text-[10px] px-2 py-0.5 rounded-md bg-gray-500/8 adm-t2">
+                {st.step_no}. {st.channel} · +{st.delay_hours}h {st.channel === 'whatsapp' ? (st.template_key || '') : (st.subject || '')}
+              </span>
+            ))}
+          </div>
+          <p className="text-[10px] adm-t3 mt-2">
+            Stops on: {[seq.stop_on_reply && 'reply', seq.stop_on_convert && 'convert'].filter(Boolean).join(', ') || 'never'}
+          </p>
+        </>
+      )}
     </Card>
   );
 }
 
 const emptyStep = () => ({ channel: 'email', delay_hours: 0, template_key: '', subject: '', body: '' });
 
-function NewSequenceModal({ onClose, onCreated }) {
+function NewSequenceModal({ audience, onClose, onCreated }) {
   const [form, setForm] = useState({ name: '', description: '', stop_on_reply: true, stop_on_convert: true });
   const [steps, setSteps] = useState([emptyStep()]);
   const [waTemplates, setWaTemplates] = useState([]);
@@ -99,6 +124,7 @@ function NewSequenceModal({ onClose, onCreated }) {
     try {
       await crmCreateSequence({
         name: form.name.trim(), description: form.description.trim(),
+        audience: audience === 'lead' ? 'lead' : 'customer', // stamp the page's audience
         stop_on_reply: form.stop_on_reply, stop_on_convert: form.stop_on_convert,
         steps: steps.map((s) => ({
           channel: s.channel, delay_hours: Number(s.delay_hours) || 0,
