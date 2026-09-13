@@ -399,13 +399,35 @@ async function enqueueCampaignEmail({
 // unmatched id or a pre-v3.138 DB just no-ops (a webhook must never throw).
 const EMAILLOG_DELIVERY = {
   'email.delivered': { status: 'delivered', stamp: 'delivered_at' },
-  'email.bounced':   { status: 'bounced',   stamp: 'bounced_at' },
-  'email.complained':{ status: 'bounced',   stamp: 'bounced_at' },
+  // suppress: a campaign/transactional bounce must also suppress the contact so
+  // cold never re-sends a dead address (the CRM path already does this via
+  // webhookEvents; campaign emails only hit email_logs, so it was leaking here —
+  // 53 bounced but only ~10 suppressed until this landed).
+  'email.bounced':   { status: 'bounced',   stamp: 'bounced_at', suppress: true },
+  'email.complained':{ status: 'bounced',   stamp: 'bounced_at', suppress: true },
   // Engagement (v3.157): stamp the timestamp only — an opened/clicked email is
   // still 'delivered', so status is never touched. First touch wins.
   'email.opened':    { stamp: 'opened_at',  engagement: true },
   'email.clicked':   { stamp: 'clicked_at', engagement: true },
 };
+// Suppress a bounced address on the contact (what the campaign/CRM send gates read)
+// and mark the lead, so it's skipped and visible. Best-effort + schema-safe: any
+// error (missing column, no match) is swallowed — a webhook must never throw.
+async function suppressBouncedContact(recipient) {
+  const email = String(recipient).trim();
+  if (!email) return;
+  try {
+    await supabaseAdmin.from('contacts')
+      .update({ email_suppressed: true, updated_at: new Date().toISOString() })
+      .ilike('email', email);
+  } catch (_) { /* best-effort */ }
+  try {
+    await supabaseAdmin.from('leads')
+      .update({ email_status: 'bounced', updated_at: new Date().toISOString() })
+      .ilike('email', email);
+  } catch (_) { /* best-effort */ }
+}
+
 async function recordEmailLogDelivery({ providerMessageId, event }) {
   const map = EMAILLOG_DELIVERY[event];
   if (!map || !providerMessageId) return { ok: true, matched: false };
@@ -413,7 +435,7 @@ async function recordEmailLogDelivery({ providerMessageId, event }) {
     // Select the target stamp too so engagement events can honour first-touch and
     // so a pre-migration DB (missing opened_at/clicked_at) trips isMissingSchema → no-op.
     const { data: row } = await supabaseAdmin
-      .from('email_logs').select(`id, status, ${map.stamp}`).eq('provider_message_id', providerMessageId).maybeSingle();
+      .from('email_logs').select(`id, status, recipient, ${map.stamp}`).eq('provider_message_id', providerMessageId).maybeSingle();
     if (!row) return { ok: true, matched: false };
     const now = new Date().toISOString();
     if (map.engagement) {
@@ -425,6 +447,9 @@ async function recordEmailLogDelivery({ providerMessageId, event }) {
     if (row.status === 'bounced') return { ok: true, matched: true }; // terminal
     await supabaseAdmin.from('email_logs')
       .update({ status: map.status, [map.stamp]: now, updated_at: now }).eq('id', row.id);
+    // Bounce/complaint → suppress the contact so cold never re-sends this address.
+    // Best-effort: ilike matches case-insensitively; never throw out of a webhook.
+    if (map.suppress && row.recipient) await suppressBouncedContact(row.recipient);
     return { ok: true, matched: true };
   } catch (err) {
     if (!isMissingSchema(err)) console.error('[email] recordEmailLogDelivery:', err.message);
