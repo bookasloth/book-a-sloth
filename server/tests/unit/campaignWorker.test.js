@@ -37,8 +37,13 @@ let mockEnqueued = [];
 jest.mock('../../services/email/communicationEngine', () => ({
   enqueueCampaignEmail: async (a) => { mockEnqueued.push(a); return { ok: true, status: 'queued', logId: `log${mockEnqueued.length}` }; },
 }));
+// Cold email budget now comes from the shared sendBudget (18:00 window + ramp +
+// remainder). Stub it so these tests control the allowance directly instead of
+// depending on wall-clock IST time.
+let mockColdAllowance = 90;
+jest.mock('../../services/email/sendBudget', () => ({ coldAllowanceNow: async () => mockColdAllowance }));
 const worker = require('../../services/campaignWorker');
-beforeEach(() => { mockEnqueued = []; state.recipients.forEach((r) => { r.status = 'queued'; }); state.campaigns[0].status = 'sending'; state.emailSentToday = 0; });
+beforeEach(() => { mockEnqueued = []; state.recipients.forEach((r) => { r.status = 'queued'; }); state.campaigns[0].status = 'sending'; state.emailSentToday = 0; mockColdAllowance = 90; });
 
 test('enqueues each queued recipient and marks them sent', async () => {
   const r = await worker.processDue();
@@ -53,8 +58,8 @@ test('marks campaign sent once drained', async () => {
   expect(state.campaigns[0].status).toBe('sent');
 });
 
-test('daily Resend cap: leaves recipients queued when budget spent, no send, campaign not drained', async () => {
-  state.emailSentToday = 100000; // well above RESEND_DAILY_CAMPAIGN_CAP
+test('cold budget spent (0 allowance): leaves recipients queued, no send, campaign not drained', async () => {
+  mockColdAllowance = 0; // outside window / no remainder
   const r = await worker.processDue();
   expect(mockEnqueued).toHaveLength(0);
   expect(state.recipients.every((x) => x.status === 'queued')).toBe(true);
@@ -62,14 +67,10 @@ test('daily Resend cap: leaves recipients queued when budget spent, no send, cam
   expect(state.campaigns[0].status).toBe('sending'); // still queued → not marked sent
 });
 
-test('daily Resend cap: partial budget enqueues only up to remaining headroom', async () => {
-  process.env.RESEND_DAILY_CAMPAIGN_CAP = '399';
-  jest.resetModules();
-  const w = require('../../services/campaignWorker');
-  state.emailSentToday = 398; // 1 slot left
-  const r = await w.processDue();
+test('partial cold allowance enqueues only up to the remainder', async () => {
+  mockColdAllowance = 1; // 1 slot left
+  const r = await worker.processDue();
   expect(r.enqueued).toBe(1);
   expect(state.recipients.filter((x) => x.status === 'sent')).toHaveLength(1);
   expect(state.recipients.filter((x) => x.status === 'queued')).toHaveLength(1);
-  delete process.env.RESEND_DAILY_CAMPAIGN_CAP;
 });

@@ -14,27 +14,19 @@ const communicationEngine = require('./email/communicationEngine');
 const aisensy = require('./aisensyService');
 const waTemplates = require('./whatsappTemplateService');
 const NotificationEngine = require('./notificationEngine');
-
-// Max campaign emails handed to Resend per UTC day. Guards the provider's daily
-// sending quota so a large blast throttles across days instead of overflowing
-// and dying as terminal 'failed'. WhatsApp campaigns are a different provider
-// (AiSensy) and are never gated by this.
-const DAILY_EMAIL_CAP = parseInt(process.env.RESEND_DAILY_CAMPAIGN_CAP || '400', 10);
+const sendBudget = require('./email/sendBudget');
 
 async function processDue() {
   const { data: campaigns } = await supabaseAdmin.from('email_campaigns').select('*').eq('status', 'sending');
   let enqueued = 0, failed = 0;
 
-  // ── Daily Resend send budget (email only) ──────────────────────────────
-  // Count campaign emails already handed to Resend today (UTC — Resend resets
-  // its daily quota at 00:00 UTC). When the budget is spent, email recipients
-  // are left 'queued' and resume on a later tick / the next day, instead of
-  // enqueuing into a doomed (quota-rejected) send.
-  const dayStart = new Date(); dayStart.setUTCHours(0, 0, 0, 0);
-  const { count: sentToday } = await supabaseAdmin
-    .from('email_logs').select('id', { count: 'exact', head: true })
-    .not('campaign_id', 'is', null).gte('created_at', dayStart.toISOString());
-  let emailBudget = Math.max(0, DAILY_EMAIL_CAP - (sentToday || 0));
+  // ── Cold email budget: the SHARED Resend remainder, 18:00 IST window only ──
+  // Campaigns are cold acquisition (P3) and go LAST: only inside the cold window,
+  // capped by the warm-up ramp AND whatever budget CRM (P1/P2) left today. Outside
+  // the window / on a skip day this is 0, so email recipients stay 'queued' and
+  // resume at 18:00. WhatsApp campaigns are a different provider (AiSensy) and are
+  // never gated by this. See services/email/sendBudget.js.
+  let emailBudget = await sendBudget.coldAllowanceNow();
 
   for (const campaign of campaigns || []) {
     const cap = campaign.throttle_per_min || 120;
