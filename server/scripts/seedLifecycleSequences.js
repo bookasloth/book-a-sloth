@@ -33,6 +33,7 @@ const p = (html) => `<p>${html}</p>`;
 const SIGN_TITHI = p(`— Tithi`);
 const SIGN_SUJATA = p(`— Sujata`);
 const SIGN_DURGA = p(`— Durga`);
+const SIGN_SHUBHAM = p(`— Shubham | Founder @ Book A Sloth`);
 
 // Approved AiSensy Campaign Names (the human name sendCampaign uses).
 const WA = { onboarding: 'Onboarding Nudge', firstBooking: 'Get First Booking', winback: 'Winback Offer - Additional Month' };
@@ -260,26 +261,46 @@ const SEQUENCES = [
     ],
   },
   {
-    name: 'New Lead nurture', sender_key: 'tithi', audience: 'lead',
-    description: 'Cold lead (event/import/website). SEEDED INACTIVE — real channel is WhatsApp (needs approved AiSensy templates). Email draft kept ready.',
+    // Cold acquisition (audience 'lead'). Founder voice (Shubham) — sent PLAIN, no
+    // brand shell (messageService PLAIN_SENDERS → 'cold' layout), so it reads like a
+    // 1:1 note from someone who lived the pain. SEEDED INACTIVE.
+    name: 'New Lead nurture', sender_key: 'shubham', audience: 'lead',
+    description: 'Cold lead (event/import/website). Founder voice, plain 1:1 style. SEEDED INACTIVE — switch on when ready.',
     is_active: false, stop_on_reply: true, stop_on_convert: true,
     steps: [
       { step_no: 1, delay_hours: 0,   channel: 'email',
-        subject: 'A booking link that gets you paid, {{first_name}}',
-        preview: `Give clients one link to book, pay and pick a time.`,
-        body: p(`Send one link. Your client picks a service, chooses a time, and pays.`) + p(`No "what time are you free?" messages. No payment chasing.`) + p(`<a href="${BL}">See how it works →</a>`) + SIGN_TITHI },
+        subject: '{{first_name}}, the WhatsApp booking dance is insane and you know it',
+        preview: `I did it for two years. Never again.`,
+        body: p(`{{first_name}} — can we talk about the madness for a sec?`)
+          + p(`"Are you free Thursday?" "How much?" "Can you do 4 instead?" "Sent the UPI — did it come?" Fifteen messages, three days, and half of them ghost you anyway.`)
+          + p(`I ran my own bookings like this for way too long. It's not a business — it's a part-time job as your own receptionist.`)
+          + p(`Book A Sloth ends it. One link. They pick, they book, they <b>pay</b> — before they can flake.`)
+          + p(`<a href="${BL}">See the thing that saved my sanity →</a>`) + SIGN_SHUBHAM
+          + p(`P.S. Reply <b>SHOW ME</b> and I'll send you a 30-second walkthrough. No signup. Just look.`) },
       { step_no: 2, delay_hours: 48,  channel: 'email',
-        subject: 'One link. Less WhatsApp. More bookings.',
-        preview: `Services, availability and payments, all in one place.`,
-        body: p(`One link for your services, calendar and payments. Your clients book and pay in a couple of taps.`) + SIGN_TITHI },
+        subject: 'three apps to get paid once. what are we doing.',
+        preview: `WhatsApp, UPI, and your memory holding it together.`,
+        body: p(`Be honest, {{first_name}} — your booking "system" right now is WhatsApp for times, UPI for money, and your brain praying you didn't double-book.`)
+          + p(`I lived in that mess. One client paid twice, another never paid, and I found out at 11pm.`)
+          + p(`One link fixes the whole circus. Services, calendar, payment — clients handle it themselves in two taps.`)
+          + p(`<a href="${BL}">Grab your link →</a>`) + SIGN_SHUBHAM
+          + p(`P.S. It'd be yours the second you sign up.`) },
       { step_no: 3, delay_hours: 72,  channel: 'email',
-        subject: 'How {{profession}}s turn enquiries into bookings',
-        preview: `From "How much?" to a paid booking — no back-and-forth.`,
-        body: p(`Someone asks to book you. Instead of explaining your availability, sending your UPI details and confirming everything by hand — send them your Book A Sloth link.`) + p(`They choose → book → pay. That's it.`) + SIGN_TITHI },
+        subject: 'the enquiry-to-ghost pipeline (you know it)',
+        preview: `Every step is a place they drop off.`,
+        body: p(`The dance, one more time, because it still makes me twitch:`)
+          + p(`"free Thursday?" → you check → you reply → silence → you follow up feeling needy → maybe they pay.`)
+          + p(`Every step is a place they ghost. Every step is you doing unpaid admin.`)
+          + p(`Your Book A Sloth link deletes all of it. They choose, book, pay — one move, while they're still excited.`)
+          + p(`<a href="${BL}">Try it →</a>`) + SIGN_SHUBHAM
+          + p(`P.S. The people who blow up do ONE thing — link in bio, link in story, link in every WhatsApp status. That's the whole trick.`) },
       { step_no: 4, delay_hours: 120, channel: 'email',
-        subject: 'Want me to set it up with you?',
-        preview: `Reply "HELP" and I'll get your page live with you.`,
-        body: p(`Reply to this email with <b>HELP</b> and I'll help you get your page live. We can do it together — it won't take long.`) + SIGN_TITHI },
+        subject: '{{first_name}} I\'ll literally set it up for you',
+        preview: `Reply and we do it together, right now.`,
+        body: p(`Okay {{first_name}}, I'm done watching you suffer the WhatsApp gauntlet.`)
+          + p(`Reply <b>HELP</b> and I'll set your page up with you. One quick back-and-forth, and you walk away with a booking link that gets you paid while you sleep.`)
+          + p(`No pitch. I just remember how much time I wasted on this — and I don't want you wasting yours.`) + SIGN_SHUBHAM
+          + p(`P.S. Want to nose around first? Reply and I'll send you a live example page.`) },
     ],
   },
 ];

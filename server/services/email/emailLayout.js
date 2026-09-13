@@ -218,24 +218,33 @@ function renderVendorLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCate
 // the legal floor only: sender identity + postal address + unsubscribe (DPDP /
 // CAN-SPAM require all three on commercial cold mail). No nav, no "My Bookings",
 // no rights-reserved. ponytail: reuses the shared shell, just drops the header row.
-function renderColdLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, settings, data }) {
-  const brand    = settings.brand_color || '#FE5100';
+// Founder cold outreach — a hand-typed 1:1 note. NO card, NO grey page background,
+// NO centered brand shell, NO orange buttons: white ground, left-aligned text, plain
+// links, and a faint legal-floor footer (sender + address + unsubscribe). The point
+// is it must NOT read as a marketing blast — plainer lands better in a cold inbox and
+// protects sender reputation. `bodyHtml` is pre-styled plain by emailService (links
+// stay inline, not promoted to buttons), so no ctaButton here.
+function renderColdLayout({ bodyHtml, previewText, settings, data }) {
   const website  = settings.website_url || 'https://bookasloth.com';
   const fromName = settings.from_name   || 'Book A Sloth';
   const unsubToken = data.unsubscribe_token || '';
-
-  // Footer text matches the body: same size (15px), color (muted) and line-height.
-  const footerRow = `<tr>
-    <td style="padding:20px 28px;border-top:1px solid ${D.border};text-align:center;font-size:15px;line-height:1.7;color:${D.muted};font-family:${D.font};">
-      ${esc(fromName)} by ${esc(COMPANY)}.<br>
-      ${esc(ADDRESS)}<br>
-      <a href="${esc(website)}/unsubscribe?u=${esc(unsubToken)}" style="color:${D.muted};text-decoration:underline;">Unsubscribe</a>
-    </td>
-  </tr>`;
-
-  // accent:false → no orange top bar; fully plain.
-  return shellOpen({ previewText, fromName, brand, accent: false })
-    + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), footerRow });
+  const font = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${esc(fromName)}</title></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:${font};">
+  <span style="display:none!important;opacity:0;color:transparent;height:0;width:0;max-height:0;max-width:0;overflow:hidden;font-size:1px;">${esc(previewText)}</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;">
+    <tr><td align="left" style="padding:22px 20px;">
+      <div style="max-width:560px;text-align:left;">
+        ${bodyHtml}
+        <div style="margin-top:22px;font-size:12px;line-height:1.6;color:${D.note};font-family:${font};">
+          ${esc(fromName)} · ${esc(COMPANY)}, ${esc(ADDRESS)}<br>
+          <a href="${esc(website)}/unsubscribe?u=${esc(unsubToken)}" style="color:${D.note};text-decoration:underline;">Unsubscribe</a>
+        </div>
+      </div>
+    </td></tr>
+  </table>
+</body></html>`;
 }
 
 // ── Dispatcher ───────────────────────────────────────────────────────────────

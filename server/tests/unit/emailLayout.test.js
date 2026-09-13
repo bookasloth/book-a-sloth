@@ -73,8 +73,12 @@ describe("renderLayout — cold outreach layout", () => {
     expect(html).toMatch(/Unsubscribe/i);
     expect(html).toContain('https://x.test/unsubscribe?u=TOK123');
     expect(html).toContain('Timewheel');            // legal entity sign-off
-    expect(html).toContain('Book A Sloth by');
+    expect(html).toContain('Book A Sloth');         // sender identity in the footer
     expect(html).toContain('Nagpur');               // postal address (legal floor)
+    // plain hand-typed look: white ground, left-aligned, no grey card, no 600px shell
+    expect(html).toContain('background:#ffffff');
+    expect(html).not.toContain('#f3f5f7');          // no grey page background
+    expect(html).not.toContain('width:600px');       // no centered card
     // header chrome + customer clutter stripped
     expect(html).not.toContain('images/email/header-logo.png');
     expect(html).not.toContain('images/email/footer-logo.png');

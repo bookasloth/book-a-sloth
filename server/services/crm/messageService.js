@@ -26,6 +26,11 @@ const RETRY_BACKOFF_MIN = [5, 30, 120]; // matches the email queue
 const MAX_ATTEMPTS = RETRY_BACKOFF_MIN.length;
 const BATCH = 50;
 
+// Senders whose email sends render PLAIN (no brand shell) — a hand-typed 1:1 note.
+// The founder cold voice (Shubham) and his warm second-touch use this; the branded
+// personas (Tithi/Sujata/Durga) keep the marketing shell.
+const PLAIN_SENDERS = new Set(['shubham']);
+
 const SITE_URL = process.env.SITE_URL || 'https://bookasloth.com';
 
 /** Render {{var}} tokens from a lead. Unknown tokens collapse to ''. */
@@ -149,6 +154,7 @@ async function dispatch(row, leadArg, opts = {}) {
       category: row.sender_key === 'sujata' ? 'Offer' : '',   // header pill
       previewText: row.variables?.preview ? renderVars(row.variables.preview, lead, extra) : '',
       fromName: sender?.fromName, fromEmail: sender?.fromEmail, replyTo: sender?.replyTo, automated,
+      plain: PLAIN_SENDERS.has(row.sender_key),   // founder cold → hand-typed, no brand shell
     });
   }
 
