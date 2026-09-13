@@ -739,7 +739,7 @@ export const crmListFollowUps    = (params)      => API.get('/admin/crm/follow-u
 export const crmCreateFollowUp   = (id, data)    => API.post(`/admin/crm/leads/${id}/follow-ups`, data);
 export const crmCompleteFollowUp = (id)          => API.post(`/admin/crm/follow-ups/${id}/complete`);
 export const crmCancelFollowUp   = (id)          => API.post(`/admin/crm/follow-ups/${id}/cancel`);
-export const crmListSequences    = ()            => API.get('/admin/crm/sequences');
+export const crmListSequences    = (audience)    => API.get('/admin/crm/sequences', { params: audience ? { audience } : {} });
 export const crmCreateSequence   = (data)        => API.post('/admin/crm/sequences', data);
 export const crmEnroll           = (id, sequenceId) => API.post(`/admin/crm/leads/${id}/enroll`, { sequenceId });
 export const crmBulk             = (data)        => API.post('/admin/crm/leads/bulk', data);

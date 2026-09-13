@@ -224,19 +224,28 @@ const cancelFollowUp = async (req, res) => {
 };
 
 // ── Sequences ─────────────────────────────────────────────────
+// audience: 'lead' (cold acquisition → Marketing) | 'customer' (host lifecycle →
+// Growth). Filter is server-side, not a cosmetic client hide. Schema-fallback:
+// pre-v3.160 DBs have no `audience` column, so drop the filter on that error and
+// return everything (the page still renders; the split just isn't enforced yet).
 const listSequences = async (req, res) => {
   try {
-    const { data } = await supabaseAdmin.from('crm_sequences').select('*, crm_sequence_steps(*)').order('created_at', { ascending: false });
+    const audience = req.query.audience === 'lead' || req.query.audience === 'customer' ? req.query.audience : null;
+    const select = () => supabaseAdmin.from('crm_sequences').select('*, crm_sequence_steps(*)').order('created_at', { ascending: false });
+    let { data, error } = audience ? await select().eq('audience', audience) : await select();
+    if (error && /audience/i.test(error.message || '')) ({ data } = await select()); // column absent
     res.json(data || []);
   } catch (e) { safeError(res, e); }
 };
 const createSequence = async (req, res) => {
   try {
-    const { name, description, steps = [], stop_on_reply, stop_on_convert } = req.body || {};
+    const { name, description, steps = [], stop_on_reply, stop_on_convert, audience } = req.body || {};
     if (!name) return res.status(400).json({ message: 'name required' });
-    const { data: seq, error } = await supabaseAdmin.from('crm_sequences')
-      .insert({ name, description: description || '', stop_on_reply: stop_on_reply !== false, stop_on_convert: stop_on_convert !== false, created_by: actor(req) })
-      .select('*').single();
+    const base = { name, description: description || '', stop_on_reply: stop_on_reply !== false, stop_on_convert: stop_on_convert !== false, created_by: actor(req) };
+    const aud = audience === 'lead' ? 'lead' : 'customer';
+    let { data: seq, error } = await supabaseAdmin.from('crm_sequences').insert({ ...base, audience: aud }).select('*').single();
+    if (error && /audience/i.test(error.message || '')) // pre-v3.160 DB — insert without the column
+      ({ data: seq, error } = await supabaseAdmin.from('crm_sequences').insert(base).select('*').single());
     if (error) return safeError(res, error);
     if (steps.length) {
       const rows = steps.map((s, i) => ({
