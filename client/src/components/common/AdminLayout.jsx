@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, Navigate, useNavigate, Link } from 'react-router-dom';
 import Ic from '../admin/Ic';
 import { IC, NAV, PATH_LABELS, QUICK_ACTIONS } from '../admin/adminNav';
-import { visibleSections, activeSection } from '../admin/navHelpers';
-import PrimaryRail from '../admin/PrimaryRail';
-import SecondarySidebar, { ItemList } from '../admin/SecondarySidebar';
+import { filterTree } from '../admin/navHelpers';
+import StackSidebar from '../admin/StackSidebar';
 import CommandPalette from '../admin/CommandPalette';
 import NotificationBell from '../admin/NotificationBell';
 import AdminEscalationRinger from '../admin/AdminEscalationRinger';
@@ -40,11 +39,8 @@ const AdminLayout = ({ children }) => {
   const quickRef   = useRef(null);
   const profileRef = useRef(null);
 
-  // Two-level nav, computed from the config + this session's permissions.
-  const sections = visibleSections(NAV, session);
-  const active   = activeSection(location.pathname, NAV) || sections[0] || null;
-  // The visible copy of the active section (permission-filtered items).
-  const activeVisible = sections.find(s => s.key === active?.key) || sections[0] || null;
+  // 3-level stacked nav, permission-filtered from the config (single source of truth).
+  const nav = useMemo(() => filterTree(NAV, session), [session]);
 
   // Live attention counts feed the rail dots + sidebar pills. Same endpoint the
   // NotificationBell uses; each sub-count is server-side try/caught with a 0
@@ -106,9 +102,9 @@ const AdminLayout = ({ children }) => {
     <div className={`admin-shell adm-canvas min-h-screen ${dark ? 'dark' : ''}`} style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
       <AdminEscalationRinger />
 
-      {/* Desktop two-level nav (lg+) */}
-      <PrimaryRail sections={sections} activeKey={activeVisible?.key} counts={counts} />
-      <SecondarySidebar section={activeVisible} pathname={location.pathname} counts={counts} />
+      {/* Desktop stacked sidebar (lg+) */}
+      <StackSidebar nav={nav} pathname={location.pathname} counts={counts}
+        onOpenPalette={() => setPaletteOpen(true)} onLogout={handleLogout} />
 
       {/* Mobile drawer — every visible section stacked (rail + sidebar collapse into one) */}
       {mobileOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMobileOpen(false)} />}
@@ -122,17 +118,8 @@ const AdminLayout = ({ children }) => {
           </div>
           <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="text-gray-500 hover:text-white p-1 rounded"><Ic d={IC.x} size={16} /></button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-3 space-y-4" style={{ scrollbarWidth:'none' }}>
-          {sections.map(sec => (
-            <div key={sec.key}>
-              <p className="px-4 mb-1 text-[11px] font-bold text-gray-500 tracking-[0.14em] uppercase select-none">{sec.label}</p>
-              <div className="px-2 space-y-0.5">
-                <ItemList section={sec} pathname={location.pathname} counts={counts} onNavigate={() => setMobileOpen(false)} />
-              </div>
-            </div>
-          ))}
-          <div className="h-4" />
-        </nav>
+        <StackSidebar variant="drawer" nav={nav} pathname={location.pathname} counts={counts}
+          onNavigate={() => setMobileOpen(false)} onLogout={handleLogout} />
         <div className="border-t border-[#1a1a1a] flex-shrink-0 p-3 space-y-0.5">
           <Link to="/dashboard" className="flex items-center gap-2.5 rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] transition-colors text-[12px] px-2.5 py-2">
             <Ic d={IC.external} size={14} /><span>Host Dashboard</span>
@@ -143,7 +130,7 @@ const AdminLayout = ({ children }) => {
         </div>
       </aside>
 
-      <div className="min-w-0 flex flex-col min-h-screen lg:ml-[276px]">
+      <div className="min-w-0 flex flex-col min-h-screen lg:ml-[272px]">
         <header className="adm-header sticky top-0 z-20 backdrop-blur h-[60px] flex items-center gap-3 px-4 md:px-5 flex-shrink-0">
           <button onClick={() => setMobileOpen(o => !o)} aria-label="Open menu"
             className="p-1.5 rounded-lg adm-t3 adm-hoverable transition-colors flex-shrink-0 lg:hidden">
