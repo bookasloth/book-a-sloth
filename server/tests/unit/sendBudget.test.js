@@ -3,18 +3,23 @@
 
 const mockSupa = { supabaseAdmin: { from: jest.fn() } };
 jest.mock('../../config/supabase', () => mockSupa);
+jest.mock('../../utils/logger', () => ({ logger: { warn: jest.fn(), info: jest.fn() } }));
 
-// A thenable query stub: every chain method returns itself; awaiting resolves `result`.
-function q(result) {
-  const o = { select: () => o, eq: () => o, gte: () => o, in: () => o, then: (r) => Promise.resolve(result).then(r) };
-  return o;
-}
-// email_logs (campaign) count + crm_messages (CRM) count.
-function mockCounts(campaign, crm, err = false) {
-  mockSupa.supabaseAdmin.from.mockImplementation((t) =>
-    t === 'email_logs'
-      ? q({ count: campaign, error: err ? { message: 'boom' } : null })
-      : q({ count: crm, error: err ? { message: 'boom' } : null }));
+// Filter-aware query stub. email_logs → campaign count, or `bounced` when the query
+// filters status='bounced' (the breaker). crm_messages → crm count.
+function mockCounts(campaign, crm, { bounced = 0, err = false } = {}) {
+  mockSupa.supabaseAdmin.from.mockImplementation((t) => {
+    const filt = {};
+    const o = {
+      select: () => o, eq: (c, v) => { filt[c] = v; return o; }, gte: () => o, in: () => o,
+      then: (r) => {
+        if (err) return Promise.resolve({ count: null, error: { message: 'boom' } }).then(r);
+        const count = t === 'email_logs' ? (filt.status === 'bounced' ? bounced : campaign) : crm;
+        return Promise.resolve({ count, error: null }).then(r);
+      },
+    };
+    return o;
+  });
 }
 
 let sendBudget;
@@ -24,6 +29,9 @@ function load() {
   process.env.COLD_DAILY_MAX = '60';
   process.env.COLD_SEND_HOUR_IST = '18';
   process.env.COLD_WINDOW_END_IST = '20';
+  process.env.COLD_BOUNCE_PAUSE_PCT = '5';
+  process.env.COLD_BOUNCE_MIN_SAMPLE = '20';
+  process.env.COLD_BOUNCE_WINDOW_H = '48';
   sendBudget = require('../../services/email/sendBudget');
 }
 
@@ -48,7 +56,7 @@ test('remainingToday = soft cap minus usage', async () => {
 });
 
 test('remainingToday fails OPEN on a counting error (returns full cap)', async () => {
-  mockCounts(0, 0, true);
+  mockCounts(0, 0, { err: true });
   await expect(sendBudget.remainingToday()).resolves.toBe(90);
 });
 
@@ -78,6 +86,25 @@ test('coldAllowanceNow is 0 on the 31st', async () => {
 });
 
 test('coldAllowanceNow fails CLOSED on a counting error (returns 0)', async () => {
-  at(MON_18); mockCounts(0, 0, true);
+  at(MON_18); mockCounts(0, 0, { err: true });
   await expect(sendBudget.coldAllowanceNow()).resolves.toBe(0);
+});
+
+// ── Bounce circuit-breaker ──
+test('breaker pauses cold when bounce rate exceeds threshold', async () => {
+  at(MON_18); mockCounts(50, 0, { bounced: 5 }); // 5/50 = 10% > 5%
+  await expect(sendBudget.coldCircuitOpen()).resolves.toBe(true);
+  await expect(sendBudget.coldAllowanceNow()).resolves.toBe(0); // paused despite budget left
+});
+
+test('breaker keeps cold sending under the bounce threshold', async () => {
+  at(MON_18); mockCounts(50, 0, { bounced: 1 }); // 1/50 = 2% < 5%
+  await expect(sendBudget.coldCircuitOpen()).resolves.toBe(false);
+  await expect(sendBudget.coldAllowanceNow()).resolves.toBe(40); // remainder 90-50, capped by nothing here
+});
+
+test('breaker ignores tiny samples (no false trip on 5/10)', async () => {
+  at(MON_18); mockCounts(10, 0, { bounced: 5 }); // 50% but only 10 sent → below min sample
+  await expect(sendBudget.coldCircuitOpen()).resolves.toBe(false);
+  await expect(sendBudget.coldAllowanceNow()).resolves.toBe(60); // min(ramp 60, remainder 80)
 });

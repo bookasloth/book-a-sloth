@@ -30,9 +30,16 @@
  * atomic reserve only if senders ever run concurrently at higher throughput.
  */
 const { supabaseAdmin } = require('../../config/supabase');
+const { logger } = require('../../utils/logger');
 
 const HARD_CAP = 100;                                                    // Resend free-tier daily limit
 const SOFT_CAP = parseInt(process.env.RESEND_DAILY_CAP || '90', 10);     // usable/day (buffer for bounces+retries)
+// Bounce circuit-breaker: pause cold when the recent Resend bounce rate is too
+// high, to protect sender reputation from a dirty list (the fastest way to lose
+// the whole marketing channel is a suspension, not overspending the cap).
+const BOUNCE_PAUSE_PCT = parseFloat(process.env.COLD_BOUNCE_PAUSE_PCT || '5');   // pause cold above this %
+const BOUNCE_WINDOW_H = parseInt(process.env.COLD_BOUNCE_WINDOW_H || '48', 10);  // trailing window
+const BOUNCE_MIN_SAMPLE = parseInt(process.env.COLD_BOUNCE_MIN_SAMPLE || '20', 10); // don't trip on tiny samples
 const COLD_SEND_HOUR = parseInt(process.env.COLD_SEND_HOUR_IST || '18', 10); // cold window start (IST); -1 disables the window
 const COLD_WINDOW_END = parseInt(process.env.COLD_WINDOW_END_IST || '20', 10); // matches CRM quiet-hours end
 // Warm-up ramp: the cold upper bound. Start low on a fresh sending reputation and
@@ -88,11 +95,40 @@ function coldSkipToday() {
   return weekday === 'Sun' || day === 31;
 }
 
+// Recent Resend bounce state over the trailing window. Fail-OPEN (open:false) on
+// error so a transient read glitch doesn't halt cold on its own — a genuinely bad
+// list stays high and trips on the next tick. Under BOUNCE_MIN_SAMPLE it never trips
+// (a 1/1 bounce is not a signal).
+async function coldBounceState() {
+  try {
+    const since = new Date(Date.now() - BOUNCE_WINDOW_H * 3600e3).toISOString();
+    const base = () => supabaseAdmin.from('email_logs').select('id', { count: 'exact', head: true }).eq('provider', 'resend').gte('created_at', since);
+    const [tot, bnc] = await Promise.all([base(), base().eq('status', 'bounced')]);
+    if (tot.error || bnc.error) return { open: false, rate: null, sample: 0 };
+    const sample = tot.count || 0;
+    const rate = sample ? (bnc.count || 0) / sample : 0;
+    if (sample < BOUNCE_MIN_SAMPLE) return { open: false, rate, sample };
+    return { open: rate * 100 > BOUNCE_PAUSE_PCT, rate, sample };
+  } catch (_) { return { open: false, rate: null, sample: 0 }; }
+}
+
+let _lastBreakerLog = 0;
+async function coldCircuitOpen() {
+  const s = await coldBounceState();
+  if (s.open && Date.now() - _lastBreakerLog > 600000) { // log at most once / 10 min
+    _lastBreakerLog = Date.now();
+    try { logger.warn({ event: 'cold_bounce_circuit_open', rate: s.rate, sample: s.sample, threshold_pct: BOUNCE_PAUSE_PCT }); } catch (_) { /* noop */ }
+  }
+  return s.open;
+}
+
 // How many cold emails may go out right now = min(ramp, remainder), but only inside
-// the 18:00 window and not on a skip day. Fail-CLOSED: a counting outage returns 0
-// so we never blast a cold list into an unknown budget and burn reputation.
+// the 18:00 window, not on a skip day, and not while the bounce breaker is open.
+// Fail-CLOSED on the budget count: a counting outage returns 0 so we never blast a
+// cold list into an unknown budget and burn reputation.
 async function coldAllowanceNow() {
   if (coldSkipToday() || !coldWindowOpen()) return 0;
+  if (await coldCircuitOpen()) return 0;
   const used = await resendUsedToday();
   if (used == null) return 0;
   return Math.max(0, Math.min(COLD_DAILY_MAX, SOFT_CAP - used));
@@ -100,5 +136,6 @@ async function coldAllowanceNow() {
 
 module.exports = {
   resendUsedToday, remainingToday, coldAllowanceNow, coldWindowOpen, coldSkipToday,
+  coldBounceState, coldCircuitOpen,
   HARD_CAP, SOFT_CAP, COLD_DAILY_MAX, COLD_SEND_HOUR, COLD_WINDOW_END,
 };
