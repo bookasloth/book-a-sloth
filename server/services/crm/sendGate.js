@@ -21,6 +21,7 @@ const { isFeatureEnabled } = require('../featureFlags');
 const { normalizePhone } = require('../aisensyService');
 const { isPlaceholderEmail } = require('../email/placeholderEmail');
 const governor = require('./touchGovernor');
+const sendBudget = require('../email/sendBudget');
 
 const SEND_FLAG = 'crm_admin_sends';
 
@@ -49,9 +50,16 @@ function istHour() {
 // the touch governor, which counts the lead's automated-touch ledger (lead_activities
 // — CRM sends AND birthday/milestone touches). FAIL-OPEN: the governor never throws,
 // and this guards defensively too, so an outage never silently freezes every send.
-async function throttle(lead) {
+async function throttle(lead, channel) {
   const h = istHour();
   if (h < QUIET_START_IST || h >= QUIET_END_IST) return { ok: false, reason: 'quiet_hours', defer: true };
+  // Shared Resend daily budget — EMAIL only (WhatsApp rides AiSensy, a different
+  // quota). CRM (P1/P2) draws freely up to the cap; when it's spent, defer (re-queue)
+  // rather than send into a quota-reject. remainingToday() fails OPEN, so a counting
+  // outage never freezes CRM mail. See services/email/sendBudget.js.
+  if (channel === 'email' && (await sendBudget.remainingToday()) <= 0) {
+    return { ok: false, reason: 'daily_budget', defer: true };
+  }
   try {
     const gate = await governor.canTouch({ type: 'lead', id: lead.id });
     if (!gate.ok) return { ok: false, reason: gate.reason || 'frequency_capped', defer: true };
@@ -91,9 +99,9 @@ async function canSend(lead, channel, opts = {}) {
     return { ok: false, reason: 'unknown_channel' };
   }
 
-  // 3. Coordinated-conversation throttle (automated sends only).
+  // 3. Coordinated-conversation throttle + shared daily budget (automated sends only).
   if (opts.automated) {
-    const t = await throttle(lead);
+    const t = await throttle(lead, channel);
     if (t) return t;
   }
   return { ok: true };
