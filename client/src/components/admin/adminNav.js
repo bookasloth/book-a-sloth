@@ -41,6 +41,7 @@ export const IC = {
   lock:      ['M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z','M8 11V7a4 4 0 118 0v4'],
   chevD:     'M19 9l-7 7-7-7',
   chevR:     'M9 18l6-6-6-6',
+  chevL:     'M15 18l-6-6 6-6',
   bell:      ['M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9z','M13.73 21a2 2 0 01-3.46 0'],
   search:    'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
   sun:       ['M12 7a5 5 0 100 10A5 5 0 0012 7z','M12 1v2','M12 21v2','M4.22 4.22l1.42 1.42','M18.36 18.36l1.42 1.42','M1 12h2','M21 12h2','M4.22 19.78l1.42-1.42','M18.36 5.64l1.42-1.42'],
@@ -100,99 +101,111 @@ export const PATH_LABELS = {
   dept:'Department', cxo:'CXO', marketing:'Marketing', operation:'Operation', engineering:'Engineering', 'sloth-house':'Sloth House',
 };
 
-// ── SECTIONS ──────────────────────────────────────────────────────────────
-// key    — stable id, used for active-rail state + last-visited memory.
-// label  — secondary-sidebar header + rail tooltip.
-// icon   — IC key for the primary rail (distinct silhouette per section).
-// color  — accent hex (from the c-* token palette, tailwind.config.js). Used as
-//          a seasoning only: glyph tint + 2px active bar, never a full fill.
-//          Rose/danger (#DC2626) is reserved for badge dots and is NOT used here.
-// items  — secondary-sidebar list, priority-ordered within the section.
-//          badge — an ops-summary key (opsAdminController.js) whose live count
-//                  renders as a pill; the section dot sums its items' badges.
-//          exact — highlight only on an exact path match (for index routes that
-//                  are a prefix of their siblings).
+// ── NAV TREE ──────────────────────────────────────────────────────────────
+// SINGLE SOURCE OF TRUTH — three levels, one stacked sidebar (StackSidebar.jsx).
+//   L1 AREA   { key, label, icon, color, children:[…] }  — the always-visible top list.
+//   L2 MODULE { key, label, icon, children:[…] }         — pushes a sub-panel.
+//   LEAF      { label, icon?, to, perm, badge?, exact?, group? } — navigates.
+// A node is a BRANCH when it has `children`, a LEAF when it has `to`. Never both.
+// A module landing page is itself the leaf named "Overview"/"Dashboard".
+//
+// key    — stable id; unique across the whole tree (drives the panel stack + tests).
+// icon   — IC key. Areas + L2 modules always carry one; L3 leaves usually omit it
+//          (indentation/header carry depth — see StackSidebar density rules).
+// color  — area accent hex (c-* palette). Seasoning only: glyph tint + 2px active
+//          bar. Danger (#DC2626) is reserved for badge dots, never an area color.
+// badge  — ops-summary key (opsAdminController.js); the live count renders as a
+//          pill on the leaf and a dot rolls up to its module + area.
+// exact  — highlight only on an exact path match (module index routes that are a
+//          prefix of their siblings, e.g. /admin/finance vs /admin/finance/ledger).
+// group  — optional uppercase sub-label inside a panel (the Vercel COMPUTE/CDN
+//          pattern) — clusters leaves without spending a whole extra level.
+//
+// Every `to` is an EXISTING route (App.jsx) — this restructure only regroups the
+// chrome; URLs, deep links and bookmarks are unchanged.
 export const NAV = [
-  { key:'overview', label:'Overview', icon:'grid', color:'#2563eb', items:[
+  { key:'home', label:'Home', icon:'grid', color:'#2563eb', children:[
     { label:'Dashboard',          icon:'grid',      to:'/super-dashboard', exact:true, perm:'ops.view' },
     { label:'Revenue',            icon:'trendUp',   to:'/super-dashboard/revenue', perm:'analytics.view' },
     { label:'Pending Actions',    icon:'clock',     to:'/super-dashboard/pending', perm:'ops.view' },
     { label:'Marketing Insights', icon:'bars',      to:'/super-dashboard/insights', perm:'analytics.view' },
     { label:'Feature Status',     icon:'zap',       to:'/admin/features', perm:'settings.manage' },
   ]},
-  { key:'operations', label:'Operations', icon:'calCheck', color:'#0891b2', items:[
+  { key:'operations', label:'Operations', icon:'calCheck', color:'#0891b2', children:[
     { label:'Bookings',           icon:'calCheck',  to:'/admin/bookings', perm:'bookings.view', badge:'stale_unpaid_bookings' },
     { label:'Services',           icon:'layers',    to:'/admin/services', perm:'services.view' },
     { label:'Service Categories', icon:'layers',    to:'/admin/services/categories', perm:'services.view' },
     { label:'Professions',        icon:'layers',    to:'/admin/professions', perm:'settings.manage' },
-    // Explore Page merchandising is deferred — its backing tables (v2.9_explore.sql)
-    // are not applied in prod, so every module returns "Failed to load". Hidden from
-    // nav until the Explore foundation ships; the /admin/explore route still exists
-    // in App.jsx for when it does.
-    // { label:'Explore Page',       icon:'search',    to:'/admin/explore', perm:'settings.manage' },
+    // Explore Page merchandising is deferred (v2.9_explore.sql not applied in prod);
+    // route stays in App.jsx, hidden from nav until the Explore foundation ships.
+    // { label:'Explore Page',    icon:'search',    to:'/admin/explore', perm:'settings.manage' },
     { label:'Addons',             icon:'package',   to:'/admin/addons', perm:'plans.manage' },
   ]},
-  { key:'people', label:'People', icon:'userCheck', color:'#059669', items:[
-    { label:'Hosts',              icon:'userCheck', to:'/admin/providers', perm:'professionals.view', badge:'pending_verifications' },
-    { label:'KYC',                icon:'shieldOk',  to:'/admin/kyc', perm:'kyc.view' },
+  { key:'people', label:'People', icon:'userCheck', color:'#059669', children:[
+    { key:'hosts', label:'Hosts', icon:'userCheck', children:[
+      { label:'All Hosts',        to:'/admin/providers', exact:true, perm:'professionals.view' },
+      { label:'Pending',          to:'/admin/providers/pending', perm:'professionals.view', badge:'pending_verifications' },
+      { label:'Active',           to:'/admin/providers/active', perm:'professionals.view' },
+      { label:'Suspended',        to:'/admin/providers/suspended', perm:'professionals.view' },
+    ]},
+    { key:'kyc', label:'KYC', icon:'shieldOk', children:[
+      { label:'Queue',            to:'/admin/kyc', exact:true, perm:'kyc.view' },
+      { label:'Approved',         to:'/admin/kyc/approved', perm:'kyc.view' },
+      { label:'Rejected',         to:'/admin/kyc/rejected', perm:'kyc.view' },
+    ]},
     { label:'Host 360°',          icon:'badgeCheck',to:'/admin/host360', perm:'professionals.view' },
     { label:'Guest 360°',         icon:'userCheck', to:'/admin/guest360', perm:'users.view' },
     { label:'Staff & Roles',      icon:'users2',    to:'/admin/staff', perm:'staff.manage' },
   ]},
-  { key:'support', label:'Support & Moderation', icon:'chat', color:'#db2777', items:[
-    { label:'Support Inbox',      icon:'msgSq',     to:'/admin/support/chat', perm:'support.view' },
-    { label:'Tickets',            icon:'chat',      to:'/admin/support/tickets', perm:'support.view' },
-    { label:'Disputes',           icon:'alert',     to:'/admin/support/disputes', perm:'disputes.view' },
-    { label:'Reviews',            icon:'msgSq',     to:'/admin/support/reviews', perm:'reviews.moderate', badge:'pending_reviews' },
-    { label:'Host Feedback',      icon:'msgSq',     to:'/admin/feedback', perm:'feedback.view' },
-    { label:'Bolt Support',       icon:'chat',      to:'/admin/support/bolt', perm:'support.view' },
-    { label:'Support Insights',   icon:'bars',      to:'/admin/support/insights', perm:'support.view' },
+  { key:'money', label:'Money', icon:'rupee', color:'#7c3aed', children:[
+    { key:'payments', label:'Payments', icon:'wallet', children:[
+      { label:'Finance Dashboard',to:'/admin/finance', exact:true, perm:'finance.view' },
+      { label:'Transactions',     to:'/admin/finance/transactions', perm:'finance.view' },
+      { label:'Payouts',          to:'/admin/finance/payouts', perm:'payouts.view', badge:'pending_payouts' },
+      { label:'Refunds',          to:'/admin/finance/refunds', perm:'finance.refund' },
+      { label:'Ledger',           to:'/admin/finance/ledger', perm:'finance.view' },
+      { label:'Journal',          to:'/admin/finance/journal', perm:'finance.view' },
+    ]},
+    { key:'gst', label:'GST', icon:'file', children:[
+      { label:'Overview',         to:'/admin/gst', exact:true, perm:'gst.view', group:'Setup' },
+      { label:'Action Center',    to:'/admin/gst/issues', perm:'gst.view', group:'Setup' },
+      { label:'Settings',         to:'/admin/gst/settings', perm:'gst.view', group:'Setup' },
+      { label:'Returns',          to:'/admin/gst/returns', perm:'gst.view', group:'Filing' },
+      { label:'Reconciliation',   to:'/admin/gst/reconciliation', perm:'gst.reconcile', group:'Filing' },
+      { label:'ITC',              to:'/admin/gst/itc', perm:'gst.view', group:'Filing' },
+      { label:'Invoices',         to:'/admin/gst/invoices', perm:'gst.view', group:'Records' },
+      { label:'Transactions',     to:'/admin/gst/transactions', perm:'gst.view', group:'Records' },
+      { label:'Reports',          to:'/admin/gst/reports', perm:'gst.view', group:'Output' },
+      { label:'CA Exports',       to:'/admin/gst/exports', perm:'gst.view', group:'Output' },
+    ]},
+    { key:'monetization', label:'Monetization', icon:'card', children:[
+      { label:'Subscription Plans',to:'/admin/plans', perm:'plans.view' },
+      { label:'Refer & Earn',     to:'/admin/referrals', perm:'referrals.view' },
+      { label:'Invite Links',     to:'/admin/invite-links', perm:'referrals.view' },
+    ]},
   ]},
-  { key:'sales', label:'Sales / CRM', icon:'affiliate', color:'#f59e0b', items:[
+  { key:'sales', label:'Sales', icon:'affiliate', color:'#f59e0b', children:[
     { label:'Leads',              icon:'users2',    to:'/admin/sales/leads', perm:'leads.view' },
     { label:'Pipeline',           icon:'layout2',   to:'/admin/sales/pipeline', perm:'leads.view' },
     { label:'Follow-ups',         icon:'clock',     to:'/admin/sales/follow-ups', perm:'leads.view' },
     { label:'Desk',               icon:'grid',      to:'/admin/sales/desk', perm:'leads.view' },
+    { label:'Lists',              icon:'layers',    to:'/admin/sales/lists', perm:'leads.view' },
     { label:'Reports',            icon:'layout2',   to:'/admin/sales/reports', perm:'leads.view' },
   ]},
-  { key:'marketing', label:'Marketing', icon:'mail', color:'#6366f1', items:[
-    { label:'Campaigns',          icon:'mail',      to:'/admin/campaigns', perm:'campaigns.view' },
-    { label:'Sequences',          icon:'send',      to:'/admin/marketing/sequences', perm:'leads.view' }, // cold acquisition drips
-    { label:'Lists',              icon:'layers',    to:'/admin/sales/lists', perm:'leads.view' },
-    { label:'Communication',      icon:'send',      to:'/admin/platform/communication', perm:'email.manage', badge:'failed_emails' },
+  { key:'marketing', label:'Marketing', icon:'mail', color:'#6366f1', children:[
+    { key:'campaigns', label:'Campaigns', icon:'mail', children:[
+      { label:'Campaigns',        to:'/admin/campaigns', perm:'campaigns.view' },
+      { label:'Cold Sequences',   to:'/admin/marketing/sequences', perm:'leads.view' },      // cold acquisition drips
+      { label:'Lifecycle Sequences',to:'/admin/growth/sequences', perm:'leads.view' },        // host lifecycle drips
+      { label:'Templates',        to:'/admin/sales/templates', perm:'leads.view' },
+    ]},
+    { key:'messaging', label:'Messaging', icon:'send', children:[
+      { label:'Communication',    to:'/admin/platform/communication', perm:'email.manage', badge:'failed_emails' },
+      { label:'Notifications',    to:'/admin/notifications', perm:'notifications.view', badge:'failed_notifications' },
+      { label:'Badges',           to:'/admin/badges', perm:'badges.manage' },
+    ]},
   ]},
-  { key:'create', label:'Create', icon:'pencil', color:'#0d9488', items:[
-    { label:'Blogs',              icon:'news',      to:'/admin/content/blogs', perm:'cms.manage' },
-    { label:'Newsletter',         icon:'mail',      to:'/admin/content/newsletter', perm:'cms.manage' },
-    { label:'FAQ',                icon:'help',      to:'/admin/content/faq', perm:'cms.manage' },
-    { label:'Testimonials',       icon:'star',      to:'/admin/content/testimonials', perm:'cms.manage' },
-    { label:'Menu Builder',       icon:'menu3',     to:'/admin/platform/menu', perm:'cms.manage' },
-    { label:'Footer Builder',     icon:'layout2',   to:'/admin/platform/footer', perm:'cms.manage' },
-  ]},
-  { key:'revenue', label:'Revenue', icon:'rupee', color:'#7c3aed', items:[
-    { label:'Payouts',            icon:'wallet',    to:'/admin/finance/payouts', perm:'payouts.view', badge:'pending_payouts' },
-    { label:'Refunds',            icon:'refresh',   to:'/admin/finance/refunds', perm:'finance.refund' },
-    { label:'Transactions',       icon:'dollar',    to:'/admin/finance/transactions', perm:'finance.view' },
-    { label:'Finance Dashboard',  icon:'trendUp',   to:'/admin/finance', exact:true, perm:'finance.view' },
-    { label:'Ledger',             icon:'layers',    to:'/admin/finance/ledger', perm:'finance.view' },
-    { label:'Journal',            icon:'file',      to:'/admin/finance/journal', perm:'finance.view' },
-    { label:'Subscription Plans', icon:'card',      to:'/admin/plans', perm:'plans.view' },
-    { label:'Refer & Earn',       icon:'affiliate', to:'/admin/referrals', perm:'referrals.view' },
-    { label:'Invite Links',       icon:'link2',     to:'/admin/invite-links', perm:'referrals.view' },
-  ]},
-  { key:'gst', label:'GST', icon:'file', color:'#0ea5e9', items:[
-    { label:'Overview',           icon:'trendUp',   to:'/admin/gst', exact:true, perm:'gst.view' },
-    { label:'Action Center',      icon:'alert',     to:'/admin/gst/issues', perm:'gst.view' },
-    { label:'Transactions',       icon:'dollar',    to:'/admin/gst/transactions', perm:'gst.view' },
-    { label:'Invoices',           icon:'file',      to:'/admin/gst/invoices', perm:'gst.view' },
-    { label:'Reconciliation',     icon:'refresh',   to:'/admin/gst/reconciliation', perm:'gst.reconcile' },
-    { label:'ITC',                icon:'layers',    to:'/admin/gst/itc', perm:'gst.view' },
-    { label:'Returns',            icon:'calCheck',  to:'/admin/gst/returns', perm:'gst.view' },
-    { label:'Reports',            icon:'layout2',   to:'/admin/gst/reports', perm:'gst.view' },
-    { label:'CA Exports',         icon:'package',   to:'/admin/gst/exports', perm:'gst.view' },
-    { label:'Settings',           icon:'gear',      to:'/admin/gst/settings', perm:'gst.view' },
-  ]},
-  { key:'seo', label:'SEO & GEO', icon:'search', color:'#16a34a', items:[
+  { key:'seo', label:'SEO & GEO', icon:'search', color:'#16a34a', children:[
     { label:'Dashboard',          icon:'grid',      to:'/admin/seo', exact:true, perm:'seo.manage' },
     { label:'Services',           icon:'layers',    to:'/admin/seo/services', perm:'seo.manage' },
     { label:'Profiles',           icon:'users',     to:'/admin/seo/profiles', perm:'seo.manage' },
@@ -203,20 +216,41 @@ export const NAV = [
     { label:'Fixes',              icon:'checkCircle', to:'/admin/seo/fixes', perm:'seo.manage' },
     { label:'Search Console',     icon:'search',    to:'/admin/seo/search-console', perm:'seo.manage' },
   ]},
-  { key:'growth', label:'Growth', icon:'bars', color:'#FE5100', items:[
-    { label:'Templates',          icon:'msgSq',     to:'/admin/sales/templates', perm:'leads.view' },
-    { label:'Sequences',          icon:'send',      to:'/admin/growth/sequences', perm:'leads.view' }, // host lifecycle drips
-    { label:'Notifications',      icon:'bell',      to:'/admin/notifications', perm:'notifications.view', badge:'failed_notifications' },
-    { label:'Badges',             icon:'star',      to:'/admin/badges', perm:'badges.manage' },
-    { label:'Pages',              icon:'file',      to:'/admin/content/pages', perm:'cms.manage' },
+  { key:'content', label:'Content', icon:'pencil', color:'#0d9488', children:[
+    { key:'c-blog', label:'Blog', icon:'news', children:[
+      { label:'Posts',            to:'/admin/content/blogs', perm:'cms.manage' },
+      { label:'Newsletter',       to:'/admin/content/newsletter', perm:'cms.manage' },
+    ]},
+    { key:'c-site', label:'Site', icon:'layout2', children:[
+      { label:'Pages',            to:'/admin/content/pages', perm:'cms.manage' },
+      { label:'Menu Builder',     to:'/admin/platform/menu', perm:'cms.manage' },
+      { label:'Footer Builder',   to:'/admin/platform/footer', perm:'cms.manage' },
+    ]},
+    { key:'c-community', label:'Community', icon:'star', children:[
+      { label:'FAQ',              to:'/admin/content/faq', perm:'cms.manage' },
+      { label:'Testimonials',     to:'/admin/content/testimonials', perm:'cms.manage' },
+    ]},
   ]},
-  { key:'system', label:'System', icon:'gear', color:'#6b7280', items:[
-    { label:'General Settings',   icon:'gear',      to:'/admin/settings', exact:true, perm:'settings.manage' },
-    { label:'Payment Settings',   icon:'card',      to:'/admin/settings/payment', perm:'settings.manage' },
-    { label:'Appearance',         icon:'palette',   to:'/admin/platform/appearance', perm:'branding.manage' },
-    { label:'Audit Logs',         icon:'activity',  to:'/admin/system/audit', perm:'audit.view' },
-    { label:'Blocked IPs',        icon:'ban',       to:'/admin/security/blocked-ips', perm:'settings.manage' },
-    { label:'Reserved Slugs',     icon:'lock',      to:'/admin/system/reserved', perm:'settings.manage' },
+  { key:'support', label:'Support', icon:'chat', color:'#db2777', children:[
+    { label:'Inbox',              icon:'msgSq',     to:'/admin/support/chat', perm:'support.view' },
+    { label:'Tickets',            icon:'chat',      to:'/admin/support/tickets', perm:'support.view' },
+    { label:'Disputes',           icon:'alert',     to:'/admin/support/disputes', perm:'disputes.view' },
+    { label:'Reviews',            icon:'msgSq',     to:'/admin/support/reviews', perm:'reviews.moderate', badge:'pending_reviews' },
+    { label:'Host Feedback',      icon:'msgSq',     to:'/admin/feedback', perm:'feedback.view' },
+    { label:'Bolt Support',       icon:'chat',      to:'/admin/support/bolt', perm:'support.view' },
+    { label:'Insights',           icon:'bars',      to:'/admin/support/insights', perm:'support.view' },
+  ]},
+  { key:'system', label:'System', icon:'gear', color:'#6b7280', children:[
+    { key:'settings-mod', label:'Settings', icon:'gear', children:[
+      { label:'General',          to:'/admin/settings', exact:true, perm:'settings.manage' },
+      { label:'Payment',          to:'/admin/settings/payment', perm:'settings.manage' },
+      { label:'Appearance',       to:'/admin/platform/appearance', perm:'branding.manage' },
+    ]},
+    { key:'security', label:'Security', icon:'lock', children:[
+      { label:'Blocked IPs',      to:'/admin/security/blocked-ips', perm:'settings.manage' },
+      { label:'Reserved Slugs',   to:'/admin/system/reserved', perm:'settings.manage' },
+      { label:'Audit Logs',       to:'/admin/system/audit', perm:'audit.view' },
+    ]},
   ]},
 ];
 
@@ -236,18 +270,21 @@ export const sessionCan = (session, perm) => {
   return perms.includes(perm);
 };
 
-// Flatten NAV into a list of navigable destinations for the command palette.
-// Honours permissions and dedupes by path. NAV is now the single source of
-// truth for every admin page, so this covers the whole console on its own.
+// Flatten the NAV tree into a list of navigable destinations for the command
+// palette. Walks every leaf at any depth, honours permissions, dedupes by path.
+// `section` is the top-level AREA label (what the palette groups by). NAV is the
+// single source of truth for every admin page, so this covers the whole console.
 export const flattenDestinations = (nav, session) => {
   const byPath = new Map();
-  nav.forEach(sec => {
-    sec.items.forEach(item => {
-      if (!item.to) return;
-      if (!sessionCan(session, item.perm)) return;
-      if (!byPath.has(item.to)) byPath.set(item.to, { label: item.label, to: item.to, section: sec.label });
+  const walk = (node, areaLabel) => {
+    (node.children || []).forEach(child => {
+      if (child.children) { walk(child, areaLabel); return; }  // module — recurse
+      if (!child.to) return;                                    // leaf without a route
+      if (!sessionCan(session, child.perm)) return;
+      if (!byPath.has(child.to)) byPath.set(child.to, { label: child.label, to: child.to, section: areaLabel });
     });
-  });
+  };
+  nav.forEach(area => walk(area, area.label));
   return Array.from(byPath.values());
 };
 

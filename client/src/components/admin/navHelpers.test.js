@@ -1,34 +1,35 @@
 import { describe, it, expect } from 'vitest';
 import {
-  itemActive, activeSection, itemBadge, sectionBadgeCount, formatBadge, visibleSections,
+  itemActive, formatBadge, leafBadge, rollupBadge, filterTree, resolveChain, activeArea,
 } from './navHelpers';
 import { NAV as REAL_NAV } from './adminNav';
 
-// Minimal NAV fixture exercising the tricky cases: an exact index route that is
-// a prefix of its siblings, and a deep item under the same section.
+// Fixture: a flat area + an area with a module (deep leaf). Exercises exact index
+// routes, longest-prefix resolution, permission filtering and badge roll-up.
 const NAV = [
-  { key: 'overview', label: 'Overview', items: [
+  { key: 'home', label: 'Home', color: '#111', children: [
     { label: 'Dashboard', to: '/super-dashboard', exact: true, perm: 'ops.view' },
     { label: 'Revenue',   to: '/super-dashboard/revenue', perm: 'analytics.view' },
   ]},
-  { key: 'revenue', label: 'Revenue', items: [
-    { label: 'Finance', to: '/admin/finance', exact: true, perm: 'finance.view' },
-    { label: 'Ledger',  to: '/admin/finance/ledger', perm: 'finance.view' },
-    { label: 'Payouts', to: '/admin/finance/payouts', perm: 'payouts.view', badge: 'pending_payouts' },
+  { key: 'money', label: 'Money', color: '#222', children: [
+    { key: 'payments', label: 'Payments', children: [
+      { label: 'Finance', to: '/admin/finance', exact: true, perm: 'finance.view' },
+      { label: 'Ledger',  to: '/admin/finance/ledger', perm: 'finance.view' },
+      { label: 'Payouts', to: '/admin/finance/payouts', perm: 'payouts.view', badge: 'pending_payouts' },
+    ]},
   ]},
 ];
 
 describe('itemActive', () => {
-  it('exact item matches only the exact path', () => {
+  it('exact leaf matches only the exact path', () => {
     expect(itemActive('/admin/finance', { to: '/admin/finance', exact: true })).toBe(true);
     expect(itemActive('/admin/finance/ledger', { to: '/admin/finance', exact: true })).toBe(false);
   });
-  it('prefix item matches the path and its sub-paths', () => {
+  it('prefix leaf matches the path and its sub-paths', () => {
     expect(itemActive('/admin/bookings', { to: '/admin/bookings' })).toBe(true);
     expect(itemActive('/admin/bookings/abandoned', { to: '/admin/bookings' })).toBe(true);
   });
-  it('does not treat a sibling with a shared string prefix as a sub-path', () => {
-    // /admin/finance-x must NOT match /admin/finance (guarded by the "/" separator).
+  it('a shared string prefix is not a sub-path', () => {
     expect(itemActive('/admin/finance-x', { to: '/admin/finance' })).toBe(false);
   });
   it('handles missing item/to', () => {
@@ -37,55 +38,60 @@ describe('itemActive', () => {
   });
 });
 
-describe('activeSection', () => {
-  it('resolves an exact root route to its section', () => {
-    expect(activeSection('/admin/finance', NAV).key).toBe('revenue');
+describe('resolveChain', () => {
+  it('resolves a flat leaf to [area]', () => {
+    const { leaf, chain } = resolveChain('/super-dashboard/revenue', NAV);
+    expect(leaf.label).toBe('Revenue');
+    expect(chain.map(n => n.key)).toEqual(['home']);
   });
-  it('longest prefix wins over a shorter sibling index', () => {
-    // /admin/finance/ledger matches both "/admin/finance" and "/admin/finance/ledger"
-    expect(activeSection('/admin/finance/ledger', NAV).key).toBe('revenue');
+  it('resolves a deep leaf to [area, module], longest prefix wins', () => {
+    const { leaf, chain } = resolveChain('/admin/finance/ledger', NAV);
+    expect(leaf.label).toBe('Ledger');
+    expect(chain.map(n => n.key)).toEqual(['money', 'payments']);
   });
-  it('resolves a sub-path (query-less) under the deep item', () => {
-    expect(activeSection('/admin/finance/payouts', NAV).key).toBe('revenue');
+  it('an exact index route resolves to its own leaf, not a sibling', () => {
+    expect(resolveChain('/admin/finance', NAV).leaf.label).toBe('Finance');
   });
-  it('resolves overview tabs', () => {
-    expect(activeSection('/super-dashboard', NAV).key).toBe('overview');
-    expect(activeSection('/super-dashboard/revenue', NAV).key).toBe('overview');
+  it('unknown path resolves to nothing', () => {
+    expect(resolveChain('/nowhere', NAV)).toEqual({ leaf: null, chain: [] });
   });
-  it('returns null for an unknown route', () => {
-    expect(activeSection('/nowhere', NAV)).toBe(null);
+
+  // Restructure landmarks: URLs are unchanged, but regrouped under new areas/modules.
+  it('maps real routes to their new top-level area', () => {
+    const area = (p) => activeArea(p, REAL_NAV)?.key;
+    expect(area('/admin/gst/invoices')).toBe('money');        // GST folded into Money
+    expect(area('/admin/finance/ledger')).toBe('money');
+    expect(area('/admin/sales/leads')).toBe('sales');         // Sales is its own area
+    expect(area('/admin/campaigns')).toBe('marketing');       // Marketing is its own area
+    expect(area('/admin/marketing/sequences')).toBe('marketing');
+    expect(area('/admin/content/blogs')).toBe('content');     // Create → Content
+    expect(area('/admin/platform/appearance')).toBe('system');
+    expect(area('/admin/seo/services')).toBe('seo');
   });
-  // Nav restructure: items keep their URLs but moved to new shells. activeSection
-  // matches by item.to, so the rail highlights the NEW section for a moved item.
-  it('maps moved items to their new sections (Marketing / Create / System)', () => {
-    expect(activeSection('/admin/sales/lists', REAL_NAV).key).toBe('marketing');   // Lists moved Sales → Marketing
-    expect(activeSection('/admin/campaigns', REAL_NAV).key).toBe('marketing');       // Campaigns moved Growth → Marketing
-    expect(activeSection('/admin/platform/communication', REAL_NAV).key).toBe('marketing');
-    expect(activeSection('/admin/content/blogs', REAL_NAV).key).toBe('create');      // Blogs moved Growth → Create
-    expect(activeSection('/admin/content/newsletter', REAL_NAV).key).toBe('create');
-    expect(activeSection('/admin/platform/appearance', REAL_NAV).key).toBe('system'); // Appearance moved Growth → System
-    expect(activeSection('/admin/sales/templates', REAL_NAV).key).toBe('growth');    // Templates moved Sales → Growth
-    expect(activeSection('/admin/sales/leads', REAL_NAV).key).toBe('sales');         // Leads stays in Sales
+  it('deep routes carry their module in the chain', () => {
+    expect(resolveChain('/admin/gst/invoices', REAL_NAV).chain.map(n => n.key)).toEqual(['money', 'gst']);
+    expect(resolveChain('/admin/marketing/sequences', REAL_NAV).chain.map(n => n.key)).toEqual(['marketing', 'campaigns']);
   });
 });
 
-describe('itemBadge / sectionBadgeCount / formatBadge', () => {
+describe('badges', () => {
   const counts = { pending_payouts: 3, pending_reviews: 0 };
-  it('reads a live count, 0 when unset or zero', () => {
-    expect(itemBadge({ badge: 'pending_payouts' }, counts)).toBe(3);
-    expect(itemBadge({ badge: 'pending_reviews' }, counts)).toBe(0);
-    expect(itemBadge({ badge: 'missing' }, counts)).toBe(0);
-    expect(itemBadge({ /* no badge */ }, counts)).toBe(0);
+  it('leafBadge reads a live count, 0 when unset or zero', () => {
+    expect(leafBadge({ badge: 'pending_payouts' }, counts)).toBe(3);
+    expect(leafBadge({ badge: 'pending_reviews' }, counts)).toBe(0);
+    expect(leafBadge({ badge: 'missing' }, counts)).toBe(0);
+    expect(leafBadge({}, counts)).toBe(0);
   });
-  it('sums a section, ignoring unbadged items', () => {
-    expect(sectionBadgeCount(NAV[1], counts)).toBe(3); // only Payouts carries a badge
-    expect(sectionBadgeCount(NAV[0], counts)).toBe(0);
-    expect(sectionBadgeCount(null, counts)).toBe(0);
+  it('rollupBadge sums every descendant leaf', () => {
+    expect(rollupBadge(NAV[1], counts)).toBe(3);              // Money → Payments → Payouts:3
+    expect(rollupBadge(NAV[1].children[0], counts)).toBe(3);  // the Payments module
+    expect(rollupBadge(NAV[0], counts)).toBe(0);
+    expect(rollupBadge(null, counts)).toBe(0);
   });
-  it('handles a missing counts map', () => {
-    expect(sectionBadgeCount(NAV[1], undefined)).toBe(0);
+  it('rollupBadge handles a missing counts map', () => {
+    expect(rollupBadge(NAV[1], undefined)).toBe(0);
   });
-  it('formats overflow', () => {
+  it('formatBadge formats overflow', () => {
     expect(formatBadge(0)).toBe('0');
     expect(formatBadge(99)).toBe('99');
     expect(formatBadge(100)).toBe('99+');
@@ -93,19 +99,23 @@ describe('itemBadge / sectionBadgeCount / formatBadge', () => {
   });
 });
 
-describe('visibleSections', () => {
-  it('keeps only items the session may see, drops empty sections', () => {
-    const session = { permissions: ['finance.view'] }; // no payouts.view, no ops/analytics
-    const vis = visibleSections(NAV, session);
-    expect(vis.map(s => s.key)).toEqual(['revenue']); // overview items all gated out
-    expect(vis[0].items.map(i => i.label)).toEqual(['Finance', 'Ledger']); // Payouts gated out
+describe('filterTree', () => {
+  it('keeps only leaves the session may see, drops empty branches', () => {
+    const vis = filterTree(NAV, { permissions: ['finance.view'] }); // no ops/analytics/payouts
+    expect(vis.map(a => a.key)).toEqual(['money']);          // Home leaves all gated out
+    expect(vis[0].children[0].children.map(l => l.label)).toEqual(['Finance', 'Ledger']); // Payouts gated
   });
   it('wildcard sees everything', () => {
-    const vis = visibleSections(NAV, { permissions: ['*'] });
-    expect(vis.map(s => s.key)).toEqual(['overview', 'revenue']);
-    expect(vis[1].items).toHaveLength(3);
+    const vis = filterTree(NAV, { permissions: ['*'] });
+    expect(vis.map(a => a.key)).toEqual(['home', 'money']);
+    expect(vis[1].children[0].children).toHaveLength(3);
   });
   it('no session sees nothing', () => {
-    expect(visibleSections(NAV, null)).toEqual([]);
+    expect(filterTree(NAV, null)).toEqual([]);
+  });
+  it('does not mutate the input tree', () => {
+    const before = JSON.stringify(NAV);
+    filterTree(NAV, { permissions: ['finance.view'] });
+    expect(JSON.stringify(NAV)).toBe(before);
   });
 });
