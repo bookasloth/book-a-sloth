@@ -10,12 +10,17 @@
  *   - CRM sends had no daily budget at all.
  *
  * The two paths log to different ledgers (campaigns → email_logs provider=resend;
- * CRM → crm_messages), with no overlap, so today's true usage is the SUM. No
- * schema change needed.
+ * CRM → crm_messages), with no overlap TODAY because CRM sends bypass email_logs.
+ * Today's usage is the SUM, counted by sent_at (when the row was handed to Resend —
+ * NOT created_at, so a row queued yesterday and sent today lands on the right UTC
+ * day). No schema change needed. NOTE: this counts SENT ROWS; a row retried N times
+ * still counts once, so the soft-cap headroom below is the retry/bounce reserve — we
+ * do not (and need not) count raw provider attempts. Resend's 100 is the hard wall;
+ * this only throttles safely under it.
  *
  * Policy (revenue-first, approved 2026-09-13):
- *   - Soft cap 90 of the hard 100 — 10 held back for bounces/retries (Resend counts
- *     those against the cap too). Reset boundary = 00:00 UTC (Resend's own reset).
+ *   - Soft cap 85 of the hard 100 — ~15 held back for retries + late bounce/complaint
+ *     webhooks (uncounted attempts). Reset boundary = 00:00 UTC (Resend's own reset).
  *   - CRM (P1/P2) draws freely up to the cap, all day inside quiet-hours.
  *   - Cold (P3) is the pure REMAINDER: one 18:00 IST window, capped by the warm-up
  *     ramp (COLD_DAILY_MAX) AND whatever budget CRM left. No floor — a busy CRM day
@@ -32,7 +37,7 @@
 const { supabaseAdmin } = require('../../config/supabase');
 
 const HARD_CAP = 100;                                                    // Resend free-tier daily limit
-const SOFT_CAP = parseInt(process.env.RESEND_DAILY_CAP || '90', 10);     // usable/day (buffer for bounces+retries)
+const SOFT_CAP = parseInt(process.env.RESEND_DAILY_CAP || '85', 10);     // usable/day (headroom = retry/bounce reserve under the hard 100)
 const COLD_SEND_HOUR = parseInt(process.env.COLD_SEND_HOUR_IST || '18', 10); // cold window start (IST); -1 disables the window
 const COLD_WINDOW_END = parseInt(process.env.COLD_WINDOW_END_IST || '20', 10); // matches CRM quiet-hours end
 // Warm-up ramp: the cold upper bound. Start low on a fresh sending reputation and
@@ -51,17 +56,18 @@ function istParts(d = new Date()) {
   return { weekday: p.find((x) => x.type === 'weekday')?.value, day: Number(p.find((x) => x.type === 'day')?.value) };
 }
 
-// Total Resend attempts today across BOTH ledgers. Returns null on error so callers
-// pick their own fail direction. Counts every attempt (incl. delivered/bounced/
-// failed) because each one consumed a unit of the Resend daily quota.
+// Resend sends today across BOTH ledgers, counted by sent_at (the send day = the
+// quota day). Returns null on error so callers pick their own fail direction. A row
+// only has sent_at once it reached Resend, so queued/unsent rows correctly don't
+// count; a terminal status (delivered/bounced/failed) still consumed a send.
 async function resendUsedToday() {
   try {
     const since = utcDayStartISO();
     const [camp, crm] = await Promise.all([
       supabaseAdmin.from('email_logs').select('id', { count: 'exact', head: true })
-        .eq('provider', 'resend').gte('created_at', since),
+        .eq('provider', 'resend').gte('sent_at', since),
       supabaseAdmin.from('crm_messages').select('id', { count: 'exact', head: true })
-        .eq('channel', 'email').gte('created_at', since)
+        .eq('channel', 'email').gte('sent_at', since)
         .in('status', ['sent', 'delivered', 'bounced', 'failed']),
     ]);
     if (camp.error || crm.error) return null;
