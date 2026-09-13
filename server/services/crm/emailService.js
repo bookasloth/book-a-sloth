@@ -37,6 +37,18 @@ function styleBody(html) {
   return `<div style="font-family:${FONT};font-size:15px;line-height:1.65;color:#3c4043;">${withButtons}</div>`;
 }
 
+// Plain (founder cold) styling: keep links INLINE and underlined — never promote to
+// branded buttons — and use a web-safe system font, left-aligned, so it reads as a
+// hand-typed note rather than a designed email. Pairs with the 'cold' layout.
+const PLAIN_FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+function plainBody(html) {
+  const plainLinks = String(html || '').replace(
+    /<a\s+href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi,
+    (_m, href, label) => `<a href="${href}" style="color:#1a5fd0;text-decoration:underline;">${label}</a>`,
+  );
+  return `<div style="font-family:${PLAIN_FONT};font-size:15px;line-height:1.62;color:#1f2733;text-align:left;">${plainLinks}</div>`;
+}
+
 /**
  * @param {object} p
  * @param {object} p.lead     leads row (uses lead.email)
@@ -47,22 +59,24 @@ function styleBody(html) {
  * @param {string} [p.fromName] [p.fromEmail] persona override
  * @returns {{success:boolean, skipped?:boolean, reason?:string, providerMessageId?:string, error?:string}}
  */
-async function send({ lead, subject, html, text, category, previewText, fromName, fromEmail, replyTo, automated = false }) {
+async function send({ lead, subject, html, text, category, previewText, fromName, fromEmail, replyTo, automated = false, plain = false }) {
   const gate = await canSend(lead, 'email', { automated });
   if (!gate.ok) return { success: false, skipped: true, reason: gate.reason, defer: gate.defer };
 
   if (!subject || !html) return { success: false, error: 'missing_subject_or_body' };
 
   // Brand the email — per-recipient unsubscribe token so the footer link works.
+  // `plain` (founder cold outreach) uses the 'cold' layout: no header/card/brand
+  // shell, inline links, hand-typed feel. Everything else keeps the branded shell.
   let finalHtml = html;
   try {
     const settings = await loadSettings();
     finalHtml = renderLayout({
-      audience: 'customer',
-      bodyHtml: styleBody(html),
+      audience: plain ? 'cold' : 'customer',
+      bodyHtml: plain ? plainBody(html) : styleBody(html),
       // Distinct inbox preheader when the step supplies one; else fall back to subject.
       previewText: previewText || subject,
-      emailCategory: category || '',
+      emailCategory: plain ? '' : (category || ''),
       settings,
       data: { unsubscribe_token: makeToken(lead.email) },
     });
