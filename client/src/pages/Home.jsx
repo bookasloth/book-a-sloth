@@ -801,7 +801,8 @@ const Home = () => {
                   b.dark ? "bg-neutral-900 ring-white/10" : "bg-white ring-black/5"
                 }`}
               >
-                <img src={b.src} alt={b.alt} loading="lazy" className="max-h-8 w-auto object-contain" />
+                {/* ponytail: width/height reserve space to kill CLS; object-contain + w-auto/max-h-8 keep real aspect so the uniform 250×54 hint never distorts external badges */}
+                <img src={b.src} alt={b.alt} loading="lazy" width="250" height="54" className="max-h-8 w-auto object-contain" />
               </a>
             ))}
           </div>
