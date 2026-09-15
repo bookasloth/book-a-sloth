@@ -134,7 +134,7 @@ export default function Footer({ variant = 'full' }) {
         )}
 
         {/* Copyright / operator */}
-        <div className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <button type="button" onClick={scrollTop} className="font-heading text-sm font-extrabold text-white/80 transition-colors hover:text-white">Book A Sloth</button>
             <span>© {year} All rights reserved.</span>
@@ -148,7 +148,7 @@ export default function Footer({ variant = 'full' }) {
                 verification checklist (homepage must identify the operator). */}
             <span>Operated by Timewheel Internet Private Limited</span>
           </div>
-          <p className="text-white/40">Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+          <p className="text-white/60">Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
         </div>
       </div>
     </footer>

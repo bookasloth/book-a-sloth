@@ -75,20 +75,20 @@ export default function ConsentBanner({ variant = "full" }) {
         <button
           type="button"
           onClick={() => choose(true)}
-          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#4caf50] transition-all duration-300 hover:bg-[#4caf50]/15"
+          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#2e7d32] transition-all duration-300 hover:bg-[#2e7d32]/15"
         >
           Agree
         </button>
         <button
           type="button"
           onClick={() => choose(false)}
-          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#f44336] transition-all duration-300 hover:bg-[#f44336]/15"
+          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#c62828] transition-all duration-300 hover:bg-[#c62828]/15"
         >
           Disagree
         </button>
         <a
           href="/privacy"
-          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#2196f3] no-underline transition-all duration-300 hover:bg-[#2196f3]/15"
+          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#1565c0] no-underline transition-all duration-300 hover:bg-[#1565c0]/15"
         >
           Privacy Policy
         </a>
