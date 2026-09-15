@@ -1303,7 +1303,7 @@ const Home = () => {
             Not sure which plan? <span className="font-semibold text-ink">Start free</span> — you can upgrade in one click, anytime.
           </p>
           <p className="mt-4 text-center">
-            <Link to="/pricing" className="text-sm font-semibold text-primary hover:text-primary-dark hover:underline">
+            <Link to="/pricing" className="text-sm font-semibold text-primary-cta hover:text-primary-dark hover:underline">
               Compare all plans &amp; features →
             </Link>
           </p>
@@ -1634,7 +1634,7 @@ const Home = () => {
           </Reveal>
 
           <p className="mx-auto mt-10 max-w-[750px] text-center text-sm font-medium text-ink">
-            Book A Sloth does not sell or share your data with third parties. <span className="text-primary">Ever.</span>
+            Book A Sloth does not sell or share your data with third parties. <span className="text-primary-cta">Ever.</span>
           </p>
         </div>
       </section>
