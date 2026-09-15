@@ -1197,6 +1197,12 @@ const Home = () => {
                   return (
                     <figure
                       key={i}
+                      // Inactive/duplicate slides are dimmed to opacity-40 (fails
+                      // Lighthouse contrast) and the list is triplicated for the
+                      // infinite loop — hide all but the active one from the a11y
+                      // tree. Fixes the contrast audit AND stops screen readers
+                      // reading every testimonial 3×. Purely visual otherwise.
+                      aria-hidden={!isActive}
                       style={{ width: `${tCardW}px` }}
                       className={`relative flex h-[14rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[6px] p-7 text-left transition-[opacity,box-shadow,border-color] duration-500 sm:p-9 ${
                         isActive
