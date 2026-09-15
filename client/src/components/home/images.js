@@ -12,16 +12,17 @@
 export const u = (id, w = 800, h = 1000) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&h=${h}&q=80`;
 
-// Hero — Book A Sloth branded banner (company CDN)
-export const HERO = "https://company-assets.bookasloth.in/images/banner/hero-book-a-sloth.png";
+// Hero — Book A Sloth branded banner. Self-hosted from client/public (was on
+// company-assets.bookasloth.in; moved same-origin for reliability + caching —
+// the .in CDN was flaky/timing out in audits). Served by Vercel, long-cached
+// via the /images/*.png rule in vercel.json.
+export const HERO = "/images/banner/hero-book-a-sloth.png";
 
-// Hero "5/5" social-proof faces (company CDN). Upload 3 square photos
-// (≈80×80, .jpg) to these exact paths. Until then the hero shows a graceful
-// neutral fallback chip instead of a broken image.
+// Hero "5/5" social-proof faces. Self-hosted from client/public (see HERO).
 export const HERO_FACES = [
-  "https://company-assets.bookasloth.in/images/hero/face-1.png",
-  "https://company-assets.bookasloth.in/images/hero/face-2.png",
-  "https://company-assets.bookasloth.in/images/hero/face-3.png",
+  "/images/hero/face-1.png",
+  "/images/hero/face-2.png",
+  "/images/hero/face-3.png",
 ];
 
 // "Who it's for" — Indian-looking professionals across roles
