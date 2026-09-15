@@ -650,7 +650,7 @@ const Home = () => {
                   <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
                   <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
                   Why we{" "}
-                  <a href="#how-google" className="font-medium text-primary underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
+                  <a href="#how-google" className="font-medium text-primary-cta underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
                 </p>
               </div>
             </Reveal>
@@ -756,7 +756,7 @@ const Home = () => {
                 <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
                 <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
                 Why we{" "}
-                <a href="#how-google" className="font-medium text-primary underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
+                <a href="#how-google" className="font-medium text-primary-cta underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
               </p>
             </div>
           </Reveal>
@@ -786,7 +786,7 @@ const Home = () => {
       {/* ════════════════ FEATURED-ON BADGES ════════════════ */}
       <section className="px-5 py-14 sm:px-8 lg:py-20">
         <div className="mx-auto max-w-5xl">
-          <Reveal as="p" className="text-center text-base font-semibold uppercase tracking-[0.2em] text-primary sm:text-lg">
+          <Reveal as="p" className="text-center text-base font-semibold uppercase tracking-[0.2em] text-primary-cta sm:text-lg">
             Trusted &amp; featured on
           </Reveal>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
@@ -812,7 +812,7 @@ const Home = () => {
       {/* ════════════════ STATS STRIP (dark) ════════════════ */}
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-base font-semibold uppercase tracking-[0.2em] text-primary sm:text-lg">
+          <Reveal as="p" className="text-center text-base font-semibold uppercase tracking-[0.2em] text-primary-cta sm:text-lg">
             The calm starts here
           </Reveal>
           <Reveal as="h2" delay={0.05} style={{ textWrap: "balance" }} className="mx-auto mt-3 max-w-[34rem] text-center text-4xl text-white sm:text-5xl">
@@ -960,7 +960,7 @@ const Home = () => {
                             by {s.profiles?.name} · {s.duration} min
                           </p>
                         </div>
-                        <span className="flex-shrink-0 text-sm font-semibold text-primary">
+                        <span className="flex-shrink-0 text-sm font-semibold text-primary-cta">
                           {s.price === 0 ? "Free" : `₹${s.price}`}
                         </span>
                       </Link>
@@ -979,7 +979,7 @@ const Home = () => {
       <section id="how-it-works" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            From link to paid. <span className="font-extrabold text-primary">In three steps.</span>
+            From link to paid. <span className="font-extrabold text-primary-cta">In three steps.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             No back-and-forth. No payment awkwardness. No reminders to write.
@@ -1084,11 +1084,11 @@ const Home = () => {
       {/* ════════════════ FEATURE BREAKDOWN (dark) ════════════════ */}
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
             Everything you need
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Four jobs. <span className="font-extrabold text-primary">One calm tool.</span>
+            Four jobs. <span className="font-extrabold text-primary-cta">One calm tool.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Not a feature list — just the four things every service business actually needs, done properly.
@@ -1247,7 +1247,7 @@ const Home = () => {
       <section id="manifesto" className="px-5 py-20 sm:px-8 lg:py-32">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-12">
           <Reveal className="lg:col-span-4">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
               The Calm Economy
             </p>
             <h2 className="mt-4 text-4xl leading-[1.05] text-ink sm:text-5xl">
@@ -1289,7 +1289,7 @@ const Home = () => {
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
         <div className="mx-auto max-w-[1200px]">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-            Simple pricing. <span className="text-primary">Zero commission.</span>
+            Simple pricing. <span className="text-primary-cta">Zero commission.</span>
           </Reveal>
           <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-[750px] text-center text-neutral-500">
             Start free. Upgrade when your bookings demand it. Keep everything you earn — always.
@@ -1303,7 +1303,7 @@ const Home = () => {
             Not sure which plan? <span className="font-semibold text-ink">Start free</span> — you can upgrade in one click, anytime.
           </p>
           <p className="mt-4 text-center">
-            <Link to="/pricing" className="text-sm font-semibold text-primary hover:text-primary-dark hover:underline">
+            <Link to="/pricing" className="text-sm font-semibold text-primary-cta hover:text-primary-dark hover:underline">
               Compare all plans &amp; features →
             </Link>
           </p>
@@ -1421,7 +1421,7 @@ const Home = () => {
       {/* ════════════════ FAQ ════════════════ */}
       <section id="faq" className="px-5 pb-20 pt-12 sm:px-8 lg:pb-28 lg:pt-16">
         <div className="mx-auto max-w-3xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
             FAQ
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
@@ -1429,7 +1429,7 @@ const Home = () => {
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             Still stuck? Write to us at{" "}
-            <a href="mailto:bolt@bookasloth.in" className="font-semibold text-primary hover:no-underline">bolt@bookasloth.in</a>{" "}
+            <a href="mailto:bolt@bookasloth.in" className="font-semibold text-primary-cta hover:no-underline">bolt@bookasloth.in</a>{" "}
             — we reply fast.
           </Reveal>
           <div className="mt-12 space-y-3">
@@ -1464,14 +1464,14 @@ const Home = () => {
         <Reveal className="mx-auto max-w-7xl">
           <div className="lg:flex lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Compare</p>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">Compare</p>
               <h2 className="mt-4 max-w-[750px] text-4xl leading-tight text-white sm:text-5xl">
                 A calmer alternative to the tools you know.
               </h2>
             </div>
             <Link
               to={ROUTE_START}
-              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:no-underline lg:mb-2 lg:mt-0"
+              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-cta hover:no-underline lg:mb-2 lg:mt-0"
             >
               See for yourself <ArrowUpRight size={16} />
             </Link>
@@ -1522,7 +1522,7 @@ const Home = () => {
 
           <p className="mt-8 text-sm text-white/60">
             More comparisons coming. Want to see one?{" "}
-            <a href="mailto:bolt@bookasloth.in?subject=Comparison%20request" className="font-semibold text-primary hover:no-underline">Tell us →</a>
+            <a href="mailto:bolt@bookasloth.in?subject=Comparison%20request" className="font-semibold text-primary-cta hover:no-underline">Tell us →</a>
             <span className="mt-2 block text-xs text-white/40">
               No mail app?{" "}
               <button
@@ -1549,11 +1549,11 @@ const Home = () => {
       {/* ════════════════ TRUST & SECURITY ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
             Trust & security
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            Your money and data, <span className="font-extrabold text-primary">handled carefully.</span>
+            Your money and data, <span className="font-extrabold text-primary-cta">handled carefully.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             The unsexy-but-important stuff — done right.
@@ -1620,21 +1620,21 @@ const Home = () => {
               <p className="mt-8 border-t border-black/5 pt-6 text-sm leading-relaxed text-neutral-500">
                 Your Google data is used only to provide these scheduling features — never for advertising,
                 never sold. You can revoke access at any time from your{" "}
-                <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="font-medium text-primary-cta hover:underline">
                   Google Account settings
                 </a>
                 . Book A Sloth's use of information received from Google APIs adheres to the{" "}
-                <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary-cta hover:underline">
                   Google API Services User Data Policy
                 </a>
                 , including the Limited Use requirements. Read more in our{" "}
-                <Link to="/privacy" className="font-medium text-primary hover:underline">Privacy Policy</Link>.
+                <Link to="/privacy" className="font-medium text-primary-cta hover:underline">Privacy Policy</Link>.
               </p>
             </div>
           </Reveal>
 
           <p className="mx-auto mt-10 max-w-[750px] text-center text-sm font-medium text-ink">
-            Book A Sloth does not sell or share your data with third parties. <span className="text-primary">Ever.</span>
+            Book A Sloth does not sell or share your data with third parties. <span className="text-primary-cta">Ever.</span>
           </p>
         </div>
       </section>

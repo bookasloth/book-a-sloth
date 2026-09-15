@@ -39,23 +39,17 @@ export default function ConsentBanner({ variant = "full" }) {
     >
       {/* Cookie pops above the card via negative top margin */}
       <div className="-mt-16 mb-[-20px] drop-shadow">
-        {/* WebP (109 KB PNG -> ~18 KB) with PNG fallback — the <source> lets the
-            browser use consent.webp when it exists on the CDN and fall back to
-            the original .png if not, so code + asset upload can ship in any order. */}
-        <picture>
-          <source
-            srcSet="https://company-assets.bookasloth.in/images/banner/consent.webp"
-            type="image/webp"
-          />
-          <img
-            src="https://company-assets.bookasloth.in/images/banner/consent.png"
-            alt="Book A Sloth cookie preferences"
-            width={298}
-            height={280}
-            decoding="async"
-            className="h-auto w-28"
-          />
-        </picture>
+        {/* Self-hosted from client/public (was company-assets.bookasloth.in; the
+            .in CDN was flaky and the .png fallback 404'd — only the webp existed).
+            webp is universally supported, so the <picture>/<source> dance is gone. */}
+        <img
+          src="/images/banner/consent.webp"
+          alt="Book A Sloth cookie preferences"
+          width={298}
+          height={280}
+          decoding="async"
+          className="h-auto w-28"
+        />
       </div>
 
       <div className="text-center leading-relaxed">
