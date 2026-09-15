@@ -252,6 +252,23 @@ async function send(opts) {
   return { ok: true, status: 'queued', logId };
 }
 
+// The cross-channel notification_logs row for a queued email is written as
+// 'pending' at enqueue time (notificationEngine.logResult) and never revisited —
+// so the admin "Notification Settings" log showed every async email stuck on
+// 'pending' even after the worker delivered it (WhatsApp is synchronous, so it
+// logged the real status). Back-fill that row here, matched by the email_logs id
+// the engine stored in payload.logId. Fire-and-forget + schema-safe: a missing
+// table/column or no matching row must never disturb the delivery path.
+async function syncNotificationLog(logId, status) {
+  if (!logId) return;
+  try {
+    await supabaseAdmin.from('notification_logs')
+      .update({ status })
+      .eq('channel', 'email')
+      .filter('payload->>logId', 'eq', String(logId));
+  } catch (_) { /* log sync must never break delivery */ }
+}
+
 /**
  * Queue worker — processes due 'queued' emails with retry backoff.
  * Called on an interval from server.js.
@@ -300,6 +317,7 @@ async function processQueue(limit = 25) {
         provider_message_id: r.id || r.response?.id || null,
         sent_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq('id', row.id);
+      await syncNotificationLog(row.id, 'sent');
       sent++;
     } else if (attemptsMade <= BACKOFFS_MIN.length) {
       // schedule the next retry (5m → 30m → 2h)
@@ -317,6 +335,7 @@ async function processQueue(limit = 25) {
         status: 'failed', attempts: attemptsMade, provider: r.provider,
         error: r.error || 'send failed (max retries)', updated_at: new Date().toISOString(),
       }).eq('id', row.id);
+      await syncNotificationLog(row.id, 'failed');
       failed++;
       // Observability parity with WhatsApp (E2): a permanently-failed email
       // (provider outage, bad address, exhausted retries) previously only lived in

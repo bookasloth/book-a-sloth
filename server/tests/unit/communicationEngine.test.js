@@ -16,6 +16,13 @@ const db = {
   ],
   email_logs: [],
   email_unsubscribes: [], // list of opted-out emails
+  notification_logs: [], // cross-channel summary rows (back-filled by the worker)
+};
+
+// jsonb path getter for the test mock: 'payload->>logId' → row.payload.logId
+const getPath = (row, col) => {
+  const m = /^([a-z_]+)->>([a-zA-Z]+)$/.exec(col);
+  return m ? row[m[1]]?.[m[2]] : row[col];
 };
 
 let mockProviderState = { success: true };
@@ -43,12 +50,26 @@ jest.mock('../../config/supabase', () => {
         return Promise.resolve({ data: null, error: null });
       },
       insert(row) {
-        const rows = [].concat(row).map((r, i) => ({ id: `log${db.email_logs.length + i + 1}`, ...r }));
-        db.email_logs.push(...rows);
+        const store = db[table] || db.email_logs;
+        const rows = [].concat(row).map((r, i) => ({ id: `log${store.length + i + 1}`, ...r }));
+        store.push(...rows);
         return { select: () => ({ single: () => Promise.resolve({ data: { id: rows[0].id }, error: null }) }) };
       },
       update(changes) {
-        return { eq: (c, v) => { const row = db.email_logs.find((r) => r[c] === v); if (row) Object.assign(row, changes); return Promise.resolve({ error: null }); } };
+        // Chainable: collect eq/filter predicates, apply to the matching rows on
+        // terminal await. Supports the worker's .update().eq().filter() back-fill.
+        const preds = [];
+        const store = db[table] || db.email_logs;
+        const apply = () => {
+          for (const r of store) if (preds.every(([c, v]) => getPath(r, c) === v)) Object.assign(r, changes);
+          return { error: null };
+        };
+        const chain = {
+          eq(c, v) { preds.push([c, v]); return chain; },
+          filter(c, _op, v) { preds.push([c, v]); return chain; },
+          then(resolve) { return resolve(apply()); },
+        };
+        return chain;
       },
       then(resolve) {
         // terminal: used for .select() list reads
@@ -75,7 +96,7 @@ jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn() }));
 const engine = require('../../services/email/communicationEngine');
 const { adminAlert } = require('../../utils/adminAlert');
 
-beforeEach(() => { db.email_logs = []; db.email_unsubscribes = []; mockProviderState = { success: true }; engine.clearCache(); adminAlert.mockClear(); });
+beforeEach(() => { db.email_logs = []; db.email_unsubscribes = []; db.notification_logs = []; mockProviderState = { success: true }; engine.clearCache(); adminAlert.mockClear(); });
 
 describe('communicationEngine.send', () => {
   test('queues a normal email (status queued, not yet sent)', async () => {
@@ -202,6 +223,23 @@ describe('communicationEngine.processQueue — retry backoff', () => {
     const r = await engine.processQueue();
     expect(r.sent).toBe(1);
     expect(db.email_logs[0].status).toBe('sent');
+  });
+
+  test('back-fills the pending notification_logs row on delivery (matched by payload.logId)', async () => {
+    const r0 = await engine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', to: 'a@x.test', data: { service_name: 'X' }, user: { name: 'A' } });
+    // notificationEngine writes this cross-channel summary row as 'pending' at enqueue.
+    db.notification_logs.push({ channel: 'email', status: 'pending', payload: { logId: r0.logId } });
+    await engine.processQueue();
+    expect(db.notification_logs[0].status).toBe('sent');
+  });
+
+  test('back-fills notification_logs to failed after retries are exhausted', async () => {
+    const r0 = await engine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', to: 'a@x.test', data: { service_name: 'X' }, user: { name: 'A' } });
+    db.notification_logs.push({ channel: 'email', status: 'pending', payload: { logId: r0.logId } });
+    mockProviderState.success = false;
+    for (let i = 0; i < 4; i++) await engine.processQueue(); // 3 retries then permanent fail
+    expect(db.email_logs[0].status).toBe('failed');
+    expect(db.notification_logs[0].status).toBe('failed');
   });
 
   test('failures retry 3 times (5m/30m/2h) then fail permanently', async () => {
