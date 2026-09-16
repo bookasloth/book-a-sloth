@@ -94,7 +94,7 @@ function CalmerWord() {
   const reduce = useReducedMotion();
   const text = useTypewriter(CALM_WORDS, !reduce);
   return (
-    <span className="whitespace-nowrap text-primary">
+    <span className="whitespace-nowrap text-primary-cta">
       <span aria-hidden="true">{text}</span>
       {!reduce && (
         <span
@@ -326,7 +326,7 @@ const GlassCard = ({ icon: Icon, label, value, accent, className, float }) => (
     </span>
     <div>
       <div className="text-[11px] font-medium text-neutral-400">{label}</div>
-      <div className={`text-sm font-semibold ${accent ? "text-primary" : "text-ink"}`}>
+      <div className={`text-sm font-semibold ${accent ? "text-primary-cta" : "text-ink"}`}>
         {value}
       </div>
     </div>
@@ -624,7 +624,7 @@ const Home = () => {
             <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
               You sell your time.
               <br />
-              <span className="font-bold">We make <span className="text-primary">everything</span>
+              <span className="font-bold">We make <span className="text-primary-cta">everything</span>
                 <br />
                 <CalmerWord /> around it.</span>
             </Reveal>
@@ -730,7 +730,7 @@ const Home = () => {
           <Reveal as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
             You sell your time.
             <br />
-            <span className="font-bold">We make <span className="text-primary">everything</span>
+            <span className="font-bold">We make <span className="text-primary-cta">everything</span>
                 <br />
                 <CalmerWord /> around it.</span>
           </Reveal>
@@ -1197,6 +1197,12 @@ const Home = () => {
                   return (
                     <figure
                       key={i}
+                      // Inactive/duplicate slides are dimmed to opacity-40 (fails
+                      // Lighthouse contrast) and the list is triplicated for the
+                      // infinite loop — hide all but the active one from the a11y
+                      // tree. Fixes the contrast audit AND stops screen readers
+                      // reading every testimonial 3×. Purely visual otherwise.
+                      aria-hidden={!isActive}
                       style={{ width: `${tCardW}px` }}
                       className={`relative flex h-[14rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[6px] p-7 text-left transition-[opacity,box-shadow,border-color] duration-500 sm:p-9 ${
                         isActive
