@@ -284,6 +284,8 @@ const TAvatar = ({ src, name }) => {
       onError={() => setErr(true)}
       alt={name}
       loading="lazy"
+      width={44}
+      height={44}
       className="h-11 w-11 flex-shrink-0 rounded-xl object-cover"
     />
   );
