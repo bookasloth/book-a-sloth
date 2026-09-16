@@ -45,8 +45,8 @@ export default function ConsentBanner({ variant = "full" }) {
         <img
           src="/images/banner/consent.webp"
           alt="Book A Sloth cookie preferences"
-          width={298}
-          height={280}
+          width={224}
+          height={201}
           decoding="async"
           className="h-auto w-28"
         />

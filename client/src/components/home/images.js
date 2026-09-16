@@ -16,13 +16,14 @@ export const u = (id, w = 800, h = 1000) =>
 // company-assets.bookasloth.in; moved same-origin for reliability + caching —
 // the .in CDN was flaky/timing out in audits). Served by Vercel, long-cached
 // via the /images/*.png rule in vercel.json.
-export const HERO = "/images/banner/hero-book-a-sloth.png";
+export const HERO = "/images/banner/hero-book-a-sloth.webp";
 
 // Hero "5/5" social-proof faces. Self-hosted from client/public (see HERO).
+// 80×80 webp (2× the 40px display) — was 128px PNG (PageSpeed image-delivery).
 export const HERO_FACES = [
-  "/images/hero/face-1.png",
-  "/images/hero/face-2.png",
-  "/images/hero/face-3.png",
+  "/images/hero/face-1.webp",
+  "/images/hero/face-2.webp",
+  "/images/hero/face-3.webp",
 ];
 
 // "Who it's for" — Indian-looking professionals across roles

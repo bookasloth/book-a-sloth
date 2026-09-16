@@ -284,6 +284,8 @@ const TAvatar = ({ src, name }) => {
       onError={() => setErr(true)}
       alt={name}
       loading="lazy"
+      width={44}
+      height={44}
       className="h-11 w-11 flex-shrink-0 rounded-xl object-cover"
     />
   );
@@ -305,6 +307,8 @@ const HeroFace = ({ src }) => {
       onError={() => setErr(true)}
       alt=""
       loading="lazy"
+      width={40}
+      height={40}
       className="h-10 w-10 flex-shrink-0 rounded-full border-2 border-canvas object-cover"
     />
   );
