@@ -56,7 +56,6 @@ import useLenis from "../hooks/useLenis";
 import { HostAvatar } from "../components/common/HostAvatar";
 import Reveal from "../components/home/Reveal";
 import HowItWorks from "../components/home/HowItWorks";
-import BrandPreloader from "../components/preloader/BrandPreloader";
 import { HERO, HERO_FACES, PERSONAS, NEWSLETTER } from "../components/home/images";
 import { TESTIMONIALS } from "../data/testimonials";
 import PricingCards from "../components/pricing/PricingCards";
@@ -445,29 +444,7 @@ const Home = () => {
     }
   };
 
-  // ── Preloader readiness: fonts loaded + hero image decoded (real, not timed) ──
-  const [assetsReady, setAssetsReady] = useState(false);
   const [openFaq, setOpenFaq] = useState(null); // FAQ: single-open accordion
-  useEffect(() => {
-    let done = false;
-    const finish = () => { if (!done) { done = true; setAssetsReady(true); } };
-    const fontsP = document.fonts ? document.fonts.ready : Promise.resolve();
-    // The hero banner only renders at >= sm (640px). The mobile hero is text-only,
-    // so on phones don't block the preloader decoding an image the device never
-    // shows — that just delayed perceived load for ~90% of (mobile) traffic.
-    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches;
-    let imgP = Promise.resolve();
-    if (!isMobile) {
-      const img = new Image();
-      img.src = HERO;
-      imgP = img.decode
-        ? img.decode().catch(() => {})
-        : new Promise((r) => { img.onload = r; img.onerror = r; });
-    }
-    Promise.all([fontsP, imgP]).then(finish);
-    const safety = setTimeout(finish, 4000); // never strand the preloader
-    return () => clearTimeout(safety);
-  }, []);
 
   // ── Newsletter ──
   const [emailInput, setEmailInput] = useState("");
@@ -614,7 +591,11 @@ const Home = () => {
         image={OG_IMAGE}
         jsonLd={HOME_JSONLD}
       />
-      <BrandPreloader variant="homepage" ready={assetsReady} />
+      {/* ponytail: no BrandPreloader on the homepage — it was a fixed full-screen
+          overlay gated on a post-hydration useEffect (fonts.ready + hero decode),
+          which hid the already-prerendered hero until the JS bundle booted. On
+          slow mobile that WAS the LCP (~6-10s). The hero is server-rendered, so
+          it now paints immediately. Intro kept on profile pages. */}
 
       {/* ════════════════ HERO — DESKTOP/TABLET (sm+) ════════════════ */}
       {/* Mobile gets its own centered section below; this whole block is sm:block. */}
@@ -683,13 +664,19 @@ const Home = () => {
           {/* RIGHT — hero photo (sm+ only; mobile uses the dedicated centered section below) */}
           <Reveal delay={0.1} className="relative hidden sm:block">
             <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[6px] bg-sand shadow-[0_40px_90px_-25px_rgba(26,26,26,0.38)] ring-1 ring-black/5">
-              <motion.img
-                src={HERO}
-                alt="A calm professional at work"
-                loading="eager"
-                style={{ y: heroImgY }}
-                className="h-[112%] w-full object-cover"
-              />
+              {/* ponytail: <picture> media-source so the hero is fetched ONLY at
+                  sm+ (where it's shown). The <img> has no src of its own, so on
+                  mobile — where this whole block is `hidden` but an <img src> would
+                  still download — nothing is fetched. Desktop loads the webp. */}
+              <picture>
+                <source media="(min-width: 640px)" srcSet={HERO} type="image/webp" />
+                <motion.img
+                  alt="A calm professional at work"
+                  loading="eager"
+                  style={{ y: heroImgY }}
+                  className="h-[112%] w-full object-cover"
+                />
+              </picture>
               {/* Subtle inset sheen for a more premium frame */}
               <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[6px] ring-1 ring-inset ring-white/15" />
             </div>
