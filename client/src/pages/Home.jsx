@@ -606,7 +606,7 @@ const Home = () => {
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT */}
           <div>
-            <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
+            <Reveal instant as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
               You sell your time.
               <br />
               <span className="font-bold">We make <span className="text-primary-cta">everything</span>
@@ -614,13 +614,13 @@ const Home = () => {
                 <CalmerWord /> around it.</span>
             </Reveal>
 
-            <Reveal as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
+            <Reveal instant as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
               Get booked &amp; get paid. Let clients book appointments, pay, and get
               reminders automatically. Built for India. Set up in 3 minutes and skip the admin.
             </Reveal>
 
             {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
-            <Reveal delay={0.18} className="mt-6 sm:mt-9">
+            <Reveal instant delay={0.18} className="mt-6 sm:mt-9">
               <div className="max-w-[22rem]">
                 <button
                   onClick={startGoogle}
@@ -641,7 +641,7 @@ const Home = () => {
             </Reveal>
 
             {/* Social proof */}
-            <Reveal delay={0.24} className="mt-7 flex items-center gap-4 sm:mt-9">
+            <Reveal instant delay={0.24} className="mt-7 flex items-center gap-4 sm:mt-9">
               <div className="flex -space-x-3">
                 {HERO_FACES.map((f, i) => (
                   <HeroFace key={i} src={f} />
@@ -662,7 +662,7 @@ const Home = () => {
           </div>
 
           {/* RIGHT — hero photo (sm+ only; mobile uses the dedicated centered section below) */}
-          <Reveal delay={0.1} className="relative hidden sm:block">
+          <Reveal instant delay={0.1} className="relative hidden sm:block">
             <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[6px] bg-sand shadow-[0_40px_90px_-25px_rgba(26,26,26,0.38)] ring-1 ring-black/5">
               {/* ponytail: <picture> media-source so the hero is fetched ONLY at
                   sm+ (where it's shown). The <img> has no src of its own, so on
@@ -718,7 +718,7 @@ const Home = () => {
           {/* Mobile hero is the responsive twin of the desktop <h1> above; both
               render in the DOM (CSS-hidden per breakpoint), so this one is an h2
               to keep a single H1 per page for crawlers. */}
-          <Reveal as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
+          <Reveal instant as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
             You sell your time.
             <br />
             <span className="font-bold">We make <span className="text-primary-cta">everything</span>
@@ -726,13 +726,13 @@ const Home = () => {
                 <CalmerWord /> around it.</span>
           </Reveal>
 
-          <Reveal as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
+          <Reveal instant as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
             Get booked &amp; get paid. Let clients book appointments, pay, and get
             reminders automatically. Built for India. Set up in 3 minutes and skip the admin.
           </Reveal>
 
           {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
-          <Reveal delay={0.18} className="mt-6">
+          <Reveal instant delay={0.18} className="mt-6">
             <div className="mx-auto max-w-[22rem]">
               <button
                 onClick={startGoogle}
@@ -753,7 +753,7 @@ const Home = () => {
           </Reveal>
 
           {/* Social proof */}
-          <Reveal delay={0.24} className="mt-7 flex flex-col items-center gap-3">
+          <Reveal instant delay={0.24} className="mt-7 flex flex-col items-center gap-3">
             <div className="flex -space-x-3">
               {HERO_FACES.map((f, i) => (
                 <HeroFace key={i} src={f} />

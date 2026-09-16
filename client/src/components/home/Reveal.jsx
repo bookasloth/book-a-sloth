@@ -15,19 +15,25 @@ export default function Reveal({
   className = "",
   once = true,
   amount = 0.25,
+  instant = false,
   ...rest
 }) {
   const MotionTag = motion[as] || motion.div;
   // Respect prefers-reduced-motion: render the final state immediately so content
   // never animates AND never gets stranded at opacity:0 for these users.
+  // `instant` does the same on purpose for above-the-fold content (the hero):
+  // the fade's `initial:{opacity:0}` re-hides the already-prerendered hero on
+  // hydration, so the LCP element only paints when the animation ends (~2.4s
+  // render delay). instant renders the final state from first paint — no re-hide.
   const reduce = useReducedMotion();
+  const skip = reduce || instant;
   return (
     <MotionTag
       className={className}
-      initial={reduce ? false : { opacity: 0, y, scale: 0.985 }}
-      whileInView={reduce ? undefined : { opacity: 1, y: 0, scale: 1 }}
+      initial={skip ? false : { opacity: 0, y, scale: 0.985 }}
+      whileInView={skip ? undefined : { opacity: 1, y: 0, scale: 1 }}
       viewport={{ once, amount }}
-      transition={reduce ? { duration: 0 } : { duration: 0.7, ease: EASE, delay }}
+      transition={skip ? { duration: 0 } : { duration: 0.7, ease: EASE, delay }}
       {...rest}
     >
       {children}
