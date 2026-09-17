@@ -218,6 +218,27 @@ const getMyWithholding = async (req, res) => {
   }
 };
 
+// Stamp the first time a host shares/copies their public booking link — the
+// activation funnel's "shared" signal (host_activation view reads
+// profiles.first_shared_at). Idempotent: only sets it if still null, so the
+// timestamp is the FIRST share. Fire-and-forget from the client; never blocks
+// the share UX. Schema-fallback safe (no-op if the column isn't there yet).
+const markLinkShared = async (req, res) => {
+  try {
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ first_shared_at: new Date().toISOString() })
+      .eq('id', req.user.id)
+      .is('first_shared_at', null);
+    if (error && !/column .*first_shared_at.* does not exist/i.test(error.message || '')) {
+      return safeError(res, error);
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 module.exports = {
   getTransactions,
   getPayoutBalance,
@@ -225,4 +246,5 @@ module.exports = {
   requestPayout,
   toggleService,
   getMyWithholding,
+  markLinkShared,
 };

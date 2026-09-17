@@ -6,7 +6,7 @@ import {
   Check, ArrowRight, Copy, Link2, MessageCircle, Wallet, Share2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc } from '../services/api';
+import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc, markLinkShared } from '../services/api';
 import { analytics, EVENTS } from '../services/analytics';
 import { normalizePlan } from '../utils/themeUtils';
 import toast from 'react-hot-toast';
@@ -161,7 +161,10 @@ const Dashboard = () => {
   const shareText = `Book a session with me on Book A Sloth: ${profileUrl}`;
   const showShareMoment =
     isHost && !!user?.username && services.length > 0 && bookings.length === 0 && !shareMomentDismissed;
-  const trackShare = (method) => analytics.track(EVENTS.PROFILE_LINK_SHARED, { method, source: 'share_moment' });
+  const trackShare = (method) => {
+    analytics.track(EVENTS.PROFILE_LINK_SHARED, { method, source: 'share_moment' });
+    markLinkShared(); // stamp the activation-funnel "shared" signal in the DB (idempotent)
+  };
   const shareNative = async () => {
     if (navigator.share) {
       try { await navigator.share({ title: 'Book A Sloth', text: 'Book a session with me:', url: profileUrl }); trackShare('native'); return; }

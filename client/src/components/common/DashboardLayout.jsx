@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
 import useLiveNotifications from '../../hooks/useLiveNotifications';
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
+import { getNotifications, markAllNotificationsRead, markNotificationRead, markLinkShared } from '../../services/api';
 import { normalizePlan } from '../../utils/themeUtils';
 import { cn } from '../dashboard/ui/cn';
 import { PageTransition } from '../dashboard/ui/PageTransition';
@@ -242,6 +242,7 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
     if (!publicUrl) return;
     try {
       await navigator.clipboard.writeText(publicUrl);
+      markLinkShared(); // activation-funnel "shared" signal (idempotent, fire-and-forget)
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch { /* clipboard blocked — no-op */ }
