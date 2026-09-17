@@ -8,6 +8,8 @@
 // Auth: gated by requireAdmin('analytics.view') in adminRoutes.
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const communicationEngine = require('../services/email/communicationEngine');
+const aisensy = require('../services/aisensyService');
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -205,4 +207,59 @@ const getActivationFunnel = async (req, res) => {
   }
 };
 
-module.exports = { getKpis, getActivationFunnel, bookingGrossValue, productGrossValue, median };
+// One-off TEST send of all 4 activation nudges to a single recipient (email
+// and/or phone the admin enters). Bypasses the notification_events on/off gates
+// on purpose (calls communicationEngine + AiSensy directly) so you can preview
+// before flipping the real events on. Sends ONLY to the given recipient — no
+// host query, never touches the cron. Admin-gated (settings.manage).
+const NUDGE_TEST = [
+  { event: 'HOST_ADD_SERVICE_NUDGE',    campaign: 'Add Your First Service - Vendor',  link: 'https://bookasloth.com/dashboard' },
+  { event: 'HOST_SHARE_LINK_NUDGE',     campaign: 'Share Your Booking Link - Vendor', link: 'https://bookasloth.com/dashboard' },
+  { event: 'HOST_FIRST_BOOKING_NUDGE',  campaign: 'Get Your First Booking - Vendor',  link: 'https://bookasloth.com/dashboard' },
+  { event: 'HOST_PAYOUT_WAITING_NUDGE', campaign: 'Payout Waiting - Vendor',          link: 'https://bookasloth.com/dashboard' },
+];
+
+const testSendActivationNudges = async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim();
+    const phone = String(req.body?.phone || '').replace(/\D/g, '');
+    if (!email && !phone) return res.status(400).json({ message: 'Provide an email and/or phone.' });
+    const first = (String(req.body?.name || 'there').trim().split(/\s+/)[0]) || 'there';
+
+    let apiKey = null;
+    if (phone) {
+      const { data } = await supabaseAdmin
+        .from('notification_providers').select('api_key').eq('provider', 'aisensy').eq('is_active', true).maybeSingle();
+      apiKey = data?.api_key || null;
+    }
+
+    const results = [];
+    for (const n of NUDGE_TEST) {
+      const out = { event: n.event, campaign: n.campaign };
+      if (email) {
+        try {
+          const r = await communicationEngine.send({
+            event: n.event, to: email, audience: 'vendor',
+            data: { first_name: first, link: n.link }, user: { email, name: first }, immediate: true,
+          });
+          out.email = { ok: !!r.ok, status: r.status, error: r.error || r.reason };
+        } catch (e) { out.email = { ok: false, error: e.message }; }
+      }
+      if (phone) {
+        if (!apiKey) out.whatsapp = { ok: false, error: 'AiSensy provider not configured' };
+        else {
+          try {
+            const r = await aisensy.sendCampaign({ apiKey, campaignName: n.campaign, destination: phone, userName: first, templateParams: [first, n.link] });
+            out.whatsapp = { ok: !!r.success, error: r.error };
+          } catch (e) { out.whatsapp = { ok: false, error: e.message }; }
+        }
+      }
+      results.push(out);
+    }
+    res.json({ sentTo: { email: email || null, phone: phone || null }, results });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+module.exports = { getKpis, getActivationFunnel, testSendActivationNudges, bookingGrossValue, productGrossValue, median };

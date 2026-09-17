@@ -41,6 +41,7 @@ router.use('/seo', require('./seoRoutes'));
 const insights = require('../controllers/insightsAdminController');
 router.get('/insights/kpis', requireAdmin('analytics.view'), insights.getKpis);
 router.get('/activation', requireAdmin('analytics.view'), insights.getActivationFunnel);
+router.post('/activation/test-send', requireAdmin('settings.manage'), insights.testSendActivationNudges);
 router.get('/ops/summary',  requireAdmin('ops.view'), ops.getSummary);
 
 // ── Image upload (admin session) — badges, branding, CMS, etc. ─

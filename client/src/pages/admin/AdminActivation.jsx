@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminGetActivation } from '../../services/api';
+import { adminGetActivation, adminTestNudges } from '../../services/api';
 
 // Host activation funnel board. Reads /admin/activation (host_activation views).
 // North Star: % of new hosts who reach their first payout. The stuck list =
@@ -23,6 +23,16 @@ export default function AdminActivation() {
   const [includeInternal, setIncludeInternal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+  const [test, setTest] = useState({ email: 'sndatarkar@gmail.com', phone: '8637758344', name: 'Datarkar' });
+  const [testResult, setTestResult] = useState(null);
+  const [testing, setTesting] = useState(false);
+
+  const sendTest = async () => {
+    setTesting(true); setTestResult(null);
+    try { const r = await adminTestNudges(test); setTestResult(r.data); }
+    catch (e) { setTestResult({ error: e?.response?.data?.message || 'Failed' }); }
+    finally { setTesting(false); }
+  };
 
   useEffect(() => {
     let live = true;
@@ -85,6 +95,19 @@ export default function AdminActivation() {
             <div className="mt-3 border-t border-black/5 pt-3 text-sm text-neutral-500">
               Lifetime GMV (paid): <strong className="text-ink">₹{Number(funnel.total_gmv || 0).toLocaleString('en-IN')}</strong>
             </div>
+          </div>
+
+          {/* Test send */}
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <h2 className="font-heading text-sm font-bold text-amber-900">Test send — all 4 nudges to one recipient</h2>
+            <p className="mb-3 text-xs text-amber-800">Bypasses the on/off gates; sends only to who you enter. WhatsApp needs the AiSensy templates approved first.</p>
+            <div className="flex flex-wrap items-end gap-2">
+              <input value={test.email} onChange={(e) => setTest({ ...test, email: e.target.value })} placeholder="email" className="rounded border border-black/10 px-2 py-1 text-sm" />
+              <input value={test.phone} onChange={(e) => setTest({ ...test, phone: e.target.value })} placeholder="phone" className="rounded border border-black/10 px-2 py-1 text-sm" />
+              <input value={test.name} onChange={(e) => setTest({ ...test, name: e.target.value })} placeholder="name" className="w-28 rounded border border-black/10 px-2 py-1 text-sm" />
+              <button onClick={sendTest} disabled={testing} className="rounded bg-primary-cta px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">{testing ? 'Sending…' : 'Send test'}</button>
+            </div>
+            {testResult && <pre className="mt-3 overflow-x-auto rounded bg-white p-2 text-xs text-neutral-700">{JSON.stringify(testResult, null, 2)}</pre>}
           </div>
 
           {/* Stuck worklist */}
