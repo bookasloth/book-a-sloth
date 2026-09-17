@@ -168,6 +168,7 @@ const AdminProviders = lazy(() => import('./pages/admin/AdminProviders'));
 const AdminKYC       = lazy(() => import('./pages/admin/AdminKYC'));
 const AdminKycOverview = lazy(() => import('./pages/admin/AdminKycOverview'));
 const Host360List    = lazy(() => import('./pages/admin/Host360List'));
+const AdminActivation = lazy(() => import('./pages/admin/AdminActivation'));
 const Host360Detail  = lazy(() => import('./pages/admin/Host360Detail'));
 const Guest360List   = lazy(() => import('./pages/admin/Guest360List'));
 const Guest360Detail = lazy(() => import('./pages/admin/Guest360Detail'));
@@ -508,6 +509,7 @@ function App() {
           <Route path="/admin" element={<Navigate to="/super-dashboard" replace />} />
 
           {/* Operations — Bookings */}
+          <Route path="/admin/activation" element={<AdminWrapper><AdminActivation /></AdminWrapper>} />
           <Route path="/admin/bookings" element={<AdminWrapper><AdminBookings /></AdminWrapper>} />
           <Route path="/admin/bookings/:filter" element={<AdminWrapper><AdminBookings /></AdminWrapper>} />
 

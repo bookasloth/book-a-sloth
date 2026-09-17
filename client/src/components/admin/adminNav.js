@@ -129,6 +129,7 @@ export const NAV = [
     { label:'Revenue',            icon:'trendUp',   to:'/super-dashboard/revenue', perm:'analytics.view' },
     { label:'Pending Actions',    icon:'clock',     to:'/super-dashboard/pending', perm:'ops.view' },
     { label:'Marketing Insights', icon:'bars',      to:'/super-dashboard/insights', perm:'analytics.view' },
+    { label:'Host Activation',    icon:'trendUp',   to:'/admin/activation', perm:'analytics.view' },
     { label:'Feature Status',     icon:'zap',       to:'/admin/features', perm:'settings.manage' },
   ]},
   { key:'operations', label:'Operations', icon:'calCheck', color:'#0891b2', children:[

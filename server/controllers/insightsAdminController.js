@@ -174,4 +174,35 @@ const getKpis = async (req, res) => {
   }
 };
 
-module.exports = { getKpis, bookingGrossValue, productGrossValue, median };
+// Host activation funnel + the "stuck" worklist (hosts with a real priced
+// service but no booking yet — stages 3_listed / 3b_shared). Reads the
+// host_activation views (v3.161/v3.162). Real-only by default (?all=1 includes
+// internal/test accounts). Schema-fallback: if the views aren't there yet,
+// returns empty rather than 500.
+const getActivationFunnel = async (req, res) => {
+  try {
+    const realOnly = req.query.all !== '1';
+    const { data: funnelRows, error: fErr } = await supabaseAdmin
+      .from('host_activation_funnel')
+      .select('*');
+    if (fErr) {
+      if (/relation .*host_activation.* does not exist/i.test(fErr.message || '')) {
+        return res.json({ funnel: null, stuck: [], pending_migration: true });
+      }
+      return safeError(res, fErr);
+    }
+    const funnel = (funnelRows || []).find((r) => r.real_only === realOnly) || (funnelRows || [])[0] || null;
+    const { data: stuck, error: sErr } = await supabaseAdmin
+      .from('host_activation')
+      .select('host_id,name,email,phone,profession,plan,stage,priced_services,gmv,days_since_signup,first_shared_at')
+      .in('stage', ['3_listed', '3b_shared'])
+      .eq('is_internal', false)
+      .order('days_since_signup', { ascending: false });
+    if (sErr) return safeError(res, sErr);
+    res.json({ funnel, stuck: stuck || [] });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+module.exports = { getKpis, getActivationFunnel, bookingGrossValue, productGrossValue, median };
