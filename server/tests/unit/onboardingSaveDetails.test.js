@@ -45,3 +45,19 @@ test('skip:true DOES record the skip when WhatsApp is not verified', async () =>
   expect(u.whatsapp_verified).toBe(false);
   expect(u.whatsapp_number).toBeNull();
 });
+
+test('location is persisted when provided (local-SEO onboarding capture)', async () => {
+  const getUpdates = wire({ onboarding_step_completed: 5, whatsapp_verified: true });
+  await ctrl.saveDetails('v1', { location: 'Nagpur, Maharashtra' });
+  expect(getUpdates().location).toBe('Nagpur, Maharashtra');
+});
+
+test('blank location is stored as null; omitted location is left untouched', async () => {
+  const getBlank = wire({ onboarding_step_completed: 5, whatsapp_verified: true });
+  await ctrl.saveDetails('v1', { location: '' });
+  expect(getBlank().location).toBeNull();
+
+  const getOmitted = wire({ onboarding_step_completed: 5, whatsapp_verified: true });
+  await ctrl.saveDetails('v1', { tagline: 'hi' });
+  expect(getOmitted()).not.toHaveProperty('location');
+});

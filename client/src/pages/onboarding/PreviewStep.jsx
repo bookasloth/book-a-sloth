@@ -24,6 +24,7 @@ const PreviewStep = () => {
 
   const [bookingType, setBookingType] = useState(null);
   const [tagline, setTagline]         = useState('');
+  const [city, setCity]               = useState('');
   const [waPhoneUi, setWaPhoneUi]     = useState({ country: '', number: '' });
   const [waVerified, setWaVerified]   = useState(false);
   const [saving, setSaving]           = useState(false);
@@ -59,6 +60,7 @@ const PreviewStep = () => {
       await saveOnboardingDetails({
         booking_type: bookingType,
         tagline: tagline.trim() || undefined,
+        location: city.trim() || undefined,
         ...(whatsappSkipped ? { whatsapp_skipped: true } : {}),
       });
       // Paywall deferred: every host goes live on the free plan and adds their
@@ -142,6 +144,25 @@ const PreviewStep = () => {
                 maxLength={120}
               />
               <p className="mt-1 text-xs text-gray-400">{tagline.length}/120</p>
+            </section>
+
+            {/* City — powers local search ("{profession} in {city}") for in-person hosts */}
+            <section className="mt-4 rounded-2xl border border-gray-200 bg-white p-5">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" strokeWidth={2.5} />
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Your city <span className="font-normal text-gray-400">(optional)</span>
+                </h2>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Helps people nearby find you in search.</p>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value.slice(0, 60))}
+                placeholder="e.g. Nagpur, Maharashtra"
+                className="fb-input mt-3 w-full"
+                maxLength={60}
+              />
             </section>
 
             {/* Booking type */}
