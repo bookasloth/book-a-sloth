@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd } from '../seo';
+import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, cityForSeo } from '../seo';
 
 const SITE = 'https://bookasloth.com';
 const VENDOR = { name: 'John Doe', username: 'john-doe', profile_image: 'https://img/john.jpg' };
@@ -63,6 +63,21 @@ describe('resolveServiceSeo — admin overrides win, fallbacks otherwise', () =>
     const seo = resolveServiceSeo({ service: { ...base, short_description: long }, vendor: VENDOR, siteUrl: SITE });
     expect(seo.description.length).toBeLessThanOrEqual(160);
   });
+
+  test('OFFLINE service gets the host city in the title; ONLINE does not', () => {
+    const vendor = { name: 'Riya', location: 'Nagpur, Maharashtra' };
+    const svc = { title: 'Physio Session', slug: 'physio' };
+    const offline = resolveServiceSeo({ service: { ...svc, meeting_mode: 'offline' }, vendor, siteUrl: SITE });
+    expect(offline.title).toBe('Physio Session in Nagpur with Riya | Book A Sloth');
+    const online = resolveServiceSeo({ service: { ...svc, meeting_mode: 'online' }, vendor, siteUrl: SITE });
+    expect(online.title).toBe('Physio Session with Riya | Book A Sloth');
+    expect(online.title).not.toMatch(/Nagpur/);
+  });
+
+  test('offline service with no usable host city falls back to no-city title', () => {
+    const seo = resolveServiceSeo({ service: { title: 'Consult', slug: 'c', meeting_mode: 'offline' }, vendor: { name: 'Amit', location: 'WFH' }, siteUrl: SITE });
+    expect(seo.title).toBe('Consult with Amit | Book A Sloth');
+  });
 });
 
 describe('resolveProfileSeo', () => {
@@ -76,6 +91,29 @@ describe('resolveProfileSeo', () => {
   });
   test('noindex when host.is_indexable === false', () => {
     expect(resolveProfileSeo({ host: { ...host, is_indexable: false }, siteUrl: SITE }).robots).toBe('noindex,nofollow');
+  });
+
+  test('city in title only when the host offers an offline service', () => {
+    const located = { ...host, location: 'Pune, Maharashtra' };
+    const online = resolveProfileSeo({ host: located, services: [{ meeting_mode: 'online' }], siteUrl: SITE });
+    expect(online.title).toBe('John Doe — Consultant | Book A Sloth');
+    const offline = resolveProfileSeo({ host: located, services: [{ meeting_mode: 'online' }, { meeting_mode: 'offline' }], siteUrl: SITE });
+    expect(offline.title).toBe('John Doe — Consultant in Pune | Book A Sloth');
+  });
+});
+
+describe('cityForSeo — normalize free-text location for titles', () => {
+  test('first comma-segment, title-cased', () => {
+    expect(cityForSeo('Nagpur, Maharashtra')).toBe('Nagpur');
+    expect(cityForSeo('NAGPUR, MH, IN')).toBe('Nagpur');
+    expect(cityForSeo('pune')).toBe('Pune');
+  });
+  test('junk / blank / over-long -> null', () => {
+    expect(cityForSeo('')).toBeNull();
+    expect(cityForSeo(null)).toBeNull();
+    expect(cityForSeo('WFH')).toBeNull();
+    expect(cityForSeo('India')).toBeNull();
+    expect(cityForSeo('x'.repeat(30))).toBeNull();
   });
 });
 

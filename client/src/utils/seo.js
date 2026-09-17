@@ -22,6 +22,19 @@ const truncate = (s, n = 160) => {
 
 const robotsFor = (indexable) => (indexable === false ? 'noindex,nofollow' : 'index,follow');
 
+// City for a local-SEO <title>/meta from free-text profiles.location.
+// Takes the first comma-segment, Title-cases it, and drops junk/non-city values
+// so "Nagpur, Maharashtra" -> "Nagpur", "NAGPUR, MH, IN" -> "Nagpur",
+// ""/"WFH"/"remote"/"India" -> null. Only used for OFFLINE (in-person) pages,
+// where a city carries real local intent; online pages never get a city.
+// Mirrored verbatim in server/controllers/prerenderController.js — keep in sync.
+const JUNK_LOC = /^(wfh|remote|online|virtual|anywhere|india|worldwide|global|n\/?a|-|\.)$/i;
+export const cityForSeo = (loc) => {
+  const first = String(loc || '').split(',')[0].trim();
+  if (!first || first.length > 24 || JUNK_LOC.test(first)) return null;
+  return first.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 const brandCard = (siteUrl) => `${trimSlash(siteUrl)}/og-image.png`;
 // Static per-service OG floor (Phase 1). The final fallback below a generated
 // service card / admin seo_image / host thumbnail. A service-branded 1200x630
@@ -40,16 +53,23 @@ export const resolveServiceSeo = ({ service = {}, vendor = {}, siteUrl = SITE_UR
   // full → drop the " | Book A Sloth" brand suffix → drop " with {host}" → the bare
   // service title. The service title is host-authored (UGC) so we never truncate it
   // — if it alone exceeds 60, it stays as the host wrote it.
+  // Local-SEO city only for an OFFLINE (in-person) service — an online service
+  // has no local intent, so a city in its title would be misleading. City comes
+  // from the host (vendor.location); a service has no location of its own.
+  const city = service.meeting_mode === 'offline' ? cityForSeo(vendor.location) : null;
   const composeTitle = () => {
-    const withName = vendor.name ? `${baseTitle} with ${vendor.name}` : baseTitle;
+    const base = city ? `${baseTitle} in ${city}` : baseTitle;
+    const withName = vendor.name ? `${base} with ${vendor.name}` : base;
     const full = `${withName} | Book A Sloth`;
     if (full.length <= 60) return full;
     if (withName.length <= 60) return withName;
+    if (base.length <= 60) return base; // keep "{title} in {city}" — the SEO phrase
     return baseTitle;
   };
   const title = service.seo_title || composeTitle();
   const description = service.seo_description
-    || truncate(service.short_description || service.description || `Book ${baseTitle} on Book A Sloth.`);
+    || truncate(service.short_description || service.description
+      || `Book ${baseTitle}${city ? ` in ${city}` : ''} on Book A Sloth.`);
 
   const canonical = username && service.slug
     ? `${site}/${username}/${service.slug}`
@@ -98,14 +118,25 @@ export const serviceJsonLd = ({ service = {}, vendor = {}, siteUrl = SITE_URL, a
 
 // ── Profile (host) ───────────────────────────────────────────────────────────
 
-export const resolveProfileSeo = ({ host = {}, siteUrl = SITE_URL } = {}) => {
+export const resolveProfileSeo = ({ host = {}, services = [], siteUrl = SITE_URL } = {}) => {
   const site = trimSlash(siteUrl);
   const name = host.name || 'Host';
 
-  const title = host.seo_title
-    || `${name}${host.profession ? ` — ${host.profession}` : ''} | Book A Sloth`;
+  // A city in the profile title only earns local intent if the host actually
+  // offers an in-person (offline) service; a fully-online host has no locality.
+  const hasOffline = (services || []).some((s) => s && s.meeting_mode === 'offline');
+  const city = hasOffline ? cityForSeo(host.location) : null;
+  const composeTitle = () => {
+    const base = `${name}${host.profession ? ` — ${host.profession}` : ''}`;
+    const withCity = city ? `${base} in ${city}` : base;
+    const full = `${withCity} | Book A Sloth`;
+    if (full.length <= 60) return full;
+    if (withCity.length <= 60) return withCity;
+    return base;
+  };
+  const title = host.seo_title || composeTitle();
   const description = host.seo_description
-    || truncate(host.bio || `Book sessions with ${name} on Book A Sloth.`);
+    || truncate(host.bio || `Book sessions with ${name}${city ? ` in ${city}` : ''} on Book A Sloth.`);
 
   return {
     title,

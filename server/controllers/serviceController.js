@@ -156,7 +156,7 @@ const fetchPublicServiceSeo = async ({ hostId, slug }) => {
 // Vendor profile for the public service page. Adds SEO override cols with a
 // fallback so a pre-migration DB still resolves the vendor (404 otherwise).
 const VENDOR_PUBLIC_COLS =
-  'id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,' +
+  'id,name,username,profession,tagline,location,profile_image,cover_image,bio,is_verified,' +
   'google_calendar_connected,badges,social_links,theme_color,plan';
 const fetchPublicVendor = async (username) => {
   const make = (cols) =>

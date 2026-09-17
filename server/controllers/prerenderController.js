@@ -175,6 +175,16 @@ function serviceBody(payload) {
 // Returns { status: 200, buildHtmlArgs } | { status: 404 } | { status: 301, redirectTo }.
 // FAQPage node from [{q,a}]. Kept here (not imported from client utils/seo) so the
 // server prerender shell has no client dependency; shape matches faqJsonLd there.
+// City for a local-SEO <title>/meta from free-text profiles.location. Mirrors
+// client utils/seo.js cityForSeo VERBATIM — keep in sync. Only used for OFFLINE
+// (in-person) pages; online pages carry no local intent so never get a city.
+const JUNK_LOC = /^(wfh|remote|online|virtual|anywhere|india|worldwide|global|n\/?a|-|\.)$/i;
+function cityForSeo(loc) {
+  const first = String(loc || '').split(',')[0].trim();
+  if (!first || first.length > 24 || JUNK_LOC.test(first)) return null;
+  return first.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function faqPageLd(faqs) {
   const mainEntity = (faqs || []).filter((f) => f && f.q && f.a).map((f) => ({
     '@type': 'Question', name: String(f.q),
@@ -201,10 +211,21 @@ async function resolveProfileMeta(username) {
   const site = trimSlash(SITE_URL);
   const name = host.name || 'Host';
 
-  const title = host.seo_title
-    || `${name}${host.profession ? ` — ${host.profession}` : ''} | Book A Sloth`;
+  // Local-SEO city only when the host offers an in-person (offline) service —
+  // mirrors client resolveProfileSeo (utils/seo.js). Online-only host = no city.
+  const hasOffline = (services || []).some((s) => s && s.meeting_mode === 'offline');
+  const city = hasOffline ? cityForSeo(host.location) : null;
+  const composeTitle = () => {
+    const base = `${name}${host.profession ? ` — ${host.profession}` : ''}`;
+    const withCity = city ? `${base} in ${city}` : base;
+    const full = `${withCity} | Book A Sloth`;
+    if (full.length <= 60) return full;
+    if (withCity.length <= 60) return withCity;
+    return base;
+  };
+  const title = host.seo_title || composeTitle();
   const description = host.seo_description
-    || truncate(host.bio || `Book sessions with ${name} on Book A Sloth.`);
+    || truncate(host.bio || `Book sessions with ${name}${city ? ` in ${city}` : ''} on Book A Sloth.`);
   const canonical = `${site}/${host.username}`;
   // Resolved once: the OG tag and the JSON-LD both point at the host's photo,
   // and upscaling only one of them is how you get a card that works next to
@@ -330,16 +351,22 @@ async function resolveServiceMeta(username, serviceSlug) {
   // service title. The service title is host-authored (UGC) and never truncated.
   // Mirrors client resolveServiceSeo (utils/seo.js) — this server path is what the
   // SEO crawler and bots audit, so it must apply the same guard.
+  // Local-SEO city only for an OFFLINE (in-person) service — mirrors client
+  // resolveServiceSeo (utils/seo.js). City comes from the host (vendor.location).
+  const city = service.meeting_mode === 'offline' ? cityForSeo(vendor.location) : null;
   const composeTitle = () => {
-    const withName = vendor.name ? `${baseTitle} with ${vendor.name}` : baseTitle;
+    const base = city ? `${baseTitle} in ${city}` : baseTitle;
+    const withName = vendor.name ? `${base} with ${vendor.name}` : base;
     const full = `${withName} | Book A Sloth`;
     if (full.length <= 60) return full;
     if (withName.length <= 60) return withName;
+    if (base.length <= 60) return base;
     return baseTitle;
   };
   const title = service.seo_title || composeTitle();
   const description = service.seo_description
-    || truncate(service.short_description || service.description || `Book ${baseTitle} on Book A Sloth.`);
+    || truncate(service.short_description || service.description
+      || `Book ${baseTitle}${city ? ` in ${city}` : ''} on Book A Sloth.`);
   const canonical = vendor.username && service.slug
     ? `${site}/${vendor.username}/${service.slug}`
     : site;
