@@ -338,6 +338,19 @@ setInterval(async () => {
   } catch (err) { console.error('Campaign worker error:', err.message); }
 }, 60 * 1000);
 
+// Host activation nudges (stage-based, every 30 min). Double-gated: feature flag
+// `activation_nudges` (default OFF) + per-event is_active/whatsapp_enabled (OFF,
+// v3.163) — fully inert until the founder launches. Quiet-hours + dedupe inside.
+const { runActivationNudges } = require('./services/activationNudges');
+setInterval(async () => {
+  try {
+    await runLocked('activation-nudges', async () => {
+      const r = await runActivationNudges();
+      if (r.processed) console.log(`Activation nudges: ${r.processed} processed, ${r.skipped} skipped`);
+    }, { leaseMs: 60 * 60 * 1000 });
+  } catch (err) { console.error('Activation nudges cron error:', err.message); }
+}, 30 * 60 * 1000);
+
 // ── Sales CRM fast workers (60s / 5min). Sends gated by crm_admin_sends (default OFF). ──
 const crmMessageService = require('./services/crm/messageService');
 const crmSequenceService = require('./services/crm/sequenceService');
