@@ -54,7 +54,7 @@ async function runActivationNudges() {
   for (const rule of RULES) {
     const { data: rows, error } = await supabaseAdmin
       .from('host_activation')
-      .select('host_id,name,phone,first_shared_at,stage')
+      .select('host_id,name,email,phone,first_shared_at,stage')
       .eq('stage', rule.stage)
       .eq('is_internal', false)
       .not('phone', 'is', null);
@@ -77,10 +77,20 @@ async function runActivationNudges() {
       const firstName = (h.name || '').trim().split(/\s+/)[0] || 'there';
       const link = rule.link(username);
 
-      // Engine gates on the event's is_active + whatsapp_enabled (OFF now → no-op).
+      // Engine gates each channel on the event's is_active + whatsapp_enabled /
+      // email_enabled (all OFF now → no-op). WhatsApp uses templateParams;
+      // email renders the Tithi email_templates row (v3.164) with emailData vars.
       await notificationEngine.send({
         event: rule.event,
-        data: { phone: h.phone, name: firstName, templateParams: [firstName, link] },
+        data: {
+          phone: h.phone,
+          email: h.email || undefined,
+          name: firstName,
+          audience: 'vendor', // resolves the vendor email template + vendor layout shell
+          templateParams: [firstName, link],
+          emailData: { first_name: firstName, link },
+          recipientUserId: h.host_id,
+        },
       });
       processed++;
     }
