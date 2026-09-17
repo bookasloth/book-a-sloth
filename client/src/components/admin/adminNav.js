@@ -80,7 +80,7 @@ export const PATH_LABELS = {
   settings:'General Settings', payment:'Payment Settings', plans:'Subscription Plans', addons:'Addons',
   providers:'Hosts', active:'Active', suspended:'Suspended', host360:'Host 360°', guest360:'Guest 360°',
   referrals:'Refer & Earn', 'invite-links':'Invite Links',
-  professions:'Professions', explore:'Explore Page', insights:'Marketing Insights',
+  professions:'Professions', explore:'Explore Page', insights:'Marketing Insights', activation:'Host Activation',
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
   finance:'Finance', journal:'Journal', ledger:'Ledger', transactions:'Transactions', payouts:'Payouts', earnings:'Host Earnings', refunds:'Refunds',
   gst:'GST', invoices:'Invoices', issues:'Action Center', reconciliation:'Reconciliation', itc:'ITC', returns:'Returns', exports:'CA Exports',
