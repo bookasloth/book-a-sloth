@@ -489,6 +489,8 @@ export const uploadProductFile = (file) => {
 };
 
 // ── Vendor dashboard ──────────────────────────────────────────
+// Activation funnel: stamp the host's first link-share (fire-and-forget, never blocks UX).
+export const markLinkShared     = ()          => API.post('/vendor/share-signal').catch(() => {});
 export const getTransactions    = (params)    => API.get('/vendor/transactions', { params });
 export const getPayoutBalance   = ()          => API.get('/vendor/payout/balance');
 export const getPayoutRequests  = ()          => API.get('/vendor/payout/requests');
@@ -532,6 +534,7 @@ export const resendProductLink   = (data)     => API.post('/products/resend-link
 // ── Admin ─────────────────────────────────────────────────────
 export const adminGetStats       = ()          => API.get('/admin/stats');
 export const adminGetInsights    = ()          => API.get('/admin/insights/kpis');
+export const adminGetActivation  = (all)        => API.get('/admin/activation', { params: all ? { all: 1 } : {} });
 export const adminGetProviderPlanAnalytics = (params) => API.get('/admin/provider-plan-analytics', { params });
 export const adminGetProviderOverview = ()      => API.get('/admin/provider-overview');
 export const adminGetRevenueTrend = ()          => API.get('/admin/revenue-trend');

@@ -80,7 +80,7 @@ export const PATH_LABELS = {
   settings:'General Settings', payment:'Payment Settings', plans:'Subscription Plans', addons:'Addons',
   providers:'Hosts', active:'Active', suspended:'Suspended', host360:'Host 360°', guest360:'Guest 360°',
   referrals:'Refer & Earn', 'invite-links':'Invite Links',
-  professions:'Professions', explore:'Explore Page', insights:'Marketing Insights',
+  professions:'Professions', explore:'Explore Page', insights:'Marketing Insights', activation:'Host Activation',
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
   finance:'Finance', journal:'Journal', ledger:'Ledger', transactions:'Transactions', payouts:'Payouts', earnings:'Host Earnings', refunds:'Refunds',
   gst:'GST', invoices:'Invoices', issues:'Action Center', reconciliation:'Reconciliation', itc:'ITC', returns:'Returns', exports:'CA Exports',
@@ -129,6 +129,7 @@ export const NAV = [
     { label:'Revenue',            icon:'trendUp',   to:'/super-dashboard/revenue', perm:'analytics.view' },
     { label:'Pending Actions',    icon:'clock',     to:'/super-dashboard/pending', perm:'ops.view' },
     { label:'Marketing Insights', icon:'bars',      to:'/super-dashboard/insights', perm:'analytics.view' },
+    { label:'Host Activation',    icon:'trendUp',   to:'/admin/activation', perm:'analytics.view' },
     { label:'Feature Status',     icon:'zap',       to:'/admin/features', perm:'settings.manage' },
   ]},
   { key:'operations', label:'Operations', icon:'calCheck', color:'#0891b2', children:[
