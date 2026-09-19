@@ -18,6 +18,8 @@ const SYSTEM = [
   'NEVER invent prices, guarantees, certifications, licenses, medical/legal claims,',
   'specific results, reviews, ratings, addresses, or phone numbers. Leave unknowable',
   'facts out. Only choose a category from the allowed list; omit category if none fit.',
+  'Suggest duration_minutes as a common bookable session length for this service',
+  '(e.g. 15/30/45/60/90); omit only if genuinely unclear. Duration is a length, never a price.',
 ].join(' ');
 
 function buildUserMessage({ title, category, price, duration, city, audience, tweak, allowedCategorySlugs }) {
