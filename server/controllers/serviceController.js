@@ -11,6 +11,7 @@ const { bustSitemapCache } = require('../utils/sitemapCache');
 const { bustPublicReadCaches } = require('../services/publicCacheBust');
 const responseCache = require('../services/responseCache');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
+const { summarizePrices, BENCHMARK_MIN_SAMPLE } = require('../lib/priceBenchmark');
 
 // Server-side read-through cache TTL for the assembled public service page.
 const SERVICE_DETAIL_CACHE_MS = Number(process.env.SERVICE_DETAIL_CACHE_MS) || 120_000;
@@ -664,32 +665,8 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
 // ─── Price benchmark ─────────────────────────────────────────────────────────
 // Advisory only: "similar hosts charge ₹X–₹Y". Data-grounded, never an LLM guess
 // (an LLM emitting prices would fabricate numbers and fight the listing
-// FABRICATION guard). See docs/specs/ai-price-suggestion.md.
-
-// Below this sample size we return no numbers — the client hides the chip rather
-// than show a "median of 2 listings". Pure + exported for unit tests.
-const BENCHMARK_MIN_SAMPLE = 5;
-
-// p in [0,1] over a sorted-ascending numeric array. Nearest-rank on (n-1) so
-// p=0 -> min, p=1 -> max. Returns null for an empty list.
-const percentile = (sortedAsc, p) => {
-  if (!sortedAsc.length) return null;
-  const idx = Math.round(p * (sortedAsc.length - 1));
-  return sortedAsc[idx];
-};
-
-// Reduce a raw price list to {low, median, high, sample_size} — or nulls when
-// the sample is too thin to be honest. Rounds to whole rupees.
-const summarizePrices = (prices) => {
-  const nums = prices.map(Number).filter((n) => Number.isFinite(n) && n >= 100).sort((a, b) => a - b);
-  if (nums.length < BENCHMARK_MIN_SAMPLE) return { low: null, median: null, high: null, sample_size: nums.length };
-  return {
-    low:    Math.round(percentile(nums, 0.25)),
-    median: Math.round(percentile(nums, 0.5)),
-    high:   Math.round(percentile(nums, 0.75)),
-    sample_size: nums.length,
-  };
-};
+// FABRICATION guard). Math lives in lib/priceBenchmark.js (pure, unit-tested).
+// See docs/specs/ai-price-suggestion.md.
 
 // GET /api/services/price-benchmark?category=<sub-slug>
 // Scoped to the host's own profession (primary_category); narrows to the
@@ -749,8 +726,4 @@ module.exports = {
   getPublicServiceByProfileAndSlug,
   buildPublicServiceByProfileAndSlug, // used by prerenderController for bot-traffic meta shells
   getPriceBenchmark,
-  // exported for unit tests
-  summarizePrices,
-  percentile,
-  BENCHMARK_MIN_SAMPLE,
 };

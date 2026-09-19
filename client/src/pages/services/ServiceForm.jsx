@@ -22,7 +22,7 @@ const MIN_SERVICE_PRICE = 100;
 // mount): the host taps to fetch. Data-grounded, never an LLM guess. Hides itself
 // when the platform sample is too thin (server returns median:null). onPick fills
 // the price input; nothing auto-applies. See docs/specs/ai-price-suggestion.md.
-const PriceBenchmark = ({ category, onPick }) => {
+export const PriceBenchmark = ({ category, onPick }) => {
   const [state, setState] = useState('idle'); // idle | loading | done | empty | error
   const [data, setData]   = useState(null);
 
