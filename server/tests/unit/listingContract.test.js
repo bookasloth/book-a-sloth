@@ -86,6 +86,15 @@ describe('sanitizeListing', () => {
     expect(dropped).toEqual(expect.arrayContaining(['faq[0]_question', 'faq[1]_answer']));
   });
 
+  test('keeps a valid duration_minutes, drops out-of-range / non-numeric', () => {
+    expect(sanitizeListing({ duration_minutes: 45 }, {}).fields.duration_minutes).toBe(45);
+    expect(sanitizeListing({ duration_minutes: 90.4 }, {}).fields.duration_minutes).toBe(90); // rounded
+    expect(sanitizeListing({ duration_minutes: 4 }, {}).fields.duration_minutes).toBeUndefined();   // below 5
+    expect(sanitizeListing({ duration_minutes: 999 }, {}).fields.duration_minutes).toBeUndefined();  // above 480
+    expect(sanitizeListing({ duration_minutes: 'sixty' }, {}).fields.duration_minutes).toBeUndefined();
+    expect(sanitizeListing({}, {}).fields.duration_minutes).toBeUndefined();                         // omitted
+  });
+
   test('handles null options safely without throwing', () => {
     expect(() => sanitizeListing({ title: 'x', short_description: 'y', long_description: 'z', included_items: [], excluded_items: [], faqs: [] }, null)).not.toThrow();
     const { fields } = sanitizeListing({ title: 'Test', short_description: 'desc', long_description: 'long', included_items: ['a'], excluded_items: ['b'], faqs: [{ question: 'q', answer: 'a' }] }, null);
