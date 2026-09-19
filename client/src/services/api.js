@@ -658,6 +658,9 @@ export const svcGetPublicByProfile  = (profileSlug, serviceSlug) => API.get(`/se
 // ── AI: Write with Bolt ───────────────────────────────────────
 export const aiGenerateListing      = (data)                   => API.post('/services/ai/listing', data);
 
+// Advisory price benchmark — what comparable hosts charge (data, not an LLM guess).
+export const getPriceBenchmark      = (category)               => API.get('/services/price-benchmark', { params: category ? { category } : {} });
+
 // ── Blog (public) ─────────────────────────────────────────────
 export const getBlogs       = ()     => API.get('/blogs');
 export const getBlogBySlug  = (slug) => API.get(`/blogs/${slug}`);
