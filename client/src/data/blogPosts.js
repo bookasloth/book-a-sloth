@@ -72,7 +72,7 @@ export const BLOG_POSTS = [
 {
   "slug": "how-to-sell-digital-products-online",
   "title": "How to Sell Digital Products Online: A Complete Guide",
-  "date": "Sep 20, 2026",
+  "date": "Sep 14, 2026",
   "icons": [
     "download",
     "wallet",
