@@ -6,6 +6,7 @@
 
 // Per-post keyword tags. Every published slug MUST appear (enforced by test).
 export const POST_TAGS = {
+  'how-to-sell-digital-products-online': ['sell-your-time', 'digital-products', 'money', 'growth'],
   'how-to-become-paid-mentor': ['sell-your-time', 'growth'],
   'how-to-ask-client-for-payment-politely': ['sell-your-time', 'money'],
   'how-to-book-an-appointment-online': ['sell-your-time', 'booking', 'work-guide'],
