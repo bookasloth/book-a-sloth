@@ -43,9 +43,17 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
   const paymentId = rzpPayment?.id || null;
 
   // Idempotency: a recorded payment means this charge already posted.
+  // THROW on a failed read rather than swallowing it. supabase-js returns errors
+  // instead of throwing, so `const { data: prior }` made a DB blip look like
+  // "never seen this payment" and re-ran the whole activation: a second receipt
+  // email, a second CRM subscription_started, a second ledger post. The money row
+  // itself is protected by uniq_subpay_payment_id, but everything around it is not.
+  // Throwing lets the webhook return 500 so Razorpay retries — the charge is
+  // re-processed later rather than half-processed now.
   if (paymentId) {
-    const { data: prior } = await supabaseAdmin
+    const { data: prior, error: priorErr } = await supabaseAdmin
       .from('subscription_payments').select('id').eq('razorpay_payment_id', paymentId).maybeSingle();
+    if (priorErr) throw priorErr;
     if (prior) return { activated: false, reason: 'payment already processed' };
   }
 
@@ -53,9 +61,13 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
 
   // First charge for this subscription → initial (drives the purchase email);
   // later charges → renewal. Read before recording so the new row doesn't skew it.
-  const { count: priorCount } = await supabaseAdmin
+  // A failed read would leave count undefined → `(undefined || 0) === 0` → true,
+  // so a renewal would be mis-sent as a brand-new purchase (and re-promoted to
+  // paid in the CRM). Same treatment: fail the webhook and let Razorpay retry.
+  const { count: priorCount, error: countErr } = await supabaseAdmin
     .from('subscription_payments').select('id', { count: 'exact', head: true })
     .eq('razorpay_subscription_id', rzpSub.id);
+  if (countErr) throw countErr;
   const isInitial = (priorCount || 0) === 0;
 
   let periodEndIso = unixToIso(rzpSub.current_end) ||
@@ -178,9 +190,11 @@ async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, p
   const paymentId = payment?.id || null;
   if (!paymentId) return { recorded: false, reason: 'no payment id' };
 
-  // Idempotency: skip if this exact charge already booked.
-  const { data: prior } = await supabaseAdmin
+  // Idempotency: skip if this exact charge already booked. Throws on a failed
+  // read (see activateFromSubscription) so a blip can't double-post the ledger.
+  const { data: prior, error: priorErr } = await supabaseAdmin
     .from('subscription_payments').select('id').eq('razorpay_payment_id', paymentId).maybeSingle();
+  if (priorErr) throw priorErr;
   if (prior) return { recorded: false, reason: 'already recorded' };
 
   const plan = await planService.getPlan(planSlug);
