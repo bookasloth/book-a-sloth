@@ -1,6 +1,6 @@
 'use strict';
 const { round2 } = require('../lib/pricingEngine');
-const { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SERIES } = require('../config/sellerIdentity');
+const { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SAC_RESCHEDULE, SERIES } = require('../config/sellerIdentity');
 const stateService = require('./stateService');
 
 // Indian FY (Apr–Mar). 2-digit START year for the invoice serial (Jun 2026 -> '26').
@@ -41,7 +41,7 @@ function computeTaxSplit(gstAmount, posStateCode, sellerStateCode = seller.state
   return { cgst: 0, sgst: 0, igst: g };
 }
 
-const SAC_FOR = { subscription: SAC_SUBSCRIPTION, booking: SAC_BOOKING, commission: SAC_COMMISSION };
+const SAC_FOR = { subscription: SAC_SUBSCRIPTION, booking: SAC_BOOKING, commission: SAC_COMMISSION, reschedule: SAC_RESCHEDULE };
 
 // Idempotent invoice minting. Best-effort: returns null (never throws) so a
 // captured payment is never failed by an invoicing problem. The create_invoice

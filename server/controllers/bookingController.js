@@ -1539,6 +1539,7 @@ const rescheduleBooking = async (req, res) => {
       console.error("Reschedule calendar patch error (non-fatal):", calErr.message);
     }
 
+    let rfRowId = null;
     if (feeChargedAmount > 0) {
       try {
         const { data: rfRow, error: rfErr } = await supabaseAdmin
@@ -1556,16 +1557,60 @@ const rescheduleBooking = async (req, res) => {
           }
           throw rfErr;
         }
+        rfRowId = rfRow.id;
         const { rescheduleFeeEntry } = require('../services/ledger/journalTemplates');
         const { post } = require('../services/ledger/postingService');
+        // Rate comes from platform_settings, not a literal — the ledger and the
+        // tax invoice below MUST agree, and a hardcoded 0.18 would silently
+        // diverge from the invoice the moment an admin changed the rate.
+        const { gstRate: rfGstRate } = await platformConfig.getConfig();
         await post({
           sourceType: 'RESCHEDULE_FEE',
           sourceId: rfRow.id,
           journalDate: new Date().toISOString().slice(0, 10),
-          template: rescheduleFeeEntry({ booking_id: booking.id, host_id: booking.host_id, fee: feeChargedAmount, gstRate: 0.18 }),
+          template: rescheduleFeeEntry({ booking_id: booking.id, host_id: booking.host_id, fee: feeChargedAmount, gstRate: rfGstRate }),
         });
       } catch (ledgerErr) {
         console.error('Reschedule fee ledger error (non-fatal):', ledgerErr.message);
+      }
+    }
+
+    // Tax invoice for the reschedule fee. The fee is BAS's OWN revenue (see
+    // rescheduleFeeEntry: it credits Platform Fee Revenue + GST Payable), so we
+    // owe the guest a tax invoice for it exactly as we do for the booking fee.
+    // Until now the GST was collected and booked as a payable with no document
+    // backing the output tax, and the guest received nothing.
+    //
+    // Split is computed the SAME way rescheduleFeeEntry does it — GST-inclusive,
+    // taxable first then GST as the remainder — so the invoice and the journal
+    // can never disagree by a paisa. Idempotent: create_invoice takes an advisory
+    // lock on (source_type, source_id) and returns the existing row. Best-effort
+    // in its own try so an invoice failure can't undo a completed reschedule.
+    if (rfRowId) {
+      try {
+        const { gstRate } = await platformConfig.getConfig();
+        const { round2 } = require('../lib/pricingEngine');
+        const gross = round2(feeChargedAmount);
+        const taxable = round2(gross / (1 + gstRate));
+        const b = booking.billing_details || {};
+        await require('../services/invoiceService').generateInvoice({
+          sourceType: 'reschedule',
+          sourceId: rfRowId,
+          paymentId: feePaymentId,
+          issuedAt: new Date().toISOString(),
+          buyer: {
+            name: b.name || booking.guest_name || 'Customer',
+            address: b.address || null,
+            stateCode: b.state_code || null,
+            stateName: b.state || null,
+            gstin: b.gstin || null,
+            pan: b.pan || null,
+          },
+          taxableValue: taxable,
+          gstAmount: round2(gross - taxable),
+        });
+      } catch (invErr) {
+        console.error('Reschedule fee invoice error (non-fatal):', invErr.message);
       }
     }
 
