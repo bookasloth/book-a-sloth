@@ -14,12 +14,19 @@ vi.mock('../services/api', () => ({
   svcCreate:             vi.fn().mockResolvedValue({ data: { id: 'svc-1' } }),
   hostGetCategories:     vi.fn().mockResolvedValue({ data: { primary_category: 'photographer' } }),
   listServiceCategories: vi.fn().mockResolvedValue({ data: { categories: [{ slug: 'portrait', name: 'Portrait' }] } }),
+  aiGenerateListing:     vi.fn().mockResolvedValue({ data: { fields: {
+    title: 'Portrait Photography Session',
+    short_description: 'Book a relaxed portrait session that gets you photos you actually like.',
+    long_description: '<p>Portrait Photography Session is a guided shoot...</p>',
+    duration_minutes: 45,
+    category: 'portrait',
+  } } }),
 }));
 vi.mock('../services/analytics', () => ({ analytics: { track: vi.fn() } }));
 vi.mock('../utils/celebration', () => ({ fireCelebration: vi.fn() }));
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: { fee_only_mode: true } }) }));
 
-import { svcCreate, markOnboardingComplete } from '../services/api';
+import { svcCreate, markOnboardingComplete, aiGenerateListing } from '../services/api';
 import ExploreWithBolt from '../pages/onboarding/ExploreWithBolt';
 
 const renderLive = () => render(
@@ -57,5 +64,32 @@ describe('onboarding first-service publish', () => {
     await screen.findByPlaceholderText(/1:1 Strategy Call/i);
     fireEvent.click(screen.getByRole('button', { name: /Publish service/i }));
     await waitFor(() => expect(svcCreate).not.toHaveBeenCalled());
+  });
+
+  test('Build with Bolt fills AI copy and publish sends it', async () => {
+    renderLive();
+
+    const titleInput = await screen.findByPlaceholderText(/1:1 Strategy Call/i);
+    fireEvent.change(titleInput, { target: { value: 'portrait shoot' } });
+    fireEvent.click(screen.getByRole('button', { name: /Build with Bolt/i }));
+
+    await waitFor(() => expect(aiGenerateListing).toHaveBeenCalledTimes(1));
+    // Refined title lands back in the input.
+    await waitFor(() => expect(titleInput.value).toBe('Portrait Photography Session'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Publish service/i }));
+    await waitFor(() => expect(svcCreate).toHaveBeenCalledTimes(1));
+    const payload = svcCreate.mock.calls[0][0];
+    expect(payload.short_description).toMatch(/relaxed portrait session/i); // AI copy, not the title seed
+    expect(payload.description).toMatch(/guided shoot/i);
+    expect(payload.duration).toBe(45);        // AI-suggested duration snapped in
+    expect(payload.category).toBe('portrait');
+  });
+
+  test('Build with Bolt needs a title first', async () => {
+    renderLive();
+    await screen.findByPlaceholderText(/1:1 Strategy Call/i);
+    fireEvent.click(screen.getByRole('button', { name: /Build with Bolt/i }));
+    await waitFor(() => expect(aiGenerateListing).not.toHaveBeenCalled());
   });
 });

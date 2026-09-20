@@ -20,6 +20,7 @@ const LISTING_TOOL = {
       },
       important_note: { type: 'string', description: 'Caveats/prerequisites, <=200 chars.' },
       category: { type: 'string', description: 'A slug from the allowed list only; omit if none fit.' },
+      duration_minutes: { type: 'integer', description: 'Suggested session length in minutes (a common bookable length, e.g. 15/30/45/60/90). Omit if genuinely unclear.' },
     },
     required: ['title', 'short_description', 'long_description', 'included_items', 'excluded_items', 'faqs'],
   },
@@ -76,6 +77,12 @@ function sanitizeListing(raw, options) {
     .slice(0, 5);
 
   if (r.category && allowedCategorySlugs.includes(r.category)) fields.category = r.category;
+
+  // Duration: integer minutes, clamped to a sane bookable range. Out-of-range or
+  // non-numeric → omit (the form keeps its default). ponytail: no fabrication
+  // guard needed — a number can't smuggle a price/claim.
+  const dur = Math.round(Number(r.duration_minutes));
+  if (Number.isFinite(dur) && dur >= 5 && dur <= 480) fields.duration_minutes = dur;
 
   return { fields, dropped };
 }

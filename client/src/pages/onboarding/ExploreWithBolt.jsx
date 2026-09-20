@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { PartyPopper, ArrowRight, Copy, Loader2, Rocket } from 'lucide-react';
+import { PartyPopper, ArrowRight, Copy, Loader2, Rocket, Sparkles, Wand2 } from 'lucide-react';
 import {
   markOnboardingComplete,
   svcCreate,
   hostGetCategories,
   listServiceCategories,
   getOnboardingStatus,
+  aiGenerateListing,
 } from '../../services/api';
+import { BOLT_ENABLED } from '../../config/aiListing';
 import { analytics } from '../../services/analytics';
 import { EVENTS } from '../../services/analytics/events';
 import { useAuth } from '../../context/AuthContext';
@@ -42,6 +44,41 @@ const ExploreWithBolt = () => {
   const [category, setCategory]   = useState('');
   const [publishing, setPublishing] = useState(false);
   const [skipping, setSkipping]   = useState(false);
+
+  // "Build with Bolt": one-line title → AI fills the real listing copy (and
+  // suggests a duration/category). Stored so handlePublish sends the rich copy
+  // instead of the title-as-description seed. Price stays the host's call — the
+  // generator never invents money (server-side FABRICATION guard).
+  const [aiBusy, setAiBusy]   = useState(false);
+  const [aiCopy, setAiCopy]   = useState(null); // { short_description, long_description } | null
+
+  const runBolt = async () => {
+    if (!title.trim()) { toast.error('Type what your service is first, then Bolt writes it.'); return; }
+    if (aiBusy) return;
+    setAiBusy(true);
+    try {
+      const { data } = await aiGenerateListing({ title: title.trim(), category: category || undefined, duration });
+      const f = data?.fields || {};
+      if (f.title) setTitle(f.title.slice(0, 60));
+      if (f.short_description || f.long_description) {
+        setAiCopy({ short_description: f.short_description || '', long_description: f.long_description || '' });
+      }
+      // Only snap the duration dropdown when the suggestion is one of its options,
+      // so the <select> never shows a value it can't render.
+      if (DURATIONS.includes(f.duration_minutes)) setDuration(f.duration_minutes);
+      // Category only if it's in the host's profession list (dropdown-safe).
+      if (f.category && svcCats.some((c) => c.slug === f.category)) setCategory(f.category);
+      toast.success('Bolt wrote your listing — review and publish.');
+    } catch (error) {
+      const status = error.response?.status;
+      const msg = error.response?.data?.message;
+      if (status === 429) toast.error(msg || "You've used your AI writing for now — fill it in manually.");
+      else if (status === 503) toast.error('AI writing is unavailable right now — fill it in manually.');
+      else toast.error(msg || 'Bolt could not write that — try a clearer title.');
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   // Fire celebration + complete onboarding once on mount. Completing HERE (not
   // only on a button) means closing the tab still flips onboarding_completed —
@@ -110,8 +147,10 @@ const ExploreWithBolt = () => {
       // in-person (and add the venue) later from the dashboard.
       await svcCreate({
         title:             title.trim(),
-        short_description: title.trim(), // seed; host can refine in the dashboard
-        description:       title.trim(),
+        // Rich copy from Bolt when the host used it; otherwise the title-seed
+        // (unchanged legacy behaviour). Host refines everything in the dashboard.
+        short_description: aiCopy?.short_description || title.trim(),
+        description:       aiCopy?.long_description || title.trim(),
         service_type:      'online',
         meeting_mode:      'online',
         price:             feeOnly ? 0 : (parseFloat(price) || 0),
@@ -194,6 +233,28 @@ const ExploreWithBolt = () => {
               maxLength={60}
               autoFocus
             />
+            {BOLT_ENABLED && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={runBolt}
+                  disabled={aiBusy || busy || !title.trim()}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary-cta transition hover:border-primary hover:bg-primary-light/40 disabled:opacity-50"
+                >
+                  {aiBusy
+                    ? <><Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.5} /> Bolt is writing…</>
+                    : <><Wand2 className="h-3.5 w-3.5" strokeWidth={2.5} /> {aiCopy ? 'Rewrite with Bolt' : 'Build with Bolt'}</>}
+                </button>
+                {aiCopy && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
+                    <Sparkles className="h-3.5 w-3.5" strokeWidth={2.5} /> Bolt wrote your description
+                  </span>
+                )}
+                {!aiCopy && !aiBusy && (
+                  <span className="text-xs text-gray-400">Let Bolt write the full description for you.</span>
+                )}
+              </div>
+            )}
           </div>
 
           {svcCats.length > 0 && (
