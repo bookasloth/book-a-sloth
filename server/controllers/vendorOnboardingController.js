@@ -237,7 +237,7 @@ const savePersona = async (vendorId, primaryCategory) => {
 // Save "about you + WhatsApp" bundle. All fields optional; only provided ones
 // are written. Bumps step to max(current, 5). Requires persona already saved
 // (step >= 3) so we cannot skip the taxonomy write.
-// data: { vendor_type?, booking_type?, whatsapp_skipped?, tagline? }
+// data: { vendor_type?, booking_type?, whatsapp_skipped?, tagline?, location? }
 // WhatsApp verification itself still goes through /api/whatsapp/verify-otp —
 // this endpoint only records the skip choice.
 const saveDetails = async (vendorId, data = {}) => {
@@ -253,6 +253,7 @@ const saveDetails = async (vendorId, data = {}) => {
   if (data.vendor_type)  updates.vendor_type  = data.vendor_type;
   if (data.booking_type) updates.booking_type = data.booking_type;
   if (data.tagline !== undefined) updates.tagline = data.tagline || null;
+  if (data.location !== undefined) updates.location = data.location || null;
   // Only record the skip if WhatsApp isn't already verified — a stale/duplicate
   // skip:true must never wipe a number the host verified via /api/whatsapp/verify-otp.
   if (data.whatsapp_skipped === true && !cur?.whatsapp_verified) {

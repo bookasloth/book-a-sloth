@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CalendarClock, CheckCircle2, XCircle, CalendarDays, LayoutGrid, IndianRupee,
-  UserCheck, Hourglass, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck,
+  UserCheck, Hourglass, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck, MapPin,
   Check, ArrowRight, Copy, Link2, MessageCircle, Wallet, Share2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -249,6 +249,7 @@ const Dashboard = () => {
   const checklist = useMemo(() => [
     { key: 'photo',   label: 'Upload profile photo',     done: !!user?.profile_image,                 Icon: Camera,       to: '/dashboard/profile' },
     { key: 'profile', label: 'Complete your profile',    done: !!(user?.bio && user?.username),        Icon: UserCog,      to: '/dashboard/profile' },
+    { key: 'city',    label: 'Add your city',            done: !!user?.location,                       Icon: MapPin,       to: '/dashboard/profile' },
     { key: 'service', label: 'Add a service',            done: services.length > 0,                    Icon: LayoutGrid,   to: '/dashboard/services' },
     { key: 'pricing', label: 'Set service pricing',      done: services.some((s) => Number(s.price) > 0), Icon: Tag,        to: '/dashboard/services' },
     { key: 'gcal',    label: 'Connect Google Calendar',  done: !!user?.google_calendar_connected,      Icon: CalendarCheck, onClick: connectGoogleCalendar },

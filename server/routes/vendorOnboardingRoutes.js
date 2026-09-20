@@ -69,7 +69,7 @@ router.post('/save-persona', protect, async (req, res) => {
 
 // ── Protected: Save details bundle (redesigned flow) ──────────────────────
 // POST /api/onboarding/save-details
-// Body: { vendor_type?, booking_type?, tagline?, whatsapp_skipped? }
+// Body: { vendor_type?, booking_type?, tagline?, location?, whatsapp_skipped? }
 // Writes any provided fields, bumps step to max(current, 5). Requires
 // persona already saved (step >= 3).
 router.post('/save-details', protect, async (req, res) => {
