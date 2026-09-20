@@ -13,14 +13,23 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const NotificationEngine = require('./notificationEngine');
-const { isFreeSlug } = require('./planService');
+const { isFreeSlug, getPlan } = require('./planService');
 
 const EVENT = 'SUBSCRIPTION_EXPIRING';
 const SEND_ON_DAYS = new Set([7, 1]);
 const DAY_MS = 86400000;
 
-const PLAN_LABEL = { creator: 'Host+', professional: 'Studio', pro: 'Studio', supreme: 'Supreme' };
-const planLabel = (slug) => PLAN_LABEL[String(slug || '').toLowerCase()] || 'your plan';
+// Read the plan's display name straight from subscription_plans so a rename
+// (Host+ → Sloth Active (Partner), etc.) never leaves a stale label in a
+// customer-facing email. Falls back to a neutral phrase if the row is gone.
+const planLabel = async (slug) => {
+  try {
+    const { name } = (await getPlan(slug)) || {};
+    return name || 'your plan';
+  } catch (_) {
+    return 'your plan';
+  }
+};
 
 async function recentlySent(email) {
   const since = new Date(Date.now() - 2 * DAY_MS).toISOString();
@@ -79,7 +88,7 @@ async function fanOut(rows, now) {
         emailUser: { name: p.name, email: p.email },
         emailData: {
           first_name: (p.name || '').split(' ')[0] || 'there',
-          plan_name: planLabel(p.plan),
+          plan_name: await planLabel(p.plan),
           days_left: daysLeft,
           expiry_date: expiry.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }),
           renew_url: `${base}/dashboard/upgrade`,

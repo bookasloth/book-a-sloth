@@ -24,7 +24,17 @@ const GRACE_MS = 15 * 60 * 1000;
 const windowOpen = (booking, now) =>
   now >= new Date(booking.scheduled_at).getTime() - GRACE_MS;
 
-const isStudio = (slug) => slug === 'professional'; // UI label "Studio"
+// Free tiers never see the counterparty's number; every paid tier does, once
+// the window opens. Since v3.165 that means Sloth Active AND the legacy paid
+// rows (creator/professional), which now carry the same entitlements.
+// Kept as a local set rather than importing planService so this module stays
+// pure and DB-free — keep it in lockstep with planService.FREE_SLUGS.
+const FREE_SLUGS = new Set(['free', 'starter', 'starter_legacy', 'explorer']);
+// An absent/blank plan (a guest viewer) is NOT paid — fail closed.
+const isPaid = (slug) => {
+  const s = String(slug || '').toLowerCase().trim();
+  return !!s && !FREE_SLUGS.has(s);
+};
 const isSupreme = (slug) => slug === 'supreme';     // hidden god tier — sees all
 
 /**
@@ -41,9 +51,9 @@ function redactBookingContact(booking, viewer, now = Date.now()) {
   const mode = booking.services?.meeting_mode || 'online';
 
   if (viewer.role === 'host') {
-    // Guest's number → host: Studio-with-window, or Supreme always.
+    // Guest's number → host: any paid plan within the window, or Supreme always.
     const show = isSupreme(viewer.plan)
-      || (isStudio(viewer.plan) && windowOpen(booking, now));
+      || (isPaid(viewer.plan) && windowOpen(booking, now));
     if (!show) {
       booking.guest_phone = null;
       if (booking.profiles) booking.profiles.phone = null; // guest profile join

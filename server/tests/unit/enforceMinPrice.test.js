@@ -2,7 +2,13 @@
 // paid services on the self-serve plans (Supreme exempt; ₹0 free always allowed).
 
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
-jest.mock('../../services/planService', () => ({ resolveVendorPlan: jest.fn(), getPlan: jest.fn() }));
+jest.mock('../../services/planService', () => ({
+  resolveVendorPlan: jest.fn(),
+  getPlan: jest.fn(),
+  FREE_PLAN: 'free',
+  // enforceMinPrice exempts the comped internal tiers (Supreme) via this helper.
+  isCompedSlug: (s) => s === 'supreme',
+}));
 
 const { enforceMinPrice, MIN_SERVICE_PRICE } = require('../../middleware/planMiddleware');
 

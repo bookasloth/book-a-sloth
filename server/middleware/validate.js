@@ -78,8 +78,13 @@ const verifyPaymentRules = [
   body('razorpay_signature').trim().notEmpty().isLength({ max: 200 }),
 ];
 
+// Shape-only: any non-empty slug. The plan must NOT be enumerated here — a
+// hardcoded list silently 400s every new or renamed tier (this rule blocked
+// `premium` at launch), and the controller already rejects an unknown or
+// unpriced slug by reading the row from subscription_plans.
 const subscribePlanRules = [
-  body('plan').trim().isIn(['creator', 'professional']).withMessage('Plan must be creator or professional'),
+  body('plan').trim().notEmpty().isLength({ max: 50 }).matches(/^[a-z0-9_]+$/)
+    .withMessage('Invalid plan'),
 ];
 
 // ── Product validators ────────────────────────────────────────

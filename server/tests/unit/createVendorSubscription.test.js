@@ -29,14 +29,17 @@ jest.mock('../../services/razorpayConfig', () => ({
   getClient: jest.fn(),
 }));
 jest.mock('../../services/planService', () => ({
-  // creator plan, has both monthly + annual prices
+  // premium plan, has both monthly + annual prices
+  FREE_PLAN: 'free',
   normalizeSlug: (s) => {
-    const v = (s || 'starter').toLowerCase().trim();
-    return v === 'explorer' ? 'starter' : v;
+    const v = (s || 'free').toLowerCase().trim();
+    return v === 'explorer' || v === 'starter' ? 'free' : v;
   },
-  isFreeSlug: (s) => ['starter', 'explorer', 'free', 'starter_legacy'].includes((s || '').toLowerCase().trim()),
+  isFreeSlug: (s) => ['free', 'starter', 'explorer', 'starter_legacy'].includes((s || '').toLowerCase().trim()),
+  // Archived rows are never self-serve purchasable (v3.165).
+  isSelfServable: (p) => !!p && p.active !== false,
   getPlan: jest.fn(() =>
-    Promise.resolve({ slug: 'creator', name: 'Creator', monthly_price: 199, annual_price: 999 })
+    Promise.resolve({ slug: 'premium', name: 'Sloth Active', monthly_price: 338.13, annual_price: 3050, active: true })
   ),
 }));
 jest.mock('../../services/platformConfig', () => ({
@@ -62,6 +65,7 @@ jest.mock('../../utils/cryptoTokens', () => ({ decrypt: jest.fn((v) => v) }));
 // ── Imports (after mocks) ────────────────────────────────────────────────────
 const { supabaseAdmin } = require('../../config/supabase');
 const razorpaySubscriptions = require('../../services/razorpaySubscriptions');
+const planService = require('../../services/planService');
 const { auditLog } = require('../../utils/logger');
 const ctrl = require('../../controllers/paymentController');
 
@@ -134,15 +138,15 @@ describe('createVendorSubscription — pending re-click idempotency (double-char
     wireProfiles(prof);
 
     // The existing Razorpay subscription is still pre-authorization and its notes
-    // match this exact request (creator / annual / vendor-1).
+    // match this exact request (premium / annual / vendor-1).
     razorpaySubscriptions.fetchSubscription.mockResolvedValue({
       id: 'sub_EXISTING',
       status: 'created',
-      notes: { vendor_id: 'vendor-1', plan: 'creator', cadence: 'annual' },
+      notes: { vendor_id: 'vendor-1', plan: 'premium', cadence: 'annual' },
     });
 
     const res = mockRes();
-    await ctrl.createVendorSubscription(makeReq({ plan: 'creator', cadence: 'annual' }), res);
+    await ctrl.createVendorSubscription(makeReq({ plan: 'premium', cadence: 'annual' }), res);
 
     // It must look up the existing mandate…
     expect(razorpaySubscriptions.fetchSubscription).toHaveBeenCalledWith('sub_EXISTING');
@@ -153,14 +157,14 @@ describe('createVendorSubscription — pending re-click idempotency (double-char
     // Response returns the EXISTING subscription id so the client re-syncs it.
     const body = res.json.mock.calls[0][0];
     expect(body.subscription_id).toBe('sub_EXISTING');
-    expect(body.plan).toBe('creator');
+    expect(body.plan).toBe('premium');
     expect(body.cadence).toBe('annual');
 
     // Idempotency was audit-logged.
     expect(auditLog).toHaveBeenCalledWith(
       'SUBSCRIPTION_CREATE_IDEMPOTENT',
       'vendor-1',
-      expect.objectContaining({ subscription_id: 'sub_EXISTING', plan: 'creator', cadence: 'annual' })
+      expect.objectContaining({ subscription_id: 'sub_EXISTING', plan: 'premium', cadence: 'annual' })
     );
   });
 
@@ -180,11 +184,11 @@ describe('createVendorSubscription — pending re-click idempotency (double-char
     razorpaySubscriptions.fetchSubscription.mockResolvedValue({
       id: 'sub_EXISTING',
       status: 'created',
-      notes: { vendor_id: 'vendor-1', plan: 'creator', cadence: 'annual' },
+      notes: { vendor_id: 'vendor-1', plan: 'premium', cadence: 'annual' },
     });
 
     const res = mockRes();
-    await ctrl.createVendorSubscription(makeReq({ plan: 'creator', cadence: 'monthly', billing: BILLING }), res);
+    await ctrl.createVendorSubscription(makeReq({ plan: 'premium', cadence: 'monthly', billing: BILLING }), res);
 
     // Different cadence → not idempotent → old mandate cancelled, new one created.
     expect(razorpaySubscriptions.cancelSubscription).toHaveBeenCalledWith('sub_EXISTING', false);
@@ -205,11 +209,35 @@ describe('createVendorSubscription — pending re-click idempotency (double-char
     wireProfiles(prof);
 
     const res = mockRes();
-    await ctrl.createVendorSubscription(makeReq({ plan: 'creator', cadence: 'annual', billing: BILLING }), res);
+    await ctrl.createVendorSubscription(makeReq({ plan: 'premium', cadence: 'annual', billing: BILLING }), res);
 
     expect(razorpaySubscriptions.fetchSubscription).not.toHaveBeenCalled();
     expect(razorpaySubscriptions.cancelSubscription).not.toHaveBeenCalled();
     expect(razorpaySubscriptions.createSubscription).toHaveBeenCalled();
     expect(res.json.mock.calls[0][0].subscription_id).toBe('sub_NEW');
+  });
+});
+
+// v3.165: the legacy partner price (`creator`, ₹229) and the internal Supreme
+// tier live on as archived rows so their existing subscribers keep renewing.
+// Both endpoints previously accepted ANY priced slug, so anyone who guessed one
+// could buy at its price. Self-serve checkout must refuse them.
+describe('createVendorSubscription — archived plans are not self-serve purchasable', () => {
+  test('an archived plan 404s instead of selling at its old price', async () => {
+    wireProfiles({
+      plan: 'free', subscription_status: null, current_period_end: null,
+      plan_expires_at: null, plan_activated_at: null,
+      razorpay_subscription_id: null, billing_cadence: null,
+    });
+    planService.getPlan.mockResolvedValueOnce({
+      slug: 'creator', name: 'Sloth Active (Partner)',
+      monthly_price: 229, annual_price: 1499, active: false,
+    });
+
+    const res = mockRes();
+    await ctrl.createVendorSubscription(makeReq({ plan: 'creator', cadence: 'annual', billing: BILLING }), res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(razorpaySubscriptions.createSubscription).not.toHaveBeenCalled();
   });
 });

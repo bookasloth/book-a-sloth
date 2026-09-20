@@ -302,9 +302,8 @@ const normalize = (s) => String(s || '').toLowerCase().replace(/[^\w\s]/g, ' ').
 // named), always linking the on-site /pricing page to buy. Per-day = yearly ÷ 365; all
 // prices exclude tax (+ 18% GST). Update here if the pricing page changes.
 const PRICING = {
-  starter: '**Starter — ₹0, free forever.** Plus 5% per booking. For professionals just getting started (up to 3 services). [See plans & get started](/pricing).',
-  host:    '**Host+ — ₹229/month**, or **₹1,499/year** (~₹4/day, save 45%). For solo creators & freelancers. Prices exclude tax (+ 18% GST). [Get Host+](/pricing).',
-  studio:  '**Studio — ₹555/month**, or **₹3,650/year** (~₹10/day, save 45%). Top tier for growing practices & studios. Prices exclude tax (+ 18% GST). [Get Studio](/pricing).',
+  free:    '**Sloth — ₹0, free forever.** Unlimited services and bookings, your booking page, UPI payments and 24-hour reminders. We take 5% only when you actually get paid. [Start free](/pricing).',
+  premium: '**Sloth Active — under ₹10 a day.** ₹3,599/year (save 25%), or ₹399/month. Commission drops to 0%, plus the Client CRM, follow-up automation and priority support. All prices include GST. [Go Premium](/pricing).',
 };
 // Pricing intent — deliberately excludes bare "plan"/"plans" so it doesn't hijack
 // plan-management questions ("how do I change my plan"). Plan name alone isn't enough.
@@ -314,14 +313,15 @@ const pricingReply = (question) => {
   if (!nq) return null;
   const raw = String(question || '').toLowerCase();
   if (!PRICING_INTENT.test(nq) && !raw.includes('₹')) return null;
-  if (nq.includes('studio')) return PRICING.studio;
-  if (/\bhost\b/.test(nq) || raw.includes('host+') || nq.includes('host plus')) return PRICING.host;
-  if (nq.includes('starter') || nq.includes('free')) return PRICING.starter;
-  return 'Our plans:\n\n' +
-    '- **Starter** — ₹0 forever (+5% per booking)\n' +
-    '- **Host+** — ₹229/mo or ₹1,499/yr (~₹4/day)\n' +
-    '- **Studio** — ₹555/mo or ₹3,650/yr (~₹10/day)\n\n' +
-    'Yearly saves ~45%. Prices exclude tax (+ 18% GST). Ask about a specific plan for details, or [see all plans](/pricing).';
+  // Legacy tier names still arrive from older blog posts and comparison pages,
+  // so they route to the plan that replaced them rather than falling through.
+  if (nq.includes('active') || nq.includes('premium') || nq.includes('studio')
+      || /\bhost\b/.test(nq) || raw.includes('host+') || nq.includes('host plus')) return PRICING.premium;
+  if (nq.includes('free') || nq.includes('starter') || nq.includes('sloth')) return PRICING.free;
+  return 'Two plans, that\'s it:\n\n' +
+    '- **Sloth** — ₹0 forever. Unlimited services and bookings; we take 5% only when you get paid.\n' +
+    '- **Sloth Active** — under ₹10/day. ₹3,599/yr (save 25%) or ₹399/mo, and commission drops to 0%.\n\n' +
+    'All prices include GST. Earning over ₹6,000 a month? Sloth Active already costs you less than the 5%. [See both plans](/pricing).';
 };
 
 // ── FAQ layer: deterministic canned answer, no LLM. Best-effort — a missing table

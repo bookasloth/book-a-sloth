@@ -537,9 +537,13 @@ const getMyCategories = async (req, res) => {
 // PUT /api/host/categories — plan-capped update; body { primary_category, categories }
 const updateCategories = async (req, res) => {
   try {
-    const plan = req.vendorPlan || 'starter';
-    const max = await planService.getLimit(plan, 'categories'); // 0=locked, N, -1
-    if (!max || max <= 0) {
+    const plan = req.vendorPlan || planService.FREE_PLAN;
+    const max = await planService.getLimit(plan, 'categories'); // 0=locked, N, -1=unlimited
+    // -1 means UNLIMITED, not locked. The old `max <= 0` test swallowed it, so
+    // the moment a plan's category cap went unlimited (v3.165 made that the free
+    // default) every category change 403'd. Only 0 / missing means locked;
+    // validateCategorySelection below already special-cases -1 for the count.
+    if (!max) {
       return res.status(403).json({
         message: 'Your plan does not allow changing your category. Contact admin to make a change.',
         upgrade_required: true,

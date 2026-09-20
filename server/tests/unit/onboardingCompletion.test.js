@@ -107,7 +107,7 @@ describe('markComplete', () => {
 // ─── activateFreePlan ────────────────────────────────────────────────────────
 
 describe('activateFreePlan', () => {
-  test('sets plan="explorer" and step=6 but does NOT set onboarding_completed', async () => {
+  test(`sets plan="free" and step=6 but does NOT set onboarding_completed`, async () => {
     const capturedUpdates = [];
     // activateFreePlan call sequence:
     //   1. supabaseAdmin.from('profiles').update({plan:'explorer',...}).eq('id', vendorId)
@@ -157,7 +157,7 @@ describe('activateFreePlan', () => {
     const result = await ctrl.activateFreePlan('uid-1');
 
     // Plan activation update
-    const planUpdate = capturedUpdates.find((u) => u.plan === 'explorer');
+    const planUpdate = capturedUpdates.find((u) => u.plan === 'free');
     expect(planUpdate).toBeDefined();
     expect(planUpdate.plan_activated_at).toBeTruthy();
     // onboarding_completed must NOT be in the plan update

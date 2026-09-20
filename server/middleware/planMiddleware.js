@@ -3,6 +3,7 @@
 // -1 = unlimited. Every block response includes an upgrade prompt.
 const { supabaseAdmin } = require('../config/supabase');
 const planService = require('../services/planService');
+const { FREE_PLAN } = planService;
 
 // Attach vendorPlan (slug) + vendorPlanData (full row) to req — call before limit checks
 const attachPlan = async (req, res, next) => {
@@ -15,11 +16,11 @@ const attachPlan = async (req, res, next) => {
     req.vendorPlanData = await planService.getPlan(req.vendorPlan);
     next();
   } catch (err) {
-    // Fail-SAFE: fall back to the most-restrictive 'starter' plan on error.
+    // Fail-SAFE: fall back to the most-restrictive (free) plan on error.
     // This is intentionally NOT a hard deny — limit checks downstream are the
     // ones that fail closed; this only chooses the safest plan to evaluate against.
     console.error('attachPlan error:', err.message);
-    req.vendorPlan = 'starter';
+    req.vendorPlan = FREE_PLAN;
     next();
   }
 };
@@ -34,12 +35,12 @@ const blockResponse = (res, { message, plan, limit }) =>
 const MIN_SERVICE_PRICE = 100;
 
 // Requires attachPlan to have set req.vendorPlan. Blocks a positive price under the
-// floor for non-Supreme plans; leaves ₹0 (free) and Supreme untouched. A body with
-// no price (e.g. a partial update) is skipped.
+// floor on every customer-facing plan; leaves ₹0 (free) services and the comped
+// internal tiers untouched. A body with no price (e.g. a partial update) is skipped.
 const enforceMinPrice = (req, res, next) => {
   const price = Number(req.body?.price);
-  const plan = req.vendorPlan || 'starter';
-  if (plan !== 'supreme' && Number.isFinite(price) && price > 0 && price < MIN_SERVICE_PRICE) {
+  const plan = req.vendorPlan || FREE_PLAN;
+  if (!planService.isCompedSlug(plan) && Number.isFinite(price) && price > 0 && price < MIN_SERVICE_PRICE) {
     return res.status(400).json({
       message: `Paid services must be priced at least ₹${MIN_SERVICE_PRICE}. Set a higher price, or list it free (₹0).`,
       min_price: MIN_SERVICE_PRICE,
@@ -51,7 +52,7 @@ const enforceMinPrice = (req, res, next) => {
 // Block service creation beyond the plan's service limit
 const checkServiceLimit = async (req, res, next) => {
   try {
-    const plan = req.vendorPlan || 'starter';
+    const plan = req.vendorPlan || FREE_PLAN;
     const planData = req.vendorPlanData || await planService.getPlan(plan);
     const limit = planData.limits?.services ?? 0;
     if (limit === -1) return next();
@@ -77,7 +78,7 @@ const checkServiceLimit = async (req, res, next) => {
 // Block product creation beyond the plan's digital_products limit
 const checkProductLimit = async (req, res, next) => {
   try {
-    const plan = req.vendorPlan || 'starter';
+    const plan = req.vendorPlan || FREE_PLAN;
     const planData = req.vendorPlanData || await planService.getPlan(plan);
     const limit = planData.limits?.digital_products ?? 0;
 
@@ -218,16 +219,16 @@ const checkBookingReceiveLimit = async (hostId) => {
   }
 };
 
-// Studio-only Client CRM gate (limits.crm: -1 = included for professional+supreme,
-// 0/absent = blocked). Requires attachPlan to have run first. Fails CLOSED.
+// Client CRM gate (limits.crm: -1 = included on Sloth Active and the legacy paid
+// tiers, 0/absent = blocked). Requires attachPlan to have run first. Fails CLOSED.
 const requireCrm = async (req, res, next) => {
   try {
-    const plan = req.vendorPlan || 'starter';
+    const plan = req.vendorPlan || FREE_PLAN;
     const planData = req.vendorPlanData || await planService.getPlan(plan);
     const limit = planData.limits?.crm ?? 0;
     if (limit === -1) return next();
     return blockResponse(res, {
-      message: 'The Client CRM is a Studio feature. Upgrade to manage client records.',
+      message: 'The Client CRM is a Sloth Active feature. Upgrade to manage client records.',
       plan, limit,
     });
   } catch (err) {
