@@ -70,6 +70,526 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "interview-schedule-template",
+  "title": "Interview Schedule Template (Free Format + Example)",
+  "date": "Sep 16, 2026",
+  "icons": [
+    "calendar",
+    "clipboard",
+    "clock"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "A free interview schedule template you can copy-paste, plus what to include, a ready email, and the steps to build one that runs itself. Word-friendly format.",
+  "body": [
+    {
+      "p": "An interview schedule is a simple plan that lays out who is being interviewed, when, by whom, and what each round covers. Below is a copy-paste template as a table, an email you can send today, and the five steps to build one. If you'd rather skip the admin entirely, [Book A Sloth](/) turns the whole thing into one [online scheduling](/features/online-scheduling) link — but the template alone will get you organised. Skip to the table if that's all you need."
+    },
+    {
+      "p": "Scheduling is where good hiring quietly falls apart. [40% of candidates wait more than two weeks just to hear back after an interview](https://standout-cv.com/stats/job-interview-statistics), and every day of that gap is a day a strong candidate keeps talking to someone else. A clear schedule fixes the part you control."
+    },
+    {
+      "h2": "What is an interview schedule?"
+    },
+    {
+      "p": "An interview schedule is a structured document that maps out the timing, sequence, interviewers, and focus of each stage of a hiring conversation. Recruiters use it to plan the course of a meeting with a candidate and stay focused on the questions that matter."
+    },
+    {
+      "p": "Think of it as the run sheet for the interview. It answers four questions at a glance: who, when, with whom, and about what. One page. No guessing on the day."
+    },
+    {
+      "p": "It is not the same as an interview agenda. The schedule is the calendar view across candidates and rounds. The agenda is the question-by-question plan inside a single round. You usually need both, but the schedule comes first."
+    },
+    {
+      "h2": "What to include in an interview schedule template"
+    },
+    {
+      "p": "A good interview schedule template needs six columns so nothing gets missed. Miss one and the day starts leaking time."
+    },
+    {
+      "ul": [
+        "**Time slot** — start and end, with the time zone spelled out for remote candidates.",
+        "**Round** — phone screen, technical, panel, or final.",
+        "**Candidate** — full name and the role they are up for.",
+        "**Interviewer** — who leads, and anyone shadowing.",
+        "**Focus** — the one skill or trait this round is meant to test.",
+        "**Notes / next step** — space for the scorecard and the handoff to the next interviewer."
+      ]
+    },
+    {
+      "p": "Block realistic time, not hopeful time. A phone screen runs 15 to 20 minutes and a technical panel 60 to 90 minutes once you count the intro and debrief. Padding the calendar is cheaper than running late all afternoon."
+    },
+    {
+      "h2": "Interview schedule template (copy-paste)"
+    },
+    {
+      "p": "Here is a ready interview schedule template you can drop into Word, Google Docs, or a spreadsheet. Replace the sample rows with your own."
+    },
+    {
+      "table": {
+        "head": [
+          "Time",
+          "Round",
+          "Candidate",
+          "Interviewer",
+          "Focus",
+          "Notes / Next step"
+        ],
+        "rows": [
+          [
+            "9:30–9:50",
+            "Phone screen",
+            "Priya Sharma (Backend Engineer)",
+            "Recruiter",
+            "Motivation, notice period, salary fit",
+            "Advance to tech round?"
+          ],
+          [
+            "10:00–11:00",
+            "Technical",
+            "Priya Sharma",
+            "Aditya (Eng Lead)",
+            "System design, coding",
+            "Scorecard due by 11:15"
+          ],
+          [
+            "11:15–11:45",
+            "Team fit",
+            "Priya Sharma",
+            "2 team members",
+            "Collaboration, communication",
+            ""
+          ],
+          [
+            "12:00–12:30",
+            "Final / offer chat",
+            "Priya Sharma",
+            "Hiring Manager",
+            "Expectations, next steps",
+            "Decision by EOD"
+          ],
+          [
+            "2:00–2:20",
+            "Phone screen",
+            "Rohan Mehta (Backend Engineer)",
+            "Recruiter",
+            "Motivation, notice period",
+            "Advance to tech round?"
+          ],
+          [
+            "2:30–3:30",
+            "Technical",
+            "Rohan Mehta",
+            "Aditya (Eng Lead)",
+            "System design, coding",
+            "Scorecard due by 3:45"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Keep a single row per candidate per round. Colour-code by candidate if you are running several in one day. Leave the last column empty on purpose — that white space is where the decision actually gets made."
+    },
+    {
+      "h2": "How to make an interview schedule in 5 steps"
+    },
+    {
+      "p": "Building an interview schedule takes about ten minutes once you have the template. Follow these steps in order."
+    },
+    {
+      "steps": [
+        "List the rounds. Decide the stages every candidate goes through and the order. Fewer rounds beat more.",
+        "Assign an owner to each round. Name the interviewer and a backup. An unowned round is a round that gets skipped.",
+        "Block honest time. Add the intro and debrief minutes, not just the talking time. Then add a 10-minute buffer between candidates.",
+        "Set the focus per round. Write the one thing each round tests so two interviewers do not accidentally ask the same five questions.",
+        "Send it out. Share the relevant slice with each candidate and each interviewer. Confirm before the day, not on it."
+      ]
+    },
+    {
+      "p": "That last step is where most schedules break. A perfect grid is worthless if the candidate never confirmed. If you send confirmations by hand, a set of ready-to-send reminder templates will save you the retyping — or a booking link that reminds candidates automatically removes the chore entirely."
+    },
+    {
+      "h2": "Email for interview schedule (template)"
+    },
+    {
+      "p": "Send the schedule with a short, plain email that states the date, time, format, and who the candidate will meet. Here is one you can copy."
+    },
+    {
+      "quote": "Subject: Interview schedule — [Role] at [Company]\n\nHi [Name],\n\nThanks for your interest in the [Role] position. Your interview is confirmed for [day, date] at [time] ([time zone]).\n\nHere is the plan:\n• [Time] — Phone screen with [Recruiter]\n• [Time] — Technical round with [Interviewer]\n• [Time] — Team conversation\n\nIt will be over [video link / office address]. Please reply to confirm this works, or tell me a better time.\n\nLooking forward to it,\n[Your name]"
+    },
+    {
+      "p": "If you want candidates to reply cleanly, it helps to know what a good acknowledgement email looks like from their side too. Clear in, clear out."
+    },
+    {
+      "h2": "Or automate the whole thing so the schedule builds itself"
+    },
+    {
+      "p": "The calmest interview schedule is the one you never build by hand. Instead of trading five emails to find a slot, you share one link, the candidate picks a time that is genuinely free, and the schedule fills itself in."
+    },
+    {
+      "p": "That is the whole idea behind Book A Sloth. The craft is yours — reading people, asking the right questions. The machinery is ours. You send [one link that books the slot and sends the reminders](/blog/how-to-book-an-appointment-online), and it syncs to Google Calendar and Meet on its own. No back-and-forth, no \"does 3pm still work,\" no becoming the admin of your own calendar."
+    },
+    {
+      "p": "For a recruiter running ten interviews a week, that is hours back. The template above tells you what to plan; a booking link means you stop being the person who chases every confirmation. [Set up online scheduling](/features/online-scheduling), [start free](/be-a-sloth), and let [Book A Sloth](/) keep the calendar calm while you focus on the hiring."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is an interview schedule?",
+          "a": "An interview schedule is a plan that lists who is being interviewed, at what time, by which interviewer, and what each round is meant to assess. It keeps the day organised and the interviewers aligned."
+        },
+        {
+          "q": "What is the difference between an interview schedule and an interview agenda?",
+          "a": "The schedule is the calendar view — times, candidates, rounds, and interviewers across the day. The agenda is the question-by-question plan for one specific round. The schedule tells you when; the agenda tells you what to ask."
+        },
+        {
+          "q": "How do I make an interview schedule in Word?",
+          "a": "Insert a table with six columns — time, round, candidate, interviewer, focus, and notes — then add one row per round. Copy the template above straight into Word or Google Docs and replace the sample rows."
+        },
+        {
+          "q": "How much time should I block per interview round?",
+          "a": "Block 15 to 20 minutes for a phone screen and 60 to 90 minutes for a technical panel, including the intro and debrief. Add a 10-minute buffer between candidates so a slow round does not push the whole day back."
+        },
+        {
+          "q": "How far in advance should I send the interview schedule?",
+          "a": "Send it at least two to three days before, and ask the candidate to confirm. Given how long candidates already wait to hear back, a fast, clear invite keeps your strongest people from drifting to another offer."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-acknowledge-interview-email",
+  "title": "How to Acknowledge an Interview Email (+ Templates)",
+  "date": "Sep 18, 2026",
+  "icons": [
+    "mail",
+    "check",
+    "clock"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to acknowledge an interview email the right way, with copy-paste replies to confirm, accept, ask a question, or reschedule. Sound professional in 60 seconds.",
+  "body": [
+    {
+      "p": "To acknowledge an interview email, reply within a few hours, thank the sender, confirm the exact date, time, and format, and say clearly that you will attend. Keep it short and professional. Below are copy-paste replies for every situation — accepting, confirming, and asking to reschedule. (If you're the recruiter sending these invites, [Book A Sloth](/) and its [online scheduling](/features/online-scheduling) link remove the back-and-forth entirely — more on that at the end.)"
+    },
+    {
+      "p": "Your reply is the first work sample the employer sees. Prompt and clear beats clever every time. Ghosting runs both ways in hiring — [52% of applicants say a recruiter has ghosted them](https://standout-cv.com/stats/job-interview-statistics) — so a candidate who confirms quickly and cleanly already stands out."
+    },
+    {
+      "h2": "How do you acknowledge an interview email?"
+    },
+    {
+      "p": "You acknowledge an interview email by replying promptly, thanking the recruiter, and confirming the details in one short message. Ideally you respond the same day you receive the invitation. Speed is rarer than you'd think: candidates take a [median of 3.9 days to reply to recruiter outreach](https://www.pin.com/blog/time-to-reply-interview-benchmarks/), so a same-day confirmation already puts you in the fast minority."
+    },
+    {
+      "p": "Here is the whole move in four steps:"
+    },
+    {
+      "steps": [
+        "Reply fast. Same day, ideally within a few hours.",
+        "Say thanks. One line of genuine appreciation for the opportunity.",
+        "Confirm the details. Repeat the date, time, time zone, and format back to them.",
+        "Confirm attendance. State plainly that you will be there — or propose a new time."
+      ]
+    },
+    {
+      "p": "That is it. You are not writing an essay. You are proving you can read an email and respond like a professional."
+    },
+    {
+      "h2": "What to include in an interview confirmation email"
+    },
+    {
+      "p": "An interview confirmation reply needs five things and nothing extra: the date and time, the format, the interviewer's name, a line confirming you will attend, and your contact details."
+    },
+    {
+      "ul": [
+        "**A clear subject line** — reply on the existing thread, or use \"Interview Confirmation: [Your Name].\"",
+        "**A thank-you** — short and sincere.",
+        "**The details, repeated** — day, date, time, time zone, and format. This catches mistakes before they cost you.",
+        "**A clear \"yes\"** — the actual confirmation that you will attend.",
+        "**Your phone number** — so they can reach you if plans change."
+      ]
+    },
+    {
+      "p": "Leave out the life story. The recruiter is scanning, not reading."
+    },
+    {
+      "h2": "Template 1: Confirm and accept the interview"
+    },
+    {
+      "p": "Use this reply when the date and time work and you simply want to accept. This is the \"I confirm that I will attend the interview\" version."
+    },
+    {
+      "quote": "Subject: Re: Interview for [Role] — [Your Name]\n\nDear [Recruiter's name],\n\nThank you for the invitation to interview for the [Role] position. I confirm that I will attend the interview on [day, date] at [time] ([time zone]) via [video link / at your office].\n\nI appreciate the opportunity and look forward to speaking with [Interviewer's name]. You can reach me on [phone number] if anything changes.\n\nBest regards,\n[Your name]"
+    },
+    {
+      "p": "Notice the second sentence repeats the date and time. That single habit catches half of all scheduling mix-ups."
+    },
+    {
+      "h2": "Template 2: Confirm and ask a clarifying question"
+    },
+    {
+      "p": "Use this when you accept the time but need one detail — the office address, who you will meet, or what to bring. Confirm first, then ask."
+    },
+    {
+      "quote": "Subject: Re: Interview for [Role] — [Your Name]\n\nDear [Recruiter's name],\n\nThank you for the invitation. I confirm that I will attend the interview on [day, date] at [time] ([time zone]).\n\nOne quick question: could you let me know [the office address / who I will be meeting / whether I should bring anything]? I want to arrive fully prepared.\n\nThank you again — looking forward to it.\n\nBest regards,\n[Your name]"
+    },
+    {
+      "p": "Confirm before you ask. That way, even if they miss your question, your \"yes\" is already on record."
+    },
+    {
+      "h2": "Template 3: Ask to reschedule politely"
+    },
+    {
+      "p": "Use this when the proposed time genuinely does not work. Apologise briefly, give a real reason only if you have one, and offer two or three alternatives."
+    },
+    {
+      "quote": "Subject: Re: Interview for [Role] — [Your Name]\n\nDear [Recruiter's name],\n\nThank you very much for the interview invitation for the [Role] position. I am very keen to attend, but I have an unavoidable commitment at the proposed time.\n\nWould any of these work instead?\n• [Day, date, time]\n• [Day, date, time]\n• [Day, date, time]\n\nI am happy to be flexible around your schedule. Apologies for any inconvenience, and thank you for understanding.\n\nBest regards,\n[Your name]"
+    },
+    {
+      "p": "Offering specific slots does the recruiter's work for them. It turns \"I can't make it\" into \"here's when I can\" — which reads as enthusiasm, not a problem."
+    },
+    {
+      "h2": "Common mistakes to avoid"
+    },
+    {
+      "p": "The fastest way to look unprepared is to reply late, reply vaguely, or not reply at all. Three mistakes sink most candidates."
+    },
+    {
+      "ul": [
+        "**Waiting a day or two \"to sound busy.\"** You do not. You sound slow.",
+        "**Not repeating the details.** A one-word \"Confirmed\" leaves both of you guessing about the time zone.",
+        "**Over-explaining a reschedule.** Two sentences and three alternative slots. No paragraph-long apology."
+      ]
+    },
+    {
+      "h2": "For recruiters: bookings that confirm themselves"
+    },
+    {
+      "p": "If you are the one sending these invitations, chasing confirmations is its own part-time job. Candidates go quiet, time zones get muddled, and you end up refreshing your inbox instead of hiring."
+    },
+    {
+      "p": "There is a calmer way. Instead of proposing a time and hoping for a \"yes,\" you share one link, the candidate picks a slot that is actually free, and the confirmation and reminders send themselves. The time saved is not small: availability-based back-and-forth burns [243 minutes of coordination per hire versus 27 minutes when the candidate self-schedules](https://candidate.fyi/post/interview-confirmation-email). That is what Book A Sloth does — a [Topmate-style booking link that removes the back-and-forth](/blog/topmate-alternative) and syncs straight to your calendar. You send [one link that books and confirms the slot](/blog/how-to-book-an-appointment-online), the schedule fills itself, and the acknowledgement email you were waiting for stops being something you have to chase. [Set up online scheduling](/features/online-scheduling), [start free](/be-a-sloth), and let [Book A Sloth](/) do the chasing for you."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I confirm that I will attend an interview?",
+          "a": "Reply to the invitation, thank the recruiter, and write one clear line: \"I confirm that I will attend the interview on [date] at [time] ([time zone]).\" Add your phone number in case plans change."
+        },
+        {
+          "q": "Should I reply to an interview email even if all the details are already there?",
+          "a": "Yes. Always acknowledge it. A short confirmation shows you are reliable and organised, and it gives the recruiter certainty that you are coming. Silence reads as uncertainty."
+        },
+        {
+          "q": "How quickly should I respond to an interview request?",
+          "a": "Reply the same day, ideally within a few hours. A fast, professional reply signals genuine interest and helps you stand out early in the process."
+        },
+        {
+          "q": "What do I write if I need to reschedule?",
+          "a": "Thank them, say you are keen to attend, mention you have a conflict at the proposed time, and offer two or three specific alternative slots. Keep it brief and do not over-apologise."
+        },
+        {
+          "q": "Can I acknowledge an interview email by phone instead?",
+          "a": "If they invited you by email, reply by email so there is a written record of the agreed time. If they called you, a quick email afterwards confirming the details is still a smart move."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "databricks-interview-questions",
+  "title": "Databricks Interview Questions and Answers (2026)",
+  "date": "Sep 20, 2026",
+  "icons": [
+    "database",
+    "cpu",
+    "layers"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Real Databricks interview questions and answers on Delta Lake, Spark, Unity Catalog, clusters, and the medallion architecture. Concise, correct, and ready to revise.",
+  "body": [
+    {
+      "p": "Databricks interviews test whether you understand the lakehouse: Delta Lake, Apache Spark, clusters, notebooks, Unity Catalog, and the medallion architecture. This guide gives you the real questions with short, correct answers you can revise the night before — and when you want to rehearse them out loud, [Book A Sloth](/) lets you [book a mock-interview slot](/features/online-scheduling) with an expert in a single link."
+    },
+    {
+      "p": "Most loops move through a recruiter screen, a technical or SQL round, a Spark deep dive, and a behavioural round. The [interview process typically runs across five or six stages over four to seven weeks](https://www.datacamp.com/blog/databricks-interview-questions) — usually a 30-minute recruiter screen, two or three coding rounds, an onsite of four to five back-to-back interviews, and a hiring-manager round — so breadth matters as much as depth."
+    },
+    {
+      "h2": "Databricks basics interview questions"
+    },
+    {
+      "p": "Start here: interviewers open with what Databricks is and why the lakehouse exists. Databricks is a unified, cloud-based analytics platform built on Apache Spark that brings data engineering, data science, machine learning, and SQL analytics onto one platform."
+    },
+    {
+      "p": "**Q: What is Databricks?** A managed platform, founded in 2013 by the original authors of Apache Spark, that runs on AWS, Azure, and GCP. It provides an optimised Spark runtime, collaborative notebooks, managed clusters, and governance in one place, so teams do not have to stitch those pieces together themselves."
+    },
+    {
+      "p": "**Q: What is a data lakehouse?** An architecture that combines the low cost and flexibility of a data lake with the reliability and performance of a data warehouse. It lets you run BI and ML on the same copy of data, avoiding the old split between a lake for raw data and a warehouse for reporting."
+    },
+    {
+      "p": "**Q: What is the difference between Apache Spark and Databricks?** Spark is the open-source distributed compute engine. Databricks is the commercial platform around it — a tuned runtime, notebooks, cluster management, Delta Lake, and Unity Catalog. Spark is the engine; Databricks is the car built around it."
+    },
+    {
+      "h2": "Apache Spark interview questions"
+    },
+    {
+      "p": "Spark questions check whether you understand distributed processing, not just the syntax. The core idea: Spark splits work across a cluster and runs it in parallel using lazy evaluation, and by keeping data in memory it can run workloads up to 100 times faster than traditional MapReduce."
+    },
+    {
+      "p": "**Q: What is the difference between a transformation and an action?** Transformations (like `map`, `filter`, `select`) are lazy — they build a plan but do not run. Actions (like `count`, `collect`, `write`) trigger execution of that plan. Nothing computes until an action is called."
+    },
+    {
+      "p": "**Q: What are narrow and wide transformations?** Narrow transformations (`map`, `filter`) need data from only one partition, so no data moves between nodes. Wide transformations (`groupBy`, `join`, `distinct`) require a shuffle, moving data across the cluster — which is where most performance problems live."
+    },
+    {
+      "p": "**Q: RDD vs DataFrame vs Dataset — when do you use each?** In Databricks, reach for DataFrames by default. The Catalyst optimiser and Tungsten execution make them fast without hand-tuning."
+    },
+    {
+      "table": {
+        "head": [
+          "Abstraction",
+          "Level",
+          "Optimisation",
+          "Use when"
+        ],
+        "rows": [
+          [
+            "RDD",
+            "Low-level",
+            "None (manual)",
+            "You need fine control over partitioning or unstructured data"
+          ],
+          [
+            "DataFrame",
+            "High-level",
+            "Catalyst optimiser",
+            "Most work — structured data, SQL-like operations"
+          ],
+          [
+            "Dataset",
+            "High-level, typed",
+            "Catalyst + compile-time types",
+            "Scala/Java where type safety matters"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Delta Lake interview questions"
+    },
+    {
+      "p": "Delta Lake is the heart of most Databricks answers, so know it cold. Delta Lake is an [open-source storage layer that adds ACID transactions](https://docs.delta.io/), schema enforcement, and time travel to data stored in a data lake."
+    },
+    {
+      "p": "**Q: How does Delta Lake actually work?** It stores data as Parquet files plus a transaction log (the `_delta_log` folder). Every write is recorded as an atomic commit in the log, which is how Delta guarantees ACID transactions on top of cheap cloud object storage."
+    },
+    {
+      "p": "**Q: What is time travel?** Time travel lets you query an earlier version of a Delta table by version number or timestamp — for example, `SELECT * FROM table VERSION AS OF 5`. It is useful for audits, reproducing a report, or rolling back a bad write."
+    },
+    {
+      "p": "**Q: What do OPTIMIZE and Z-ORDER do?** `OPTIMIZE` compacts many small files into fewer large ones to speed up reads. `ZORDER BY` co-locates related data in the same files so Spark can skip files it does not need. Together they fix the \"small files problem\" and cut scan time."
+    },
+    {
+      "p": "**Q: What is Auto Loader?** Auto Loader (`cloudFiles`) incrementally and efficiently ingests new files from cloud storage as they arrive, tracking what it has already processed. It is the standard way to build a streaming ingestion layer without reprocessing everything."
+    },
+    {
+      "h2": "Clusters and notebooks interview questions"
+    },
+    {
+      "p": "Cluster questions test cost-awareness and how you run code day to day. Databricks clusters are managed groups of compute that run your Spark workloads, and choosing the right type controls both speed and spend."
+    },
+    {
+      "p": "**Q: All-purpose vs job clusters — what is the difference?** All-purpose clusters are interactive and shared, used for development and exploration in notebooks. Job clusters are created for a single automated job and terminate when it finishes. Job clusters are cheaper for production because they do not sit idle."
+    },
+    {
+      "p": "**Q: What is autoscaling?** Autoscaling adds or removes worker nodes based on load, so you pay for capacity only when the workload needs it. It is a default lever for controlling cost on variable pipelines."
+    },
+    {
+      "p": "**Q: How do notebooks support multiple languages?** A Databricks notebook can mix Python, SQL, Scala, and R using magic commands like `%sql` or `%python` per cell. This lets a team explore in SQL and productionise in Python in the same document."
+    },
+    {
+      "h2": "Unity Catalog and governance questions"
+    },
+    {
+      "p": "Unity Catalog questions have become standard, so do not skip them. Unity Catalog is [Databricks' centralised governance layer for all data and AI assets](https://docs.databricks.com/aws/en/data-governance/unity-catalog/) across every workspace in an account."
+    },
+    {
+      "p": "**Q: What problem does Unity Catalog solve?** It replaces per-workspace, inconsistent permissions with one governance model. You get fine-grained access control (down to rows and columns), automatic data lineage, auditing, and a searchable data catalogue — managed once, applied everywhere."
+    },
+    {
+      "p": "**Q: Explain the three-level namespace.** Unity Catalog uses `catalog.schema.table`. The catalog is the top container, the schema (database) groups related tables, and the table holds the data. This structure is how it isolates and organises data across teams and environments."
+    },
+    {
+      "p": "**Q: Managed vs external tables?** For managed tables, Unity Catalog controls both the metadata and the underlying files, and dropping the table deletes the data. For external tables, it manages the metadata while the files live in a location you control, so dropping the table leaves the data in place."
+    },
+    {
+      "h2": "Medallion architecture and pipelines"
+    },
+    {
+      "p": "The medallion architecture is a near-guaranteed question, so have a crisp answer ready. It is a [design pattern that organises data into three progressively refined layers](https://docs.databricks.com/aws/en/lakehouse/medallion) — Bronze, Silver, and Gold."
+    },
+    {
+      "ul": [
+        "**Bronze** — raw data ingested as-is from source systems. No cleaning. Full history.",
+        "**Silver** — cleaned, filtered, and conformed data, joined and deduplicated into usable tables.",
+        "**Gold** — business-level aggregates ready for reporting, dashboards, and ML features."
+      ]
+    },
+    {
+      "p": "Data flows Bronze to Silver to Gold, getting more trustworthy at each step."
+    },
+    {
+      "p": "**Q: What are Delta Live Tables (DLT)?** DLT is a declarative framework for building reliable pipelines. You define the transformations and the data-quality rules (\"expectations\"), and Databricks manages the dependencies, orchestration, and error handling. It differs from plain Jobs by being declarative rather than a set of manually ordered tasks."
+    },
+    {
+      "p": "**Q: What is the Photon engine?** Photon is a native vectorised query engine written in C++ that speeds up SQL and DataFrame workloads on Databricks. It runs the same code faster, with no query rewrite needed — you just enable it on the cluster."
+    },
+    {
+      "h2": "Reading answers is not the same as saying them out loud"
+    },
+    {
+      "p": "You can memorise every answer above and still freeze when an engineer asks, \"So walk me through how you'd design the Silver layer.\" Interviews are won in the saying, not the reading."
+    },
+    {
+      "p": "The fix is reps. Practise these out loud, then do a mock round with an expert who has actually cleared a Databricks loop and can push back on a vague answer. A short [message to line up that practice call](/blog/interview-calling-message) is all it takes to start, and [Book A Sloth](/) makes booking that expert calm: [one scheduling link](/features/online-scheduling), one payment, one slot on the calendar. The craft is yours; the machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "How hard are Databricks interviews?",
+          "a": "They are demanding but predictable. If you can explain Delta Lake, Spark's lazy execution, the medallion architecture, and Unity Catalog clearly — and back it with hands-on examples — you cover most of what interviewers probe."
+        },
+        {
+          "q": "What is the difference between Delta Lake and a data lakehouse?",
+          "a": "Delta Lake is the storage layer that adds ACID transactions and reliability to files in cloud storage. The lakehouse is the broader architecture built on top of it, combining warehouse-style management with lake-style flexibility."
+        },
+        {
+          "q": "Do I need to know Spark internals for a Databricks interview?",
+          "a": "Yes, at least the fundamentals: transformations vs actions, narrow vs wide operations, shuffles, and why lazy evaluation matters. You do not need the source code, but you should explain why a job is slow."
+        },
+        {
+          "q": "What questions come up for a Databricks data engineer role specifically?",
+          "a": "Expect pipeline design with the medallion architecture, ingestion with Auto Loader, Delta Live Tables, tuning with OPTIMIZE and Z-ORDER, and Unity Catalog governance."
+        },
+        {
+          "q": "How should I prepare in a week?",
+          "a": "Revise the answers above daily, build one small Bronze-to-Gold pipeline in a free Databricks workspace, and do at least one live mock interview so you practise saying the answers, not just reading them."
+        }
+      ]
+    }
+  ]
+},
+{
   "slug": "how-to-sell-digital-products-online",
   "title": "How to Sell Digital Products Online: A Complete Guide",
   "date": "Sep 14, 2026",

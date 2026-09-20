@@ -6,12 +6,15 @@
 
 // Per-post keyword tags. Every published slug MUST appear (enforced by test).
 export const POST_TAGS = {
-  'how-to-sell-digital-products-online': ['sell-your-time', 'digital-products', 'money', 'growth'],
+  'how-to-sell-digital-products-online': ['sell-your-time', 'digital-products', 'money', 'growth', 'digital-selling'],
   'how-to-become-paid-mentor': ['sell-your-time', 'growth'],
   'how-to-ask-client-for-payment-politely': ['sell-your-time', 'money'],
   'how-to-book-an-appointment-online': ['sell-your-time', 'booking', 'work-guide'],
-  'interview-calling-message': ['work-guide', 'scheduling', 'booking'],
-  'topmate-alternative': ['sell-your-time', 'commission'],
+  'interview-calling-message': ['work-guide', 'scheduling', 'booking', 'interview'],
+  'interview-schedule-template': ['work-guide', 'scheduling', 'booking', 'interview'],
+  'how-to-acknowledge-interview-email': ['work-guide', 'scheduling', 'interview'],
+  'databricks-interview-questions': ['work-guide', 'interview'],
+  'topmate-alternative': ['sell-your-time', 'commission', 'digital-selling'],
   'digital-marketing-for-startups': ['marketing', 'startup', 'aeo'],
   'digital-marketing-for-saas-companies': ['marketing', 'saas', 'b2b', 'aeo'],
   'performance-marketing-for-ecommerce': ['marketing', 'ecommerce', 'performance', 'aeo'],
@@ -112,6 +115,13 @@ export const BLOG_CLUSTERS = [
   { key: 'sell-your-time', keyword: 'selling your time online', pillar: 'how-to-book-an-appointment-online',
     tags: ['sell-your-time'], priority: 95,
     priorityLinks: ['topmate-alternative', 'how-to-ask-client-for-payment-politely', 'how-to-become-paid-mentor'] },
+  // Digital-products selling line. priority > sell-your-time so it wins primary for its two
+  // tagged posts, pairing the guide with topmate as pillar — keeps digital-products linked
+  // without crowding the sell-your-time slot budget (see blog-relatedposts-orphan-fragility).
+  { key: 'digital-selling', keyword: 'selling digital products online', pillar: 'topmate-alternative',
+    tags: ['digital-selling'], priority: 101,
+    description: 'Selling digital products and productised time online.',
+    priorityLinks: ['how-to-sell-digital-products-online'] },
   // Marketing "work guide" batch (interview/scheduling/templates how-tos). Own cluster so the
   // batch interlinks among itself as it publishes (1/day) instead of displacing saturated
   // clusters — see docs blog-relatedposts-orphan-fragility. Pillar is the canonical booking guide.
@@ -119,6 +129,14 @@ export const BLOG_CLUSTERS = [
     tags: ['work-guide'], priority: 96,
     description: 'Practical how-to guides: interview messages, scheduling, templates, getting paid.',
     priorityLinks: ['interview-calling-message'] },
+  // Interview batch (Sep 2026): scheduling/confirmation/prep guides. Own cluster so the batch
+  // interlinks within itself off the published pillar, instead of starving the small work-guide
+  // cluster — see docs blog-relatedposts-orphan-fragility. priority > work-guide so it wins as
+  // primary for these 'interview'-tagged posts.
+  { key: 'interview-prep', keyword: 'interview scheduling & preparation', pillar: 'interview-calling-message',
+    tags: ['interview'], priority: 97,
+    description: 'Interview scheduling, confirmation and preparation guides.',
+    priorityLinks: ['interview-schedule-template', 'how-to-acknowledge-interview-email', 'databricks-interview-questions'] },
   { key: 'commission', keyword: '0% commission', pillar: 'zero-commission-bet',
     tags: ['commission', 'pricing', 'earnings'], priority: 100,
     description: 'The 0%-commission / flat-fee pricing argument.',
