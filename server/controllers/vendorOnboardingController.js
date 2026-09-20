@@ -320,7 +320,7 @@ const advanceToLive = async (vendorId) => {
 const activateFreePlan = async (vendorId) => {
   await supabaseAdmin
     .from("profiles")
-    .update({ plan: "explorer", plan_activated_at: new Date().toISOString() })
+    .update({ plan: planService.FREE_PLAN, plan_activated_at: new Date().toISOString() })
     .eq("id", vendorId);
   return advanceToLive(vendorId);
 };

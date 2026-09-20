@@ -131,20 +131,27 @@ test('a greeting in front of a real question is NOT swallowed as small talk', as
 
 describe('pricingReply (deterministic pricing layer)', () => {
   it('answers the NAMED plan only, with the buy link', () => {
-    expect(pricingReply('how much is studio')).toMatch(/Studio/);
-    expect(pricingReply('how much is studio')).toMatch(/\/pricing/);
-    expect(pricingReply('studio pricing')).not.toMatch(/Host\+/); // that plan only
-    expect(pricingReply('host+ price')).toMatch(/Host\+/);
-    expect(pricingReply('what does the starter plan cost')).toMatch(/Starter/);
+    expect(pricingReply('how much is sloth active')).toMatch(/Sloth Active/);
+    expect(pricingReply('how much is sloth active')).toMatch(/\/pricing/);
+    expect(pricingReply('premium pricing')).not.toMatch(/₹0, free forever/); // that plan only
+    expect(pricingReply('what does the free plan cost')).toMatch(/₹0, free forever/);
   });
-  it('quotes yearly per-day + the GST note', () => {
-    expect(pricingReply('studio yearly cost')).toMatch(/₹10\/day/);
-    expect(pricingReply('host plus yearly price')).toMatch(/₹4\/day/);
-    expect(pricingReply('studio price')).toMatch(/18% GST/);
+  it('routes retired tier names to the plan that replaced them', () => {
+    // Old blog posts and comparison pages still say Studio / Host+.
+    expect(pricingReply('how much is studio')).toMatch(/Sloth Active/);
+    expect(pricingReply('host+ price')).toMatch(/Sloth Active/);
+  });
+  it('quotes the real charged prices, GST-inclusive', () => {
+    expect(pricingReply('sloth active yearly cost')).toMatch(/₹3,599/);
+    expect(pricingReply('premium monthly price')).toMatch(/₹399/);
+    expect(pricingReply('premium price')).toMatch(/include GST/);
+    // The old copy quoted ex-GST prices and a stale ₹229/₹555 ladder.
+    expect(pricingReply('premium price')).not.toMatch(/₹229|₹555|₹1,499|₹3,650/);
   });
   it('gives an overview when no plan is named', () => {
     const r = pricingReply('what are your prices');
-    expect(r).toMatch(/Starter/); expect(r).toMatch(/Host\+/); expect(r).toMatch(/Studio/);
+    expect(r).toMatch(/Sloth/); expect(r).toMatch(/Sloth Active/);
+    expect(r).not.toMatch(/Host\+|Studio|Starter/);
   });
   it('does NOT hijack non-pricing questions (incl. plan management / becoming a host)', () => {
     expect(pricingReply('how do I change my plan')).toBeNull();

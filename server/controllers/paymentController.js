@@ -432,6 +432,11 @@ const subscribePlan = async (req, res) => {
     if (!planRecord || planRecord.slug !== planService.normalizeSlug(plan) || !(Number(planRecord.annual_price) > 0)) {
       return res.status(400).json({ message: "Invalid or free plan — nothing to purchase." });
     }
+    // Archived rows (legacy partner price, internal Supreme) still renew for
+    // their existing subscribers but are never self-serve purchasable.
+    if (!planService.isSelfServable(planRecord)) {
+      return res.status(404).json({ message: "Plan not found" });
+    }
     // GST is charged ON TOP of the plan price (PRD §5.2) — never embedded.
     const { gstRate } = await platformConfig.getConfig();
     const breakdown = computeSubscriptionBreakdown({ planPrice: Number(planRecord.annual_price), gstRate });
@@ -652,6 +657,12 @@ const createVendorSubscription = async (req, res) => {
     }
     const planRecord = await planService.getPlan(plan);
     if (!planRecord || planRecord.slug !== planService.normalizeSlug(plan)) {
+      return res.status(404).json({ message: "Plan not found" });
+    }
+    // Archived rows (legacy partner price, internal Supreme) still renew for
+    // their existing subscribers but are never self-serve purchasable. Without
+    // this, anyone who guessed an archived slug could buy at its old price.
+    if (!planService.isSelfServable(planRecord)) {
       return res.status(404).json({ message: "Plan not found" });
     }
     if (!(cadencePrice(planRecord, cadence) > 0)) {

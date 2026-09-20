@@ -21,8 +21,22 @@ describe('redactBookingContact — guest phone → host', () => {
     expect(b.profiles.phone).toBeNull();
   });
 
-  it('Host+ (creator) host never sees guest phone', () => {
-    expect(redactBookingContact(mk(-100), hostView('creator'), NOW).guest_phone).toBeNull();
+  // v3.165: the legacy paid rows carry Sloth Active entitlements, so `creator`
+  // now sees the number inside the window just like `premium` does.
+  it('Sloth Active (premium) host sees guest phone inside the window', () => {
+    expect(redactBookingContact(mk(-100), hostView('premium'), NOW).guest_phone).not.toBeNull();
+  });
+
+  it('legacy paid (creator) host sees guest phone inside the window', () => {
+    expect(redactBookingContact(mk(-100), hostView('creator'), NOW).guest_phone).not.toBeNull();
+  });
+
+  it('free (Sloth) host never sees guest phone, even inside the window', () => {
+    expect(redactBookingContact(mk(-100), hostView('free'), NOW).guest_phone).toBeNull();
+  });
+
+  it('a viewer with no plan never sees guest phone', () => {
+    expect(redactBookingContact(mk(-100), hostView(undefined), NOW).guest_phone).toBeNull();
   });
 
   it('Studio host: hidden while booking is far out', () => {

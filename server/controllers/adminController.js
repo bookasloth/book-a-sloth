@@ -708,15 +708,23 @@ const getProviderPlanAnalytics = async (req, res) => {
     // ── Contracted plan revenue (DERIVED): plan list price × current holders. ──
     // Auto-updates the instant a host's plan changes — the only way to surface
     // subscription value when upgrades are admin-granted (no payment row exists).
-    const planContracted = { creator: 0, professional: 0 };
-    for (const slug of ['creator', 'professional']) {
+    // Paid slugs are DERIVED from subscription_plans (archived rows included —
+    // the legacy tiers still hold revenue), never hardcoded, so a renamed or
+    // newly added plan shows up here without a code change.
+    const allPlans = [...(await planService.loadPlans()).values()];
+    const paidSlugs = allPlans
+      .filter((p) => !planService.isFreeSlug(p.slug) && !planService.isCompedSlug(p.slug))
+      .map((p) => p.slug);
+
+    const planContracted = Object.fromEntries(paidSlugs.map((s) => [s, 0]));
+    for (const slug of paidSlugs) {
       const price = Number((await planService.getPlan(slug))?.annual_price) || 0;
       planContracted[slug] = price * (distribution[slug] || 0);
     }
 
     // ── Earning from plans: collected subscription payments, net of gateway ──
     // net = plan_price − razorpay_fee − razorpay_tax (GST excluded: pass-through).
-    const planEarnings = { creator: 0, professional: 0 };
+    const planEarnings = Object.fromEntries(paidSlugs.map((s) => [s, 0]));
     let subsQuery = supabaseAdmin
       .from('subscription_payments')
       .select('plan_type, plan_price, razorpay_fee, razorpay_tax, status')
@@ -742,9 +750,9 @@ const getProviderPlanAnalytics = async (req, res) => {
         .select('host_id, payment_status, platform_fee_amount')
         .eq('payment_status', 'paid'));
     }
-    const bookingEarnings = { starter: 0, creator: 0, professional: 0 };
+    const bookingEarnings = Object.fromEntries([planService.FREE_PLAN, ...paidSlugs].map((s) => [s, 0]));
     (bookingsRes.data || []).forEach((b) => {
-      const slug = hostPlan[b.host_id] || 'starter';
+      const slug = hostPlan[b.host_id] || planService.FREE_PLAN;
       if (bookingEarnings[slug] == null) bookingEarnings[slug] = 0;
       bookingEarnings[slug] += platformNetFromBooking(b);
     });
