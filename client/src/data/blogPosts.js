@@ -70,6 +70,548 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "how-to-find-book-expert-online",
+  "title": "How to Find and Book an Expert Online",
+  "date": "Sep 22, 2026",
+  "icons": [
+    "search",
+    "users",
+    "calendar"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to find and book the right expert or mentor online: where to look, how to vet them, the red flags, the questions to ask, and how booking and payment work.",
+  "body": [
+    {
+      "p": "To find and book an expert online, decide exactly what problem you need solved, search a vetted platform or a warm referral, check their real track record, ask two or three sharp questions, then book a paid session with clear scope. The goal is not the most famous person — it is the right person, paid for their time so you both take it seriously. Tools like [Book A Sloth](/) put that whole flow behind [one scheduling link](/features/online-scheduling), which is why the smoothest experts already use one."
+    },
+    {
+      "p": "Most people do this backwards. They cold-DM a big name, get ignored, and give up. A paid, scoped booking beats a cold ask every time — for you and for them."
+    },
+    {
+      "h2": "What \"an expert\" means when you are booking one"
+    },
+    {
+      "p": "An expert worth booking is someone with proven, relevant experience who can move your specific problem forward faster than you could alone. That could be a marketing expert who has run the exact channel you are stuck on, an AI expert who has shipped real models, or a technology mentor who has scaled a team like yours. The label matters less than the fit. A top mentor for a Series A founder is the wrong mentor for a first-time freelancer."
+    },
+    {
+      "p": "Match the person to the problem, not to their follower count."
+    },
+    {
+      "h2": "Where to find an expert or mentor online"
+    },
+    {
+      "p": "You find good experts in three places: vetted marketplaces, warm referrals, and communities where they already show up. Each has a different trust level."
+    },
+    {
+      "ul": [
+        "**Vetted platforms.** Booking marketplaces screen their experts, which does the first filter for you. GrowthMentor, for example, [accepts about 5% of applicants](https://www.growthmentor.com/blog/online-mentoring-platforms-software) and runs a 4.8/5 average across 60,000+ sessions. Selectivity like that is a signal — someone vetted them before you did.",
+        "**Warm referrals.** Ask people who have solved your problem who they paid to help. A referral comes with a real review attached.",
+        "**Communities.** Niche Slack groups, subreddits, and local founder circles surface people who help before they sell. Watch who gives useful answers, then approach them."
+      ]
+    },
+    {
+      "p": "Avoid the pure cold-outreach route on social media. It is low-yield, and the experts who respond to it are often the ones with the most free time — not always the best sign."
+    },
+    {
+      "h2": "How to vet an expert before you book"
+    },
+    {
+      "p": "Vet an expert by checking their track record, their recent relevance, and how they talk about past work — before money changes hands. A polished profile is not proof. Do this in ten minutes:"
+    },
+    {
+      "steps": [
+        "Check the track record, not the title. Have they actually done the thing you need, recently? A technology mentor who last shipped code in 2015 may be out of date.",
+        "Read the reviews and session count. On platforms, the number of sessions someone has done is the closest thing this industry has to an honest review. Volume plus rating beats a slick bio.",
+        "Ask if they have the specific expertise you need. Before booking, confirm they [have real experience in the exact topic](https://www.brilliantbreakthroughs.com/vetting-a-mentor/) and that it maps to your current problem.",
+        "Look for teaching, not just doing. Being great at something does not mean being able to explain it. Their public content tells you if they can.",
+        "Confirm availability. A brilliant expert who cannot show up on a schedule is not useful to you right now."
+      ]
+    },
+    {
+      "h2": "Red flags to walk away from"
+    },
+    {
+      "p": "Walk away from any expert who is vague about results, guarantees outcomes, or pressures you to buy fast. These are the patterns that cost people money."
+    },
+    {
+      "table": {
+        "head": [
+          "Red flag",
+          "What it usually means"
+        ],
+        "rows": [
+          [
+            "No specifics, only buzzwords",
+            "They may not have done the work themselves"
+          ],
+          [
+            "Guarantees a specific outcome",
+            "Nobody can promise your result; honest experts qualify"
+          ],
+          [
+            "No reviews or refuses references",
+            "Nothing verifiable behind the profile"
+          ],
+          [
+            "Pushes a huge package on call one",
+            "Selling volume, not solving your problem"
+          ],
+          [
+            "Won't take a small paid trial",
+            "Confident experts are happy to prove value once"
+          ],
+          [
+            "Rate far below everyone else",
+            "Sometimes a bargain; often inexperience or desperation"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The single strongest filter is a small paid session. A real expert will happily take a scoped, one-off booking to prove their value. Someone who only wants the big commitment upfront is selling, not helping."
+    },
+    {
+      "h2": "Questions to ask before you commit"
+    },
+    {
+      "p": "Ask a few sharp questions before you book so you buy the right help, not the wrong package. Send these ahead, or use them in the first five minutes:"
+    },
+    {
+      "ul": [
+        "\"Have you solved this exact problem, and roughly when?\"",
+        "\"What would you need from me to make one session useful?\"",
+        "\"What does a good outcome from our time look like to you?\"",
+        "\"Do you have the availability to do this on my timeline?\""
+      ]
+    },
+    {
+      "p": "You should also ask yourself the honest one: are you ready to act on what you hear? A booked expert only helps if you show up prepared to use the advice."
+    },
+    {
+      "h2": "How booking and payment actually work"
+    },
+    {
+      "p": "Booking an expert online should be one link: you pick a time, you pay, the session is confirmed, and both sides get a calendar invite. No email tag, no \"how do I pay you?\", no awkwardness. That single flow is what makes the whole thing feel professional instead of favour-shaped."
+    },
+    {
+      "p": "A clean booking does four things: it shows the expert's real open slots so you are not negotiating times; it collects payment at booking, so the session is committed on both sides; it sends the meeting link and reminders automatically; and it keeps a record — an invoice, a receipt — so it is a real transaction."
+    },
+    {
+      "p": "This is exactly what [Book A Sloth](/) gives the expert's side: [one link that books the slot and collects payment](/features/online-scheduling), UPI and Razorpay, auto GST invoices for Indian experts, Google Meet built in, and email plus WhatsApp reminders. If the expert you want does not have a link like this yet, that is fine — but the smoothest ones already do. Choosing between platforms? This [Topmate alternative breakdown](/blog/topmate-alternative) covers what to look for. Paying also changes the relationship: when you make a fair exchange for their time, you both treat the session as real work. Free advice gets free effort."
+    },
+    {
+      "h2": "The calm way to do this"
+    },
+    {
+      "p": "Stop cold-DMing experts and hoping. Decide your problem, find someone vetted, run the ten-minute checks, ask two sharp questions, and book a small paid session you can actually pay for. If it works, book again. If not, you are out one session, not one month."
+    },
+    {
+      "p": "If you are on the other side of this — someone people want to pay for your time — read [how to become a paid mentor](/blog/how-to-become-paid-mentor), then set up [how to book an appointment online](/blog/how-to-book-an-appointment-online) so the right people can reach you without the chase. [Start free on Book A Sloth](/be-a-sloth). The craft is yours; the machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "Is it better to book a paid expert or find a free mentor?",
+          "a": "Both have a place, but a paid, scoped session gets you focused, committed help fast. Free mentorship is generous but often slow and hard to hold to a schedule. For a specific, time-sensitive problem, pay for the time."
+        },
+        {
+          "q": "How do I know an online expert is legit?",
+          "a": "Check a verifiable track record, recent relevance, and reviews or session counts on a vetted platform. Then run a small paid session before any large commitment. Real experts welcome a trial; sellers push the big package."
+        },
+        {
+          "q": "What should a first session with an expert cover?",
+          "a": "One clear problem and one clear outcome. Send context beforehand, keep the scope tight, and end with concrete next steps. Prices vary widely — some platforms start around $15 for 15 minutes — so match the length to the question."
+        },
+        {
+          "q": "Where can I find an AI expert or technology mentor in India?",
+          "a": "Start with vetted mentoring platforms and niche communities where practitioners answer questions publicly. Prioritise someone who has shipped real work recently over someone with only a big title."
+        },
+        {
+          "q": "How do I actually pay and schedule once I've chosen someone?",
+          "a": "The cleanest way is a single booking link where you pick a slot and pay in one step, with a calendar invite and reminders sent automatically. Avoid loose arrangements over chat — a proper booking protects both sides."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "meeting-invitation-templates",
+  "title": "Meeting Invitation Templates: Email, SMS & WhatsApp",
+  "date": "Sep 24, 2026",
+  "icons": [
+    "mail",
+    "calendar",
+    "users"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Copy-paste meeting invitation templates for email, SMS and WhatsApp, plus a formal sample, a simple format, and a Marathi example. Send in seconds.",
+  "body": [
+    {
+      "p": "A meeting invitation is a short message that tells someone who is meeting, why, when, where, and how to join. The best ones answer all five in the first three lines, then get out of the way. Below are copy-paste templates for email, SMS, and WhatsApp — a formal sample, a simple one, and one in Marathi — so you can fill the brackets and send. If you'd rather send a slot than start a thread, [Book A Sloth](/) turns the whole invite into [one scheduling link](/features/online-scheduling)."
+    },
+    {
+      "p": "I run Book A Sloth, and I read a lot of invites that bury the time under a paragraph of pleasantries. Don't. Lead with the details. Be warm in one line, not five."
+    },
+    {
+      "h2": "What every meeting invitation must include"
+    },
+    {
+      "p": "Every meeting invitation needs six things: a clear subject, the purpose, the date and time, the location or link, who should come, and how to confirm. Miss one and you get a reply asking for it — which defeats the point of the invite."
+    },
+    {
+      "steps": [
+        "Subject line — say the meeting and the date. Keep it short.",
+        "Purpose — one sentence on why this meeting exists.",
+        "Date and time — with the time zone (write \"IST\") if anyone is remote.",
+        "Location or link — a room, or a video link that works.",
+        "Attendees — who is required, who is optional.",
+        "A way to confirm — \"reply yes\" or a booking link."
+      ]
+    },
+    {
+      "p": "A tight subject helps more than people think. Aim to [keep the subject line around 36–50 characters](https://youcanbook.me/blog/meeting-invitation-email) — long enough to be clear, short enough to survive a phone's preview pane."
+    },
+    {
+      "h2": "Meeting invitation email template (formal sample)"
+    },
+    {
+      "p": "A formal meeting invitation email opens with the purpose, states the logistics in a scannable block, and closes with a clear confirmation request. Use this for clients, seniors, and anything official."
+    },
+    {
+      "quote": "Subject: Meeting invitation — Q3 review, Thu 18 Sep, 3 PM IST\n\nDear [Name],\n\nI'd like to invite you to a meeting to review our Q3 numbers and agree next quarter's priorities.\n\nDate: Thursday, 18 September 2026\nTime: 3:00–3:45 PM IST\nLocation: Google Meet (link below)\nAttendees: [Name], [Name], you\n\nAgenda\n1. Q3 results (10 min)\n2. What's working, what isn't (15 min)\n3. Q4 priorities and owners (20 min)\n\nPlease confirm you can make it by end of day Tuesday. If the time doesn't work, tell me two slots that do.\n\nWarm regards,\n[Your name]"
+    },
+    {
+      "p": "This is also a clean invitation-letter format — drop the \"Subject\" line and put it on a letterhead, and it reads as a formal notice."
+    },
+    {
+      "h2": "Simple meeting invitation email sample"
+    },
+    {
+      "p": "A simple meeting invitation email skips the agenda and keeps everything to four lines. Use it for teammates and quick catch-ups where the context is already understood."
+    },
+    {
+      "quote": "Subject: Quick sync — Fri 11 AM\n\nHi [Name],\n\nCan we grab 30 minutes on Friday at 11 AM IST to sort out the [project] handover? Google Meet link is on the calendar invite.\n\nReply \"yes\" and I'll lock it in.\n\n[Your name]"
+    },
+    {
+      "h2": "Meeting invitation SMS format"
+    },
+    {
+      "p": "A meeting invitation SMS has to fit on one screen, so it carries only the essentials: what, when, where, and confirm. No greeting paragraph, no signature block."
+    },
+    {
+      "quote": "Hi [Name], meeting on [project] tomorrow, Thu 18 Sep, 3 PM at [office/link]. Please reply Y to confirm. — [Your name], [Company]"
+    },
+    {
+      "p": "For a reminder the day of:"
+    },
+    {
+      "quote": "Reminder: our meeting is today at 3 PM, [location/link]. See you there. — [Your name]"
+    },
+    {
+      "p": "Keep SMS under about 160 characters so it sends as one message and reads at a glance."
+    },
+    {
+      "h2": "WhatsApp meeting invitation template"
+    },
+    {
+      "p": "A WhatsApp meeting invitation can be a touch warmer than SMS, but it still leads with the details. Bold the time so it's easy to spot in a busy chat."
+    },
+    {
+      "quote": "Hi [Name] 👋\nSetting up a quick meeting on *[topic]*.\n🗓 *Thu, 18 Sep* · ⏰ *3:00 PM IST*\n📍 [Google Meet link / office]\nDoes this work for you? A thumbs-up is enough to confirm 🙌"
+    },
+    {
+      "p": "WhatsApp is where most Indian clients actually reply, so this is often the one that gets a fast yes."
+    },
+    {
+      "h2": "Meeting invitation in Marathi (example)"
+    },
+    {
+      "p": "A meeting invitation in Marathi follows the same rule: purpose, date and time, place, and a request to attend. Here is a clean, formal example you can adapt."
+    },
+    {
+      "quote": "विषय: बैठकीचे निमंत्रण — [विषय], गुरुवार, १८ सप्टेंबर\n\nनमस्कार [नाव],\n\n[विषय] यावर चर्चा करण्यासाठी एक बैठक आयोजित केली आहे.\n\nदिनांक: गुरुवार, १८ सप्टेंबर २०२६\nवेळ: दुपारी ३:०० वाजता\nठिकाण: [कार्यालय / Google Meet लिंक]\n\nकृपया वेळेवर उपस्थित राहावे. उपस्थितीबाबत कळवावे ही विनंती.\n\nआपला विश्वासू,\n[नाव]"
+    },
+    {
+      "h2": "Formal vs simple: which template to use"
+    },
+    {
+      "p": "The right template depends on who is on the other side and how much context they already have. Use this quick guide."
+    },
+    {
+      "table": {
+        "head": [
+          "Situation",
+          "Channel",
+          "Template",
+          "Include agenda?"
+        ],
+        "rows": [
+          [
+            "Client or senior, official meeting",
+            "Email",
+            "Formal sample",
+            "Yes"
+          ],
+          [
+            "Teammate, quick catch-up",
+            "Email or WhatsApp",
+            "Simple sample",
+            "No"
+          ],
+          [
+            "Last-minute or on-site reminder",
+            "SMS",
+            "SMS format",
+            "No"
+          ],
+          [
+            "Indian clients / vendors",
+            "WhatsApp",
+            "WhatsApp template",
+            "Optional"
+          ],
+          [
+            "Board, RWA, or official body",
+            "Letter",
+            "Formal notice",
+            "Yes"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The pattern behind all of them is the same: video meetings are now the norm, so a working link and a clear time matter more than a polished paragraph."
+    },
+    {
+      "h2": "Stop the reply thread: send a booking link"
+    },
+    {
+      "p": "The fastest invitation isn't a template at all — it's a link that lets the other person pick a slot that works, so nobody trades six emails to find a time. Instead of proposing a time and waiting, you send one link, they book, and the calendar invite and reminders go out on their own."
+    },
+    {
+      "p": "That's exactly what I built [Book A Sloth](/) to do. You share [one scheduling link](/features/online-scheduling), the other person books and pays if it's a paid session, and email plus WhatsApp reminders go out automatically. Inviting someone for a job round? A booking link works there too — pair it with a clean [interview calling message](/blog/interview-calling-message), or see [how to book an appointment online](/blog/how-to-book-an-appointment-online) to set it up. [Start free](/be-a-sloth). The craft is yours; the machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is the best format for a meeting invitation email?",
+          "a": "Lead with the purpose in one line, then a scannable block of date, time, location, and attendees, then a clear request to confirm. Put the agenda in a short numbered list if the meeting needs one."
+        },
+        {
+          "q": "How long should a meeting invitation be?",
+          "a": "As short as the situation allows. A formal invite fits in under 120 words; an SMS in under 160 characters. If the reader has to scroll to find the time, it's too long."
+        },
+        {
+          "q": "How do I write a meeting invitation SMS?",
+          "a": "Include only what, when, where, and a one-tap confirm. Skip the greeting paragraph and signature block. Keep it under 160 characters so it sends as a single message."
+        },
+        {
+          "q": "Should I send meeting invites on WhatsApp in India?",
+          "a": "Yes, for clients and vendors who already chat with you there — it usually gets the fastest reply. Keep the same structure as email: bold the date and time, and ask for a quick confirm."
+        },
+        {
+          "q": "How do I write a meeting invitation in Marathi?",
+          "a": "Use the same order as English: विषय (subject), दिनांक आणि वेळ (date and time), ठिकाण (place), and a polite request to attend and confirm. Keep it formal for official meetings."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "appointment-reminder-templates",
+  "title": "WhatsApp Reminder Templates for Appointments (Copy-Paste)",
+  "date": "Sep 26, 2026",
+  "icons": [
+    "bell",
+    "message-circle",
+    "calendar"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Copy-paste WhatsApp, SMS and email appointment reminder templates — booking confirmation, 24h before, 1h before and no-show follow-up. Plus when to send each.",
+  "body": [
+    {
+      "p": "A WhatsApp reminder is the most reliable way to keep an appointment from being forgotten in India, because it lands where your client already is. Below are copy-paste WhatsApp, SMS, and email templates for every stage — booking confirmation, 24 hours before, 1 hour before, and the no-show follow-up. Take them as they are, swap the brackets, and send — or let [Book A Sloth](/) fire them automatically through its [built-in reminders](/features/notifications)."
+    },
+    {
+      "h2": "Why appointment reminders work"
+    },
+    {
+      "p": "Appointment reminders work because most no-shows are forgetfulness, not flaking — and a well-timed nudge fixes forgetfulness. The numbers back it up."
+    },
+    {
+      "p": "Text reminders reduce no-shows by [38%, according to an Imperial College London study](https://www.klara.com/blog/text-message-appointment-reminders-reduce-no-shows-by-38-study-finds) that compared reminded patients against a group who got nothing. That is not a rounding error — that is one in three missed slots recovered."
+    },
+    {
+      "p": "And the problem is bigger than most people think. The [average no-show rate sits around 23%](https://appointmentreminder.com/guides/no-show-statistics/), with salons, spas, and personal training running higher at 25–30%. Every one of those is time you set aside and money you did not make. A reminder is the cheapest insurance you can send."
+    },
+    {
+      "h2": "WhatsApp reminder templates"
+    },
+    {
+      "p": "WhatsApp reminders lead in India because open rates are high and clients reply in the same thread. Keep them short, warm, and easy to answer."
+    },
+    {
+      "p": "**Booking confirmation (send immediately)**"
+    },
+    {
+      "quote": "Hi [Name], you're booked! ✅\n📅 [Service] with [Your Name]\n🗓️ [Day, Date] at [Time]\n📍 [Location / video link]\nNeed to change it? Just reply here. See you soon!"
+    },
+    {
+      "p": "**24 hours before**"
+    },
+    {
+      "quote": "Hi [Name], quick reminder — your [Service] is tomorrow, [Day] at [Time]. 🗓️\nReply YES to confirm, or let me know if you need to reschedule. Thanks!"
+    },
+    {
+      "p": "**1 hour before**"
+    },
+    {
+      "quote": "Hi [Name], see you in about an hour for your [Service] at [Time]. 🙂\n[Location / here's your link: [Meet link]]. Running late? Just ping me here."
+    },
+    {
+      "p": "**No-show follow-up (send 15–30 min after)**"
+    },
+    {
+      "quote": "Hi [Name], looks like we missed each other today — no worries, it happens. 🙂\nWant to grab another slot? Here's my calendar: [booking link]. Would love to still help."
+    },
+    {
+      "p": "The no-show message matters most. Keep it kind. A guilt trip loses the client; a warm door often wins the rebooking."
+    },
+    {
+      "h2": "SMS reminder templates"
+    },
+    {
+      "p": "SMS reminders are the reliable backup for anyone not active on WhatsApp, and they must stay under one message length. Cut every spare word."
+    },
+    {
+      "quote": "Booked! [Service] with [Your Name] on [Date] at [Time]. Reply to change. — [Business]"
+    },
+    {
+      "quote": "Reminder: [Service] tomorrow [Date] at [Time]. Reply Y to confirm or C to reschedule. — [Business]"
+    },
+    {
+      "quote": "Hi [Name], your [Service] is at [Time] today. [Address / link]. See you soon! — [Business]"
+    },
+    {
+      "quote": "Hi [Name], sorry we missed you today. Rebook anytime here: [link]. — [Business]"
+    },
+    {
+      "p": "For daily text reminders — a trainer confirming tomorrow's 6 a.m. clients, say — send the batch the evening before, not at dawn. People decide the night before, and a morning text arrives after they have already skipped."
+    },
+    {
+      "h2": "Meeting reminder email templates"
+    },
+    {
+      "p": "An email reminder suits longer, formal, or work appointments where a client wants the details in writing. Use a clear subject line and a scannable body."
+    },
+    {
+      "quote": "Subject: Confirmed: [Service] on [Date] at [Time]\n\nHi [Name],\n\nYour [Service] with [Your Name] is confirmed.\n\nWhen: [Day, Date] at [Time]\nWhere: [Location / video link]\n\nAdd it to your calendar with the invite attached. Need to reschedule? Reply to this email or use [booking link].\n\nLooking forward to it,\n[Your Name]"
+    },
+    {
+      "quote": "Subject: Reminder: your [Service] is tomorrow\n\nHi [Name],\n\nA quick reminder that your [Service] is tomorrow, [Day] at [Time], at [Location / link].\n\nIf anything's changed, just reply and we'll sort it. Otherwise, see you then.\n\n[Your Name]"
+    },
+    {
+      "p": "The same warm, direct tone carries over to other client messages too — see how it reads in these [interview and calling message templates](/blog/interview-calling-message) if you send those as well."
+    },
+    {
+      "h2": "When to send each reminder"
+    },
+    {
+      "p": "Send a confirmation the moment someone books, a nudge 24 hours before, and a final one about an hour before. Three touches is the sweet spot — enough to stick, not so many you annoy."
+    },
+    {
+      "table": {
+        "head": [
+          "Reminder",
+          "When to send",
+          "Best channel"
+        ],
+        "rows": [
+          [
+            "Booking confirmation",
+            "Instantly on booking",
+            "WhatsApp + email"
+          ],
+          [
+            "First reminder",
+            "24 hours before",
+            "WhatsApp"
+          ],
+          [
+            "Final reminder",
+            "1 hour before",
+            "WhatsApp or SMS"
+          ],
+          [
+            "No-show follow-up",
+            "15–30 min after miss",
+            "WhatsApp"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Layering these touchpoints is what drives the drop in missed slots. Sending them by hand every day, though, is exactly the admin that eats your week."
+    },
+    {
+      "h2": "How to write a reminder that gets read"
+    },
+    {
+      "p": "A reminder gets read when it names the person, states the exact date and time, and makes replying effortless. Skip those and it reads like spam."
+    },
+    {
+      "steps": [
+        "Lead with their name and your name. No mystery numbers.",
+        "Put the date, time, and place in one glance. Bold or emoji-mark them.",
+        "Give one clear action. \"Reply YES,\" or one link. Not three.",
+        "Stay warm. You are helping someone keep a plan, not chasing a debt."
+      ]
+    },
+    {
+      "h2": "Never send one manually again"
+    },
+    {
+      "p": "You can copy these templates forever, or you can set them once and forget them. Manually sending confirmations, 24-hour nudges, and no-show follow-ups is a second job you did not sign up for."
+    },
+    {
+      "p": "Or never send one manually again — [Book A Sloth](/) fires [WhatsApp and email reminders automatically](/features/notifications) and cuts no-shows, so the slot fills and you just show up. See [how to book an appointment online](/blog/how-to-book-an-appointment-online) to turn it on, or compare it as a [Topmate alternative](/blog/topmate-alternative) built for India. When the reminder is late, [asking a client for payment politely](/blog/how-to-ask-client-for-payment-politely) gets easier too. [Start free](/be-a-sloth). The craft is yours; the machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "Do appointment reminders actually reduce no-shows?",
+          "a": "Yes. Text reminders cut no-shows by around 38% in a controlled study, and layering a confirmation with 24-hour and 1-hour nudges pushes the drop further. Most no-shows are simple forgetfulness, which a timed nudge fixes."
+        },
+        {
+          "q": "When should I send an appointment reminder?",
+          "a": "Send a confirmation the moment someone books, a reminder 24 hours before, and a final one about an hour before. For a missed appointment, follow up warmly within 15 to 30 minutes."
+        },
+        {
+          "q": "Is WhatsApp or SMS better for appointment reminders in India?",
+          "a": "WhatsApp usually wins in India — high open rates and clients reply in the same thread. Keep SMS as the backup for anyone not on WhatsApp, since it reaches any phone without data."
+        },
+        {
+          "q": "How do I write a no-show follow-up message?",
+          "a": "Keep it kind and short. Acknowledge the miss without blame, then hand over a booking link so rebooking takes one tap. A warm door recovers more clients than a guilt trip."
+        },
+        {
+          "q": "How many reminders should I send before an appointment?",
+          "a": "Three is the sweet spot: an instant confirmation, a 24-hour nudge, and a 1-hour final reminder. More than that starts to feel like spam and gets muted or ignored."
+        }
+      ]
+    }
+  ]
+},
+{
   "slug": "interview-schedule-template",
   "title": "Interview Schedule Template (Free Format + Example)",
   "date": "Sep 16, 2026",
