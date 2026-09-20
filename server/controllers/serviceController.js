@@ -11,6 +11,7 @@ const { bustSitemapCache } = require('../utils/sitemapCache');
 const { bustPublicReadCaches } = require('../services/publicCacheBust');
 const responseCache = require('../services/responseCache');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
+const { summarizePrices, BENCHMARK_MIN_SAMPLE } = require('../lib/priceBenchmark');
 
 // Server-side read-through cache TTL for the assembled public service page.
 const SERVICE_DETAIL_CACHE_MS = Number(process.env.SERVICE_DETAIL_CACHE_MS) || 120_000;
@@ -661,6 +662,56 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
   }
 };
 
+// ─── Price benchmark ─────────────────────────────────────────────────────────
+// Advisory only: "similar hosts charge ₹X–₹Y". Data-grounded, never an LLM guess
+// (an LLM emitting prices would fabricate numbers and fight the listing
+// FABRICATION guard). Math lives in lib/priceBenchmark.js (pure, unit-tested).
+// See docs/specs/ai-price-suggestion.md.
+
+// GET /api/services/price-benchmark?category=<sub-slug>
+// Scoped to the host's own profession (primary_category); narrows to the
+// sub-category when that alone clears the min sample, else falls back to the
+// whole profession. Excludes the host's own / inactive / free (<₹100) services.
+const getPriceBenchmark = async (req, res) => {
+  try {
+    const hostId = req.user.id;
+    const category = (req.query.category || '').trim() || null;
+
+    // Host's profession scopes the benchmark.
+    const { data: prof } = await supabaseAdmin
+      .from('profiles').select('primary_category').eq('id', hostId).single();
+    const profession = prof?.primary_category || null;
+    if (!profession) return res.status(200).json({ sample_size: 0, low: null, median: null, high: null, basis: null });
+
+    const { data: rows, error } = await supabaseAdmin
+      .from('services')
+      .select('price, category')
+      .eq('is_active', true)
+      .eq('primary_category', profession)
+      .neq('host_id', hostId)
+      .gte('price', 100);
+    if (error) throw error;
+
+    const list = rows || [];
+    // Try the sub-category first; fall back to the whole profession when thin.
+    let basis = 'profession';
+    let summary = summarizePrices(list.map((r) => r.price));
+    if (category) {
+      const sub = summarizePrices(list.filter((r) => r.category === category).map((r) => r.price));
+      if (sub.sample_size >= BENCHMARK_MIN_SAMPLE) { summary = sub; basis = 'category'; }
+    }
+
+    return res.status(200).json({ ...summary, basis: summary.median == null ? null : basis });
+  } catch (err) {
+    // Missing column / un-migrated DB etc: degrade to "no data", never 500 — the
+    // chip just stays hidden. Unexpected errors still route through safeError.
+    if (/Could not find the|does not exist/i.test(err?.message || '')) {
+      return res.status(200).json({ sample_size: 0, low: null, median: null, high: null, basis: null });
+    }
+    return safeError(res, err);
+  }
+};
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -674,4 +725,5 @@ module.exports = {
   getPublicServiceBySlug,
   getPublicServiceByProfileAndSlug,
   buildPublicServiceByProfileAndSlug, // used by prerenderController for bot-traffic meta shells
+  getPriceBenchmark,
 };

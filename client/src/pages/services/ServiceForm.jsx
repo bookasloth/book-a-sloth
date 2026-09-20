@@ -5,8 +5,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, MapPin, AlertTriangle } from 'lucide-react';
-import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories, hostSuggestServiceCategory, aiGenerateListing, updateProfile } from '../../services/api';
+import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories, hostSuggestServiceCategory, aiGenerateListing, updateProfile, getPriceBenchmark } from '../../services/api';
 import toast from 'react-hot-toast';
+import { TrendingUp } from 'lucide-react';
 import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
 import { BOLT_ENABLED } from '../../config/aiListing';
@@ -16,6 +17,59 @@ import { normalizePlan } from '../../utils/themeUtils';
 // ₹ floor for paid services on the self-serve plans; Supreme is exempt, ₹0 free is
 // always allowed. Mirrors the server's planMiddleware.MIN_SERVICE_PRICE.
 const MIN_SERVICE_PRICE = 100;
+
+// Advisory price benchmark chip — "similar hosts charge ₹X–₹Y". On-demand (not on
+// mount): the host taps to fetch. Data-grounded, never an LLM guess. Hides itself
+// when the platform sample is too thin (server returns median:null). onPick fills
+// the price input; nothing auto-applies. See docs/specs/ai-price-suggestion.md.
+export const PriceBenchmark = ({ category, onPick }) => {
+  const [state, setState] = useState('idle'); // idle | loading | done | empty | error
+  const [data, setData]   = useState(null);
+
+  const load = async () => {
+    setState('loading');
+    try {
+      const { data: b } = await getPriceBenchmark(category);
+      if (b && b.median != null) { setData(b); setState('done'); }
+      else setState('empty');
+    } catch {
+      setState('error');
+    }
+  };
+
+  if (state === 'idle' || state === 'loading') {
+    return (
+      <button type="button" onClick={load} disabled={state === 'loading'}
+        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary-cta hover:underline disabled:opacity-50">
+        <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+        {state === 'loading' ? 'Checking…' : 'See what similar hosts charge'}
+      </button>
+    );
+  }
+  if (state === 'empty' || state === 'error') {
+    return (
+      <p className="mt-2 text-xs text-gray-400">
+        {state === 'empty' ? 'Not enough similar listings yet to suggest a price.' : 'Could not load pricing data.'}
+      </p>
+    );
+  }
+  return (
+    <div className="mt-2">
+      <p className="mb-1.5 text-xs text-gray-500">
+        Similar hosts charge <span className="font-semibold text-ink">₹{data.low}–₹{data.high}</span>{' '}
+        ({data.sample_size} listing{data.sample_size === 1 ? '' : 's'}). Tap to use:
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {[['Low', data.low], ['Median', data.median], ['High', data.high]].map(([label, val]) => (
+          <button key={label} type="button" onClick={() => onPick(val)}
+            className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 transition hover:border-primary hover:text-primary-cta">
+            {label} ₹{val}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -715,6 +769,9 @@ export default function ServiceForm({ initialData, serviceId }) {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 font-medium text-gray-500">₹</span>
                   <Input type="number" min={0} step={1} required value={form.price} onChange={e => set('price', e.target.value)} placeholder="1999" className="pl-7" />
                 </div>
+              )}
+              {!feeOnly && (
+                <PriceBenchmark category={form.category || undefined} onPick={(v) => set('price', String(v))} />
               )}
             </div>
           </div>
