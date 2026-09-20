@@ -32,7 +32,7 @@ export const FEATURES = [
     accent: "#269CEF", accentLight: "rgba(38,156,239,0.10)", darkBg: "#0F1111",
     signature: "coverflow",
     hero: {
-      pre: "Online scheduling without the", accent: "back-and-forth", post: "",
+      pre: "Free online appointment scheduling", accent: "software", post: "",
       sub: "Let clients book on your real availability while Book A Sloth handles the confirmations, reminders and admin. No WhatsApp ping-pong, no double-bookings.",
       cta: "Get started free",
     },
@@ -47,7 +47,7 @@ export const FEATURES = [
       { value: "0", label: "double-bookings once live" },
     ],
     benefits: {
-      heading: "Stop running your calendar over WhatsApp",
+      heading: "Free appointment scheduling software that runs your calendar for you",
       lead: "“Are you free Tuesday?” “How about 4pm?” Every booking that starts as a chat ends as your admin.",
       without: [
         { title: "Endless WhatsApp threads", desc: "Ten messages just to lock one slot." },
@@ -107,8 +107,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Stop scheduling over WhatsApp.", subline: "Set up your booking page free in under 5 minutes. Clients book, pay and get reminded, and you just show up." },
     seo: {
-      title: "Online Scheduling Software for Creators | Book A Sloth",
-      description: "Let clients book themselves 24/7 with real-time availability, no double-bookings and instant confirmation. Built for India's creators and freelancers.",
+      title: "Free Online Appointment Scheduling Software | Book A Sloth",
+      description: "Free online appointment scheduling software for India's creators — clients book themselves 24/7 on your real availability, with no double-bookings and instant confirmation.",
     },
   },
 
@@ -409,7 +409,7 @@ export const FEATURES = [
     accent: "#FF4D93", accentLight: "rgba(255,77,147,0.10)", darkBg: "#0F1111",
     signature: "automation",
     hero: {
-      pre: "Keep your bookings and calendar", accent: "in sync", post: "",
+      pre: "The Google Calendar", accent: "appointment scheduler", post: "",
       sub: "One calendar, not two. Book A Sloth reads your events to block busy time and writes every booking back with a Google Meet link, automatically.",
       cta: "Connect your calendar",
     },
@@ -428,7 +428,7 @@ export const FEATURES = [
       { value: "<2s", label: "average sync time after booking" },
     ],
     benefits: {
-      heading: "One calendar, not two half-right ones",
+      heading: "A Google Calendar appointment scheduler, not two half-right calendars",
       lead: "A personal event lands on your calendar, a client books that same hour on your page, and now you are double-booked.",
       without: [
         { title: "Two separate calendars", desc: "A booking calendar and a personal one, always out of step." },
@@ -496,8 +496,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Let your calendar do the blocking for you.", subline: "Connect Google Calendar in one click and never double-book again." },
     seo: {
-      title: "Google Calendar Appointment Scheduling & Sync | Book A Sloth",
-      description: "Two-way Google Calendar sync with automatic Meet links and free/busy blocking. Keep one calendar instead of two.",
+      title: "Google Calendar Appointment Scheduler & Sync | Book A Sloth",
+      description: "A Google Calendar appointment scheduler with two-way sync, automatic Meet links and free/busy blocking — keep one calendar instead of two.",
     },
   },
 
@@ -510,7 +510,7 @@ export const FEATURES = [
     accent: "#F59E0B", accentLight: "rgba(245,158,11,0.12)", darkBg: "#1A1D24",
     signature: "automation",
     hero: {
-      pre: "Automatic reminders for every", accent: "appointment", post: "",
+      pre: "An automated appointment reminder", accent: "system", post: "",
       sub: "WhatsApp and email confirmations and reminders go out on their own, so clients show up and you never send another manual nudge.",
       cta: "Get started free",
     },
@@ -529,7 +529,7 @@ export const FEATURES = [
       { value: "3", label: "automatic touchpoints per booking" },
     ],
     benefits: {
-      heading: "A no-show costs you the slot and the income",
+      heading: "An automated appointment reminder system that ends no-shows",
       lead: "A client forgets, you sit waiting, and that hour is gone along with the money it should have made.",
       without: [
         { title: "Manual reminders", desc: "You text every client the day before, one by one." },
@@ -598,8 +598,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Let reminders chase your clients, not you.", subline: "Turn on WhatsApp and email notifications in your dashboard today." },
     seo: {
-      title: "Automatic Appointment Reminders & Notifications | Book A Sloth",
-      description: "Cut no-shows with automatic WhatsApp and email reminders for every booking, reschedule and cancellation.",
+      title: "Automated Appointment Reminder System | Book A Sloth",
+      description: "An automated appointment reminder system that cuts no-shows — WhatsApp and email reminders for every booking, reschedule and cancellation.",
     },
   },
 
@@ -708,7 +708,7 @@ export const FEATURES = [
     accent: "#269CEF", accentLight: "rgba(38,156,239,0.10)", darkBg: "#1A1D24",
     signature: "automation",
     hero: {
-      pre: "Sell digital products alongside your", accent: "services", post: "",
+      pre: "Sell digital products", accent: "online", post: "alongside your services",
       sub: "Templates, ebooks and recorded courses on the same page as your bookings. One checkout, one payout stream, no separate store to run.",
       cta: "Get started free",
     },
@@ -727,7 +727,7 @@ export const FEATURES = [
       { value: "₹0", label: "extra platform fee beyond your plan" },
     ],
     benefits: {
-      heading: "Sell your templates without a second storefront",
+      heading: "Sell digital products online without a second storefront",
       lead: "You have a worksheet or a recorded workshop worth money, but a whole separate store for it is its own project.",
       without: [
         { title: "A separate store to run", desc: "Another tool, another login, another payout." },
@@ -795,8 +795,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Turn your knowledge into a second income stream.", subline: "List your first digital product next to your services today." },
     seo: {
-      title: "Sell Digital Products & Templates Online | Book A Sloth",
-      description: "Sell ebooks, templates and courses alongside your bookings, with secure instant delivery and one unified checkout.",
+      title: "Sell Digital Products Online in India | Book A Sloth",
+      description: "Sell digital products online — ebooks, templates and courses — right beside your bookings, with secure instant delivery and one unified checkout.",
     },
   },
 
