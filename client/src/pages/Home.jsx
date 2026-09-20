@@ -111,18 +111,6 @@ function CalmerWord() {
 const ROUTE_START = "/be-a-sloth";
 const ROUTE_LOGIN = "/login-as-vendor";
 
-/* Directory badges — "Trusted & featured on" strip below the hero. Images are the
-   directories' own hosted badges (external). */
-/* `dark:true` = the badge art is light-on-transparent (needs a dark chip); the
-   rest are dark-on-light (light chip). Uniform chip size keeps the row tidy. */
-const FEATURED_ON = [
-  { href: "https://www.producthunt.com/products/book-a-sloth-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-book-a-sloth-2", src: "https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1227352&theme=light&t=1787277679258", alt: "Book A Sloth on Product Hunt" },
-  { href: "https://findly.tools/book-a-sloth-1?utm_source=book-a-sloth-1", src: "https://findly.tools/badges/findly-tools-badge-light.svg", alt: "Featured on Findly.tools" },
-  { href: "https://saasgrow.app?ref=bookasloth.com", src: "https://saasgrow.app/api/badge?type=top&style=light", alt: "Book A Sloth on SaaSGrow" },
-  { href: "https://startuptrusted.com?ref=bookasloth.com", src: "https://startuptrusted.com/api/badge?type=top&style=light", alt: "Book A Sloth on StartupTrusted" },
-  { href: "https://twelve.tools", src: "https://twelve.tools/badge3-white.svg", alt: "Featured on Twelve Tools", dark: true },
-];
-
 /* ── Homepage SEO ──────────────────────────────────────────────────────────
    OG/Twitter image + Organization logo must be uploaded to these exact URLs
    on company-assets.bookasloth.in (1200×630 for OG). */
@@ -771,32 +759,6 @@ const Home = () => {
               </p>
             </div>
           </Reveal>
-        </div>
-      </section>
-
-      {/* ════════════════ FEATURED-ON BADGES ════════════════ */}
-      <section className="px-5 py-14 sm:px-8 lg:py-20">
-        <div className="mx-auto max-w-5xl">
-          <Reveal as="p" className="text-center text-base font-semibold uppercase tracking-[0.2em] text-primary-cta sm:text-lg">
-            Trusted &amp; featured on
-          </Reveal>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-            {FEATURED_ON.map((b) => (
-              <a
-                key={b.alt}
-                href={b.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={b.alt}
-                className={`flex h-14 items-center justify-center rounded-xl px-5 ring-1 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                  b.dark ? "bg-neutral-900 ring-white/10" : "bg-white ring-black/5"
-                }`}
-              >
-                {/* ponytail: width/height reserve space to kill CLS; object-contain + w-auto/max-h-8 keep real aspect so the uniform 250×54 hint never distorts external badges */}
-                <img src={b.src} alt={b.alt} loading="lazy" width="250" height="54" className="max-h-8 w-auto object-contain" />
-              </a>
-            ))}
-          </div>
         </div>
       </section>
 
