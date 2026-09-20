@@ -70,6 +70,186 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "how-to-sell-digital-products-online",
+  "title": "How to Sell Digital Products Online: A Complete Guide",
+  "date": "Sep 20, 2026",
+  "icons": [
+    "download",
+    "wallet",
+    "trending-up"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Learn how to sell digital products online: pick a product, validate demand, choose a platform, price it right, and handle GST in India — with real numbers.",
+  "body": [
+    {
+      "p": "To sell digital products online, you create a file or a login once — an e-book, course, template, or preset — then sell it repeatedly through a checkout that delivers it automatically. The margin is the whole appeal: no printing, no shipping, no stock. At [Book A Sloth](/) we build exactly this into a creator's page, so [selling a digital product](/features/digital-products) sits right next to selling your time. This guide walks the full process — pick, validate, price, platform, market — with real figures and the India GST layer most guides skip."
+    },
+    {
+      "p": "Most guides call this passive income, then stop before the numbers get uncomfortable. The [global market for digital goods is worth about $157 billion in 2026](https://www.mordorintelligence.com/industry-reports/digital-goods-market) and compounding fast — but that money is shared very unevenly, as the earnings data below makes brutally clear. Read this as a business plan, not a get-rich-quick pitch."
+    },
+    {
+      "h2": "What are digital products, and why sell them?"
+    },
+    {
+      "p": "A digital product is anything you make once, deliver as a file or a login, and sell repeatedly without shipping a box. E-books, online courses, Notion templates, Lightroom presets, fonts, plugins, stock photos, and paid memberships all qualify. Traditional retail bleeds money on manufacturing, warehousing, and shipping; a digital product keeps a far larger share of every sale because those costs are gone."
+    },
+    {
+      "p": "Scale behaves differently too. Whether ten people or ten thousand buy your course, your operations barely change, and there are no customs forms when a buyer in Berlin checks out at 2am. One honest caveat: digital goods are trivially easy to copy, so license keys, watermarking, and expiring download links are a cost of doing business here, not optional extras."
+    },
+    {
+      "h2": "Choose your digital product type"
+    },
+    {
+      "p": "Pick the format that matches what you already know how to make, not the one with the highest theoretical ceiling. Four categories do most of the work, in rising order of effort:"
+    },
+    {
+      "ul": [
+        "**E-books, guides, and PDFs** — the lowest barrier. A 40-page tactical guide on one narrow problem outsells a 200-page general book almost every time, and it's the cheapest way to test whether anyone cares about your topic.",
+        "**Online courses and video training** — the highest-value format and the most work: recorded lessons, worksheets, sometimes a community. Higher price, lower volume, far more production.",
+        "**Templates, presets, and design assets** — Notion dashboards, Figma kits, Excel models, Canva packs, Lightroom presets. Buyers get value within minutes, which keeps refund requests low.",
+        "**Software, plugins, and tools** — Chrome extensions, WordPress plugins, micro-SaaS. Highest technical bar, strongest case for recurring revenue instead of one-off sales."
+      ]
+    },
+    {
+      "p": "Category choice has real revenue consequences: business, software, and design topics carry the largest total demand, while narrow niches have fewer competitors but far fewer buyers. Pick on the strength of your own credibility and your distribution, not on category size alone."
+    },
+    {
+      "h2": "Validate the idea before you build it"
+    },
+    {
+      "p": "Validate demand first, because most digital products fail at the demand stage, not the production stage. In an analysis of 146,271 Gumroad products, [44% earned exactly $0](https://insightraider.com/en/data/gumroad-statistics-2026) — not because they were bad, but because nobody was waiting for them. A weekend of validation saves a month of building the wrong thing."
+    },
+    {
+      "steps": [
+        "Mine pain points where your audience already complains — Reddit threads, WhatsApp groups, LinkedIn comments, your own DMs. Look for a problem with a clear cost attached: hours lost, clients lost, money left on the table.",
+        "Study what already sells. Search your topic on Gumroad, Etsy, and creator marketplaces. A crowded category is proof of demand, not a reason to quit.",
+        "Run a pre-sale. Put up a one-page offer, take real money for a product that doesn't exist yet, and refund everyone if you miss your target. Twenty paid pre-orders tell you more than two hundred survey answers.",
+        "Soft-launch to twenty people. Ship a minimum version to a small list, collect feedback, then iterate before you scale."
+      ]
+    },
+    {
+      "h2": "Create the smallest version that works"
+    },
+    {
+      "p": "Build the smallest thing that completely solves one problem. A narrow product is easier to launch, explain, price, and sell than an over-engineered version one. Outline the deliverable before you open any tool — for a course that means modules, lessons, and runtime; for a template, the exact screens or sheets included. That outline becomes your sales-page bullet list later, so writing it first saves a rewrite."
+    },
+    {
+      "p": "Keep the stack lean: Canva or Figma for design assets, Google Docs exported to PDF for guides, OBS or Loom for screen recording, Notion for template products. You don't need a studio to earn your first ₹50,000. Where solo sellers lose money is quality control, so open the PDF on a phone, play every video end to end, and have one person from your target audience run the whole thing before launch and note where they get stuck. Screenshots of the actual product beat abstract graphics every time, because buyers of digital goods are trying to reduce the risk of buying something invisible."
+    },
+    {
+      "h2": "Pick the right platform to sell on"
+    },
+    {
+      "p": "Choose the platform whose fee structure fits your price point and volume — that one decision quietly moves 10% or more of your revenue. Platforms fall into three models: marketplaces with built-in traffic and a high cut, all-in-one storefronts and course platforms, and self-hosted setups you own outright."
+    },
+    {
+      "table": {
+        "head": ["Platform", "Cost model", "Best for"],
+        "rows": [
+          ["Gumroad", "No monthly fee; ~10% + $0.50 per sale (up to 30% on marketplace sales)", "A first product, no audience"],
+          ["Payhip", "Free plan, or a low monthly fee for 0% per sale", "Low-ticket, high-volume sellers"],
+          ["Teachable / Thinkific", "Monthly subscription, low or zero per-sale cut", "Structured courses with quizzes and certificates"],
+          ["Self-hosted / Book A Sloth", "Payment processing only, on your own page", "Full ownership; selling next to your services"]
+        ]
+      }
+    },
+    {
+      "p": "Two numbers are worth internalising. First, [Gumroad charges a flat 10% plus $0.50 per sale](https://gumroad.com/help/article/66-gumroads-fees), and marketplace-sourced sales cost more — with payment processing on top, the all-in rate lands higher than the headline. Second, subscription platforms invert the math: a monthly fee with a low or zero per-sale cut is expensive at ten sales a month and cheap at a thousand. The rule that falls out: percentage models win while you're small and unpredictable, flat-fee models win the moment you have steady traction. In India, pairing your own page with a gateway like Razorpay gives you UPI checkout and the lowest total cut — which is how [Book A Sloth's digital-products feature](/features/digital-products) and [transparent pricing](/pricing) are built."
+    },
+    {
+      "h2": "Price on the outcome, not the hours"
+    },
+    {
+      "p": "Price on the value of the result you deliver, not the time you spent building it — cost-plus pricing makes no sense when your marginal cost per extra sale is effectively zero. The data points to a clear band: mid-priced downloads in the roughly $30–49 range convert better and earn far more in total than sub-$10 products, which capture a negligible share of platform revenue. Cheap doesn't mean more sales; it usually means less revenue and a lower-intent buyer. Courses sit higher, often near $100."
+    },
+    {
+      "p": "Tiering works well: a stripped-down version, a standard version, and a premium tier with templates, a community, or a live call. Most buyers take the middle option, and the top tier mainly exists to make the middle look sensible. For Indian sellers, currency is strategic: pricing in USD can multiply revenue per unit but changes your tax position, while pricing in INR at ₹499–₹2,999 suits UPI checkout and the domestic market. Many sellers run both with geo-based pricing."
+    },
+    {
+      "h2": "Market it: build the audience first"
+    },
+    {
+      "p": "Traffic is the binding constraint, not production. Nobody goes from zero audience to five figures a month overnight — a digital product is leverage on an audience you already have, not a substitute for one. The channels that actually move product, in the order most sellers should build them:"
+    },
+    {
+      "ul": [
+        "**SEO and content marketing** — the slowest channel and the best one. Write the free version of your paid product, answer the exact questions buyers type into Google, then link the product from the article. It takes four to six months to compound, which is why you start before the product is ready.",
+        "**Email** — a 500-person list that trusts you outperforms 50,000 passive followers. Put a free lead magnet in front of the paid product and send something useful weekly. Organic search and email consistently drive the largest shares of digital-product sales.",
+        "**Social** — post the process, not the product. Build in public, share a template excerpt weekly, answer questions in your niche. Short-form video suits visual products; LinkedIn and X suit B2B tools and templates.",
+        "**Paid ads and affiliates** — skip ads until organic is exhausted and margins are above 80%. Affiliates carry far less risk because you only pay on conversion."
+      ]
+    },
+    {
+      "p": "Sell across several channels rather than one, so a single algorithm change can't end your business. This is the same playbook creators use to move off high-commission marketplaces — see our [Topmate alternative breakdown](/blog/topmate-alternative) for how the math changes when you own the audience and the checkout."
+    },
+    {
+      "h2": "Handle the legal and tax side (India notes)"
+    },
+    {
+      "p": "You don't need a registered company to start. In India you can sell as a sole proprietor on your personal PAN, and the major gateways (Razorpay, PayU, Cashfree, Instamojo) onboard unregistered individual sellers, so you can accept UPI, cards, and net banking from day one. Gateway onboarding typically needs a PAN, address proof, bank proof, and a working website; some gateways ask for a GST number regardless of turnover, so check before you build the checkout."
+    },
+    {
+      "p": "GST is the part sellers get wrong. Digital products and online courses are [taxable at 18%](https://www.mastersindia.co/blog/gst-online-courses/), and registration becomes mandatory once turnover crosses ₹20 lakh (₹10 lakh in special-category states). The delivery model matters: a pre-recorded course with downloadable PDFs is treated as an automated digital (OIDAR) supply, while a course with live tutor support is not, and private coaching cannot claim the education exemption formal institutions get. Income from digital products is ordinary business income — platform fees and creation costs are deductible against it. Selling abroad adds export paperwork (an LUT or IGST-refund route). None of this is tax advice; confirm your position with a CA before you scale."
+    },
+    {
+      "info": {
+        "title": "The shortcut for cross-border sales",
+        "text": "Selling into other countries triggers their VAT and sales-tax rules too. Platforms that act as Merchant of Record — Paddle, Lemon Squeezy, and Gumroad among them — handle global tax on your behalf for a higher cut. That's usually the right trade until you're large enough to hire someone for it."
+      }
+    },
+    {
+      "h2": "The verdict: what actually works"
+    },
+    {
+      "p": "Digital products are a real business, not a passive-income hack, and the earnings distribution proves it. The median Gumroad creator earns roughly $72 a month while a tiny top tier captures most of the revenue, and the median product sells about 28 copies over its whole lifetime. Most sellers who make nothing simply uploaded once and did no marketing. The strongest lever in that data isn't pricing or platform choice — it's catalogue size. Sellers with several products for one audience earn multiples of single-product sellers, because the compounding does the rest."
+    },
+    {
+      "p": "Three things worth doing this week:"
+    },
+    {
+      "steps": [
+        "Pre-sell before you build. Put up a one-page offer and try to take twenty real payments. If nobody pays, you just saved a month of production.",
+        "Price at $30–49, or ₹1,500–₹4,000. Stop defaulting to ₹199 — the bottom band earns less in total, not more.",
+        "Start the email list today, even with nothing to sell. It's behind the largest share of sales and the only channel you truly own."
+      ]
+    },
+    {
+      "p": "When you're ready to sell, you don't need a separate storefront. [Book A Sloth](/) lets you [list a digital product](/features/digital-products) on the same page where clients book your time, with UPI checkout, automatic delivery, and no per-sale commission on paid plans. [Start free](/be-a-sloth), upload your first product, and share one link. Build the catalogue, own the audience, and let the compounding do the work."
+    },
+    {
+      "faq": [
+        {
+          "q": "What are the best platforms to sell digital products?",
+          "a": "Gumroad suits a first launch (no monthly fee, ~10% per sale). Payhip lowers fees at volume. Teachable or Thinkific fit structured courses with quizzes and certificates. Self-hosting gives full ownership. In India, pairing your own page with Razorpay gives you UPI checkout and the lowest total cut."
+        },
+        {
+          "q": "How do I price my digital product?",
+          "a": "Price on the outcome you deliver, not the hours you spent. Mid-priced downloads in the $30–49 band convert best and earn far more in total than sub-$10 products; courses sit higher, often near $100. Use three tiers so buyers gravitate to the middle option."
+        },
+        {
+          "q": "What digital products sell best online?",
+          "a": "Templates and tools with instant, obvious utility, followed by courses in high-ROI categories like business, software, and design. Specific beats general every time: an SEO audit template for Shopify stores outsells a generic marketing templates pack."
+        },
+        {
+          "q": "How much money can you make selling digital products?",
+          "a": "Realistically the median creator makes under $100 a month, while active multi-product sellers average a few thousand. Expect four to six months before organic traffic compounds into steady sales, and treat first-year revenue as validation, not income replacement."
+        },
+        {
+          "q": "Do I need a business license to sell digital products online in India?",
+          "a": "Not to start. You can sell as an individual or sole proprietor on your personal PAN, and the major payment gateways onboard unregistered sellers. GST registration becomes mandatory above ₹20 lakh of turnover (₹10 lakh in special-category states), and some gateways require a GST number regardless."
+        },
+        {
+          "q": "How do I deliver digital products to customers?",
+          "a": "Use automated delivery from your platform — the file is sent the moment checkout completes. On your own site, use expiring download links or a gated members area so files aren't shared freely, and always follow up with an email containing access instructions and a support address."
+        }
+      ]
+    }
+  ]
+},
+{
   "slug": "interview-calling-message",
   "title": "Interview Calling Message: 20+ Templates (Email & SMS)",
   "date": "Sep 12, 2026",
