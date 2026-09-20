@@ -456,7 +456,7 @@ const HostProfile = () => {
   ];
 
   // Admin-managed SEO → head tags + ProfilePage JSON-LD (only once host loaded).
-  const seo = host ? resolveProfileSeo({ host, siteUrl: SEO_SITE }) : null;
+  const seo = host ? resolveProfileSeo({ host, services, siteUrl: SEO_SITE }) : null;
   const faqs = host ? profileFaqs({ host, services }) : [];
   const jsonLd = host ? [
     profileJsonLd({ host, siteUrl: SEO_SITE, services, rating: { avg: reviewData.avg, count: reviewData.count } }),
