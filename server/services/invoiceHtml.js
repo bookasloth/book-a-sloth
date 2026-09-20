@@ -48,8 +48,10 @@ function buildTaxInvoiceHTML(inv = {}) {
   const type = inv.source_type;
   const isSub = type === 'subscription';
   const isCom = type === 'commission';
+  const isRsf = type === 'reschedule';
   const itemDesc = isSub ? 'Book A Sloth — subscription plan'
     : isCom ? 'Book A Sloth — platform commission'
+    : isRsf ? 'Booking reschedule fee'
     : 'Booking convenience / platform fee';
 
   // Intra (CGST+SGST) vs inter (IGST) — mutually exclusive by construction.
@@ -74,7 +76,9 @@ function buildTaxInvoiceHTML(inv = {}) {
   const statusMeta = isCom ? `${esc(fmtDate(inv.issued_at))} · from host payout`
     : `Paid ${esc(fmtDate(inv.issued_at))} · Razorpay`;
 
-  const refLabel = isSub ? 'Charge ref' : isCom ? 'Booking ref' : 'Booking ref';
+  // source_id for a reschedule invoice is the reschedule_payments row, not the
+  // booking — labelling it "Booking ref" would point auditors at the wrong id.
+  const refLabel = isSub ? 'Charge ref' : isRsf ? 'Reschedule ref' : 'Booking ref';
   const refId = inv.source_id ? String(inv.source_id).slice(0, 8) : '—';
   const sacLabel = SAC_LABEL[inv.sac_code] || 'Information technology services';
 
@@ -82,7 +86,9 @@ function buildTaxInvoiceHTML(inv = {}) {
     ? 'GST is charged on top of the plan price. Computer-generated invoice — no signature required.'
     : isCom
       ? 'Commission is GST-inclusive: the amount already contains the GST shown. The host claims the GST as input credit.'
-      : "Covers Book A Sloth's platform fee only. The booked service is supplied by the host, who invoices separately if GST-registered.";
+      : isRsf
+        ? 'The reschedule fee is GST-inclusive: the amount charged already contains the GST shown. Covers rescheduling your booking on Book A Sloth.'
+        : "Covers Book A Sloth's platform fee only. The booked service is supplied by the host, who invoices separately if GST-registered.";
 
   const buyerTaxLine = inv.buyer_gstin
     ? `<div class="gst">GSTIN <b>${esc(inv.buyer_gstin)}</b></div>`

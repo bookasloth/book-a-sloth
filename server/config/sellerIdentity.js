@@ -34,11 +34,17 @@ const SAC_BOOKING      = env.SAC_BOOKING      || '998314';
 // commission — do not use it. Override to 996211 (retail-trade commission-agent
 // code) via env if the CA prefers the literal commission-agent character.
 const SAC_COMMISSION   = env.SAC_COMMISSION   || '998314';
+// Reschedule fee = the same booking-facilitation supply as the booking fee, so
+// it shares 998314. It gets its OWN series rather than riding BAS-BKG: a single
+// booking can carry both a booking-fee invoice and a reschedule-fee invoice, and
+// two BAS-BKG numbers against one booking is needlessly confusing to audit.
+const SAC_RESCHEDULE   = env.SAC_RESCHEDULE   || '998314';
 
 const SERIES = {
   subscription: { code: 'SUB', prefix: 'BAS-SUB' },
   booking:      { code: 'BKG', prefix: 'BAS-BKG' },
   commission:   { code: 'COM', prefix: 'BAS-COM' },  // v4: BAS → host commission invoice
+  reschedule:   { code: 'RSF', prefix: 'BAS-RSF' },  // guest-paid reschedule fee
 };
 
-module.exports = { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SERIES };
+module.exports = { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SAC_RESCHEDULE, SERIES };
