@@ -121,7 +121,7 @@ export const FEATURES = [
     accent: "#FE5100", accentLight: "rgba(254,81,0,0.10)", darkBg: "#1A1D24",
     signature: "timeline",
     hero: {
-      pre: "A booking page your clients can", accent: "actually use", post: "",
+      pre: "A free booking page for", accent: "freelancers", post: "",
       sub: "Not a bare scheduling widget. Your page shows who you are, what you offer and how to book, all at one link you can put anywhere.",
       cta: "Claim your link",
     },
@@ -140,7 +140,7 @@ export const FEATURES = [
       { value: "5+", label: "themes tailored to creators" },
     ],
     benefits: {
-      heading: "A link that sells for you, not a plain form",
+      heading: "A free booking page that sells for you, not a plain form",
       lead: "A generic widget with someone else's branding does not build much trust with a first-time client.",
       without: [
         { title: "Off-brand booking widgets", desc: "Your work looks like everyone else's." },
@@ -204,8 +204,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Get a booking page that looks like you.", subline: "Claim your bookasloth.com link free, with no credit card needed." },
     seo: {
-      title: "Online Booking Page Builder for Your Services | Book A Sloth",
-      description: "Create a branded, mobile-first booking page at your own bookasloth.com link, with your services, pricing, bio and socials in one place.",
+      title: "Free Booking Page for Freelancers & Creators | Book A Sloth",
+      description: "Create a free booking page at your own bookasloth.com link — services, pricing, bio and socials in one place, built mobile-first for freelancers and creators.",
     },
   },
 
@@ -218,7 +218,7 @@ export const FEATURES = [
     accent: "#4AB765", accentLight: "rgba(74,183,101,0.10)", darkBg: "#1A1D24",
     signature: "automation",
     hero: {
-      pre: "Get paid the moment clients", accent: "book", post: "",
+      pre: "Online payments and", accent: "GST invoices", post: "for freelancers",
       sub: "Collect payment at checkout over UPI, cards, netbanking or wallets. An unpaid slot is never held, and every paid booking gets a GST invoice on its own.",
       cta: "Get started free",
     },
@@ -237,7 +237,7 @@ export const FEATURES = [
       { value: "1-click", label: "GST invoice on every booking" },
     ],
     benefits: {
-      heading: "Never chase money after the work is done",
+      heading: "GST invoices and upfront payment, without chasing money",
       lead: "The session is over, and now you are sending “just following up on the payment” for the third time.",
       without: [
         { title: "Chasing payment", desc: "You follow up for money days after the appointment." },
@@ -306,8 +306,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Never chase a payment again.", subline: "Every booking is paid before it lands on your calendar." },
     seo: {
-      title: "Online Payment & GST Invoicing for Bookings | Book A Sloth",
-      description: "Accept UPI, cards and netbanking with Razorpay, and get auto-generated GST invoices on every paid booking. Built for India's creators.",
+      title: "GST Invoice & Online Payments for Freelancers | Book A Sloth",
+      description: "Accept UPI, cards and netbanking with Razorpay and send auto-generated GST invoices for freelancers on every paid booking. Built for India.",
     },
   },
 
@@ -320,7 +320,7 @@ export const FEATURES = [
     accent: "#8B5CF6", accentLight: "rgba(139,92,246,0.10)", darkBg: "#1A1D24",
     signature: "timeline",
     hero: {
-      pre: "Set your hours once and", accent: "forget about it", post: "",
+      pre: "Set your availability for", accent: "online bookings", post: "",
       sub: "Your booking page stays accurate on its own, blocking booked time, respecting your buffers and converting slots to each client's local timezone.",
       cta: "Get started free",
     },
@@ -335,7 +335,7 @@ export const FEATURES = [
       { value: "24/7", label: "an accurate booking page" },
     ],
     benefits: {
-      heading: "Stop updating your calendar by hand",
+      heading: "Set availability for online bookings once, not by hand",
       lead: "Opening and closing slots every week is exactly the admin you signed up to avoid.",
       without: [
         { title: "Weekly manual updates", desc: "You re-enter your availability again and again." },
@@ -395,8 +395,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Set your schedule once. Let it run itself.", subline: "Define your availability today and stop manually updating your calendar." },
     seo: {
-      title: "Appointment Availability & Scheduling Rules | Book A Sloth",
-      description: "Set weekly hours, buffers and holidays once. Your booking page stays accurate automatically, in every client's timezone.",
+      title: "Set Availability for Online Bookings | Book A Sloth",
+      description: "Set your availability for online bookings once — weekly hours, buffers and holidays. Your page stays accurate automatically, in every client's timezone.",
     },
   },
 
@@ -612,7 +612,7 @@ export const FEATURES = [
     accent: "#FE5100", accentLight: "rgba(254,81,0,0.10)", darkBg: "#1A1D24",
     signature: "timeline",
     hero: {
-      pre: "Keep every client and appointment", accent: "organized", post: "",
+      pre: "Free client management for", accent: "coaches", post: "",
       sub: "Everyone who books is saved automatically with their full history, so you know who is a first-timer and who is on their fifth session. No CRM to maintain.",
       cta: "Get started free",
     },
@@ -631,7 +631,7 @@ export const FEATURES = [
       { value: "₹0", label: "extra CRM subscription needed" },
     ],
     benefits: {
-      heading: "Every client in one place, without a CRM to maintain",
+      heading: "Free client management for coaches, without a CRM to maintain",
       lead: "Client details scattered across chats, a notes app and your inbox is how you forget who is a regular.",
       without: [
         { title: "Scattered details", desc: "Names and numbers across chats and notebooks." },
@@ -694,8 +694,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Know your clients without a separate CRM.", subline: "Every booking builds your client list automatically, starting today." },
     seo: {
-      title: "Client Management Software for Service Professionals | Book A Sloth",
-      description: "Keep client information, appointments and booking history organized in one place, with no separate CRM subscription.",
+      title: "Free Client Management for Coaches & Creators | Book A Sloth",
+      description: "Free client management for coaches and creators — keep client info, appointments and booking history in one place, with no separate CRM subscription.",
     },
   },
 
@@ -809,7 +809,7 @@ export const FEATURES = [
     accent: "#FF4D93", accentLight: "rgba(255,77,147,0.10)", darkBg: "#0F1111",
     signature: "timeline",
     hero: {
-      pre: "Turn completed appointments into", accent: "client reviews", post: "",
+      pre: "Collect reviews from your", accent: "clients", post: "",
       sub: "A one-tap prompt after every session, tied to a real paid booking, so reviews cannot be faked. Your rating and testimonials show where new clients decide.",
       cta: "Get started free",
     },
@@ -828,7 +828,7 @@ export const FEATURES = [
       { value: "2x", label: "conversion lift with 10+ reviews" },
     ],
     benefits: {
-      heading: "Let proof do the convincing",
+      heading: "Collect reviews from clients and let proof convince",
       lead: "A stranger deciding whether to book wants to know one thing: did this go well for someone like me?",
       without: [
         { title: "No social proof", desc: "New visitors have nothing to trust yet." },
@@ -891,8 +891,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Build trust before the first call even starts.", subline: "Turn every happy client into a public testimonial, automatically." },
     seo: {
-      title: "Collect Client Reviews & Ratings After Appointments | Book A Sloth",
-      description: "Automatic, booking-verified reviews shown right on your page. Build trust and convert more visitors into paying clients.",
+      title: "Collect Reviews from Clients After Bookings | Book A Sloth",
+      description: "Collect reviews from clients automatically after every booking — verified, shown on your page, turning happy clients into proof that converts visitors.",
     },
   },
 
@@ -905,7 +905,7 @@ export const FEATURES = [
     accent: "#4AB765", accentLight: "rgba(74,183,101,0.10)", darkBg: "#0F1111",
     signature: "coverflow",
     hero: {
-      pre: "See what is happening across your", accent: "bookings", post: "",
+      pre: "Booking analytics for", accent: "freelancers", post: "",
       sub: "Revenue, booking trends and repeat-client rate in one live dashboard. Spot your best-performing service and where bookings drop off, with no spreadsheets.",
       cta: "Get started free",
     },
@@ -924,7 +924,7 @@ export const FEATURES = [
       { value: "Live", label: "numbers, no manual refresh" },
     ],
     benefits: {
-      heading: "Know what is working, not just how it feels",
+      heading: "Booking analytics that show what is working, not just how it feels",
       lead: "Which service earns the most? How many visitors actually book? Right now that answer lives in a payment app and a notebook.",
       without: [
         { title: "Guesswork", desc: "You are not sure which service actually pays." },
@@ -985,8 +985,8 @@ export const FEATURES = [
     ],
     cta: { headline: "Stop guessing what is working.", subline: "See your real numbers in one dashboard, updated live." },
     seo: {
-      title: "Appointment & Revenue Analytics for Service Pros | Book A Sloth",
-      description: "Track revenue, repeat clients and top services in one live dashboard. No spreadsheets and no guesswork.",
+      title: "Booking Analytics for Freelancers & Coaches | Book A Sloth",
+      description: "Booking analytics for freelancers — track revenue, repeat clients and top services in one live dashboard. No spreadsheets, no guesswork.",
     },
   },
 ];
