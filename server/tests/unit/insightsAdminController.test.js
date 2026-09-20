@@ -48,8 +48,11 @@ test('computes revenue, conversion, bookings and host tiles from Postgres rows',
 
   expect(r.json).toHaveBeenCalledTimes(1);
   const p = r.json.mock.calls[0][0];
-  expect(p.revenue.total).toBe(35);          // 10+5 + 20
-  expect(p.revenue.last30).toBe(35);
+  // Revenue is EX-GST. commission_applied is GST-INCLUSIVE, so the ₹5 commission
+  // contributes ₹4.24 (₹5 / 1.18), not ₹5 — the old ₹35 counted the commission's
+  // ₹0.76 of GST as revenue while the same rupees were also reported as tax.
+  expect(p.revenue.total).toBe(34.24);       // (10 + 4.24) + 20
+  expect(p.revenue.last30).toBe(34.24);
   expect(p.bookings).toEqual({ total: 4, paid: 2, last30: 2 });
   expect(p.conversion).toEqual({ created: 4, paid: 2, rate: 50 }); // 2/4 = 50%
   expect(p.hosts).toEqual({ total: 2, new30: 2 });

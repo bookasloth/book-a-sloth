@@ -8,6 +8,7 @@ const { clearHostServiceCategories } = require('../lib/serviceCategory');
 const { bustPublicReadCaches } = require('../services/publicCacheBust');
 const { purgeUserStorage } = require('../utils/purgeUserStorage');
 const { isValidBookingTransition } = require('./bookingController');
+const { platformNetFromBooking } = require('../lib/pricingEngine');
 
 // Admin-managed SEO fields (v3.19) — shared whitelist for service + profile SEO.
 // Builds a sanitised update payload from the request body; only provided keys
@@ -40,7 +41,7 @@ const getStats = async (req, res) => {
     // collected on paid bookings (GST is a pass-through liability, not revenue).
     let bookingsRes = await supabaseAdmin
       .from('bookings')
-      .select('id, payment_status, status, platform_fee_amount, commission_applied, vendor_amount, guest_id, guest_email, guest_phone', { count: 'exact' });
+      .select('id, payment_status, status, platform_fee_amount, commission_applied, commission_gst, vendor_amount, guest_id, guest_email, guest_phone', { count: 'exact' });
 
     if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
       // Pre-v1.7 DB without commission_applied — fall back to the fee column only.
@@ -57,10 +58,7 @@ const getStats = async (req, res) => {
 
     const allBookings = bookingsRes.data || [];
     const paid = allBookings.filter(b => b.payment_status === 'paid');
-    const revenue = paid.reduce(
-      (s, b) => s + (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0),
-      0
-    );
+    const revenue = paid.reduce((s, b) => s + platformNetFromBooking(b), 0);
     // GMV = full amount guests paid (host cut + platform fee + commission). Drives
     // "Avg per Booking" = average transaction size, not platform take per booking.
     const gmv = paid.reduce(
@@ -736,7 +734,7 @@ const getProviderPlanAnalytics = async (req, res) => {
     const filterPaid = (q) => (since ? q.gte('paid_at', since) : q);
     let bookingsRes = await filterPaid(supabaseAdmin
       .from('bookings')
-      .select('host_id, payment_status, commission_applied, platform_fee_amount')
+      .select('host_id, payment_status, commission_applied, commission_gst, platform_fee_amount')
       .eq('payment_status', 'paid'));
     if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
       bookingsRes = await filterPaid(supabaseAdmin
@@ -748,7 +746,7 @@ const getProviderPlanAnalytics = async (req, res) => {
     (bookingsRes.data || []).forEach((b) => {
       const slug = hostPlan[b.host_id] || 'starter';
       if (bookingEarnings[slug] == null) bookingEarnings[slug] = 0;
-      bookingEarnings[slug] += (Number(b.commission_applied) || 0) + (Number(b.platform_fee_amount) || 0);
+      bookingEarnings[slug] += platformNetFromBooking(b);
     });
 
     res.json({ distribution, planEarnings, planContracted, bookingEarnings, metrics });
@@ -831,7 +829,7 @@ const getRevenueTrend = async (req, res) => {
     bookings.forEach((b) => {
       const d = new Date(b.paid_at);
       if (isNaN(d) || d.getTime() < COHORT_START_MS) return;
-      feed(d, 0, (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0),
+      feed(d, 0, platformNetFromBooking(b),
         (Number(b.platform_fee_gst) || 0) + (Number(b.commission_gst) || 0));
     });
     (subs || []).forEach((s) => {
@@ -862,7 +860,9 @@ const getRevenueTrend = async (req, res) => {
 //
 // Money model (all ₹, GST excluded from "revenue" — it is a pass-through liability):
 //   subscription net = plan_price − razorpay_fee − razorpay_tax
-//   platform-fee net = platform_fee_amount + commission_applied
+//   platform-fee net = platform_fee_amount + commission EX-GST
+//                      (platformNetFromBooking — commission_applied is GST-INCLUSIVE,
+//                       so adding it raw counted its GST as revenue AND as tax)
 //   taxes            = GST we charged: subscription gst_amount + booking
 //                      platform_fee_gst + commission_gst
 //   Total Revenue    = subscription net + platform-fee net (money BAS kept)
@@ -929,7 +929,7 @@ const getRevenueBreakdown = async (req, res) => {
     (bookings || []).forEach((b) => {
       if (b.payment_status !== 'paid') return;
       if (!inWindow(b.paid_at || b.created_at)) return; // drop pre-launch test bookings
-      const fee = (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+      const fee = platformNetFromBooking(b);
       const gst = (Number(b.platform_fee_gst) || 0) + (Number(b.commission_gst) || 0);
       platformFee += fee;
       bookingGst += gst;
@@ -989,7 +989,7 @@ const getProviderOverview = async (req, res) => {
       .from('profiles').select('id, plan, is_verified, is_banned, created_at').eq('role', 'host');
 
     let bkRes = await supabaseAdmin.from('bookings').select(
-      'host_id, status, payment_status, scheduled_at, created_at, paid_at, vendor_amount, platform_fee_amount, commission_applied');
+      'host_id, status, payment_status, scheduled_at, created_at, paid_at, vendor_amount, platform_fee_amount, commission_applied, commission_gst');
     if (bkRes.error && /Could not find the|column.*does not exist/i.test(bkRes.error.message)) {
       bkRes = await supabaseAdmin.from('bookings').select(
         'host_id, status, payment_status, scheduled_at, created_at, paid_at, vendor_amount, platform_fee_amount');
@@ -1023,7 +1023,7 @@ const getProviderOverview = async (req, res) => {
 
     // ── Bookings: windowed money + activity ──
     const gmvOf = (b) => (Number(b.vendor_amount) || 0) + (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
-    const feeOf = (b) => (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+    const feeOf = (b) => platformNetFromBooking(b);
     let completedBookings = 0, completedValue = 0, upcomingBookings = 0;
     let windowTotal = 0, failedBookings = 0, gmv = 0, bookingFeeRevenue = 0;
     const activeHostSet = new Set();
