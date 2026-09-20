@@ -46,6 +46,10 @@ async function listBlogs(req, res) {
         .from('blogs')
         .select('slug,title,excerpt,category,author,image,og_image,icons,read_mins,published_at,updated_at')
         .eq('status', 'published')
+        // Future-date gate: a post seeded with a future published_at stays hidden
+        // until its date arrives. Lets us seed a whole content calendar ahead of
+        // time and have each post reveal on schedule (cache TTL adds ≤5 min lag).
+        .lte('published_at', new Date().toISOString())
         .order('published_at', { ascending: false });
       if (error) throw error;
       return { posts: (data || []).map(toSummary) };
@@ -68,6 +72,8 @@ async function getBlogBySlug(req, res) {
         .select('slug,title,excerpt,body,category,author,image,og_image,icons,read_mins,published_at,updated_at')
         .eq('slug', slug)
         .eq('status', 'published')
+        // Same future-date gate as the list (a direct URL must not leak a scheduled post early).
+        .lte('published_at', new Date().toISOString())
         .maybeSingle();
       if (error) throw error;
       return { post: data ? toFull(data) : null };

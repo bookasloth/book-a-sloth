@@ -243,13 +243,14 @@ const fetchProfessions = async () => {
 };
 
 // Published blog posts. Mirrors the public read in blogController exactly
-// (status only, no date gate) — any stricter filter here would sitemap a URL the
-// API still serves, or omit one it does.
+// (status + future-date gate) — so the sitemap never lists a scheduled post the
+// API still 404s, nor omits one it serves.
 const fetchBlogs = async () => {
   const r = await supabaseAdmin
     .from('blogs')
     .select('slug, published_at, updated_at')
     .eq('status', 'published')
+    .lte('published_at', new Date().toISOString())
     .not('slug', 'is', null)
     .order('published_at', { ascending: false });
   if (r.error) throw r.error;
