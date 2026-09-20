@@ -124,21 +124,22 @@ describe('blogEntries', () => {
 });
 
 describe('fetchBlogs', () => {
-  // Mirrors blogController's public read: status only, no date gate. A stricter
-  // filter here would omit a URL the API still serves.
+  // Mirrors blogController's public read: status + future-date gate, so the
+  // sitemap never lists a scheduled post the API still 404s.
   const chain = (resolved) => {
     const obj = {};
-    ['select', 'eq', 'not', 'order'].forEach((m) => { obj[m] = jest.fn().mockReturnValue(obj); });
+    ['select', 'eq', 'lte', 'not', 'order'].forEach((m) => { obj[m] = jest.fn().mockReturnValue(obj); });
     obj.then = (resolve, reject) => Promise.resolve(resolved).then(resolve, reject);
     return obj;
   };
 
-  test('filters to published and returns rows', async () => {
+  test('filters to published, gates future dates, and returns rows', async () => {
     const c = chain({ data: [{ slug: 'a', published_at: '2026-07-01T00:00:00Z', updated_at: null }], error: null });
     supabaseAdmin.from.mockReturnValue(c);
     await expect(fetchBlogs()).resolves.toEqual([{ slug: 'a', published_at: '2026-07-01T00:00:00Z', updated_at: null }]);
     expect(supabaseAdmin.from).toHaveBeenCalledWith('blogs');
     expect(c.eq).toHaveBeenCalledWith('status', 'published');
+    expect(c.lte).toHaveBeenCalledWith('published_at', expect.any(String));
   });
 
   test('propagates a query error instead of silently emitting an empty sitemap', async () => {
