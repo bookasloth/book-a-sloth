@@ -155,3 +155,61 @@ describe('activateFromSubscription', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 });
+
+// ── Idempotency guards must fail CLOSED ─────────────────────────────────────
+// supabase-js returns errors rather than throwing, so `const { data: prior }`
+// made a DB blip look like "never seen this payment" and re-ran the whole
+// activation: a second receipt email, a second CRM subscription_started, a
+// second ledger post. uniq_subpay_payment_id protects the money row, but
+// nothing protects the side effects around it. Throwing makes the webhook
+// return 500 so Razorpay retries, rather than half-processing the charge now.
+describe('a failed idempotency read aborts instead of reprocessing', () => {
+  const wireFailing = (failOn) => {
+    supabaseAdmin.from.mockImplementation((table) => {
+      if (table === 'subscription_payments') {
+        const c = {};
+        c.select = jest.fn(() => c);
+        c.eq = jest.fn(() => c);
+        c.maybeSingle = jest.fn(() => Promise.resolve(
+          failOn === 'prior' ? { data: null, error: { message: 'connection terminated' } }
+                             : { data: null, error: null }));
+        c.then = (resolve) => resolve(
+          failOn === 'count' ? { count: null, data: null, error: { message: 'connection terminated' } }
+                             : { count: 0, data: [], error: null });
+        c.insert = jest.fn(() => ({ select: () => ({ single: () => Promise.resolve({ data: { id: 'r' }, error: null }) }) }));
+        return c;
+      }
+      const c = {};
+      c.update = jest.fn(() => ({ eq: jest.fn(() => Promise.resolve({ data: null, error: null })) }));
+      c.select = jest.fn(() => c);
+      c.eq = jest.fn(() => c);
+      c.single = jest.fn(() => Promise.resolve({ data: { name: 'V', email: 'v@x.com' }, error: null }));
+      c.maybeSingle = jest.fn(() => Promise.resolve({ data: { plan_expires_at: null }, error: null }));
+      return c;
+    });
+  };
+
+  test('prior-payment read error → throws, sends nothing', async () => {
+    wireFailing('prior');
+    await expect(
+      svc.activateFromSubscription({ rzpSub: RZP_SUB, rzpPayment: { id: 'pay_boom' } }),
+    ).rejects.toMatchObject({ message: 'connection terminated' });
+    expect(notifySend).not.toHaveBeenCalled();
+  });
+
+  // A failed count left `(undefined || 0) === 0` true, so a RENEWAL was mis-sent
+  // as a brand-new purchase and re-promoted to paid in the CRM.
+  test('prior-count read error → throws rather than mislabelling a renewal', async () => {
+    wireFailing('count');
+    await expect(
+      svc.activateFromSubscription({ rzpSub: RZP_SUB, rzpPayment: { id: 'pay_boom2' } }),
+    ).rejects.toMatchObject({ message: 'connection terminated' });
+    expect(notifySend).not.toHaveBeenCalled();
+  });
+
+  test('a clean read still activates normally', async () => {
+    wireFailing(null);
+    const r = await svc.activateFromSubscription({ rzpSub: RZP_SUB, rzpPayment: { id: 'pay_ok' } });
+    expect(r.activated).toBe(true);
+  });
+});
