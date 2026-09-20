@@ -14,6 +14,9 @@ export const POST_TAGS = {
   'interview-schedule-template': ['work-guide', 'scheduling', 'booking', 'interview'],
   'how-to-acknowledge-interview-email': ['work-guide', 'scheduling', 'interview'],
   'databricks-interview-questions': ['work-guide', 'interview'],
+  'meeting-invitation-templates': ['work-guide', 'scheduling', 'booking'],
+  'appointment-reminder-templates': ['work-guide', 'scheduling', 'booking'],
+  'how-to-find-book-expert-online': ['sell-your-time', 'booking', 'discovery'],
   'topmate-alternative': ['sell-your-time', 'commission', 'digital-selling'],
   'digital-marketing-for-startups': ['marketing', 'startup', 'aeo'],
   'digital-marketing-for-saas-companies': ['marketing', 'saas', 'b2b', 'aeo'],
@@ -61,7 +64,7 @@ export const POST_TAGS = {
   'security-nobody-claps-for': ['security', 'trust', 'data'],
   'what-happens-to-your-aadhaar': ['security', 'trust', 'data', 'onboarding', 'incident'],
   'how-explore-ranking-works': ['discovery', 'growth', 'marketing'],
-  'digital-marketing-strategy-vibe-coders': ['marketing', 'growth', 'discovery'],
+  'digital-marketing-strategy-vibe-coders': ['marketing', 'growth', 'discovery', 'evergreen'],
   'advance-payments-without-the-screenshot-dance': ['payments', 'money', 'invoices'],
   'welcome-aastha-nikhare': ['team', 'building-in-public', 'milestones'],
   'building-in-public-why-we-blog': ['building-in-public', 'team', 'milestones', 'origins'],
@@ -73,7 +76,7 @@ export const POST_TAGS = {
   'razorpay-is-the-source-of-truth': ['payments', 'money', 'invoices'],
   'going-live': ['building-in-public', 'milestones', 'origins'],
   'hello-world': ['building-in-public', 'milestones', 'origins'],
-  'refer-earn-studio-crm-offline-bookings': ['growth', 'earnings', 'hosting'],
+  'refer-earn-studio-crm-offline-bookings': ['growth', 'earnings', 'hosting', 'evergreen'],
   'zero-commission-bet': ['commission', 'pricing', 'earnings'],
   'the-day-the-site-went-white': ['security', 'building-in-public', 'data', 'incident'],
   'the-first-host-who-paid': ['commission', 'building-in-public', 'milestones', 'earnings'],
@@ -175,6 +178,14 @@ export const BLOG_CLUSTERS = [
   { key: 'vertical-marketing', keyword: 'industry marketing guides', pillar: 'digital-marketing-for-architects',
     tags: ['marketing', 'vertical-guide'], priority: 72,
     description: 'Industry-specific marketing playbooks (architects, travel, finance, recruitment, branding, rural).' },
+  // Rescue pairing for two evergreen posts that otherwise depend on the newest-post
+  // fallback (which newer posts keep stealing). Low priority + a deep tag overlap so it
+  // wins primary ONLY for these two (via overlap depth, not priority) and they link each
+  // other — no displacement of any saturated cluster. See blog-relatedposts-orphan-fragility.
+  { key: 'evergreen', keyword: 'evergreen growth guides', pillar: 'digital-marketing-strategy-vibe-coders',
+    tags: ['growth', 'discovery', 'marketing', 'evergreen'], priority: 65,
+    description: 'Evergreen growth and referral guides.',
+    priorityLinks: ['refer-earn-studio-crm-offline-bookings'] },
   { key: 'incident', keyword: 'postmortems', pillar: 'the-day-the-site-went-white',
     tags: ['incident'], priority: 110,
     description: 'Postmortems and reliability write-ups.',
