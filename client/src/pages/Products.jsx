@@ -8,7 +8,7 @@ import {
   uploadImage,
   getPublicPlans,
 } from "../services/api";
-import { planLabel } from "../utils/themeUtils";
+import { planLabel, normalizePlan } from "../utils/themeUtils";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeatureContext";
 import BackButton from "../components/common/BackButton";
@@ -83,10 +83,11 @@ const Products = () => {
   // Database-driven plan gate. A plan can sell digital products when its DB
   // `digital_products` allowance is non-zero (-1 = unlimited). We gate on the
   // real allowance, never on the slug — a higher tier must never be prompted to
-  // "upgrade" to a lower one. `explorer` is the legacy alias for the free tier.
-  const LEGACY_PLAN_ALIASES = { explorer: "starter" };
-  const rawPlan = (user?.plan || "starter").toLowerCase();
-  const planSlug = LEGACY_PLAN_ALIASES[rawPlan] || rawPlan;
+  // "upgrade" to a lower one. Alias resolution comes from themeUtils rather than
+  // a local map — the canonical free slug has already changed once
+  // (starter → free) and a private copy silently stopped matching any plan row,
+  // which made the gate fall through to "can create".
+  const planSlug = normalizePlan(user?.plan);
 
   const sortedPlans = [...(plans || [])].sort(
     (a, b) => (a.sort_order || 0) - (b.sort_order || 0),

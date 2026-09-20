@@ -70,7 +70,7 @@ describe('dashboard topbar profile menu', () => {
     openProfile();
     const menu = within(screen.getByRole('menu', { name: 'Account' }));
     // Plan chip in the header carries the humanized plan label (creator -> Host+).
-    expect(menu.getByText('Host+')).toBeInTheDocument();
+    expect(menu.getByText('Sloth Active')).toBeInTheDocument();
     ['Account information', 'Plan & billing', 'Verification', 'View public profile', 'Copy link', 'Account manager', 'Log out']
       .forEach((label) => expect(menu.getByText(label)).toBeInTheDocument());
     // The old nav shortcuts no longer live in the menu — they're in the sidebar.
@@ -162,7 +162,7 @@ describe('console sidebar — two-level nav', () => {
 
   it('plan-locked items render disabled with a locked accessible name', () => {
     // Starter host: Products is Supreme-only -> shown but locked.
-    renderAt('/dashboard/products', { name: 'Host', plan: 'starter', role: 'host' });
+    renderAt('/dashboard/products', { name: 'Host', plan: 'free', role: 'host' });
     const products = screen.getByLabelText('Products (locked)');
     expect(products).toHaveAttribute('aria-disabled', 'true');
     expect(products).toHaveAttribute('tabindex', '-1');
@@ -178,21 +178,21 @@ describe('console sidebar — two-level nav', () => {
 describe('console sidebar — tier-aware bottom slot', () => {
   beforeEach(() => { mockAuth.current = {}; });
 
-  it('pitches Studio to Starter hosts', () => {
-    renderAt('/dashboard', { name: 'H', plan: 'starter', role: 'host' });
-    expect(screen.getByRole('link', { name: 'Upgrade to Studio. Go Studio' }))
+  it('pitches Sloth Active to free hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'free', role: 'host' });
+    expect(screen.getByRole('link', { name: 'Go Sloth Active. Go Premium' }))
       .toHaveAttribute('href', '/dashboard/upgrade');
   });
 
-  it('pitches Studio to Host+ hosts', () => {
+  it('offers Refer & Earn to legacy paid hosts (no dead-end upsell)', () => {
     renderAt('/dashboard', { name: 'H', plan: 'creator', role: 'host' });
-    expect(screen.getByRole('link', { name: 'Level up to Studio. Go Studio' }))
-      .toHaveAttribute('href', '/dashboard/upgrade');
+    expect(screen.getByRole('link', { name: 'Refer & Earn. Invite a host' }))
+      .toHaveAttribute('href', '/dashboard/referrals');
   });
 
   it('shows Refer & Earn (no upsell) for Studio hosts', () => {
     renderAt('/dashboard', { name: 'H', plan: 'professional', role: 'host' });
-    expect(screen.queryByRole('link', { name: /Upgrade to Studio/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Go Sloth Active/ })).toBeNull();
     expect(screen.getByRole('link', { name: 'Refer & Earn. Invite a host' }))
       .toHaveAttribute('href', '/dashboard/referrals');
   });

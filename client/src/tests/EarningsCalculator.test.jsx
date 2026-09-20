@@ -9,22 +9,21 @@ describe('EarningsCalculator', () => {
   it('shows the estimated earnings for the winning plan on mount', () => {
     setup();
     expect(screen.getByText(/your estimated earnings/i)).toBeTruthy();
-    expect(screen.getByText(/with host\+, you keep/i)).toBeTruthy();
+    // default ₹5,000 × 12/mo → the 5% commission dwarfs the annual fee
+    expect(screen.getByText(/with sloth active, you keep/i)).toBeTruthy();
     expect(screen.getAllByText(/per year/i).length).toBeGreaterThan(0);
   });
 
   it('shows how much more the winner keeps than the free plan', () => {
     setup();
-    // default ₹5,000 × 12/mo → Host+ wins by well over the fee
     expect(screen.getByText(/more than the free plan/i)).toBeTruthy();
   });
 
-  it('renders all three real plans with take-home + CTAs (Studio is live)', () => {
+  it('renders both plans with take-home + CTAs', () => {
     setup();
-    expect(screen.getAllByText(/you keep per year/i).length).toBe(3);
+    expect(screen.getAllByText(/you keep per year/i).length).toBe(2);
     expect(screen.getByRole('link', { name: /get started/i })).toBeTruthy();
-    expect(screen.getAllByRole('link', { name: /start on host\+/i }).length).toBeGreaterThan(0);
-    expect(screen.getByRole('link', { name: /start on studio/i })).toBeTruthy(); // live, not "coming soon"
+    expect(screen.getAllByRole('link', { name: /start on sloth/i }).length).toBeGreaterThan(0);
   });
 
   it('billing toggle switches to monthly', () => {
@@ -34,6 +33,8 @@ describe('EarningsCalculator', () => {
     expect(monthly.getAttribute('aria-pressed')).toBe('true');
   });
 
+  // The honest answer at low volume is "stay free" — a calculator that always
+  // recommends paying is a brochure, not a calculator.
   it('recommends the free plan at very low volume', () => {
     setup();
     const price = screen.getByLabelText('Set your price per session');
@@ -41,6 +42,6 @@ describe('EarningsCalculator', () => {
     fireEvent.change(price, { target: { value: '600' } });
     fireEvent.change(sessions, { target: { value: '1' } });
     expect(screen.getByText(/free plan keeps the most/i)).toBeTruthy();
-    expect(screen.getByText(/with starter, you keep/i)).toBeTruthy();
+    expect(screen.getByText(/with sloth, you keep/i)).toBeTruthy();
   });
 });

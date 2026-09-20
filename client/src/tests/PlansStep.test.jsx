@@ -9,7 +9,7 @@ vi.mock('../services/api', () => ({
   createSubscription: vi.fn(() => Promise.resolve({ data: { key: 'k', subscription_id: 'sub_1' } })),
   syncSubscription: vi.fn(() => Promise.resolve({ data: {} })),
   getMe: vi.fn(() =>
-    Promise.resolve({ data: { name: 'Test Host', email: 'host@example.com', plan: 'creator' } })
+    Promise.resolve({ data: { name: 'Test Host', email: 'host@example.com', plan: 'premium' } })
   ),
   // useOnboardingGuard: stepCompleted=6 → RESUME[6]=undefined → target=null → no redirect
   getOnboardingStatus: vi.fn(() =>
@@ -31,12 +31,11 @@ import {
 } from '../services/api';
 import PlansStep from '../pages/onboarding/PlansStep';
 
-// Studio (professional, ₹3,650/yr) is the top-priced paid plan → the hero.
-// Host+ (creator) sits in the "other plans" drawer. Starter is the free fallback.
+// Two plans since v3.165. Sloth Active (premium) is the only paid row → the
+// hero, chosen by price rather than a hardcoded slug. Sloth is the free fallback.
 const PLANS = [
-  { slug: 'starter', name: 'Starter', monthly_price: 0, annual_price: 0, limits: { services: 1, bookings_per_year: 20 }, commission_percentage: 5 },
-  { slug: 'creator', name: 'Creator', monthly_price: 199, annual_price: 999, limits: { services: 5, bookings_per_year: -1 }, commission_percentage: 0 },
-  { slug: 'professional', name: 'Studio', monthly_price: 555, annual_price: 3650, limits: { services: -1, bookings_per_year: -1 }, commission_percentage: 0 },
+  { slug: 'free', name: 'Sloth', monthly_price: 0, annual_price: 0, limits: { services: -1, bookings_per_year: -1 }, commission_percentage: 5 },
+  { slug: 'premium', name: 'Sloth Active', monthly_price: 338.13, annual_price: 3050, limits: { services: -1, bookings_per_year: -1 }, commission_percentage: 0 },
 ];
 
 // GST billing details on the host (#805): choosePaid now requires a place-of-supply
@@ -57,7 +56,7 @@ const renderStep = () => render(
 beforeEach(() => {
   vi.clearAllMocks();
   getPublicPlans.mockResolvedValue({ data: PLANS });
-  getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'creator', billing_details: BILL } });
+  getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'premium', billing_details: BILL } });
   // Use a function (not arrow) so `new window.Razorpay(opts)` works as a constructor.
   window.Razorpay = function () { return { open: vi.fn() }; };
   // Guard checks window.location.pathname for the current segment.
@@ -67,53 +66,53 @@ beforeEach(() => {
   });
 });
 
-test('Studio is the preselected hero; free Starter is a fallback', async () => {
+test('Sloth Active is the preselected hero; free Sloth is a fallback', async () => {
   renderStep();
-  await waitFor(() => screen.getByText('Studio'));           // hero card
-  expect(screen.getByText('₹3,650')).toBeInTheDocument();    // annual price
-  expect(screen.getByRole('button', { name: /Publish on Starter/ })).toBeInTheDocument(); // free fallback
+  await waitFor(() => screen.getByText('Sloth Active'));           // hero card
+  expect(screen.getByText('₹3,599')).toBeInTheDocument();    // annual price
+  expect(screen.getByRole('button', { name: /Publish on Sloth/ })).toBeInTheDocument(); // free fallback
 });
 
-test('hero "go live" opens a Studio ANNUAL subscription', async () => {
+test('hero "go live" opens a Sloth Active ANNUAL subscription', async () => {
   renderStep();
-  await waitFor(() => screen.getByText('Studio'));
+  await waitFor(() => screen.getByText('Sloth Active'));
   fireEvent.click(screen.getByRole('button', { name: /go live/ }));
-  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'professional', cadence: 'annual', billing: BILL }));
+  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'premium', cadence: 'annual', billing: BILL }));
 });
 
 test('renders other plans + monthly/annual cadence toggle in the drawer', async () => {
   renderStep();
-  await waitFor(() => screen.getByText('Studio'));
+  await waitFor(() => screen.getByText('Sloth Active'));
   fireEvent.click(screen.getByRole('button', { name: /See all plans/ }));
-  await waitFor(() => screen.getByText('Host+'));
+  await waitFor(() => screen.getAllByText('Sloth Active').length > 0);
   expect(screen.getByRole('button', { name: 'Monthly' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Annual/ })).toBeInTheDocument();
 });
 
 test('drawer paid plan opens an auto-renew subscription with the selected cadence', async () => {
   renderStep();
-  await waitFor(() => screen.getByText('Studio'));
+  await waitFor(() => screen.getByText('Sloth Active'));
   fireEvent.click(screen.getByRole('button', { name: /See all plans/ }));
-  await waitFor(() => screen.getByText('Host+'));
-  fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
-  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'creator', cadence: 'annual', billing: BILL }));
+  await waitFor(() => screen.getAllByText('Sloth Active').length > 0);
+  fireEvent.click(screen.getByRole('button', { name: 'Choose Sloth Active' }));
+  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'premium', cadence: 'annual', billing: BILL }));
 });
 
 test('switching to monthly passes monthly cadence', async () => {
   renderStep();
-  await waitFor(() => screen.getByText('Studio'));
+  await waitFor(() => screen.getByText('Sloth Active'));
   fireEvent.click(screen.getByRole('button', { name: /See all plans/ }));
-  await waitFor(() => screen.getByText('Host+'));
+  await waitFor(() => screen.getAllByText('Sloth Active').length > 0);
   fireEvent.click(screen.getByRole('button', { name: 'Monthly' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
-  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'creator', cadence: 'monthly', billing: BILL }));
+  fireEvent.click(screen.getByRole('button', { name: 'Choose Sloth Active' }));
+  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'premium', cadence: 'monthly', billing: BILL }));
 });
 
 describe('free plan path', () => {
   test('calls activateFreePlan then navigates to /live', async () => {
     renderStep();
-    await waitFor(() => screen.getByText('Studio'));
-    fireEvent.click(screen.getByRole('button', { name: /Publish on Starter/ }));
+    await waitFor(() => screen.getByText('Sloth Active'));
+    fireEvent.click(screen.getByRole('button', { name: /Publish on Sloth/ }));
     await waitFor(() => expect(activateFreePlan).toHaveBeenCalled());
     // After navigation the /live sentinel route renders
     await waitFor(() => expect(screen.getByTestId('live-page')).toBeInTheDocument());
@@ -121,8 +120,8 @@ describe('free plan path', () => {
 
   test('does NOT call advanceToLive or markOnboardingComplete on free path', async () => {
     renderStep();
-    await waitFor(() => screen.getByText('Studio'));
-    fireEvent.click(screen.getByRole('button', { name: /Publish on Starter/ }));
+    await waitFor(() => screen.getByText('Sloth Active'));
+    fireEvent.click(screen.getByRole('button', { name: /Publish on Sloth/ }));
     await waitFor(() => expect(activateFreePlan).toHaveBeenCalled());
     // Navigates but does NOT call advanceToLive (activate-free handles step advance server-side)
     expect(advanceToLive).not.toHaveBeenCalled();
@@ -143,10 +142,10 @@ describe('paid plan success path', () => {
   test('handler calls syncSubscription → getMe → advanceToLive → navigate /live when plan is active', async () => {
     const getCapture = makeRazorpayCapture();
     // Both mount + handler getMe calls return a paid plan
-    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional', billing_details: BILL } });
+    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'premium', billing_details: BILL } });
 
     renderStep();
-    await waitFor(() => screen.getByText('Studio'));
+    await waitFor(() => screen.getByText('Sloth Active'));
     fireEvent.click(screen.getByRole('button', { name: /go live/ }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
@@ -172,7 +171,7 @@ describe('paid plan success path', () => {
     getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: null, billing_details: BILL } });
 
     renderStep();
-    await waitFor(() => screen.getByText('Studio'));
+    await waitFor(() => screen.getByText('Sloth Active'));
     fireEvent.click(screen.getByRole('button', { name: /go live/ }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
@@ -191,11 +190,11 @@ describe('paid plan success path', () => {
     const getCapture = makeRazorpayCapture();
     // Mount getMe resolves (so the page renders); the post-payment getMe rejects.
     getMe
-      .mockResolvedValueOnce({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional', billing_details: BILL } })
+      .mockResolvedValueOnce({ data: { name: 'Test Host', email: 'host@example.com', plan: 'premium', billing_details: BILL } })
       .mockRejectedValue(new Error('network'));
 
     renderStep();
-    await waitFor(() => screen.getByText('Studio'));
+    await waitFor(() => screen.getByText('Sloth Active'));
     fireEvent.click(screen.getByRole('button', { name: /go live/ }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
@@ -214,7 +213,7 @@ describe('paid plan success path', () => {
     const getCapture = makeRazorpayCapture();
 
     renderStep();
-    await waitFor(() => screen.getByText('Studio'));
+    await waitFor(() => screen.getByText('Sloth Active'));
     fireEvent.click(screen.getByRole('button', { name: /go live/ }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
@@ -224,10 +223,10 @@ describe('paid plan success path', () => {
 
   test('paid handler does NOT call markOnboardingComplete (only navigates to /live via advanceToLive)', async () => {
     const getCapture = makeRazorpayCapture();
-    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional', billing_details: BILL } });
+    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'premium', billing_details: BILL } });
 
     renderStep();
-    await waitFor(() => screen.getByText('Studio'));
+    await waitFor(() => screen.getByText('Sloth Active'));
     fireEvent.click(screen.getByRole('button', { name: /go live/ }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 

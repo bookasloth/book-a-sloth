@@ -62,29 +62,25 @@ export function computeMorBreakdown({
 }
 
 /**
- * Per-booking charge config for the three self-serve plans, plus their
- * subscription cost. Mirrors the future subscription_plans.limits rows and the
- * published /host-fees §1 table. Subscription prices are imported from the single
- * source (data/plans.js) so they never drift from the pricing page.
+ * Per-booking charge config for the two plans, plus their subscription cost.
+ * Mirrors subscription_plans (migration v3.165) and the published /host-fees §1
+ * table. Neither plan caps service price or booking volume any more, so
+ * maxServicePrice is null on both.
  */
 export const CALC_PLANS = [
   {
-    key: 'starter', name: 'Starter',
+    key: 'free', name: 'Sloth',
     charge: { bookingCharge: 10, commissionRate: 0.05, pgRate: 0.02, absorbsPg: false },
-    monthly: 0, maxServicePrice: 5000,
-    note: 'Free to start · 5% per booking',
+    monthly: 0, maxServicePrice: null,
+    note: 'Free forever · 5% per booking',
   },
   {
-    key: 'hostplus', name: 'Host+',
+    key: 'premium', name: 'Sloth Active',
     charge: { bookingCharge: 10, commissionRate: 0, pgRate: 0.02, absorbsPg: false },
-    monthly: 229, maxServicePrice: null,
-    note: '0% commission · ₹229/mo',
-  },
-  {
-    key: 'studio', name: 'Studio',
-    charge: { bookingCharge: 10, commissionRate: 0, pgRate: 0.02, absorbsPg: false },
-    monthly: 555, maxServicePrice: null,
-    note: '0% commission · ₹555/mo',
+    // GST-INCLUSIVE, matching data/plans.js — this is subtracted from monthly
+    // income, so it must be the amount actually charged, not the ex-GST base.
+    monthly: 399, maxServicePrice: null,
+    note: '0% commission · ₹399/mo',
   },
 ];
 
@@ -98,7 +94,7 @@ export function monthlyForPlan(plan, targetEarning, bookingsPerMonth, gstRate = 
   const bookings = Math.max(0, Math.floor(Number(bookingsPerMonth) || 0));
   const grossMonthly = round2(b.hostConsideration * bookings);
   const netMonthly = round2(grossMonthly - plan.monthly);
-  const capped = plan.maxServicePrice != null && Number(targetEarning) > plan.maxServicePrice;
+  const capped = plan.maxServicePrice != null && Number(targetEarning) > plan.maxServicePrice;  // no plan caps price today
   return {
     plan,
     perBookingTakeHome: b.hostConsideration,

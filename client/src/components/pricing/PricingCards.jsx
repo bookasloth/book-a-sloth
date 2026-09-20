@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Sprout, Sparkles, Rocket, Building2 } from "lucide-react";
-import { PAID_PLANS, STARTER_PLAN, ENTERPRISE_PLAN } from "../../data/plans";
+import { Check, Sprout, Rocket } from "lucide-react";
+import { FREE_PLAN, PREMIUM_PLAN, PREMIUM_PER_DAY, PREMIUM_ANNUAL_SAVE_PCT } from "../../data/plans";
 import useFeeOnly from "../../hooks/useFeeOnly";
 
-const ROUTE_START = "/be-a-sloth"; // must match Home.jsx (confirmed in Task 2 Step 1)
-const ICONS = { Sprout, Sparkles, Rocket, Building2 };
+const ROUTE_START = "/be-a-sloth"; // must match Home.jsx
+const ICONS = { Sprout, Rocket };
 
 function AccentIcon({ name, accent, size = 20 }) {
-  const Icon = ICONS[name] ?? Sparkles;
+  const Icon = ICONS[name] ?? Rocket;
   return (
     <span
       className="inline-flex h-10 w-10 items-center justify-center rounded-[6px]"
@@ -35,7 +35,7 @@ function Features({ plan }) {
   return (
     <>
       {plan.intro && <p className="mt-7 text-sm font-semibold text-ink">{plan.intro}</p>}
-      <ul className="mt-4 space-y-3">
+      <ul className={`space-y-3 ${plan.intro ? "mt-4" : "mt-7"}`}>
         {plan.features.map((f) => (
           <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
             <Check size={16} className="mt-0.5 flex-shrink-0" style={{ color: plan.accent }} />
@@ -47,20 +47,15 @@ function Features({ plan }) {
   );
 }
 
-function PaidCard({ plan, yearly }) {
-  const isEnterprise = plan.slug === "enterprise";
-  const perMo = isEnterprise ? 0 : Math.round(plan.yearly / 12);
-  const savePct = isEnterprise ? 0 : Math.round((1 - plan.yearly / 12 / plan.monthly) * 100);
-  const bigPrice = yearly ? plan.yearly : plan.monthly;
-  const cta = isEnterprise ? plan.cta : { label: "Let's Get Started", to: ROUTE_START };
-
+function PlanCard({ plan, yearly, children }) {
+  const recommended = !!plan.recommended;
   return (
     <div
       className={`relative flex h-full flex-col rounded-[6px] border bg-white p-7 sm:p-8 ${
-        plan.recommended ? "" : "border-black/5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
+        recommended ? "" : "border-black/5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
       }`}
       style={
-        plan.recommended
+        recommended
           ? { borderColor: `${plan.accent}4d`, boxShadow: `0 24px 60px -30px ${plan.accent}73` }
           : undefined
       }
@@ -72,46 +67,19 @@ function PaidCard({ plan, yearly }) {
         >
           {plan.name}
         </span>
-        {plan.recommended ? (
+        {recommended ? (
           <span
             className="rounded-full px-3 py-1 text-xs font-semibold text-white"
             style={{ background: plan.accent }}
           >
-            Recommended
+            Save {PREMIUM_ANNUAL_SAVE_PCT}%
           </span>
         ) : (
-          <AccentIcon name={plan.icon} accent={plan.accent} />
+          <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-primary">{plan.badge}</span>
         )}
       </div>
       <p className="mt-3 text-sm text-neutral-500">{plan.tagline}</p>
-
-      <div className="mt-6 flex items-end gap-2">
-        {isEnterprise ? (
-          <span className="text-4xl font-extrabold text-ink">Custom</span>
-        ) : (
-          <>
-            <span className="text-5xl font-extrabold text-ink">₹{bigPrice.toLocaleString("en-IN")}</span>
-            <span className="mb-1.5 text-sm text-neutral-400">/ {yearly ? "year" : "month"}</span>
-            {yearly && (
-              <span className="mb-2 rounded-full bg-sand px-2 py-0.5 text-xs font-semibold" style={{ color: plan.accent }}>
-                Save {savePct}%
-              </span>
-            )}
-          </>
-        )}
-      </div>
-      <p className="mt-1 text-xs text-neutral-400">
-        {isEnterprise ? "Volume pricing — tailored to your team" : yearly ? `just ₹${perMo}/month, billed yearly` : "billed monthly"}
-      </p>
-
-      <Link
-        to={cta.to}
-        className="mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 hover:no-underline"
-        style={{ background: plan.recommended ? plan.accent : "#1a1a1a" }}
-      >
-        {cta.label}
-      </Link>
-
+      {children}
       <Features plan={plan} />
       <div className="flex-1" />
       <Persona plan={plan} />
@@ -121,10 +89,13 @@ function PaidCard({ plan, yearly }) {
 
 export default function PricingCards() {
   const [yearly, setYearly] = useState(true);
-  // Interim (fee-only) mode: hide the free Starter plan from the pricing display.
-  // Free signup still works — we just don't advertise it. Reverts on Route go-live.
+  // Interim (fee-only) mode: hide the free plan from the pricing display. Free
+  // signup still works — we just don't advertise it. Reverts on Route go-live.
   const feeOnly = useFeeOnly();
-  const paid = [...PAID_PLANS, ENTERPRISE_PLAN]; // Host+, Studio, Enterprise
+
+  // Yearly is the headline: ₹3,599 is where the "under ₹10 a day" figure comes
+  // from. Monthly (₹399) is shown as the alternative, never as the anchor.
+  const price = yearly ? PREMIUM_PLAN.yearly : PREMIUM_PLAN.monthly;
 
   return (
     <div>
@@ -151,51 +122,46 @@ export default function PricingCards() {
         </div>
       </div>
 
-      {/* Top row: 3 paid cards */}
-      <div className="mt-10 grid gap-5 md:grid-cols-3">
-        {paid.map((p) => (
-          <PaidCard key={p.slug} plan={p} yearly={yearly} />
-        ))}
-      </div>
-
-      {/* Starter — wide card (hidden in interim fee-only mode; free signup still works) */}
-      {!feeOnly && (
-      <div className="mt-5 rounded-[6px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
-        <div className="lg:shrink-0">
-          <div className="flex items-center gap-2.5">
-            <span
-              className="rounded-[6px] border px-2.5 py-1 font-heading text-lg font-bold"
-              style={{ color: STARTER_PLAN.accent, borderColor: `${STARTER_PLAN.accent}33` }}
+      <div className={`mt-10 grid gap-5 ${feeOnly ? "mx-auto max-w-lg" : "md:grid-cols-2"}`}>
+        {/* Sloth — free (hidden in interim fee-only mode; free signup still works) */}
+        {!feeOnly && (
+          <PlanCard plan={FREE_PLAN} yearly={yearly}>
+            <div className="mt-6 flex items-end gap-2">
+              <span className="text-5xl font-extrabold text-ink">₹0</span>
+              <span className="mb-1.5 text-sm text-neutral-400">/ forever</span>
+            </div>
+            <p className="mt-1 text-xs text-neutral-400">
+              We take 5% when you get paid. Nothing when you don't.
+            </p>
+            <Link
+              to={ROUTE_START}
+              className="mt-6 inline-flex items-center justify-center rounded-[6px] bg-ink px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 hover:no-underline"
             >
-              {STARTER_PLAN.name}
-            </span>
-            <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-primary">{STARTER_PLAN.badge}</span>
-            <AccentIcon name={STARTER_PLAN.icon} accent={STARTER_PLAN.accent} />
+              Start free
+            </Link>
+          </PlanCard>
+        )}
+
+        {/* Sloth Active — premium */}
+        <PlanCard plan={PREMIUM_PLAN} yearly={yearly}>
+          <div className="mt-6 flex items-end gap-2">
+            <span className="text-5xl font-extrabold text-ink">₹{price.toLocaleString("en-IN")}</span>
+            <span className="mb-1.5 text-sm text-neutral-400">/ {yearly ? "year" : "month"}</span>
           </div>
-          <p className="mt-2 text-sm text-neutral-500">{STARTER_PLAN.tagline}</p>
-          <div className="mt-4 flex items-end gap-2">
-            <span className="text-4xl font-extrabold text-ink">₹0</span>
-            <span className="mb-1 text-sm text-neutral-400">/ forever</span>
-          </div>
-        </div>
-        <ul className="mt-6 grid gap-3 lg:mt-0 lg:flex-1 lg:grid-cols-2 lg:gap-x-8">
-          {STARTER_PLAN.features.map((f) => (
-            <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
-              <Check size={16} className="mt-0.5 flex-shrink-0" style={{ color: STARTER_PLAN.accent }} />
-              <span>{f}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-6 lg:mt-0 lg:shrink-0">
+          <p className="mt-1 text-xs text-neutral-400">
+            {yearly
+              ? `under ${PREMIUM_PER_DAY} a day · incl. GST`
+              : `or ₹${PREMIUM_PLAN.yearly.toLocaleString("en-IN")}/year and save ${PREMIUM_ANNUAL_SAVE_PCT}% · incl. GST`}
+          </p>
           <Link
             to={ROUTE_START}
-            className="inline-flex w-full items-center justify-center rounded-[6px] bg-ink px-7 py-3 text-sm font-semibold text-white transition-transform hover:bg-neutral-800 hover:no-underline lg:w-auto"
+            className="mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 hover:no-underline"
+            style={{ background: PREMIUM_PLAN.accent }}
           >
-            Let's Get Started
+            Go Premium
           </Link>
-        </div>
+        </PlanCard>
       </div>
-      )}
     </div>
   );
 }

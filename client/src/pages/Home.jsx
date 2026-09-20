@@ -379,8 +379,8 @@ const FEATURE_GROUPS = [
 
 /* ── FAQ ── */
 const FAQS = [
-  { q: "Is Book A Sloth really free?", a: "Yes. The Free plan costs nothing and has no time limit. You pay a 5% fee per booking. Paid plans start at ₹83/month and are 0% commission — they pay for themselves quickly if you're booking regularly." },
-  { q: "Do you charge commission?", a: "On paid plans, no. You keep 100% of every booking. The Free plan charges 5% per transaction." },
+  { q: "Is Book A Sloth really free?", a: "Yes. Sloth costs nothing and has no time limit — unlimited services and bookings. We take 5% only when you actually get paid. Sloth Active removes that commission for ₹3,599 a year (under ₹10 a day), which pays for itself once you're earning about ₹6,000 a month." },
+  { q: "Do you charge commission?", a: "On Sloth Active, no — you keep 100% of every booking. Sloth (the free plan) charges 5% per transaction, and nothing when you have no bookings." },
   { q: "Can clients pay while booking?", a: "Yes — that's the whole point. Clients pay via UPI, card or netbanking at checkout. You get paid before the session starts." },
   { q: "Do clients need an account?", a: "No. Clients book and pay without creating an account." },
   { q: "Can I connect Google Calendar?", a: "Yes. Two-way sync — your availability updates automatically and bookings appear in your calendar in real time." },
@@ -1244,7 +1244,7 @@ const Home = () => {
       )}
 
 
-      {/* ════════════════ PRICING (shared PricingCards — 4 plans) ════════════════ */}
+      {/* ════════════ PRICING (shared PricingCards — Sloth + Sloth Active) ════════════ */}
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
         <div className="mx-auto max-w-[1200px]">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
@@ -1267,7 +1267,7 @@ const Home = () => {
             </Link>
           </p>
           <p className="mt-3 text-center text-xs text-neutral-500">
-            0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
+            0% commission on Sloth Active · All prices include GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
           </p>
         </div>
       </section>

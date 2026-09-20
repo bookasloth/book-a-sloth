@@ -362,18 +362,20 @@ const computeBadges = (user) => {
 
 /* ------------------------------------------------------------------ *
  *  Bottom slot — one docked card, tier-aware. The upgrade pitch shows
- *  only to hosts who can actually upgrade (Starter/Host+ -> Studio);
- *  Studio gets Refer & Earn (no dead-end upsell) and Supreme gets a
- *  concierge line. Keyed by canonical plan slug. Never advertise Supreme.
+ *  only to hosts who can actually upgrade (Sloth -> Sloth Active); anyone
+ *  already on a paid row gets Refer & Earn (no dead-end upsell) and Supreme
+ *  gets a concierge line. Keyed by canonical plan slug. Never advertise Supreme.
  * ------------------------------------------------------------------ */
 const SLOTS = {
-  starter:      { variant: 'upgrade',   to: '/dashboard/upgrade',   icon: Sparkles, cta: 'Go Studio',            title: 'Upgrade to Studio',   sub: 'Unlock the Customers CRM, digital Products & higher booking caps.' },
-  creator:      { variant: 'upgrade',   to: '/dashboard/upgrade',   icon: Sparkles, cta: 'Go Studio',            title: 'Level up to Studio',  sub: "You're one tier away — add the Customers CRM & Products." },
+  free:         { variant: 'upgrade',   to: '/dashboard/upgrade',   icon: Sparkles, cta: 'Go Premium',           title: 'Go Sloth Active',     sub: '0% commission, the Clients CRM and follow-ups — under ₹10 a day.' },
+  premium:      { variant: 'refer',     to: '/dashboard/referrals', icon: Gift,     cta: 'Invite a host',        title: 'Refer & Earn',        sub: 'Invite a host — you both get paid when they go live.' },
+  // Archived paid rows already hold Sloth Active entitlements — no upsell.
+  creator:      { variant: 'refer',     to: '/dashboard/referrals', icon: Gift,     cta: 'Invite a host',        title: 'Refer & Earn',        sub: 'Invite a host — you both get paid when they go live.' },
   professional: { variant: 'refer',     to: '/dashboard/referrals', icon: Gift,     cta: 'Invite a host',        title: 'Refer & Earn',        sub: 'Invite a host — you both get paid when they go live.' },
   supreme:      { variant: 'concierge', href: '/bolt958',           icon: Headset,  cta: 'Talk to your manager', title: 'Priority concierge',  sub: 'Your account manager is one message away.' },
 };
 
-// Reuses the app's plan-badge hues (amber = Studio, primary = brand, violet = Supreme).
+// Reuses the app's plan-badge hues (amber = Sloth Active, primary = brand, violet = Supreme).
 const SLOT_STYLE = {
   upgrade:   { card: 'border-amber-200 bg-amber-50',    title: 'text-amber-700',  cta: 'bg-amber-600 hover:bg-amber-700' },
   refer:     { card: 'border-primary/30 bg-primary/10', title: 'text-primary',    cta: 'bg-primary hover:bg-primary-dark' },
@@ -381,7 +383,7 @@ const SLOT_STYLE = {
 };
 
 const PanelSlot = ({ plan, onNavigate }) => {
-  const s = SLOTS[plan] || SLOTS.starter;
+  const s = SLOTS[plan] || SLOTS.free;
   const st = SLOT_STYLE[s.variant];
   const Icon = s.icon;
   const inner = (

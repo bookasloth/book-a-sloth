@@ -76,7 +76,12 @@ const PlansStep = () => {
   const heroPlan = [...paidPlans].sort((a, b) => priceFor(b, 'annual') - priceFor(a, 'annual'))[0] || null;
   const heroAnnual = heroPlan ? priceFor(heroPlan, 'annual') : 0;
   // Drawer shows the remaining paid plans — the hero already has its own card.
-  const otherPaid = paidPlans.filter((p) => p !== heroPlan);
+  // The drawer used to list only the NON-hero paid plans. With a single paid
+  // plan (v3.165) that left it permanently empty, which also made monthly
+  // pricing unreachable during onboarding — the hero is always sold annual.
+  // List every paid plan instead, so the drawer keeps its real job: the
+  // monthly/annual choice.
+  const otherPaid = paidPlans;
 
   const goNext = () => navigate(`/vendor-register/${slug}/live`);
 
@@ -255,11 +260,11 @@ const PlansStep = () => {
                     <div>
                       <h2 className="text-xl font-bold">{planLabel(heroPlan.slug, heroPlan.name)}</h2>
                       <p className="mt-1">
-                        <span className="text-2xl font-bold text-primary">{inr(heroAnnual)}</span>
+                        <span className="text-2xl font-bold text-primary">{inr(Math.round(heroAnnual * (1 + GST_RATE)))}</span>
                         <span className="text-sm font-normal text-gray-500">/year</span>
                       </p>
                       <p className="text-[11px] text-gray-500">
-                        + 18% GST · {inr(Math.round(heroAnnual * (1 + GST_RATE)))} billed today · auto-renews yearly
+                        incl. GST · billed today · auto-renews yearly
                       </p>
                     </div>
                     <button
@@ -276,7 +281,7 @@ const PlansStep = () => {
                       ) : (
                         <>
                           <Rocket className="w-4 h-4" strokeWidth={2.5} />
-                          Pay {inr(heroAnnual)}/yr &amp; go live
+                          Pay {inr(Math.round(heroAnnual * (1 + GST_RATE)))}/yr &amp; go live
                         </>
                       )}
                     </button>
@@ -325,7 +330,7 @@ const PlansStep = () => {
                     aria-expanded={showPaid}
                     className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-primary transition"
                   >
-                    {showPaid ? 'Hide other plans' : 'See all plans & monthly pricing'}
+                    {showPaid ? 'Hide plans' : 'See all plans & monthly pricing'}
                     <ChevronDown className={`w-4 h-4 transition-transform ${showPaid ? 'rotate-180' : ''}`} strokeWidth={2.5} />
                   </button>
                 </div>
@@ -357,9 +362,9 @@ const PlansStep = () => {
                           {cadenceAvailable ? (
                             <>
                               <p className="text-xl font-bold text-primary mb-0.5">
-                                {inr(price)}<span className="text-sm font-normal text-gray-500">/{cadence === 'monthly' ? 'mo' : 'yr'}</span>
+                                {inr(Math.round(price * (1 + GST_RATE)))}<span className="text-sm font-normal text-gray-500">/{cadence === 'monthly' ? 'mo' : 'yr'}</span>
                               </p>
-                              <p className="text-[11px] text-gray-500 mb-1">+ 18% GST · {inr(Math.round(price * (1 + GST_RATE)))} billed</p>
+                              <p className="text-[11px] text-gray-500 mb-1">incl. GST · {inr(price)} + 18% GST</p>
                             </>
                           ) : (
                             <p className="text-sm font-semibold text-gray-400 py-2 mb-1">Annual billing only</p>

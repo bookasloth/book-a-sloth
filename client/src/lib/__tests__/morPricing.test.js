@@ -39,24 +39,25 @@ describe('computeMorBreakdown matches /host-fees §5 (E = ₹1,000, 18%)', () =>
 
 describe('monthlyForPlan', () => {
   it('nets the subscription off gross monthly income', () => {
-    const starter = monthlyForPlan(CALC_PLANS[0], 1000, 10);
-    const hostplus = monthlyForPlan(CALC_PLANS[1], 1000, 10);
-    expect(starter.netMonthly).toBe(9097.6);       // 909.76 × 10 − 0
-    expect(hostplus.netMonthly).toBe(9368.6);      // 959.76 × 10 − 229
+    const free = monthlyForPlan(CALC_PLANS[0], 1000, 10);
+    const premium = monthlyForPlan(CALC_PLANS[1], 1000, 10);
+    expect(free.netMonthly).toBe(9097.6);       // 909.76 × 10 − 0
+    expect(premium.netMonthly).toBe(9198.6);    // 959.76 × 10 − 399 (GST-incl fee)
   });
 
-  it('Host+ overtakes Starter once volume is high enough', () => {
-    // Host+ saves the 5% commission (₹50 on ₹1,000) per booking, so its ₹229/mo
-    // pays for itself around 5 bookings: Starter wins at 4, Host+ from 5 up.
-    const at4 = { s: monthlyForPlan(CALC_PLANS[0], 1000, 4).netMonthly, h: monthlyForPlan(CALC_PLANS[1], 1000, 4).netMonthly };
-    const at5 = { s: monthlyForPlan(CALC_PLANS[0], 1000, 5).netMonthly, h: monthlyForPlan(CALC_PLANS[1], 1000, 5).netMonthly };
-    expect(at4.s).toBeGreaterThan(at4.h);
-    expect(at5.h).toBeGreaterThan(at5.s);
+  it('Sloth Active overtakes free once volume is high enough', () => {
+    // Premium saves the 5% commission (₹50 on ₹1,000) per booking, so its
+    // ₹399/mo pays for itself just under 8 bookings: free wins at 7, premium
+    // from 8 up. The turn has to be checked on BOTH sides — asserting only that
+    // premium eventually wins would pass for any fee.
+    const at7 = { f: monthlyForPlan(CALC_PLANS[0], 1000, 7).netMonthly, p: monthlyForPlan(CALC_PLANS[1], 1000, 7).netMonthly };
+    const at8 = { f: monthlyForPlan(CALC_PLANS[0], 1000, 8).netMonthly, p: monthlyForPlan(CALC_PLANS[1], 1000, 8).netMonthly };
+    expect(at7.f).toBeGreaterThan(at7.p);
+    expect(at8.p).toBeGreaterThan(at8.f);
   });
 
-  it('flags a Starter earning above the ₹5,000 cap', () => {
-    expect(monthlyForPlan(CALC_PLANS[0], 6000, 5).capped).toBe(true);
-    expect(monthlyForPlan(CALC_PLANS[0], 5000, 5).capped).toBe(false);
-    expect(monthlyForPlan(CALC_PLANS[1], 6000, 5).capped).toBe(false); // Host+ has no cap
+  it('neither plan caps service price any more', () => {
+    expect(monthlyForPlan(CALC_PLANS[0], 6000, 5).capped).toBe(false);
+    expect(monthlyForPlan(CALC_PLANS[1], 6000, 5).capped).toBe(false);
   });
 });

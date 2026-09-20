@@ -1,193 +1,160 @@
 /**
  * Single source of truth for Book A Sloth plan pricing + features (display side).
  *
- * Imported by the homepage (Home.jsx), the dedicated pricing page (Pricing.jsx)
- * and landing pages (e.g. lp/CalendlyAlternative) so prices never drift between
- * surfaces. Display names follow themeUtils PLAN_DISPLAY (DB slugs
- * starter / creator / professional → Starter / Host+ / Studio).
+ * Imported by the homepage (Home.jsx), the dedicated pricing page (Pricing.jsx),
+ * the competitor landing pages (lp/*Alternative) and the profession landings, so
+ * prices never drift between surfaces. Display names follow themeUtils
+ * PLAN_DISPLAY (DB slugs free / premium → Sloth / Sloth Active).
  *
- * KEEP IN SYNC with server migration v3.55 (subscription_plans) — the DB is the
- * enforcement authority; this file is the marketing copy that mirrors it. If you
- * change a number here, change it there too (and re-run on BOTH DBs).
+ * KEEP IN SYNC with server migration v3.165 (subscription_plans) — the DB is the
+ * enforcement authority; this file is the marketing copy that mirrors it.
  *
- * Prices are in INR, exclusive of GST. `monthly` / `yearly` are the headline
- * numbers; each page derives per-month + savings from them.
+ * ── PRICES ARE GST-INCLUSIVE ────────────────────────────────────────────────
+ * What the customer is actually charged. The DB stores the ex-GST base and the
+ * engine adds 18% on top, so the numbers here are the DB values grossed up:
+ *
+ *   monthly   DB 338.13  →  ₹399   (charged ₹398.99 — a paisa under, never over)
+ *   yearly    DB 3050.00 →  ₹3,599
+ *
+ * Yearly saves ₹1,189 = 24.83%, advertised as "Save 25%". ₹3,599 / 365 = ₹9.86,
+ * the "under ₹10 a day" headline. Every price shown to a customer must stay on
+ * this one basis — quoting monthly ex-GST against yearly incl-GST is what made
+ * the old ₹300/₹3,650 pair read as if annual cost MORE than twelve months.
  */
 
-export const STARTER_PLAN = {
-  name: "Starter",
-  slug: "starter",
-  tagline: "For professionals just getting started.",
+export const FREE_PLAN = {
+  name: "Sloth",
+  slug: "free",
+  tagline: "Everything you need to get booked.",
   badge: "5% per booking",
   accent: "#4AB765",
   icon: "Sprout",
-  persona: { title: "Just Starting Out", blurb: "Testing the waters — your first bookings, at zero cost." },
+  persona: { title: "Just starting out", blurb: "Your booking page, your first customers, at zero cost." },
   monthly: 0,
   yearly: 0,
   features: [
-    "Up to 3 services",
-    "300 bookings a year",
-    "1 service category",
-    "Booking page + online payments",
-    "Community + email support",
+    "Unlimited services & bookings",
+    "Booking page + UPI payments",
+    "24-hour booking reminders",
+    "Online & in-person appointments",
+    "Google Calendar & Meet",
+    "3 digital products",
+    "GST invoices & payouts",
   ],
 };
 
-export const PAID_PLANS = [
-  {
-    name: "Host+",
-    slug: "creator",
-    tagline: "For solo creators & freelancers.",
-    monthly: 229,
-    yearly: 1499,
-    accent: "#269CEF",
-    icon: "Sparkles",
-    persona: { title: "Solo Creator", blurb: "Booking regularly and want 0% commission + automation." },
-    intro: "What's included:",
-    features: [
-      "0% commission on bookings",
-      "Up to 5 services",
-      "1,000 bookings a year",
-      "5 digital products",
-      "2 service categories",
-      "Offline appointments",
-      "Auto invoices + basic reports",
-      "Booking reminder automation (1 flow)",
-      "Email + chat support",
-    ],
-  },
-  {
-    name: "Studio",
-    slug: "professional",
-    tagline: "Top tier, for growing practices & studios.",
-    monthly: 555,
-    yearly: 3650,
-    recommended: true,
-    accent: "#FE5100",
-    icon: "Rocket",
-    persona: { title: "Growing Studio", blurb: "A full practice — CRM, analytics, unlimited everything." },
-    intro: "Everything in Host+, plus:",
-    features: [
-      "Unlimited services & bookings",
-      "Unlimited digital products & categories",
-      "2 calendar integrations (Google + iCal soon)",
-      "Client CRM, history & notes",
-      "Custom fields + recurring clients",
-      "Advanced analytics + data export",
-      "Unlimited reminder automation",
-      "WhatsApp + call support",
-    ],
-  },
-];
-
-/** Enterprise — no self-serve price; card teases and links to /enterprise. */
-export const ENTERPRISE_PLAN = {
-  name: "Enterprise",
-  slug: "enterprise",
-  tagline: "For teams, agencies & multi-location practices.",
-  price: "Custom",
-  cta: { label: "Talk to Sales", to: "/enterprise" },
-  accent: "#FF4D93",
-  icon: "Building2",
-  intro: "Everything in Studio, plus:",
+export const PREMIUM_PLAN = {
+  name: "Sloth Active",
+  slug: "premium",
+  tagline: "Keep every rupee. Automate the rest.",
+  // GST-inclusive — see the header note.
+  monthly: 399,
+  yearly: 3599,
+  recommended: true,
+  accent: "#FE5100",
+  icon: "Rocket",
+  persona: { title: "Booked and growing", blurb: "Earning over ₹6,000 a month? This already costs you less than the 5%." },
+  intro: "Everything in Sloth, plus:",
   features: [
-    "SSO & SAML sign-in",
-    "Role-based team access",
-    "Multi-location & multi-seat",
-    "REST API + webhooks",
-    "Dedicated SLA & onboarding",
+    "0% commission — keep it all",
+    "Client CRM with notes & history",
+    "1-hour reminders + reschedule alerts",
+    "Follow-up & rebook automation",
+    "Unlimited digital products",
+    "2 calendar integrations",
+    "Unlimited AI service writing",
+    "Priority WhatsApp support",
   ],
-  persona: { title: "Teams & Agencies", blurb: "Multiple seats, locations and workflows, custom needs." },
 };
 
-/** All three plans in display order — handy for 3-up pricing grids (landing pages + /pricing). */
-export const ALL_PLANS = [STARTER_PLAN, ...PAID_PLANS];
+/** Array form — several surfaces index into this ([0] / [length-1]). */
+export const PAID_PLANS = [PREMIUM_PLAN];
+
+/** Both plans in display order. */
+export const ALL_PLANS = [FREE_PLAN, PREMIUM_PLAN];
+
+/** Headline daily figure for Sloth Active: ₹3,599 / 365 = ₹9.86. */
+export const PREMIUM_PER_DAY = "₹9.86";
+
+/** Annual saving vs 12 × monthly — kept here so no surface recomputes it wrong. */
+export const PREMIUM_ANNUAL_SAVING = PREMIUM_PLAN.monthly * 12 - PREMIUM_PLAN.yearly; // ₹1,189
+export const PREMIUM_ANNUAL_SAVE_PCT = Math.round((PREMIUM_ANNUAL_SAVING / (PREMIUM_PLAN.monthly * 12)) * 100); // 25
 
 /* ────────────────────────────────────────────────────────────────────────────
- * Full feature comparison — drives the table on /pricing (Pricing.jsx).
- * Single-sourced here so the comparison grid never drifts from the plan cards.
- * Cell values: true (✓) · false (✗/—) · string (verbatim label).
- * Columns map to DB slugs: starter / creator (Host+) / professional (Studio).
+ * Everything both plans include.
+ *
+ * In a two-plan world most of the old comparison grid collapsed to ✓/✓, which is
+ * noise in a table. These are listed once as a reassurance band instead, and the
+ * table below carries only what actually DIFFERS.
+ * ──────────────────────────────────────────────────────────────────────────── */
+export const PLAN_INCLUDED = [
+  "Unlimited services",
+  "Unlimited bookings",
+  "Unlimited service categories",
+  "Public booking page + custom URL",
+  "Online and in-person appointments",
+  "Payment collection via UPI & cards",
+  "Booking confirmations (email + WhatsApp)",
+  "24-hour booking reminders",
+  "Reschedule & cancellation",
+  "Google Calendar + Meet",
+  "All profile theme colours",
+  "GST invoices",
+  "Earnings, payouts & transaction history",
+  "Guest reviews",
+];
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Comparison table — ONLY rows the server actually enforces.
+ *
+ * Every row here maps to a real gate: commission_percentage, limits.crm,
+ * limits.reminder_flows, limits.followup_flows, limits.digital_products,
+ * limits.calendar_integrations, limits.ai_generations, support_type.
+ *
+ * Deliberately ABSENT: advanced_reports and data_export. They live in
+ * subscription_plans.features, which nothing on the server reads — a Free
+ * account reaches both today. Listing them would be a promise the product does
+ * not keep. Add the rows when the gates exist, not before.
  * ──────────────────────────────────────────────────────────────────────────── */
 export const PLAN_COLUMNS = [
-  { key: "starter", name: "Starter", slug: "starter" },
-  { key: "hostplus", name: "Host+", slug: "creator" },
-  { key: "studio", name: "Studio", slug: "professional", recommended: true },
-  { key: "enterprise", name: "Enterprise", slug: "enterprise" },
+  { key: "free", name: "Sloth", slug: "free" },
+  { key: "premium", name: "Sloth Active", slug: "premium", recommended: true },
 ];
 
 export const PLAN_MATRIX = [
   {
-    group: "Pricing & commission",
+    group: "Price",
     rows: [
-      { label: "Price (monthly)", starter: "₹0", hostplus: "₹229", studio: "₹555", enterprise: "Custom" },
-      { label: "Price (yearly)", starter: "₹0", hostplus: "₹1,499", studio: "₹3,650", enterprise: "Custom" },
-      { label: "Commission", starter: "5%", hostplus: "0%", studio: "0%", enterprise: "0%" },
-      { label: "Support", starter: "Community + Email", hostplus: "Email + Chat", studio: "WhatsApp + Call", enterprise: "Dedicated + SLA" },
+      { label: "Monthly", free: "₹0", premium: "₹399" },
+      { label: "Yearly", free: "₹0", premium: "₹3,599" },
+      { label: "Commission on your bookings", free: "5%", premium: "0%" },
+    ],
+  },
+  {
+    group: "Automation",
+    rows: [
+      { label: "Booking reminders", free: "24h before", premium: "24h + 1h + reschedule alerts" },
+      { label: "Follow-up & rebook automation", free: false, premium: true },
+    ],
+  },
+  {
+    group: "Clients",
+    rows: [
+      { label: "Client CRM — records, history, notes", free: false, premium: true },
     ],
   },
   {
     group: "Limits",
     rows: [
-      { label: "Services", starter: "3", hostplus: "5", studio: "Unlimited", enterprise: "Unlimited" },
-      { label: "Bookings / year", starter: "300", hostplus: "1,000", studio: "Unlimited", enterprise: "Unlimited" },
-      { label: "Digital products", starter: "1", hostplus: "5", studio: "Unlimited", enterprise: "Unlimited" },
-      { label: "Service categories", starter: "1", hostplus: "2", studio: "Unlimited", enterprise: "Unlimited" },
-      { label: "Calendar integrations", starter: "1", hostplus: "1", studio: "2", enterprise: "Unlimited" },
-      { label: "Meeting integrations", starter: "Google", hostplus: "Google", studio: "Google & iCal (Planned)", enterprise: "Google, iCal & custom" },
+      { label: "Digital products", free: "3", premium: "Unlimited" },
+      { label: "Calendar integrations", free: "1 (Google)", premium: "2 (Google + iCal)" },
+      { label: "AI service writing", free: "10 per 6 months", premium: "Unlimited" },
     ],
   },
   {
-    group: "Booking & scheduling",
+    group: "Support",
     rows: [
-      { label: "Professional booking page", starter: true, hostplus: true, studio: true, enterprise: true },
-      { label: "Online appointments", starter: true, hostplus: true, studio: true, enterprise: true },
-      { label: "Offline appointments", starter: false, hostplus: true, studio: true, enterprise: true },
-      { label: "Payment collection", starter: true, hostplus: true, studio: true, enterprise: true },
-      { label: "Multiple availability schedules", starter: false, hostplus: false, studio: true, enterprise: true },
-      { label: "Priority feature access", starter: false, hostplus: false, studio: true, enterprise: true },
-    ],
-  },
-  {
-    group: "Notifications",
-    rows: [
-      { label: "Booking confirmations", starter: true, hostplus: true, studio: true, enterprise: true },
-      { label: "Email & WhatsApp notifications", starter: "Partial", hostplus: "Basic", studio: "Advanced", enterprise: "Advanced" },
-      { label: "Booking reminder automation", starter: false, hostplus: "1 Flow", studio: "Unlimited", enterprise: "Unlimited" },
-    ],
-  },
-  {
-    group: "Clients (CRM)",
-    rows: [
-      { label: "Booking history", starter: false, hostplus: false, studio: true, enterprise: true },
-      { label: "Client records (CRM)", starter: false, hostplus: false, studio: true, enterprise: true },
-      { label: "Client history", starter: false, hostplus: false, studio: true, enterprise: true },
-      { label: "Client notes", starter: false, hostplus: false, studio: true, enterprise: true },
-      { label: "Custom fields", starter: false, hostplus: false, studio: true, enterprise: true },
-      { label: "Recurring clients", starter: false, hostplus: false, studio: true, enterprise: true },
-    ],
-  },
-  {
-    group: "Invoicing & reports",
-    rows: [
-      { label: "Auto invoices", starter: false, hostplus: true, studio: true, enterprise: true },
-      { label: "Basic reports", starter: false, hostplus: true, studio: true, enterprise: true },
-      { label: "Advanced analytics", starter: false, hostplus: false, studio: true, enterprise: true },
-      { label: "Data export", starter: false, hostplus: false, studio: true, enterprise: true },
-    ],
-  },
-  {
-    group: "Branding",
-    rows: [
-      { label: "Custom branding", starter: "None", hostplus: "Standard", studio: "Premium", enterprise: "White-label" },
-    ],
-  },
-  {
-    group: "Enterprise",
-    rows: [
-      { label: "SSO & SAML", starter: false, hostplus: false, studio: false, enterprise: true },
-      { label: "Role-based access", starter: false, hostplus: false, studio: false, enterprise: true },
-      { label: "REST API + webhooks", starter: false, hostplus: false, studio: false, enterprise: true },
+      { label: "Support", free: "Email", premium: "Priority — WhatsApp + email" },
     ],
   },
 ];

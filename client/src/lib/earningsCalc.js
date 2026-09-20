@@ -5,20 +5,20 @@
  * presentation-only. Display/illustration only — real pricing is server-side.
  */
 import { computeMorBreakdown, CALC_PLANS, DEFAULT_GST_RATE } from './morPricing';
-import { PAID_PLANS } from '../data/plans';
+import { PREMIUM_PLAN } from '../data/plans';
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
-export const HOSTPLUS_ANNUAL_CAP = 1000;
+// Neither plan caps bookings since v3.165 — both are unlimited, so there is no
+// "you can't accept booking #1,001" ceiling to model any more. The whole
+// comparison is now a single question: at what volume does the flat annual fee
+// beat 5% commission?
+const ANNUAL_BOOKING_CAP = { free: null, premium: null };
 
-const ANNUAL_BOOKING_CAP = { starter: 300, hostplus: HOSTPLUS_ANNUAL_CAP, studio: null };
-
-// Annual fees from the single pricing source. plans.js slugs: creator=Host+, professional=Studio.
-const yearlyBySlug = Object.fromEntries(PAID_PLANS.map((p) => [p.slug, p.yearly]));
+// Annual fees from the single pricing source (GST-inclusive, as charged).
 export const ANNUAL_FEE = {
-  starter: 0,
-  hostplus: yearlyBySlug.creator,
-  studio: yearlyBySlug.professional,
+  free: 0,
+  premium: PREMIUM_PLAN.yearly,
 };
 
 export const annualBookings = (sessionsPerMonth) =>
@@ -30,9 +30,9 @@ export function resultsFor(earning, sessionsPerMonth, cycle = 'annual') {
     const b = computeMorBreakdown({ targetEarning: earning, ...plan.charge, gstRate: DEFAULT_GST_RATE });
     const perBookingTakeHome = b.hostConsideration;
     const cap = ANNUAL_BOOKING_CAP[plan.key];
-    // A plan only earns on the bookings it can actually accept — Host+ physically
-    // can't take booking #1,001, Starter can't take #301. Earning on all `yearly`
-    // bookings would overstate the cheaper plans and hide why Studio wins.
+    // Kept as a hook: if a booking cap ever returns to a plan, a plan only earns
+    // on the bookings it can actually accept. Both plans are uncapped today, so
+    // this is always the full year.
     const earnableBookings = cap == null ? yearly : Math.min(yearly, cap);
     const uncollectedBookings = yearly - earnableBookings;
     const grossAnnual = round2(perBookingTakeHome * earnableBookings);
@@ -70,35 +70,29 @@ export function annualSaving(planKey) {
   return plan.monthly * 12 - ANNUAL_FEE[planKey];
 }
 
-export function ceilingState(sessionsPerMonth) {
-  const yearly = annualBookings(sessionsPerMonth);
-  if (yearly > HOSTPLUS_ANNUAL_CAP) return 'over';
-  if (yearly > 840) return 'near'; // ~70/mo, approaching the cap
-  return 'none';
-}
-
-export function starterCommissionPerYear(earning, sessionsPerMonth) {
-  const rate = CALC_PLANS.find((p) => p.key === 'starter').charge.commissionRate;
+// Commission a free host gives up over a year — the number the upgrade is
+// measured against.
+export function freeCommissionPerYear(earning, sessionsPerMonth) {
+  const rate = CALC_PLANS.find((p) => p.key === 'free').charge.commissionRate;
   return round2(rate * (Number(earning) || 0) * annualBookings(sessionsPerMonth));
 }
 
 // The recommendation's headline number: how much more the winning plan keeps per
-// year than the free Starter plan. This — not three near-identical absolutes — is
-// what justifies paying. 0 when Starter itself is the winner (nothing to beat).
+// year than free. 0 when free itself is the winner (nothing to beat).
 export function deltaVsFree(results, winnerKey) {
   const winner = results.find((r) => r.plan.key === winnerKey);
-  const starter = results.find((r) => r.plan.key === 'starter');
-  if (!winner || !starter) return 0;
-  return round2(winner.netAnnual - starter.netAnnual);
+  const free = results.find((r) => r.plan.key === 'free');
+  if (!winner || !free) return 0;
+  return round2(winner.netAnnual - free.netAnnual);
 }
 
-// Sessions/month at which Host+ (0% commission, flat annual fee) starts beating
-// free Starter for a given per-session price: Host+ wins once a year of saved 5%
-// commission clears its fee → ceil(fee / (rate·price·12)). Powers the honest
-// "stay free until ~N/mo" message when Starter is the winner.
-export function hostplusCrossover(earning) {
-  const rate = CALC_PLANS.find((p) => p.key === 'starter').charge.commissionRate;
+// Sessions/month at which Sloth Active (0% commission, flat annual fee) starts
+// beating free for a given per-session price: it wins once a year of saved 5%
+// commission clears the fee → ceil(fee / (rate·price·12)). Powers the honest
+// "stay free until ~N/mo" message when free is the winner.
+export function premiumCrossover(earning) {
+  const rate = CALC_PLANS.find((p) => p.key === 'free').charge.commissionRate;
   const price = Math.max(0, Number(earning) || 0);
   if (price <= 0) return Infinity;
-  return Math.ceil(ANNUAL_FEE.hostplus / (rate * price * 12));
+  return Math.ceil(ANNUAL_FEE.premium / (rate * price * 12));
 }
