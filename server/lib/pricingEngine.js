@@ -220,6 +220,39 @@ function computeBreakdown({ servicePrice, commissionPercentage, platformFee, gst
   };
 }
 
+// ─── Platform revenue kept from a stored booking row ─────────────────────────
+/**
+ * Net (ex-GST) platform revenue for one booking, from its snapshot columns.
+ *
+ * The two money columns are stored on DIFFERENT tax bases and must never be
+ * added directly:
+ *   platform_fee_amount  EX-GST  (its tax sits in platform_fee_gst)
+ *   commission_applied   GST-INCLUSIVE (its tax is INSIDE, per the v4 model)
+ *
+ * `platform_fee_amount + commission_applied` therefore reports the commission's
+ * GST as revenue — while the same rupees are also reported under taxes, and
+ * added a third time when gross is computed as revenue + taxes. For a ₹1,000
+ * free-plan booking that overstates net revenue by ₹7.63 (₹60 vs ₹52.37).
+ *
+ * Prefers the stored commission_gst snapshot; derives it from the booking's own
+ * gst_rate only when that column wasn't selected or predates the v2.8 snapshot.
+ *
+ * @param {object} row  booking row with platform_fee_amount, commission_applied,
+ *                      and ideally commission_gst (else gst_rate)
+ * @returns {number} ex-GST platform revenue in ₹
+ */
+function platformNetFromBooking(row) {
+  const fee = Number(row?.platform_fee_amount) || 0;
+  const commission = Number(row?.commission_applied) || 0;
+  const commissionGst = row?.commission_gst != null
+    ? Number(row.commission_gst) || 0
+    : calculateCommissionGst(commission, {
+        gstRate: row?.gst_rate != null ? Number(row.gst_rate) : undefined,
+      });
+  // Floor at 0: a malformed snapshot must not produce negative revenue.
+  return round2(fee + Math.max(0, round2(commission - commissionGst)));
+}
+
 // ─── Subscription breakdown (GST charged ON TOP of plan price — PRD §5.2) ────
 function computeSubscriptionBreakdown({ planPrice, gstRate }) {
   assertNonNegative(planPrice, 'planPrice');
@@ -245,6 +278,7 @@ module.exports = {
   calculateVendorPayout,
   calculateCustomerTotal,
   computeBreakdown,
+  platformNetFromBooking,
   computeSubscriptionBreakdown,
   round2,
 };

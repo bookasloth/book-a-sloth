@@ -245,3 +245,60 @@ describe('computeSubscriptionBreakdown (unchanged, PRD §5.2)', () => {
     expect(s.totalCharged).toBe(1178.82);
   });
 });
+
+// ── platformNetFromBooking ──────────────────────────────────────────────────
+// platform_fee_amount is stored EX-GST; commission_applied is GST-INCLUSIVE.
+// Adding them raw reported the commission's GST as revenue while the same
+// rupees were ALSO reported under taxes, and added a third time when gross was
+// computed as revenue + taxes. These pin the published /host-fees ₹1,000 case.
+describe('platformNetFromBooking', () => {
+  const { platformNetFromBooking } = require('../../lib/pricingEngine');
+
+  // ₹1,000 free-plan booking: fee ₹10 + GST ₹1.80, commission ₹50 incl ₹7.63 GST.
+  const FREE_PLAN_ROW = {
+    platform_fee_amount: 10, platform_fee_gst: 1.8,
+    commission_applied: 50, commission_gst: 7.63, gst_rate: 0.18,
+  };
+
+  test('uses the commission EX-GST, not the inclusive figure', () => {
+    expect(platformNetFromBooking(FREE_PLAN_ROW)).toBe(52.37);   // 10 + 42.37
+    // The old expression, kept here as the thing that must never come back.
+    const naive = FREE_PLAN_ROW.platform_fee_amount + FREE_PLAN_ROW.commission_applied;
+    expect(naive).toBe(60);
+    expect(platformNetFromBooking(FREE_PLAN_ROW)).not.toBe(naive);
+  });
+
+  test('net + taxes reconciles to what the guest actually paid us', () => {
+    const net = platformNetFromBooking(FREE_PLAN_ROW);
+    const taxes = FREE_PLAN_ROW.platform_fee_gst + FREE_PLAN_ROW.commission_gst; // 9.43
+    // Guest paid the ₹10 fee + ₹1.80 GST; the host bore the ₹50 commission.
+    expect(Math.round((net + taxes) * 100) / 100).toBe(61.8);
+  });
+
+  test('paid plan (0% commission) is just the fee', () => {
+    expect(platformNetFromBooking({
+      platform_fee_amount: 10, platform_fee_gst: 1.8, commission_applied: 0, commission_gst: 0,
+    })).toBe(10);
+  });
+
+  test('derives the commission GST when the column was not selected', () => {
+    // Same row without commission_gst — falls back to the booking's own gst_rate.
+    expect(platformNetFromBooking({
+      platform_fee_amount: 10, commission_applied: 50, gst_rate: 0.18,
+    })).toBe(52.37);
+  });
+
+  test('defaults to 18% when neither commission_gst nor gst_rate is present', () => {
+    expect(platformNetFromBooking({ platform_fee_amount: 10, commission_applied: 50 })).toBe(52.37);
+  });
+
+  test('a free (₹0) booking yields nothing', () => {
+    expect(platformNetFromBooking({ platform_fee_amount: 0, commission_applied: 0 })).toBe(0);
+  });
+
+  test('missing / malformed rows never produce negative revenue', () => {
+    expect(platformNetFromBooking(null)).toBe(0);
+    expect(platformNetFromBooking({})).toBe(0);
+    expect(platformNetFromBooking({ commission_applied: 10, commission_gst: 999 })).toBe(0);
+  });
+});

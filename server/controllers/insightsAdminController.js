@@ -10,6 +10,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const communicationEngine = require('../services/email/communicationEngine');
 const aisensy = require('../services/aisensyService');
+const { platformNetFromBooking } = require('../lib/pricingEngine');
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -44,10 +45,11 @@ const median = (arr) => {
   return round1(m);
 };
 
-// Platform revenue on a paid booking = platform fee + commission collected.
-// GST is a pass-through liability, not revenue (matches getStats).
-const bookingRevenue = (b) =>
-  (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+// Platform revenue on a paid booking = platform fee + commission EX-GST.
+// GST is a pass-through liability, not revenue (matches getStats). The fee is
+// stored ex-GST but the commission is GST-INCLUSIVE, so they cannot be summed
+// raw — platformNetFromBooking backs the commission's GST out first.
+const bookingRevenue = (b) => platformNetFromBooking(b);
 
 const getKpis = async (req, res) => {
   try {
@@ -57,7 +59,7 @@ const getKpis = async (req, res) => {
 
     // ── Bookings (one scan drives revenue, conversion + booking counts) ──
     // v1.7 fallback: commission_applied may not exist yet (see getStats).
-    const FULL_COLS = 'id, host_id, payment_status, platform_fee_amount, platform_fee_gst, commission_applied, vendor_amount, customer_total, created_at';
+    const FULL_COLS = 'id, host_id, payment_status, platform_fee_amount, platform_fee_gst, commission_applied, commission_gst, vendor_amount, customer_total, created_at';
     const CORE_COLS = 'id, host_id, payment_status, platform_fee_amount, created_at';
     let bookingsRes = await supabaseAdmin.from('bookings').select(FULL_COLS);
     if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
