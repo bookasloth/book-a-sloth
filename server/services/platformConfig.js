@@ -62,6 +62,11 @@ const toBool = (raw, fallback) => {
 const CACHE_TTL_MS = 60 * 1000;
 let _cache = { at: 0, value: null };
 
+// Last successfully-read config, kept BEYOND the cache TTL. A failed read serves
+// this instead of reverting to DEFAULTS — see getConfig. Null until the first
+// successful read (cold start), which is the only time DEFAULTS are served.
+let _lastGood = null;
+
 // Coerce a platform_settings value into a finite number. Values may be raw
 // numbers, numeric strings, or JSON-stringified MULTIPLE times (a buggy admin
 // save re-encoded them, e.g. "\"\\\"0.18\\\"\""). Unwrap every JSON layer
@@ -92,10 +97,16 @@ const getConfig = async () => {
   let payoutReconcilerMode = DEFAULTS.payoutReconcilerMode;
   let routeAutopilot = DEFAULTS.routeAutopilot;
   try {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('platform_settings')
       .select('key, value')
       .in('key', ['platform_fee', 'platform_fee_gst_rate', 'settlement_clearing_days', 'fee_only_mode', 'payout_reconciler_mode', 'route_autopilot']);
+    // supabase-js RETURNS errors, it does not throw. Destructuring only `data`
+    // meant a failed read looked identical to an empty table: the loop below ran
+    // zero times, every setting silently reverted to DEFAULTS, and the catch
+    // that was written to surface exactly this never fired. Raise it so the
+    // last-known-good path below actually runs.
+    if (error) throw error;
     for (const row of data || []) {
       if (row.key === 'platform_fee') platformFee = toNumber(row.value, DEFAULTS.platformFee);
       if (row.key === 'platform_fee_gst_rate') gstRate = toNumber(row.value, DEFAULTS.gstRate);
@@ -105,10 +116,21 @@ const getConfig = async () => {
       if (row.key === 'route_autopilot') routeAutopilot = toBool(row.value, DEFAULTS.routeAutopilot);
     }
   } catch (err) {
-    // A DB blip silently reverts platform_fee / gstRate to hardcoded defaults
-    // (₹10 / 18%) — a mispricing risk if the admin has configured different
-    // values. Surface it so the fallback isn't invisible.
-    securityLog('platform_config_db_fallback', { error: err?.message });
+    // Serve the LAST GOOD config rather than reverting to DEFAULTS. A blip must
+    // never change a live money setting: reverting would force fee_only_mode
+    // back ON (hosts stop being able to sell), and would quietly reset
+    // platform_fee / gstRate to ₹10 / 18% for any admin who had tuned them.
+    // DEFAULTS are only correct on a cold start, where there is nothing better.
+    securityLog('platform_config_db_fallback', {
+      error: err?.message,
+      served: _lastGood ? 'last_known_good' : 'defaults_cold_start',
+    });
+    if (_lastGood) {
+      // Re-arm the TTL so a sustained outage doesn't hammer the DB every call.
+      _cache = { at: now, value: _lastGood };
+      return _lastGood;
+    }
+    return { ...DEFAULTS };
   }
 
   // Guard against nonsensical config
@@ -118,9 +140,14 @@ const getConfig = async () => {
   clearingDays = Math.floor(clearingDays);
 
   _cache = { at: now, value: { platformFee, gstRate, clearingDays, feeOnlyMode, payoutReconcilerMode, routeAutopilot } };
+  _lastGood = _cache.value;
   return _cache.value;
 };
 
+// Drops the TTL cache so the next call re-reads (used after an admin edit).
+// Deliberately KEEPS _lastGood: clearing it would re-expose the cold-start path,
+// so an admin save immediately followed by a DB blip would revert to DEFAULTS —
+// the exact failure this module now prevents.
 const clearCache = () => { _cache = { at: 0, value: null }; };
 
 module.exports = { getConfig, clearCache, DEFAULTS };

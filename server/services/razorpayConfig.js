@@ -26,6 +26,11 @@ const KEYS = {
 
 const CACHE_TTL_MS = 60 * 1000;
 let _cache = { at: 0, value: null };
+
+// Last successfully-read credentials, kept BEYOND the cache TTL. A failed read
+// serves these instead of dropping to env vars — see the catch in getConfig.
+// Null until the first successful read (cold start).
+let _lastGood = null;
 let _client = { keyId: null, keySecret: null, instance: null };
 
 // platform_settings values may be raw or JSON-stringified — unwrap one layer.
@@ -48,8 +53,12 @@ async function getConfig() {
   let mode = 'test';
 
   try {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('platform_settings').select('key, value').in('key', Object.values(KEYS));
+    // supabase-js RETURNS errors rather than throwing, so destructuring only
+    // `data` made a failed read look like "no rows configured" and fall through
+    // to the env credentials below — silently, because the catch never ran.
+    if (error) throw error;
     const map = {};
     for (const row of data || []) map[row.key] = unwrap(row.value);
 
@@ -64,13 +73,25 @@ async function getConfig() {
       enabled = !!(keyId && keySecret);
     }
   } catch (err) {
-    // Silent fallback to env creds masks a DB outage while payments quietly
-    // run on whatever env vars happen to be set (or none). Emit a security
-    // event so the fallback is observable instead of invisible.
-    securityLog('razorpay_config_db_fallback', { error: err?.message });
+    // Serve the LAST GOOD credentials rather than dropping to env vars. Falling
+    // back would point live payments at whatever RAZORPAY_* the host happens to
+    // have set — a different account, a test key, or nothing at all (which
+    // flips `enabled` false and blocks checkout). Env creds are only the right
+    // answer on a cold start, where there is nothing better to serve.
+    securityLog('razorpay_config_db_fallback', {
+      error: err?.message,
+      served: _lastGood ? 'last_known_good' : 'env_cold_start',
+    });
+    if (_lastGood) {
+      // Re-arm the TTL so a sustained outage doesn't hammer the DB every call.
+      _cache = { at: now, value: _lastGood };
+      return _lastGood;
+    }
+    return { keyId, keySecret, webhookSecret, enabled, mode };
   }
 
   _cache = { at: now, value: { keyId, keySecret, webhookSecret, enabled, mode } };
+  _lastGood = _cache.value;
   return _cache.value;
 }
 
@@ -93,6 +114,10 @@ const getKeySecret = async () => (await getConfig()).keySecret;
 const getWebhookSecret = async () => (await getConfig()).webhookSecret;
 const isConfigured = async () => { const c = await getConfig(); return !!(c.keyId && c.keySecret); };
 
+// Drops the TTL cache so the next call re-reads (used after an admin saves).
+// Deliberately KEEPS _lastGood: if the re-read then fails, serving the previous
+// working credentials beats dropping to env vars. Worst case that is one stale
+// key until the DB recovers; the alternative is charging on the wrong account.
 const clearCache = () => {
   _cache = { at: 0, value: null };
   _client = { keyId: null, keySecret: null, instance: null };
