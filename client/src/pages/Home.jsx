@@ -62,50 +62,8 @@ import PricingCards from "../components/pricing/PricingCards";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
 
-/* Hero headline — the adjective after "everything" cycles with a typewriter.
-   Same tick pattern as about/HeroV2.jsx (typing + backspace, one setTimeout). */
-const CALM_WORDS = ["Calmer", "Smoother", "Easier", "Lighter", "Simpler"];
-
-function useTypewriter(words, enabled) {
-  const [text, setText] = useState(words[0]);
-  useEffect(() => {
-    if (!enabled) return; // reduced motion → static first word
-    let wi = 0, ci = words[0].length, deleting = true, raf;
-    const tick = () => {
-      const word = words[wi];
-      ci += deleting ? -1 : 1;
-      setText(word.slice(0, ci));
-      let delay = deleting ? 45 : 95;
-      if (!deleting && ci === word.length) { deleting = true; delay = 1500; }
-      else if (deleting && ci === 0) { deleting = false; wi = (wi + 1) % words.length; delay = 280; }
-      raf = window.setTimeout(tick, delay);
-    };
-    raf = window.setTimeout(tick, 1600); // hold "Calmer" before the first cycle
-    return () => window.clearTimeout(raf);
-  }, [words, enabled]);
-  return text;
-}
-
-/* Cycling word only — inherits the parent's primary colour; the sentence's
-   period stays static + black outside this. sr-only keeps the headline a clean
-   sentence for screen readers and prerender. */
-function CalmerWord() {
-  const reduce = useReducedMotion();
-  const text = useTypewriter(CALM_WORDS, !reduce);
-  return (
-    <span className="whitespace-nowrap text-primary-cta">
-      <span aria-hidden="true">{text}</span>
-      {!reduce && (
-        <span
-          aria-hidden="true"
-          className="ml-0.5 inline-block w-[2px] animate-pulse align-[-0.05em] bg-primary"
-          style={{ height: "0.9em" }}
-        />
-      )}
-      <span className="sr-only">Calmer</span>
-    </span>
-  );
-}
+/* Hero headline is a single static line now — the old cycling-word typewriter
+   ("Calmer / Smoother / …") was retired with the copy reposition. */
 
 /* Real funnel routes — do not point CTAs anywhere else. */
 const ROUTE_START = "/be-a-sloth";
@@ -128,7 +86,7 @@ const HOME_JSONLD = [
     operatingSystem: "Web",
     url: SITE_URL,
     description:
-      "Book A Sloth gives India's creators and professionals one booking link — clients book, pay over UPI, and the money lands in their account.",
+      "Book A Sloth is the appointment booking and payment system for professionals who sell their time — appointment scheduling, booking and payment, availability, invoices and appointment reminders in one link.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
     // Users' rating of the product. SoftwareApplication (not Organization) is the
     // snippet-eligible node for a self-hosted rating. KEEP TRUTHFUL: reviewCount
@@ -161,7 +119,7 @@ const HOME_JSONLD = [
     "@type": "WebSite",
     name: "Book A Sloth",
     url: SITE_URL,
-    description: "Get booked and paid with one link — bookings, UPI payments and reminders.",
+    description: "Online booking system for people who sell their time — appointment scheduling, booking and payment, and appointment reminders in one link.",
     potentialAction: {
       "@type": "SearchAction",
       target: `${SITE_URL}/search?q={search_term_string}`,
@@ -371,8 +329,8 @@ export const STATS = [
 const FEATURE_GROUPS = [
   { icon: CalendarCheck, title: "Get booked", desc: "Your page is live 24/7. Clients book while you sleep.", items: ["Personal booking page", "Availability management", "Two-way calendar sync"] },
   { icon: Wallet, title: "Get paid", desc: "Money in before the session. No invoicing, no chasing.", items: ["Razorpay — UPI, cards, netbanking", "Advance & full payments", "Automatic GST invoices"] },
-  { icon: FolderKanban, title: "Stay organized", desc: "Every client, every booking, every rupee — in one place.", items: ["Client history & receipts", "Private notes", "Bookings & revenue reports"] },
-  { icon: BellRing, title: "Reduce no-shows", desc: "Gentle reminders that go out automatically. You don't lift a finger.", items: ["Email & WhatsApp reminders", "Instant confirmations", "Post-session follow-ups"] },
+  { icon: BellRing, title: "Get reminded", desc: "Automatic reminders and confirmations go out for you — no no-shows to chase.", items: ["Email & WhatsApp reminders", "Instant confirmations", "Post-session follow-ups"] },
+  { icon: FolderKanban, title: "Get organized", desc: "Every client, every booking, every rupee — in one place.", items: ["Client history & receipts", "Private notes", "Bookings & revenue reports"] },
 ];
 
 
@@ -566,16 +524,16 @@ const Home = () => {
   return (
     <main id="top" className="overflow-x-clip bg-canvas text-ink">
       <Seo
-        title="Book A Sloth — the booking link that gets you paid"
-        description="Share one link — clients book, pay over UPI, and the money lands in your account. Book A Sloth is the booking page for India's creators, coaches, tutors and studios. Instant UPI payouts, reminders and calendar sync — set up in about a minute."
-        keywords="booking link, get paid for bookings, UPI payments booking, appointment booking India, online booking page, creator booking, coach booking software, consultant scheduling, tutor booking, freelancer payments, instant payout, calendar scheduling, India"
+        title="Appointment Booking & Payment Software for People Who Sell Their Time — Book A Sloth"
+        description="Book A Sloth is the online booking system for professionals who sell their time. One link handles appointment scheduling, booking and payment, availability, invoices and appointment reminders — clients book and pay themselves, so you skip the admin. Built for India."
+        keywords="appointment booking software, online booking system, appointment scheduling, booking and payment, appointment reminders, appointment scheduling software, online appointment booking, take payments for appointments, booking page, India"
         canonical={`${SITE_URL}/`}
         robots="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
         siteName="Book A Sloth"
         locale="en_IN"
         themeColor="#F5B700"
-        ogTitle="Book A Sloth — the booking link that gets you paid"
-        ogDescription="Share one link — clients book, pay over UPI, money lands in your account. For India's creators, coaches and studios."
+        ogTitle="Get booked, paid, and reminded. Without the admin."
+        ogDescription="One link for appointments, payments, availability, invoices, and reminders. Built for people who sell their time."
         image={OG_IMAGE}
         jsonLd={HOME_JSONLD}
       />
@@ -594,17 +552,14 @@ const Home = () => {
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT */}
           <div>
-            <Reveal instant as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
-              You sell your time.
-              <br />
-              <span className="font-bold">We make <span className="text-primary-cta">everything</span>
-                <br />
-                <CalmerWord /> around it.</span>
+            <Reveal instant as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
+              Get <span className="text-primary-cta">booked, paid, and reminded.</span>{" "}
+              <span className="font-bold">Without the admin.</span>
             </Reveal>
 
             <Reveal instant as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
-              Get booked &amp; get paid. Let clients book appointments, pay, and get
-              reminders automatically. Built for India. Set up in 3 minutes and skip the admin.
+              One link for appointments, payments, availability, invoices, and reminders.
+              Built for people who sell their time.
             </Reveal>
 
             {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
@@ -616,14 +571,12 @@ const Home = () => {
                   className="btn flex w-full items-center justify-center gap-3 rounded-[5px] bg-ink py-3.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(16,24,40,0.16)] transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   <GoogleIcon />
-                  {googleLoading ? "Opening Google…" : "Continue with Google Account"}
+                  {googleLoading ? "Opening Google…" : "Create Your Free Booking Page"}
                 </button>
                 <p className="mt-3 text-xs leading-relaxed text-neutral-500">
                   By continuing, you agree to our{" "}
                   <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
-                  <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
-                  Why we{" "}
-                  <a href="#how-google" className="font-medium text-primary-cta underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
+                  <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.
                 </p>
               </div>
             </Reveal>
@@ -707,16 +660,13 @@ const Home = () => {
               render in the DOM (CSS-hidden per breakpoint), so this one is an h2
               to keep a single H1 per page for crawlers. */}
           <Reveal instant as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
-            You sell your time.
-            <br />
-            <span className="font-bold">We make <span className="text-primary-cta">everything</span>
-                <br />
-                <CalmerWord /> around it.</span>
+            Get <span className="text-primary-cta">booked, paid, and reminded.</span>{" "}
+            <span className="font-bold">Without the admin.</span>
           </Reveal>
 
           <Reveal instant as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
-            Get booked &amp; get paid. Let clients book appointments, pay, and get
-            reminders automatically. Built for India. Set up in 3 minutes and skip the admin.
+            One link for appointments, payments, availability, invoices, and reminders.
+            Built for people who sell their time.
           </Reveal>
 
           {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
@@ -728,14 +678,12 @@ const Home = () => {
                 className="btn btn--outline flex w-full items-center justify-center gap-3 rounded-[5px] border border-black/[0.12] bg-white py-3.5 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-black/20 disabled:opacity-50"
               >
                 <GoogleIcon />
-                {googleLoading ? "Opening Google…" : "Continue with Google Account"}
+                {googleLoading ? "Opening Google…" : "Create Your Free Booking Page"}
               </button>
               <p className="mt-3 text-xs leading-relaxed text-neutral-500">
                 By continuing, you agree to our{" "}
                 <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
-                <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
-                Why we{" "}
-                <a href="#how-google" className="font-medium text-primary-cta underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
+                <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.
               </p>
             </div>
           </Reveal>
@@ -765,11 +713,11 @@ const Home = () => {
       {/* ════════════════ STATS STRIP (dark) ════════════════ */}
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-base font-semibold uppercase tracking-[0.2em] text-primary-cta sm:text-lg">
-            The calm starts here
+          <Reveal as="p" className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-primary-cta sm:text-sm">
+            Built for people who sell their time
           </Reveal>
-          <Reveal as="h2" delay={0.05} style={{ textWrap: "balance" }} className="mx-auto mt-3 max-w-[34rem] text-center text-4xl text-white sm:text-5xl">
-            Early, intentional, and built to last.
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[64rem] text-center text-2xl text-white sm:text-3xl">
+            Coaches, Doctors, Consultants, Therapists and Designers already getting appointments booked and paid.
           </Reveal>
           <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4 lg:gap-x-0 lg:divide-x lg:divide-white/10">
             {STATS.map((s, i) => (
@@ -931,11 +879,14 @@ const Home = () => {
       {/* ════════════════ HOW THE CALM WORKS ════════════════ */}
       <section id="how-it-works" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            From link to paid. <span className="font-extrabold text-primary-cta">In three steps.</span>
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
+            Still managing appointments on WhatsApp?
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+            Everything around the appointment, <span className="font-extrabold text-primary-cta">automated.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
-            No back-and-forth. No payment awkwardness. No reminders to write.
+            Choose a service → Pick a time → Pay → Get confirmation → Get reminders.
           </Reveal>
 
           <HowItWorks theme="light" />
@@ -1038,13 +989,13 @@ const Home = () => {
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
-            Everything you need
+            The outcome
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Four jobs. <span className="font-extrabold text-primary-cta">One calm tool.</span>
+            Get <span className="font-extrabold text-primary-cta">booked</span>. Get <span className="font-extrabold text-primary-cta">paid</span>. Get <span className="font-extrabold text-primary-cta">reminded</span>. Get <span className="font-extrabold text-primary-cta">organized</span>.
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
-            Not a feature list — just the four things every service business actually needs, done properly.
+            Everything around the appointment, handled — so you focus on the actual work.
           </Reveal>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
             {featureGroups.map((g, i) => (
@@ -1246,7 +1197,7 @@ const Home = () => {
 
       {/* ════════════ PRICING (shared PricingCards — Sloth + Sloth Active) ════════════ */}
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[860px]">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
             Simple pricing. <span className="text-primary-cta">Zero commission.</span>
           </Reveal>
@@ -1258,10 +1209,7 @@ const Home = () => {
             <PricingCards />
           </Reveal>
 
-          <p className="mt-8 text-center text-sm text-neutral-500">
-            Not sure which plan? <span className="font-semibold text-ink">Start free</span> — you can upgrade in one click, anytime.
-          </p>
-          <p className="mt-4 text-center">
+          <p className="mt-8 text-center">
             <Link to="/pricing" className="text-sm font-semibold text-primary-cta hover:text-primary-dark hover:underline">
               Compare all plans &amp; features →
             </Link>
