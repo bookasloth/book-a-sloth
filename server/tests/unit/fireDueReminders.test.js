@@ -20,6 +20,7 @@ jest.mock('../../middleware/planMiddleware', () => ({
 }));
 jest.mock('../../services/planService', () => ({
   resolveVendorPlan: jest.fn(() => 'professional'),
+  isFreeSlug: jest.fn(() => false), // paid → sendBookingReminder keeps WhatsApp on
   reminderWindowsForPlan: jest.fn().mockResolvedValue([24, 1]),
   rescheduleNotifyForPlan: jest.fn().mockResolvedValue(true),
   getPlan: jest.fn(),
