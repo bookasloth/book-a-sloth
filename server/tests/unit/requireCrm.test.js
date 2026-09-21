@@ -25,6 +25,14 @@ describe('requireCrm (Studio gate)', () => {
     expect(next).toHaveBeenCalled();
   });
 
+  test('free Sloth (limits.crm=10, capped view) → next()', async () => {
+    const next = jest.fn();
+    const res = mockRes();
+    await requireCrm({ vendorPlan: 'free', vendorPlanData: { limits: { crm: 10 } } }, res, next);
+    expect(next).toHaveBeenCalled();       // a positive cap now grants access; the cap itself is enforced in crmService
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   test('Starter (limits.crm=0) → 403 upgrade_required', async () => {
     const next = jest.fn();
     const res = mockRes();

@@ -48,3 +48,11 @@ test('free plan caps free (₹0) services; premium does not', async () => {
   expect(await planService.getLimit('free', 'free_services')).toBe(2);
   expect(await planService.getLimit('premium', 'free_services')).toBe(-1);
 });
+
+// Free gets a CAPPED CRM view (10 most recent) — not a hard block (crm:0) and not
+// unlimited. requireCrm now lets any positive limit through; crmService.listClients
+// enforces the "10 most recent" cap. Premium is unlimited.
+test('free plan gets a capped CRM (10); premium is unlimited', async () => {
+  expect(await planService.getLimit('free', 'crm')).toBe(10);
+  expect(await planService.getLimit('premium', 'crm')).toBe(-1);
+});
