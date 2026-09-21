@@ -38,6 +38,13 @@ on:
     # workflow_dispatch has no path filter, so a forced re-deploy always runs.
     paths:
       - 'client/**'
+      # docs/help is the ONE docs directory that ships in the client bundle:
+      # client/src/content/helpDocs.js inlines it at build time via
+      # import.meta.glob, and the /help/docs/* pages prerender from it. Without
+      # this line a help-article-only merge never redeploys, so /help keeps
+      # serving the previous text indefinitely while Bolt (reseeded from the
+      # same files) moves on. Every other docs/ directory is still skipped.
+      - 'docs/help/**'
       - '.github/workflows/deploy-vercel.yml'
   workflow_dispatch: {}
 
