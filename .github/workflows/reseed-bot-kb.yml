@@ -71,3 +71,13 @@ jobs:
           SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+          # Both seed scripts only ever use supabaseAdmin, but config/supabase.js
+          # eagerly constructs the PUBLIC anon client at require time as well, and
+          # createClient throws "supabaseKey is required" on an empty key. With no
+          # anon key in this job, every run died on the first require — before the
+          # delete, so nothing was lost, but nothing was ever reseeded either. The
+          # anon client is never called here, so any non-empty value satisfies
+          # construction without granting anything; a real key would add a secret
+          # to manage for no benefit. Deliberately NOT fixed in config/supabase.js:
+          # on the live server a missing anon key SHOULD fail loudly.
+          SUPABASE_ANON_KEY: unused-by-seed-scripts
