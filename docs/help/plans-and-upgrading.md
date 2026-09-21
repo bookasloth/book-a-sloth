@@ -1,427 +1,148 @@
 # Plans and upgrading
 
-Book A Sloth has three plans. See the [pricing](/pricing) page for current prices, limits, and the full comparison.
+Book A Sloth has two plans: **Sloth** and **Sloth Active**. See the [pricing](/pricing) page for the current comparison.
 
 ## The plans
 
-- **Starter** — free forever, with real online payment collection built in. Best for getting started. A 5% commission applies per booking on this tier.
-- **Host+** — a flat annual price, **0% commission**, higher limits, custom branding, reminders, and auto invoices.
-- **Studio** — everything in Host+ plus unlimited services and bookings, advanced analytics, client CRM, and premium branding.
+- **Sloth** — free forever. Unlimited services and bookings, your booking page, online payments, 24-hour booking reminders, and GST invoices. We take a **5% commission** when you actually get paid, and nothing when you don't.
+- **Sloth Active** — **₹399 a month**, or **₹3,599 a year** (under ₹10 a day, and about 25% cheaper than paying monthly). Commission drops to **0%**, and you get the Client CRM, 1-hour reminders and reschedule alerts, follow-up and rebook automation, unlimited digital products, a second calendar integration, unlimited AI service writing, and priority WhatsApp support.
 
-Exact prices, limits, and what's included live on the [pricing](/pricing) page, since they can change.
+All prices include GST. Exact figures and the full comparison live on the [pricing](/pricing) page.
+
+## Which plan should I choose?
+
+Start on Sloth. It is a complete booking business, not a trial — there is no time limit and no card required.
+
+Sloth Active pays for itself once the 5% commission costs more than the subscription. That happens at roughly **₹6,000 a month** in bookings on the yearly plan. Below that, staying free genuinely keeps you more money, and your dashboard shows exactly how much commission you have paid so far so the decision is a calculation rather than a guess.
+
+## Is there a free plan?
+
+Yes. Sloth is free forever, with real online payment collection built in.
+
+## Does the free plan limit my services or bookings?
+
+No. Both plans include unlimited services, unlimited bookings, and unlimited service categories.
+
+Sloth caps two things that cost us money to run: **digital products** (3) and **AI service writing** (10 generations every 6 months). Sloth Active removes both.
+
+## What does "0% commission" mean?
+
+On Sloth Active we take no percentage of your booking price — you keep the full amount, minus the payment-gateway fee and any statutory taxes. On Sloth, a 5% commission applies per booking. A separate flat booking fee is paid by your guest on both plans; see [pricing and commission](/help/pricing-and-commission).
 
 ## Upgrading
 
-Upgrade any time from **Upgrade** in your dashboard. Upgrading is additive — your existing bookings, history, and your page link stay exactly as they are. Your new limits and features apply right away once payment goes through.
+Upgrade any time from **Upgrade** in your dashboard. Upgrading is additive — your existing bookings, history, clients, and your page link stay exactly as they are. Your new features apply as soon as payment goes through.
 
-## My plan shows as free after I paid
+## Can I pay monthly instead of yearly?
 
-Plan activation can take a few minutes after payment. If it's still not active after about 15 minutes, reach us from the [Help](/help) page with your payment details and we'll activate it.
+Yes. Both cadences are on the **Upgrade** page. Yearly costs less overall; monthly is the smaller commitment.
 
-## My plan expired
+## Can I switch between monthly and yearly?
 
-An expired paid plan automatically drops back to the free Starter tier and its limits. Renew from the **Upgrade** page to restore your paid features.
-
-## Cancelling
-
-You can cancel a plan any time — there's no lock-in beyond the billing period you've already paid for. Your booking history and data stay accessible.
-
-## What is a subscription plan on Book A Sloth?
-
-A subscription plan gives hosts access to platform features and sets limits on services, digital products, theme colours, reminder flows, and more. Choose the plan that fits your business.
-
-## Why do I need a subscription plan?
-
-It unlocks features for your business — more services and digital products, extra customization, and room to grow.
-
-## What subscription plans are available?
-
-Three plans: **Starter**, **Host+**, and **Studio**. Higher plans raise service limits, booking capacity, digital products, customization, and premium features.
-
-## Is there a free plan available?
-
-Yes. The **Starter** plan is free, letting you start offering services with limited features before upgrading.
-
-## What features are included in the Starter plan?
-
-A limited number of services, digital products, theme colours, and bookings — designed for getting started.
-
-## What is included in the Host+ plan?
-
-Higher limits for services, bookings, digital products, and theme colours, plus 0% booking commission and more reminder and follow-up automation than Starter.
-
-## What is included in the Studio plan?
-
-The highest limits — unlimited services and bookings, more theme colours, and additional reminder automation for a growing business.
-
-## Can I upgrade my subscription plan?
-
-Yes, any time you need more features or higher limits. It activates after successful payment.
-
-## Can I downgrade my subscription plan?
-
-Yes. You can move to a lower plan, though your available limits may decrease.
-
-## How do I purchase a subscription plan?
-
-Go to the Plans section, choose a plan, and complete payment through the secure Razorpay checkout.
-
-## Which payment gateway is used for subscription plans?
-
-Razorpay. Your subscription activates after successful payment verification.
-
-## How do I know if my subscription is active?
-
-Your dashboard shows your active plan, renewal information, and feature limits.
-
-## Can I change my plan after purchasing it?
-
-Yes. Upgrade or change any time; your features and limits update accordingly.
-
-## What happens if my subscription expires?
-
-Your account automatically falls back to the free Starter plan until you renew.
-
-## Will I lose my services if my plan expires?
-
-Your account stays active, but limits drop to Starter's. If you exceed them, renew or upgrade.
-
-## Can I renew my subscription before it expires?
-
-Yes, to keep premium features without interruption.
+Yes. Switching applies your unused time as free days on the new cadence, so you are never charged twice for the same period.
 
 ## Does my subscription renew automatically?
 
-Some plans support auto-renewal through Razorpay subscriptions. Check your subscription settings in the dashboard.
+Yes. Sloth Active renews automatically at the end of each period until you cancel. You will get a reminder email before it renews.
 
-## Can I cancel my subscription?
+## Cancelling
 
-Yes. If it's set to auto-renew, cancel the renewal; your current plan stays active until the period ends.
+You can cancel any time — there is no lock-in beyond the billing period you have already paid for. Your plan stays active until that period ends, then your account returns to Sloth.
 
-## What happens after I cancel my subscription?
+## What happens when my plan expires or I cancel?
 
-Your plan stays active until the current billing period ends, then switches to Starter.
+Your account returns to the free Sloth plan. **Nothing is deleted.** Your services, bookings, clients, digital products, earnings history, and booking link all stay exactly as they are — you simply lose the Sloth Active features (0% commission, the Client CRM, the extra automation) until you resubscribe.
 
-## Can I purchase the same subscription again?
+## Will I lose my services, clients or digital products?
 
-Yes. If it expired, buy the same plan again any time to restore premium features.
+No. Plan changes never delete your data.
 
-## Why isn't my subscription active after payment?
+If you had more digital products than the free plan includes, the existing ones keep working and stay visible — you just cannot add new ones until you are back under the limit or resubscribe.
 
-Confirmation can take a few minutes via webhook processing. The platform checks pending payments and usually updates within about 15 minutes.
+## Can I keep accepting bookings after my plan expires?
 
-## I paid for my subscription but it still shows the Starter plan — what should I do?
+Yes. Bookings are unlimited on both plans. The 5% commission applies again while you are on Sloth.
 
-Wait about 15 minutes for reconciliation. If it's still not active, contact Support with your Razorpay payment or subscription ID.
+## Can I renew after it has expired?
 
-## Can I purchase a subscription during onboarding?
+Yes, any time from the **Upgrade** page. Renewing restores your Sloth Active features immediately.
 
-Yes. Choosing and paying for a plan is one of the final onboarding steps.
+## Can I renew before it expires?
 
-## Can I change my subscription plan during onboarding?
+Yes. Renewing early extends your existing period rather than replacing it.
 
-Yes. Select the plan that best suits your business before completing onboarding.
+## Will I get a reminder before my subscription expires?
 
-## Who should I contact if I have a subscription issue?
+Yes — we email you before your plan renews or lapses, so a renewal is never a surprise.
 
-For purchasing, renewing, activating, or cancelling issues, contact Support with your registered email or phone number and your payment or subscription reference.
+## My plan shows as free after I paid
 
-## Can I compare subscription plans before purchasing?
+Plan activation can take a few minutes after payment. If it is still not active after about 15 minutes, reach us from the [Help](/help) page with your payment details and we will sort it out.
 
-Yes. Book A Sloth shows each plan's features and limits so you can compare on the [pricing](/pricing) page.
+## My payment was deducted but the plan is not active
 
-## Which subscription plan should I choose?
+Contact us from the [Help](/help) page with the payment reference. If the payment succeeded we will activate the plan; if it failed, the amount is returned by your bank — a deducted-but-failed payment is normally reversed within a few working days.
 
-Start with Starter. As you need more services, products, and bookings, upgrade to Host+ or Studio.
+## What if my payment is pending?
 
-## Can I upgrade my subscription anytime?
+Wait a few minutes and refresh the **Upgrade** page. Pending UPI and card payments usually settle quickly. If it is still pending after a while, contact us rather than paying again.
 
-Yes. The new plan activates after successful payment.
+## Can I pay by UPI, card or netbanking?
 
-## Will my existing bookings be affected after upgrading?
+Yes. Subscription payments go through Razorpay, which supports UPI, cards, netbanking and wallets.
 
-No. Upgrading only raises limits and features; bookings, services, and customers stay unchanged.
+## Do I get an invoice for my subscription?
 
-## Will my Digital Products remain after upgrading?
+Yes. A GST tax invoice is issued for every subscription charge, and past invoices are available from your dashboard.
 
-Yes. Upgrading simply lets you publish more if you'd hit a limit.
+## Where can I see my payment history?
 
-## What happens if I exceed my subscription limits?
+On the **Upgrade** page in your dashboard, along with your renewal date and current plan.
 
-You'll need to upgrade before creating more services or Digital Products.
+## How do I check my current plan and renewal date?
 
-## Can I see my remaining plan limits?
+Your plan is shown in your dashboard, and the **Upgrade** page shows the renewal or expiry date.
 
-Yes. Your dashboard shows used resources and available limits.
+## Can I see how much commission I have paid?
 
-## Does upgrading unlock more services?
+Yes. Your dashboard shows the commission total across your paid bookings — that number is the honest case for upgrading.
 
-Yes. Higher plans allow more services than Starter.
+## Will my customers know which plan I am on?
 
-## Does upgrading unlock more Digital Products?
+No. Your plan is never shown on your public booking page, and upgrading does not change how your page looks to guests.
 
-Yes. Host+ and Studio allow more Digital Products than Starter.
+## Does upgrading change my profile URL or booking links?
 
-## Does upgrading increase my booking limit?
-
-Yes. Premium plans provide higher booking capacity.
-
-## Does my subscription affect reminder automations?
-
-Yes. Higher-tier plans include more reminder and follow-up automation.
-
-## Does my subscription affect theme customization?
-
-Yes. Premium plans offer more theme colour options than Starter.
-
-## Can I purchase a subscription using UPI?
-
-Yes. Razorpay supports UPI, cards, net banking, and other methods.
-
-## Can I pay using a debit or credit card?
-
-Yes. Razorpay supports debit and credit cards and other methods.
-
-## Can I receive an invoice for my subscription?
-
-Yes. Access your payment details and invoice from your account, or contact Support.
-
-## Can I view my subscription payment history?
-
-Yes. Your account keeps a record of subscription payments to review any time.
-
-## What should I do if my payment is deducted but my subscription isn't activated?
-
-Wait a few minutes for verification. If it's still not active after reconciliation, contact Support with your payment details.
-
-## Will I receive a confirmation after purchasing a subscription?
-
-Yes. After verification, your account updates to the selected plan and you receive confirmation.
-
-## Can I change my subscription more than once?
-
-Yes, whenever needed, provided the plan is available.
-
-## Can businesses of any size use Book A Sloth subscription plans?
-
-Yes. The plans suit individuals, creators, professionals, and growing businesses.
-
-## Does upgrading my subscription change my public profile?
-
-No. Your profile stays the same; upgrading only unlocks features and raises limits.
-
-## Will my customers know which subscription plan I'm using?
-
-No. Plans manage your account features and limits; customers only see your services and products.
-
-## Can I continue accepting bookings while changing my subscription?
-
-Yes. Existing bookings continue as normal unless there's an unexpected payment issue.
-
-## Can I contact support before purchasing a subscription?
-
-Yes. If you're unsure which plan is right, contact Support for guidance.
-
-## Who should I contact for subscription billing issues?
-
-For billing problems, payment failures, incorrect charges, or activation issues, contact Support with your registered email or phone and your Razorpay payment or subscription ID.
-
-## Can I upgrade my subscription immediately after signing up?
-
-Yes. Choose a higher plan whenever you need more features or limits.
-
-## Do subscription plans have different booking capacities?
-
-Yes. Higher-tier plans allow more bookings to support growth.
-
-## Can I switch from the Studio plan back to the Host+ plan?
-
-Yes. Your account limits update to the selected plan.
-
-## Will I lose my customer data after changing plans?
-
-No. Changing plans doesn't remove customer information, booking history, or profile details.
-
-## Does changing my plan affect my earnings?
-
-No. Existing earnings stay in your dashboard; changing plans only affects features and limits.
-
-## Can I continue receiving bookings after my plan expires?
-
-Your account moves to Starter after expiry; whether you keep accepting bookings depends on Starter's limits.
-
-## Will my published services be removed if I downgrade?
-
-No. Existing services aren't deleted, but if they exceed the new plan's limits you may need to reduce them before adding new ones.
-
-## Will my Digital Products be deleted after downgrading?
-
-No. Existing products remain; your ability to publish more depends on the current plan's limits.
-
-## How can I check my current subscription plan?
-
-View your active subscription, status, and expiry from your dashboard.
-
-## Can I see my subscription expiry date?
-
-Yes. Your dashboard shows the expiry or renewal date.
-
-## Will I receive a reminder before my subscription expires?
-
-Book A Sloth may send reminders before expiry so you can renew without interruption.
-
-## Can I renew my subscription after it has expired?
-
-Yes. Purchase or renew a plan any time to regain premium features.
-
-## Can I upgrade if I have already reached my plan limits?
-
-Yes. Upgrading immediately raises your available limits.
-
-## Does upgrading affect my profile URL?
-
-No. Your profile URL stays the same.
-
-## Will my booking links change after upgrading?
-
-No. Existing booking links keep working; upgrading only unlocks features and higher limits.
-
-## Does my subscription affect appointment reminders?
-
-Yes. Premium plans include additional reminder and follow-up automation.
-
-## Can I purchase a subscription from my mobile phone?
-
-Yes, from any supported device — mobile, tablet, or desktop.
-
-## What should I do if my subscription payment is pending?
-
-Wait a few minutes for verification. If it stays pending, contact Support with your payment reference.
-
-## Can I use Book A Sloth without purchasing a subscription?
-
-Yes. Start on the free Starter plan and upgrade later.
-
-## Can I upgrade multiple times?
-
-Yes, whenever your business needs more resources or features.
-
-## Is my subscription linked to my account?
-
-Yes. It's applied automatically after successful payment verification.
-
-## Can I transfer my subscription to another account?
-
-No. Subscriptions belong to the account that purchased them.
-
-## Does every host need their own subscription?
-
-Yes. Each host account manages its own plan, features, and limits.
-
-## Can I contact support to help me choose a subscription plan?
-
-Yes. If you're unsure which plan fits, contact Support for guidance.
-
-## Where can I learn more about subscription plans?
-
-Visit the Plans section in your dashboard or the [pricing](/pricing) page to compare and choose.
-
-## Which subscription plan is best for beginners?
-
-The Starter plan — free forever with essentials to start accepting bookings.
-
-## Which subscription plan is best for freelancers?
-
-The Host+ plan — designed for solo creators, freelancers, and independent professionals who need higher limits and premium features.
-
-## Which subscription plan is recommended for studios?
-
-The Studio plan — ideal for growing businesses, clinics, agencies, and studios needing unlimited services, bookings, and advanced customization.
-
-## What does "0% commission on bookings" mean?
-
-On eligible premium plans, Book A Sloth doesn't deduct a commission from your bookings — you keep the full amount, excluding applicable payment gateway charges.
-
-## Does the Starter plan charge commission?
-
-Yes. Starter includes a 5% commission per booking — good for getting started before upgrading.
-
-## Does the Host+ plan charge booking commission?
-
-No. Host+ offers 0% commission on bookings.
-
-## Does the Studio plan charge booking commission?
-
-No. Studio also includes 0% commission on bookings.
-
-## Can I upgrade from Starter to Host+?
-
-Yes, whenever you need more features, higher limits, or zero booking commission.
-
-## Can I upgrade from Host+ to Studio?
-
-Yes. Upgrade to Studio to unlock unlimited resources and premium features.
-
-## Will my data remain safe after upgrading?
-
-Yes. Upgrading doesn't affect your services, bookings, customers, or account data.
-
-## Does my subscription affect online payments?
-
-Online payment support is available across plans; premium plans add features and higher limits.
-
-## Can I continue using my booking page after upgrading?
-
-Yes. Your booking page stays active; only features and limits expand.
-
-## Can I upgrade during an active subscription?
-
-Yes, any time without creating a new account.
-
-## Is there a limit on bookings in the Starter plan?
-
-Yes. Starter includes an annual booking limit; upgrade for more.
-
-## Does Host+ allow more bookings than Starter?
-
-Yes. Host+ significantly increases booking capacity.
-
-## Does Studio have booking limits?
-
-Studio is built for high volumes and includes unlimited bookings under the current pricing model.
-
-## Can I create unlimited services with the Starter plan?
-
-No. Starter limits the number of services you can create.
-
-## Does Host+ increase my service limit?
-
-Yes. Host+ allows more services than Starter.
-
-## Does Studio include unlimited services?
-
-Yes. Studio includes unlimited services.
-
-## Can I sell Digital Products on every subscription plan?
-
-Availability and limits for Digital Products depend on your plan — see the [pricing](/pricing) page. Upgrade if your current plan doesn't include what you need.
-
-## Which plan is best if I sell many Digital Products?
-
-The Studio plan — it offers the highest limits.
-
-## How do I know when it's time to upgrade my subscription?
-
-When you hit your plan's limits, get more bookings, need more services, or want premium features like zero booking commission.
+No. Your username, profile URL and every booking link stay the same.
 
 ## Will upgrading interrupt my bookings?
 
-No. Bookings continue normally during an upgrade.
+No. Existing bookings are unaffected and you can keep taking new ones throughout.
 
-## Can I compare all subscription plans before purchasing?
+## Can I upgrade during onboarding?
 
-Yes. The [pricing](/pricing) page compares Starter, Host+, and Studio features, limits, and benefits.
+Yes. You can choose Sloth Active while setting up, or publish on Sloth and upgrade later from your dashboard.
 
-## Where can I manage my subscription?
+## Can I use Book A Sloth without paying?
 
-From your dashboard — view your plan, upgrade or renew, review billing, and monitor limits.
+Yes, indefinitely. Sloth is a complete booking business — page, payments, reminders, invoices — with a 5% commission on what you earn.
+
+## Is my subscription linked to my account?
+
+Yes. It applies to the account that purchased it and cannot be transferred to another account. Every host needs their own subscription.
+
+## Can I upgrade more than once?
+
+There is nothing to upgrade through — there is one paid plan. You can cancel and resubscribe as often as you like.
+
+## I am on an older plan (Host+ or Studio)
+
+Those plans are no longer sold, but if you are on one **nothing changes for you**: you keep your original price, your subscription renews as normal, and you have the full Sloth Active feature set. There is nothing you need to do.
+
+## Who do I contact about a subscription or billing issue?
+
+Reach us from the [Help](/help) page. Include your payment reference for anything billing-related and we will get to it quickly.
+
+## Where can I compare the plans?
+
+The [pricing](/pricing) page has the full side-by-side comparison, and the [earnings calculator](/earnings-calculator) shows what you would keep on each plan at your own price and booking volume.
