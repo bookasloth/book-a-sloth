@@ -491,6 +491,9 @@ export const uploadProductFile = (file) => {
 // ── Vendor dashboard ──────────────────────────────────────────
 // Activation funnel: stamp the host's first link-share (fire-and-forget, never blocks UX).
 export const markLinkShared     = ()          => API.post('/vendor/share-signal').catch(() => {});
+// Dashboard "Next step" nudge — server-tracked dismissal (cross-device).
+export const getHostNudges      = ()           => API.get('/host/nudges');
+export const dismissHostNudge   = (key)        => API.post(`/host/nudges/${key}/dismiss`);
 export const getTransactions    = (params)    => API.get('/vendor/transactions', { params });
 export const getPayoutBalance   = ()          => API.get('/vendor/payout/balance');
 export const getPayoutRequests  = ()          => API.get('/vendor/payout/requests');
