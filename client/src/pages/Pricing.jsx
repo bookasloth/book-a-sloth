@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { Check, X } from "lucide-react";
+import { Check, Info } from "lucide-react";
 import Seo from "../components/common/Seo";
+import Tooltip from "../components/common/Tooltip";
 import { ogCard } from "../config/ogImages";
 import { SITE_URL } from "../utils/seo";
-import { PLAN_COLUMNS, PLAN_MATRIX, PLAN_INCLUDED, PREMIUM_PER_DAY, PREMIUM_ANNUAL_SAVE_PCT } from "../data/plans";
+import { PLAN_COLUMNS, PLAN_MATRIX, PREMIUM_PER_DAY, PREMIUM_ANNUAL_SAVE_PCT } from "../data/plans";
 import PricingCards from "../components/pricing/PricingCards";
 import useFeeOnly from "../hooks/useFeeOnly";
 
@@ -33,11 +34,22 @@ const JSON_LD = {
   // when sourced from actual review data — see enterpriseSeo.js for the pattern.
 };
 
-// One comparison cell: ✓ / ✗ for booleans, verbatim text otherwise.
+// One comparison cell: ✓ for true, — for false, verbatim text for a string, and a
+// "Limited" chip + tooltip for a limited(tip) object (so a small free number is
+// never printed bare — the exact figure lives in the tooltip).
 const Cell = ({ value }) => {
   if (value === true) return <Check size={18} className="mx-auto text-primary" aria-label="Included" />;
-  if (value === false)
-    return <X size={16} className="mx-auto text-neutral-300" aria-label="Not included" />;
+  if (value === false) return <span className="text-neutral-300" aria-label="Not included">—</span>;
+  if (value && typeof value === "object" && value.tip) {
+    return (
+      <Tooltip content={value.tip}>
+        <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary">
+          {value.v || "Limited"}
+          <Info size={12} aria-hidden="true" />
+        </span>
+      </Tooltip>
+    );
+  }
   return <span className="text-sm text-neutral-700">{value}</span>;
 };
 
@@ -85,21 +97,11 @@ export default function Pricing() {
       {/* ── Full feature comparison ────────────────────────── */}
       <section className="px-5 pb-20 pt-16 sm:px-8 lg:pt-24">
         <div className="mx-auto max-w-[1050px]">
-          <h2 className="text-center text-3xl font-extrabold text-ink sm:text-4xl">What changes when you upgrade</h2>
-          <p className="mx-auto mt-3 max-w-[600px] text-center text-neutral-500">
-            Everything below is on both plans. The table shows only what actually differs.
+          <h2 className="text-center text-3xl font-extrabold text-ink sm:text-4xl">Compare every feature</h2>
+          <p className="mx-auto mt-3 max-w-[620px] text-center text-neutral-500">
+            Everything Sloth gives you free, and everything you unlock with Sloth Active.
+            Tap any <span className="font-semibold text-primary">Limited</span> tag for the detail.
           </p>
-
-          {/* Everything both plans include — most of the old grid was ✓/✓, which
-              is noise in a table. Listed once here instead. */}
-          <ul className="mx-auto mt-8 grid max-w-[820px] gap-x-8 gap-y-2.5 sm:grid-cols-2">
-            {PLAN_INCLUDED.map((f) => (
-              <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-700">
-                <Check size={16} className="mt-0.5 flex-shrink-0 text-primary" aria-hidden="true" />
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
 
           <div className="mt-10 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-left">

@@ -77,8 +77,12 @@ const shape = (c, crmRow) => ({
   attributes: crmRow?.attributes || {},
 });
 
-// List a host's clients. Options: { q, page, pageSize, sort:'ltv'|'recent', filter:'lapsed' }
-const listClients = async (hostId, { q = '', page = 1, pageSize = 50, sort = 'recent', filter = null } = {}) => {
+// List a host's clients. Options: { q, page, pageSize, sort:'ltv'|'recent', filter:'lapsed', maxClients }
+// maxClients: -1 = unlimited (paid plans + admin callers). A positive N caps the
+// result to the N most-recent clients — the free Sloth plan's "your 10 most recent
+// clients". This is a MONETIZATION gate on the host's OWN customers, not a privacy
+// boundary, so a soft view cap is correct.
+const listClients = async (hostId, { q = '', page = 1, pageSize = 50, sort = 'recent', filter = null, maxClients = -1 } = {}) => {
   const nowMs = Date.now();
   const { data: bookings, error } = await supabaseAdmin
     .from('bookings').select(BOOKING_COLS).eq('host_id', hostId);
@@ -111,9 +115,17 @@ const listClients = async (hostId, { q = '', page = 1, pageSize = 50, sort = 're
       c.last_booking_at && new Date(c.last_booking_at).getTime() < cutoff);
   }
 
-  shaped.sort((a, b) =>
-    sort === 'ltv' ? b.total_spent - a.total_spent
-      : new Date(b.last_booking_at || 0) - new Date(a.last_booking_at || 0));
+  // Recency order first — it defines WHICH clients the free cap keeps ("most recent N").
+  shaped.sort((a, b) => new Date(b.last_booking_at || 0) - new Date(a.last_booking_at || 0));
+
+  // Free-plan cap: keep only the N most-recent clients. ponytail: caps the surfaced
+  // list AND the CSV export (both route through here); getClient is not independently
+  // capped, but the hidden clients' ids are never returned here, so a free host has no
+  // way to address client N+1 — a monetization gate, not a data-protection boundary.
+  if (maxClients >= 0) shaped = shaped.slice(0, maxClients);
+
+  // Display sort — LTV re-orders the (capped) set; recency is already applied above.
+  if (sort === 'ltv') shaped.sort((a, b) => b.total_spent - a.total_spent);
 
   const total = shaped.length;
   const start = (page - 1) * pageSize;

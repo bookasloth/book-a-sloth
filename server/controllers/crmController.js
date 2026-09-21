@@ -13,8 +13,11 @@ const fail = (res, err, msg) => { console.error('crm:', msg, err?.message || err
 const listCustomers = async (req, res) => {
   try {
     const { q = '', page = '1', sort = 'recent', filter = null } = req.query;
+    // Free plan sees its N most-recent clients (limits.crm); paid = -1 (unlimited).
+    // requireCrm has already blocked crm 0/absent, so this is 10 (free) or -1 (paid).
+    const maxClients = req.vendorPlanData?.limits?.crm ?? -1;
     const out = await crmService.listClients(req.user.id, {
-      q: String(q), page: Math.max(1, parseInt(page, 10) || 1), sort, filter,
+      q: String(q), page: Math.max(1, parseInt(page, 10) || 1), sort, filter, maxClients,
     });
     return res.json(out);
   } catch (err) { return fail(res, err, 'Could not load clients.'); }
@@ -33,7 +36,10 @@ const getCustomer = async (req, res) => {
 // GET /api/crm/customers.csv  — fulfils the "Data export" Studio row.
 const exportCsv = async (req, res) => {
   try {
-    const { clients } = await crmService.listClients(req.user.id, { pageSize: 100000, sort: 'ltv' });
+    // Export honours the same plan cap as the list — a free host exports only their
+    // N most-recent clients, a paid host exports everything (maxClients -1).
+    const maxClients = req.vendorPlanData?.limits?.crm ?? -1;
+    const { clients } = await crmService.listClients(req.user.id, { pageSize: 100000, sort: 'ltv', maxClients });
     const esc = (v) => {
       const s = v == null ? '' : String(v);
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

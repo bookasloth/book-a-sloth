@@ -23,7 +23,7 @@ Yes. Sloth is free forever, with real online payment collection built in.
 
 No. Both plans include unlimited services, unlimited bookings, and unlimited service categories.
 
-Sloth caps two things that cost us money to run: **digital products** (3) and **AI service writing** (10 generations every 6 months). Sloth Active removes both.
+Sloth caps three things: **digital products** (3), **AI service writing** (10 generations every 6 months), and **free (₹0) services** (2). A free service is meant as a taster — a free discovery call — rather than a way to run a whole business at no cost; list more than a couple and you either set a price or move to Sloth Active. Sloth Active removes all three caps.
 
 ## What does "0% commission" mean?
 

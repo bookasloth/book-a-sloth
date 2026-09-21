@@ -1803,6 +1803,24 @@ const reminderFlagFor = (windowHours) =>
 // Send the guest + host reminder pair for one booking. Content is identical for
 // every lead-time (it shows the actual scheduled time), so callers don't pass
 // the window — only the cron's flag bookkeeping differs.
+// WhatsApp booking reminders are a paid perk. Free (Sloth) hosts get them for a
+// grace window — their first 2 months — after which their reminders fall back to
+// email; paid/comped plans always keep WhatsApp. The window is anchored no earlier
+// than WHATSAPP_FREE_LAUNCH so EXISTING free hosts (all already >2 months old) are
+// grandfathered a fresh window from the scaling launch rather than being cut off the
+// day this ships. Suppressing `phone` on a reminder send makes NotificationEngine
+// skip the WhatsApp attempt (it only fires when data.phone is set) while the email
+// send is untouched. Applies to both the guest and the host reminder.
+const WHATSAPP_FREE_DAYS = 60;
+const WHATSAPP_FREE_LAUNCH_MS = Date.parse("2026-10-01T00:00:00+05:30");
+const whatsappRemindersAllowed = (host) => {
+  const plan = planService.resolveVendorPlan(host);
+  if (!planService.isFreeSlug(plan)) return true;   // paid / comped → always WhatsApp
+  if (!host?.created_at) return true;               // unknown signup → don't downgrade
+  const anchor = Math.max(new Date(host.created_at).getTime(), WHATSAPP_FREE_LAUNCH_MS);
+  return Date.now() < anchor + WHATSAPP_FREE_DAYS * 86400000;
+};
+
 const sendBookingReminder = async (b, host, tz) => {
   const s = b.services;
   const when = new Date(b.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
@@ -1823,10 +1841,12 @@ const sendBookingReminder = async (b, host, tz) => {
     online: isOnline, actionLink: isOnline && b.meeting_link ? b.meeting_link : "",
     mapLink: directions, hostLocation: host.location,
   });
+  // Gate WhatsApp behind the plan/grace window; null phone → email-only send.
+  const waOk = whatsappRemindersAllowed(host);
   await NotificationEngine.send({
     event: "BOOKING_REMINDER_CUSTOMER",
     data: {
-      email: b.guest_email, phone: b.guest_phone, name: b.guest_name,
+      email: b.guest_email, phone: waOk ? b.guest_phone : null, name: b.guest_name,
       templateParams: customerParams(ctx),
       emailData, emailUser: { name: b.guest_name, email: b.guest_email },
       recipientUserId: b.guest_id, bookingId: b.id,
@@ -1835,7 +1855,7 @@ const sendBookingReminder = async (b, host, tz) => {
   await NotificationEngine.send({
     event: "BOOKING_REMINDER_VENDOR",
     data: {
-      email: host.email, phone: host.phone, name: host.name,
+      email: host.email, phone: waOk ? host.phone : null, name: host.name,
       templateParams: vendorParams(ctx),
       emailData, emailUser: { name: host.name, email: host.email, username: host.username },
       recipientUserId: b.host_id, bookingId: b.id,
@@ -2119,4 +2139,5 @@ module.exports = {
   processReminders,
   fireDueReminders,
   bookingEmailData, // exported for unit testing (offline map-link surfacing)
+  whatsappRemindersAllowed, // exported for unit testing (free 2-month WhatsApp grace)
 };
