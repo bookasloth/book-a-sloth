@@ -112,33 +112,45 @@ export const getPlanBorderColor = (plan) => {
 // ─── Plan display labels (UI ONLY — DB slugs/names are unchanged) ────────────
 // Maps the internal plan slug to the user-facing brand name. Internal code,
 // routes, DB values, feature flags, and analytics keep their original slugs.
+// Two public plans since v3.165: free → "Sloth", premium → "Sloth Active".
+// The legacy paid rows are hidden from the catalogue but still renew for their
+// existing subscribers, so they keep a label — they carry Sloth Active
+// entitlements at their original price.
 export const PLAN_DISPLAY = {
-  starter: 'Starter', explorer: 'Starter', free: 'Starter', starter_legacy: 'Starter',
-  creator: 'Host+',
-  professional: 'Studio', pro: 'Studio',
+  free: 'Sloth', starter: 'Sloth', explorer: 'Sloth', starter_legacy: 'Sloth',
+  premium: 'Sloth Active',
+  creator: 'Sloth Active (Partner)',
+  professional: 'Sloth Active (Legacy Studio)', pro: 'Sloth Active (Legacy Studio)',
+  supreme: 'Supreme',
 };
 
 // Render-time plan label. Pass the slug; optional fallback for unknown slugs.
 export const planLabel = (slug, fallback) =>
   PLAN_DISPLAY[String(slug || '').toLowerCase()] || fallback || slug || '';
 
-// Collapse legacy plan aliases to the canonical DB slug so UI lookups
-// (badges, premium cards, lock gates) never miss on a synonym. The free tier's
-// real slug is `starter`; `explorer`/`free` are legacy aliases. `pro` ===
-// `professional`. Unknown slugs fall through to `starter`.
-const PLAN_ALIASES = { explorer: 'starter', free: 'starter', pro: 'professional' };
-export const CANONICAL_PLANS = ['starter', 'creator', 'professional', 'supreme'];
+// Collapse legacy plan aliases to the canonical DB slug so UI lookups (badges,
+// premium cards, lock gates) never miss on a synonym. Mirrors planService:
+// `starter` / `explorer` / `starter_legacy` are all the free tier. Unknown
+// slugs fall through to free — never to a paid tier.
+const PLAN_ALIASES = {
+  explorer: 'free', starter: 'free', starter_legacy: 'free',
+  pro: 'professional',
+};
+export const CANONICAL_PLANS = ['free', 'premium', 'creator', 'professional', 'supreme'];
 export const normalizePlan = (slug) => {
   const s = String(slug || '').toLowerCase();
   const canon = PLAN_ALIASES[s] || s;
-  return CANONICAL_PLANS.includes(canon) ? canon : 'starter';
+  return CANONICAL_PLANS.includes(canon) ? canon : 'free';
 };
 
+/** Is this host on the free tier? Use instead of comparing slugs inline — the
+ *  canonical free slug has already changed once (starter → free). */
+export const isFreePlan = (slug) => normalizePlan(slug) === 'free';
+
 export const getPlanBorderLabel = (plan) => {
-  if (plan === 'supreme')      return 'Supreme';
-  if (plan === 'professional') return 'Studio';
-  if (plan === 'creator')      return 'Host+';
-  return 'Starter';
+  const canon = normalizePlan(plan);
+  if (canon === 'supreme') return 'Supreme';
+  return canon === 'free' ? 'Sloth' : 'Sloth Active';
 };
 
 // ─── Social platform brand colors ────────────────────────────────────────────

@@ -133,7 +133,7 @@ const COMPARE = [
   { f: "UPI payments at booking", basT: "Built in", zT: "Via Razorpay add-on", z: "partial" },
   { f: "GST invoices — automatic", basT: "Yes", zT: "No", z: false },
   { f: "WhatsApp reminders", basT: "Yes", zT: "Via Zoho ecosystem", z: "partial" },
-  { f: "Starting price (solo)", basT: "₹229 / month", zT: "Free (limited) then ₹per user", z: "partial" },
+  { f: "Starting price (solo)", basT: "₹0 free · ₹399/mo paid", zT: "Free (limited) then ₹per user", z: "partial" },
   { f: "No ecosystem lock-in", basT: "Yes — standalone", zT: "Best with Zoho CRM, Mail, etc.", z: false },
   { f: "Google Calendar sync", basT: "Yes", zT: "Yes", z: true },
   { f: "Google Meet links", basT: "Yes", zT: "Yes", z: true },
@@ -165,7 +165,7 @@ const FAQS = [
   },
   {
     q: "Is Book A Sloth really free to start?",
-    a: "Yes. The Starter plan is free forever — no 15-day trial, no credit card required. You get a booking page, Google Calendar sync, and can accept 2 free services. Paid plans start at just ₹229/month for unlimited bookings with 0% commission.",
+    a: "Yes. The Sloth plan is free forever — no 15-day trial, no credit card required. You get a booking page, Google Calendar sync, and can accept 2 free services. Sloth Active is ₹399/month (₹3,599/year) for 0% commission.",
   },
 ];
 
@@ -182,7 +182,7 @@ const ZohoBookingsAlternative = () => {
   useDocumentMeta({
     title: "Book A Sloth — Zoho Bookings alternative for Indian creators",
     description:
-      "Zoho Bookings is built for enterprises. Book A Sloth is built for you — simple scheduling with UPI payments, GST invoices & WhatsApp reminders from ₹229/month.",
+      "Zoho Bookings is built for enterprises. Book A Sloth is built for you — simple scheduling with UPI payments, GST invoices & WhatsApp reminders free to start.",
   });
 
   useEffect(() => {
@@ -630,7 +630,7 @@ const ZohoBookingsAlternative = () => {
             })}
           </div>
           <p className="mt-6 text-center text-sm text-gray-400">
-            0% commission on paid plans · Prices in INR, excl. GST · Cancel anytime
+            0% commission on Sloth Active · All prices include GST · Cancel anytime
           </p>
         </div>
       </section>

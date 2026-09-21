@@ -23,7 +23,7 @@ import ErrorPage from '../ErrorPage';
 import { SITE_URL } from '../../utils/seo';
 import { HERO_FACES } from '../../components/home/images';
 import { TESTIMONIALS } from '../../data/testimonials';
-import { STARTER_PLAN, PAID_PLANS } from '../../data/plans';
+import { FREE_PLAN, PAID_PLANS } from '../../data/plans';
 import useFeeOnly from '../../hooks/useFeeOnly';
 import { getProfessionLanding } from './professionLandingData';
 
@@ -228,7 +228,7 @@ export default function ProfessionLanding() {
   const { profession } = useParams();
   const data = getProfessionLanding(profession);
   // Interim (fee-only): a single honest banner caveats the earn/commission copy
-  // below (which stays as-is), and we drop the free Starter offer from JSON-LD.
+  // below (which stays as-is), and we drop the free Sloth offer from JSON-LD.
   const feeOnly = useFeeOnly();
 
   // Prefer profession-specific testimonials; fall back to weighted shared set.
@@ -248,7 +248,8 @@ export default function ProfessionLanding() {
 
   const { theme, seo, hero, socialProof, trust, stats, painPoints, features, headings, pricing, faq, finalCta, midCtas = {}, madeFor, label } = data;
   const canonical = `${SITE_URL}/for/${data.slug}`;
-  // Headline "₹X/day" sells the TOP plan (last = Studio, unlimited). ₹3650/yr = ₹10/day.
+  // Headline "₹X/day" sells the paid plan. ₹3,599/yr = ₹9.86/day; rounding UP to
+  // ₹10 is deliberate — advertise at or above what we actually charge, never below.
   const topPlan = PAID_PLANS[PAID_PLANS.length - 1];
   const perDay = Math.max(1, Math.round(topPlan.yearly / 365));
 
@@ -266,7 +267,7 @@ export default function ProfessionLanding() {
       offers: feeOnly
         ? [{ '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` }]
         : [
-            { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${STARTER_PLAN.name} plan` },
+            { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
             { '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` },
           ],
       // No aggregateRating: a testimonial-derived 5.0 self-rating is exactly the

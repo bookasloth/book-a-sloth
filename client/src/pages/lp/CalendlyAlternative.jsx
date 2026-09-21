@@ -219,8 +219,8 @@ const COMPARE = [
   { f: "GST invoices — automatic", basT: "Yes", cT: "No", c: false },
   { f: "WhatsApp reminders", basT: "Yes", cT: "No", c: false },
   { f: "INR billing (₹)", basT: "Yes", cT: "USD only", c: false },
-  { f: "0% commission on paid plans", basT: "Yes", cT: "N/A", c: false },
-  { f: "Starting price", basT: "₹229 / month", cT: "~₹1,200 / month (USD)", c: false },
+  { f: "0% commission on Sloth Active", basT: "Yes", cT: "N/A", c: false },
+  { f: "Starting price", basT: "₹0 free · ₹399/mo paid", cT: "~₹1,200 / month (USD)", c: false },
   { f: "Google Calendar sync", basT: "Yes", cT: "Yes", c: true },
   { f: "Google Meet links", basT: "Yes", cT: "Yes", c: true },
   { f: "Custom booking page", basT: "Yes", cT: "Yes", c: true },
@@ -240,7 +240,7 @@ const CalendlyAlternative = () => {
   useDocumentMeta({
     title: "Book A Sloth — Calendly alternative built for India",
     description:
-      "Calendly schedules. Book A Sloth schedules AND collects ₹ via UPI, sends GST invoices, WhatsApp reminders — built for India from ₹229/month.",
+      "Calendly schedules. Book A Sloth schedules AND collects ₹ via UPI, sends GST invoices, WhatsApp reminders — built for India, free to start.",
   });
 
   useEffect(() => {
@@ -527,7 +527,7 @@ const CalendlyAlternative = () => {
             Pick the Perfect Plan for Your Work
           </h2>
           <p className="mt-2 text-center" style={{ color: CAL_BODY }}>
-            All plans billed in ₹. 0% commission on paid plans. No USD, no surprises.
+            All plans billed in ₹, GST included. 0% commission on Sloth Active. No USD, no surprises.
           </p>
 
           {/* Billing toggle — compact segmented control */}
@@ -624,7 +624,7 @@ const CalendlyAlternative = () => {
             })}
           </div>
           <p className="mt-6 text-center text-sm text-gray-400">
-            0% commission on paid plans · Prices in INR, excl. GST · Cancel anytime
+            0% commission on Sloth Active · All prices include GST · Cancel anytime
           </p>
         </div>
       </section>

@@ -137,8 +137,8 @@ const COMPARE = [
   { f: "WhatsApp reminders", basT: "Yes", sT: "No", s: false },
   { f: "GST invoices — automatic", basT: "Yes", sT: "No", s: false },
   { f: "INR billing (₹)", basT: "Yes", sT: "USD only", s: false },
-  { f: "0% commission on paid plans", basT: "Yes", sT: "N/A", s: false },
-  { f: "Starting price", basT: "₹229 / month", sT: "~₹420 / user / month", s: false },
+  { f: "0% commission on Sloth Active", basT: "Yes", sT: "N/A", s: false },
+  { f: "Starting price", basT: "₹0 free · ₹399/mo paid", sT: "~₹420 / user / month", s: false },
   { f: "Free plan appointments", basT: "Unlimited", sT: "200 / month", s: false },
   { f: "Google Calendar sync", basT: "Yes", sT: "Yes", s: true },
   { f: "Video meetings", basT: "Yes", sT: "Yes (Teleport)", s: true },
@@ -157,7 +157,7 @@ const FAQ = [
   },
   {
     q: "Is the free plan really unlimited appointments?",
-    a: "Yes. Setmore caps their free plan at 200 appointments per month. Book A Sloth's Starter plan has no appointment cap — you only hit limits on advanced features like reminders and integrations.",
+    a: "Yes. Setmore caps their free plan at 200 appointments per month. Book A Sloth's free Sloth plan has no appointment cap — you only hit limits on advanced features like reminders and integrations.",
   },
   {
     q: "Can I send WhatsApp reminders to my clients?",
@@ -169,7 +169,7 @@ const FAQ = [
   },
   {
     q: "How does pricing compare to Setmore Pro?",
-    a: "Setmore Pro costs $5/user/month (USD only), which adds up fast for teams. Book A Sloth starts at ₹229/month flat — no per-user pricing, billed in INR. You save on both the plan cost and forex fees.",
+    a: "Setmore Pro costs $5/user/month (USD only), which adds up fast for teams. Book A Sloth is free to start, then ₹399/month flat — no per-user pricing, billed in INR. You save on both the plan cost and forex fees.",
   },
 ];
 
@@ -186,7 +186,7 @@ const SetmoreAlternative = () => {
   useDocumentMeta({
     title: "Book A Sloth — Setmore alternative built for India",
     description:
-      "Setmore books appointments. Book A Sloth books AND collects ₹ via UPI, sends GST invoices, WhatsApp reminders — built for India from ₹229/month.",
+      "Setmore books appointments. Book A Sloth books AND collects ₹ via UPI, sends GST invoices, WhatsApp reminders — built for India, free to start.",
   });
 
   useEffect(() => {
@@ -470,7 +470,7 @@ const SetmoreAlternative = () => {
             Simple Pricing, No Per-User Fees
           </h2>
           <p className="mt-2 text-center" style={{ color: SET_BODY }}>
-            All plans billed in ₹. 0% commission on paid plans. No USD, no per-seat surprises.
+            All plans billed in ₹, GST included. 0% commission on Sloth Active. No USD, no per-seat surprises.
           </p>
 
           <div className="mt-6 flex justify-center">
@@ -566,7 +566,7 @@ const SetmoreAlternative = () => {
             })}
           </div>
           <p className="mt-6 text-center text-sm text-gray-400">
-            0% commission on paid plans · Prices in INR, excl. GST · Cancel anytime
+            0% commission on Sloth Active · All prices include GST · Cancel anytime
           </p>
         </div>
       </section>

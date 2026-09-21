@@ -1,95 +1,93 @@
 import { describe, it, expect } from 'vitest';
 import {
-  ANNUAL_FEE, HOSTPLUS_ANNUAL_CAP, annualBookings, resultsFor,
-  pickWinner, annualSaving, ceilingState, starterCommissionPerYear,
+  resultsFor, pickWinner, annualSaving, deltaVsFree, premiumCrossover,
+  freeCommissionPerYear, annualBookings, ANNUAL_FEE,
 } from '../earningsCalc';
+import { PREMIUM_PLAN } from '../../data/plans';
+
+const byKey = (results, key) => results.find((r) => r.plan.key === key);
 
 describe('earningsCalc', () => {
-  it('annual fees come from plans.js (Host+ 1499, Studio 3650)', () => {
-    expect(ANNUAL_FEE.hostplus).toBe(1499);
-    expect(ANNUAL_FEE.studio).toBe(3650);
-    expect(ANNUAL_FEE.starter).toBe(0);
+  it('annual fees come from the single pricing source, GST-inclusive', () => {
+    expect(ANNUAL_FEE.free).toBe(0);
+    expect(ANNUAL_FEE.premium).toBe(PREMIUM_PLAN.yearly); // 3599
   });
 
-  it('annualBookings floors then x12', () => {
+  it('annual bookings = sessions/month × 12', () => {
     expect(annualBookings(10)).toBe(120);
-    expect(annualBookings(10.9)).toBe(120);
+    expect(annualBookings(0)).toBe(0);
+    expect(annualBookings(-5)).toBe(0);
   });
 
-  it('annual net = per-booking take-home x annual volume minus annual fee', () => {
-    // Host+ at E=1000: per-booking take-home = 959.76 (see morPricing drift test / host-fees §5)
-    const r = resultsFor(1000, 10, 'annual').find((x) => x.plan.key === 'hostplus');
+  it('annual net = per-booking take-home × volume − annual fee', () => {
+    const r = byKey(resultsFor(1000, 10, 'annual'), 'premium');
+    // ₹1,000 booking on 0% commission → ₹959.76 take-home (published /host-fees §5)
     expect(r.perBookingTakeHome).toBe(959.76);
     expect(r.grossAnnual).toBe(959.76 * 120);
-    expect(r.netAnnual).toBe(959.76 * 120 - 1499);
-    expect(r.fee).toBe(1499);
+    expect(r.netAnnual).toBe(Math.round((959.76 * 120 - 3599) * 100) / 100);
   });
 
-  it('monthly cycle subtracts monthly*12 as the fee', () => {
-    const r = resultsFor(1000, 10, 'monthly').find((x) => x.plan.key === 'hostplus');
-    expect(r.fee).toBe(229 * 12);
+  it('the monthly cycle charges monthly × 12 instead of the annual fee', () => {
+    const r = byKey(resultsFor(1000, 10, 'monthly'), 'premium');
+    expect(r.fee).toBe(PREMIUM_PLAN.monthly * 12); // 4788
   });
 
-  it('winner is highest net take-home among non-capped (Host+ beats Studio, same per-booking)', () => {
-    const results = resultsFor(1000, 10, 'annual');
-    expect(pickWinner(results)).toBe('hostplus');
+  it('free keeps less per booking because of the 5% commission', () => {
+    const free = byKey(resultsFor(1000, 10, 'annual'), 'free');
+    expect(free.perBookingTakeHome).toBe(909.76); // ₹50 commission vs premium
+    expect(free.fee).toBe(0);
   });
 
-  it('Starter is capped and excluded from winner above 5000/session', () => {
-    const results = resultsFor(6000, 10, 'annual');
-    const starter = results.find((x) => x.plan.key === 'starter');
-    expect(starter.capped).toBe(true);
-    expect(pickWinner(results)).not.toBe('starter');
+  // Both plans are uncapped since v3.165 — there is no "you can't accept booking
+  // #1,001" ceiling left to model, so nothing is ever uncollected.
+  it('neither plan caps bookings or service price', () => {
+    for (const r of resultsFor(50000, 500, 'annual')) {
+      expect(r.capped).toBe(false);
+      expect(r.outgrows).toBe(false);
+      expect(r.uncollectedBookings).toBe(0);
+      expect(r.uncollectedValue).toBe(0);
+    }
+  });
+});
+
+describe('the upgrade verdict', () => {
+  it('free wins at low volume — the honest answer is "stay free"', () => {
+    const results = resultsFor(1000, 1, 'annual'); // 12 bookings/yr, ₹600 commission
+    expect(pickWinner(results)).toBe('free');
+    expect(deltaVsFree(results, 'free')).toBe(0);
   });
 
-  it('Host+ outgrows when annual bookings exceed 1000; ceiling over', () => {
-    const results = resultsFor(1000, 90, 'annual'); // 1080/yr
-    const hp = results.find((x) => x.plan.key === 'hostplus');
-    expect(hp.outgrows).toBe(true);
-    expect(ceilingState(90)).toBe('over');
-    expect(ceilingState(75)).toBe('near'); // 900/yr, within 840..1000
-    expect(ceilingState(10)).toBe('none');
-    expect(HOSTPLUS_ANNUAL_CAP).toBe(1000);
-    expect(pickWinner(resultsFor(1000, 90, 'annual'))).toBe('studio');
+  it('premium wins once saved commission clears the fee', () => {
+    const results = resultsFor(1500, 12, 'annual');
+    expect(pickWinner(results)).toBe('premium');
+    expect(deltaVsFree(results, 'premium')).toBeGreaterThan(0);
   });
 
-  it('Starter outgrows above its 300/yr booking cap; Host+ wins mid volume', () => {
-    const results = resultsFor(100, 30, 'annual'); // 360/yr
-    const starter = results.find((x) => x.plan.key === 'starter');
-    expect(starter.outgrows).toBe(true);
-    expect(pickWinner(results)).toBe('hostplus');
+  it('crossover = the month count where 5% saved beats the annual fee', () => {
+    // ₹3,599 / (5% × ₹1,500 × 12) = 3.99 → 4 sessions a month
+    expect(premiumCrossover(1500)).toBe(4);
+    // Cheaper sessions need more volume: ₹3,599 / (5% × ₹300 × 12) = 19.99 → 20
+    expect(premiumCrossover(300)).toBe(20);
   });
 
-  it('a plan only earns on bookings it can accept; overflow is uncollected', () => {
-    // 90 sessions/mo = 1080/yr. Host+ caps earnings at 1000; Studio (no cap) earns all 1080.
-    const results = resultsFor(1000, 90, 'annual');
-    const hp = results.find((x) => x.plan.key === 'hostplus');
-    const st = results.find((x) => x.plan.key === 'studio');
-    expect(hp.earnableBookings).toBe(1000);
-    expect(hp.uncollectedBookings).toBe(80);
-    expect(hp.grossAnnual).toBe(959.76 * 1000);
-    expect(hp.netAnnual).toBe(959.76 * 1000 - 1499);
-    expect(hp.uncollectedValue).toBe(959.76 * 80);
-    // Studio earns all 1080 → its capped-earnings net now exceeds Host+'s.
-    expect(st.earnableBookings).toBe(1080);
-    expect(st.uncollectedBookings).toBe(0);
-    expect(st.netAnnual).toBeGreaterThan(hp.netAnnual);
+  it('a ₹0 price never justifies paying', () => {
+    expect(premiumCrossover(0)).toBe(Infinity);
+    expect(premiumCrossover(-100)).toBe(Infinity);
   });
 
-  it('below cap, nothing is uncollected', () => {
-    const r = resultsFor(1000, 10, 'annual').find((x) => x.plan.key === 'hostplus');
-    expect(r.uncollectedBookings).toBe(0);
-    expect(r.uncollectedValue).toBe(0);
-    expect(r.earnableBookings).toBe(120);
+  it('the crossover agrees with the actual winner either side of it', () => {
+    const n = premiumCrossover(1500);
+    expect(pickWinner(resultsFor(1500, n - 1, 'annual'))).toBe('free');
+    expect(pickWinner(resultsFor(1500, n + 1, 'annual'))).toBe('premium');
   });
 
-  it('annual saving = monthly*12 - annual fee', () => {
-    expect(annualSaving('hostplus')).toBe(229 * 12 - 1499); // 1249
-    expect(annualSaving('studio')).toBe(555 * 12 - 3650);   // 3010
-    expect(annualSaving('starter')).toBe(0);
+  it('annual saving = monthly × 12 − annual fee', () => {
+    expect(annualSaving('premium')).toBe(PREMIUM_PLAN.monthly * 12 - PREMIUM_PLAN.yearly); // 1189
+    expect(annualSaving('free')).toBe(0);
   });
 
-  it('starter commission per year = 5% x price x annual bookings', () => {
-    expect(starterCommissionPerYear(1000, 10)).toBe(0.05 * 1000 * 120); // 6000
+  it('commission given up per year = 5% × price × annual bookings', () => {
+    expect(freeCommissionPerYear(1000, 10)).toBe(0.05 * 1000 * 120); // ₹6,000
+    expect(freeCommissionPerYear(0, 10)).toBe(0);
   });
 });

@@ -115,8 +115,8 @@ const COMPARE = [
   { f: "WhatsApp reminders", basT: "Yes", sbT: "No", sb: false },
   { f: "INR billing (₹)", basT: "Yes", sbT: "USD / EUR only", sb: false },
   { f: "Setup time", basT: "~3 minutes", sbT: "30-60 minutes", sb: false },
-  { f: "0% commission on paid plans", basT: "Yes", sbT: "Varies by plan", sb: false },
-  { f: "Starting price (paid)", basT: "₹229/mo", sbT: "~₹700/mo (USD)", sb: false },
+  { f: "0% commission on Sloth Active", basT: "Yes", sbT: "Varies by plan", sb: false },
+  { f: "Starting price (paid)", basT: "₹0 free · ₹399/mo paid", sbT: "~₹700/mo (USD)", sb: false },
   { f: "Google Calendar sync", basT: "Yes", sbT: "Yes", sb: true },
   { f: "Custom booking page", basT: "Yes", sbT: "Yes", sb: true },
   { f: "Email reminders", basT: "Yes", sbT: "Yes", sb: true },
@@ -139,11 +139,11 @@ const FAQS = [
   },
   {
     q: "Is Book A Sloth really free to start?",
-    a: "Yes. Our Starter plan is free forever — not a 14-day trial. You get a booking page, Google Calendar sync, and email reminders at no cost. Upgrade only when you need payments or WhatsApp reminders.",
+    a: "Yes. Our Sloth plan is free forever — not a 14-day trial. You get a booking page, Google Calendar sync, and email reminders at no cost. Upgrade only when you need payments or WhatsApp reminders.",
   },
   {
     q: "How does pricing compare to SimplyBook.me?",
-    a: "SimplyBook's Basic plan starts at ~$8.25/month (billed in USD). Book A Sloth's paid plan starts at ₹229/month (billed in INR), includes UPI payments and GST invoices — features SimplyBook charges extra for or doesn't offer at all.",
+    a: "SimplyBook's Basic plan starts at ~$8.25/month (billed in USD). Book A Sloth's paid plan is ₹399/month (billed in INR, GST included), includes UPI payments and GST invoices — features SimplyBook charges extra for or doesn't offer at all.",
   },
   {
     q: "Do you support multi-channel booking like SimplyBook?",
@@ -604,7 +604,7 @@ const SimplybookAlternative = () => {
             })}
           </div>
           <p className="mt-6 text-center text-sm text-gray-400">
-            0% commission on paid plans · Prices in INR, excl. GST · Cancel anytime
+            0% commission on Sloth Active · All prices include GST · Cancel anytime
           </p>
         </div>
       </section>
@@ -692,7 +692,7 @@ const SimplybookAlternative = () => {
             <span style={{ color: BAS_ORANGE }}>Start free. Stay free.</span>
           </h2>
           <p className="mx-auto mt-4 max-w-md text-lg text-neutral-300">
-            Unlike SimplyBook&apos;s 14-day trial, our Starter plan is free forever. Upgrade when you&apos;re ready — not when a countdown says so.
+            Unlike SimplyBook&apos;s 14-day trial, our Sloth plan is free forever. Upgrade when you&apos;re ready — not when a countdown says so.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3">
             <div className="w-full max-w-xs">

@@ -3,7 +3,7 @@ import { Check, X } from "lucide-react";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
 import { SITE_URL } from "../utils/seo";
-import { PLAN_COLUMNS, PLAN_MATRIX } from "../data/plans";
+import { PLAN_COLUMNS, PLAN_MATRIX, PLAN_INCLUDED, PREMIUM_PER_DAY, PREMIUM_ANNUAL_SAVE_PCT } from "../data/plans";
 import PricingCards from "../components/pricing/PricingCards";
 import useFeeOnly from "../hooks/useFeeOnly";
 
@@ -20,10 +20,13 @@ const JSON_LD = {
   description:
     "Zero-commission appointment booking for Indian creators — publish services, get booked via OTP or login, collect payments through Razorpay.",
   brand: { "@type": "Brand", name: "Book A Sloth" },
+  // Prices are GST-INCLUSIVE, matching what the cards show and what Razorpay
+  // actually charges. These are indexed into rich results, so a stale number
+  // here survives in Google for weeks after the page itself is corrected.
   offers: [
-    { "@type": "Offer", name: "Starter", price: "0", priceCurrency: "INR", availability: "https://schema.org/InStock" },
-    { "@type": "Offer", name: "Host+", price: "229", priceCurrency: "INR", availability: "https://schema.org/InStock" },
-    { "@type": "Offer", name: "Studio", price: "555", priceCurrency: "INR", availability: "https://schema.org/InStock" },
+    { "@type": "Offer", name: "Sloth", price: "0", priceCurrency: "INR", availability: "https://schema.org/InStock" },
+    { "@type": "Offer", name: "Sloth Active (monthly)", price: "399", priceCurrency: "INR", availability: "https://schema.org/InStock" },
+    { "@type": "Offer", name: "Sloth Active (yearly)", price: "3599", priceCurrency: "INR", availability: "https://schema.org/InStock" },
   ],
   // No aggregateRating: Google penalises self-serving ratings that aren't
   // backed by real, verifiable reviews. Re-add (with an on-page badge) only
@@ -39,15 +42,15 @@ const Cell = ({ value }) => {
 };
 
 export default function Pricing() {
-  // Interim (fee-only) mode: hide the free Starter column + soften commission/earn
+  // Interim (fee-only) mode: hide the free Sloth column + soften commission/earn
   // copy. Reverts automatically when the DB flag flips on Route go-live.
   const feeOnly = useFeeOnly();
-  const columns = feeOnly ? PLAN_COLUMNS.filter((c) => c.key !== "starter") : PLAN_COLUMNS;
+  const columns = feeOnly ? PLAN_COLUMNS.filter((c) => c.key !== "free") : PLAN_COLUMNS;
   return (
     <main className="bg-white">
       <Seo
-        title={feeOnly ? "Pricing — Book A Sloth | Plans for creators & professionals" : "Pricing — Book A Sloth | Zero-commission booking from ₹0"}
-        description={feeOnly ? "Simple, honest pricing for your booking page — scheduling and reminders. Compare Host+ and Studio side by side — prices in INR, excl. GST." : "Simple, honest pricing. Start free, keep 0% commission on paid plans. Compare Starter, Host+ and Studio side by side — prices in INR, excl. GST."}
+        title={feeOnly ? "Pricing — Book A Sloth | Sloth Active for creators & professionals" : "Pricing — Book A Sloth | Free to start, Premium at under ₹10 a day"}
+        description={feeOnly ? "Simple, honest pricing for your booking page — scheduling, reminders and automation. Sloth Active is ₹3,599 a year, GST included." : "Two plans, that's it. Sloth is free forever — we take 5% only when you get paid. Sloth Active drops that to 0% for under ₹10 a day. All prices include GST."}
         image={ogCard('pricing')}
         canonical={`${SITE_URL}/pricing`}
         jsonLd={JSON_LD}
@@ -57,12 +60,12 @@ export default function Pricing() {
       <section className="px-5 pb-10 pt-16 sm:px-8 lg:pt-24">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-            Simple pricing. <span className="text-primary">{feeOnly ? "Grow your practice." : "Zero commission."}</span>
+            Two plans. <span className="text-primary">{feeOnly ? "Grow your practice." : "That's it."}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-[640px] text-neutral-500">
             {feeOnly
               ? "Pick the plan that fits your booking page. Upgrade anytime."
-              : "Start free, upgrade when your bookings grow, and keep every rupee. We don't believe in taxing your success — so we never take a cut of what you earn."}
+              : `Sloth is free forever — we take 5% only when you actually get paid. Sloth Active drops that to 0% for under ${PREMIUM_PER_DAY} a day.`}
           </p>
         </div>
       </section>
@@ -74,18 +77,29 @@ export default function Pricing() {
         </div>
         <p className="mx-auto mt-6 max-w-[1050px] text-center text-xs text-neutral-400">
           {feeOnly
-            ? "Prices in INR, excl. GST · Cancel anytime"
-            : "0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime"}
+            ? "All prices include GST · Cancel anytime"
+            : `All prices include GST · Yearly saves ${PREMIUM_ANNUAL_SAVE_PCT}% · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime`}
         </p>
       </section>
 
       {/* ── Full feature comparison ────────────────────────── */}
       <section className="px-5 pb-20 pt-16 sm:px-8 lg:pt-24">
         <div className="mx-auto max-w-[1050px]">
-          <h2 className="text-center text-3xl font-extrabold text-ink sm:text-4xl">Compare every feature</h2>
+          <h2 className="text-center text-3xl font-extrabold text-ink sm:text-4xl">What changes when you upgrade</h2>
           <p className="mx-auto mt-3 max-w-[600px] text-center text-neutral-500">
-            Everything each plan includes — no fine print, no surprises.
+            Everything below is on both plans. The table shows only what actually differs.
           </p>
+
+          {/* Everything both plans include — most of the old grid was ✓/✓, which
+              is noise in a table. Listed once here instead. */}
+          <ul className="mx-auto mt-8 grid max-w-[820px] gap-x-8 gap-y-2.5 sm:grid-cols-2">
+            {PLAN_INCLUDED.map((f) => (
+              <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-700">
+                <Check size={16} className="mt-0.5 flex-shrink-0 text-primary" aria-hidden="true" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
 
           <div className="mt-10 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-left">
@@ -110,6 +124,14 @@ export default function Pricing() {
             </table>
           </div>
         </div>
+      </section>
+
+      {/* ── Teams / agencies — no self-serve tier, one line to sales ── */}
+      <section className="px-5 pb-4 sm:px-8">
+        <p className="mx-auto max-w-[1050px] text-center text-sm text-neutral-500">
+          Teams, agencies or multi-location practices?{" "}
+          <Link to="/enterprise" className="font-semibold text-primary">Talk to sales →</Link>
+        </p>
       </section>
 
       {/* ── Closing CTA ────────────────────────────────────── */}

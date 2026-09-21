@@ -4,15 +4,14 @@ import { getPublicPlans, createSubscription, syncSubscription, cancelSubscriptio
 import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
 import { PageHeader, Card, Button, cn, Modal, Sheet, ConfirmSheet, Input, Select, FormField } from "../components/dashboard/ui";
-import { planLabel } from "../utils/themeUtils";
+import { planLabel, normalizePlan } from "../utils/themeUtils";
 import loadRazorpay from "../utils/loadRazorpay";
 import { INDIAN_STATES } from "../lib/indianStates";
 
 const GST_RATE = 0.18; // display only — server is authoritative
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
-// `explorer` is the legacy alias for the free tier (real slug: `starter`).
-const LEGACY_PLAN_ALIASES = { explorer: "starter" };
+
 
 // Build a concise, accurate feature list straight from the DB plan record.
 const featureLines = (plan) => {
@@ -56,8 +55,8 @@ const UpgradePlan = () => {
     pan: user?.billing_details?.pan || "",
   });
 
-  const rawPlan = (user?.plan || "starter").toLowerCase();
-  const currentPlan = LEGACY_PLAN_ALIASES[rawPlan] || rawPlan;
+  // Alias resolution lives in themeUtils — see the note in Products.jsx.
+  const currentPlan = normalizePlan(user?.plan);
   // Current tier rank, used to tell upgrades from downgrades. Falls back to 0
   // when the current plan isn't in the public list (e.g. an archived/admin tier)
   // — every paid plan then reads as a higher tier, never a bogus "downgrade".
@@ -216,13 +215,17 @@ const UpgradePlan = () => {
                       <p className="text-3xl font-bold">Free</p>
                     ) : cadenceAvailable ? (
                       <>
+                        {/* Lead with the GST-INCLUSIVE amount, matching /pricing.
+                            subscription_plans stores the ex-GST base, so showing
+                            that as the headline made the dashboard quote a
+                            different number than the marketing page. */}
                         <p className="text-3xl font-bold">
-                          {inr(price)}
+                          {inr(Math.round(price * (1 + GST_RATE)))}
                           <span className="ml-1 text-sm font-normal text-gray-400">/ {cadence === "monthly" ? "month" : "year"}</span>
                         </p>
-                        <p className="mt-1 text-[11px] text-gray-500">+ 18% GST · {inr(Math.round(price * (1 + GST_RATE)))} billed</p>
+                        <p className="mt-1 text-[11px] text-gray-500">incl. GST · {inr(price)} + 18% GST</p>
                         {cadence === "annual" && savings > 0 && (
-                          <p className="mt-0.5 text-[11px] font-semibold text-emerald-600">Save {inr(savings)}/yr vs monthly</p>
+                          <p className="mt-0.5 text-[11px] font-semibold text-emerald-600">Save {inr(Math.round(savings * (1 + GST_RATE)))}/yr vs monthly</p>
                         )}
                       </>
                     ) : (

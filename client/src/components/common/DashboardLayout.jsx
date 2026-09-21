@@ -18,9 +18,12 @@ import '../dashboard/ui/tokens.css';
 // Keyed by canonical plan slug (see normalizePlan) — legacy aliases like
 // `explorer`/`free`/`pro` are collapsed before lookup.
 const PLAN_STYLES = {
-  starter: { label: 'Starter', bg: 'bg-gray-100', text: 'text-gray-600' },
-  creator: { label: 'Host+', bg: 'bg-primary/10', text: 'text-primary' },
-  professional: { label: 'Studio', bg: 'bg-amber-100', text: 'text-amber-700' },
+  free: { label: 'Sloth', bg: 'bg-gray-100', text: 'text-gray-600' },
+  premium: { label: 'Sloth Active', bg: 'bg-amber-100', text: 'text-amber-700' },
+  // Archived rows: hidden from the catalogue, but their existing subscribers
+  // still see a badge and carry Sloth Active entitlements at the old price.
+  creator: { label: 'Sloth Active', bg: 'bg-amber-100', text: 'text-amber-700' },
+  professional: { label: 'Sloth Active', bg: 'bg-amber-100', text: 'text-amber-700' },
   supreme: { label: 'Supreme', bg: 'bg-violet-100', text: 'text-violet-700' },
 };
 

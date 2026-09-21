@@ -9,28 +9,26 @@ import {
 } from "../lib/earningsCalc";
 
 // /earnings-calculator — public conversion tool. Host sets price + monthly volume;
-// sees annual take-home per plan as a bar chart (Starter 5% · Host+ 0% · Studio 0%),
+// sees annual take-home per plan as a bar chart (Sloth 5% · Sloth Active 0%),
 // the plan that keeps the most, and how much more than free. All numbers come from
 // lib/earningsCalc.js + lib/morPricing.js (server mirror) — display only, real
 // pricing computed server-side at booking. No invented tiers, no fake figures.
 
 const ROUTE_START = "/be-a-sloth";
-const ICON = { starter: Sprout, hostplus: Sparkles, studio: Rocket };
-const ACCENT = { starter: "#4AB765", hostplus: "#FE5100", studio: "#269CEF" };
-const CTA_LABEL = { starter: "Get Started", hostplus: "Start on Host+", studio: "Start on Studio" };
+const ICON = { free: Sprout, premium: Rocket };
+const ACCENT = { free: "#4AB765", premium: "#FE5100" };
+const CTA_LABEL = { free: "Get Started", premium: "Start on Sloth Active" };
 
 // One-line "who's this for" per plan.
 const POSITION = {
-  starter: "Test the waters, free.",
-  hostplus: "Booking grows, you keep it all.",
-  studio: "Outgrowing the limits.",
+  free: "Test the waters, free.",
+  premium: "Booking grows, you keep it all.",
 };
 
 // Concise, REAL feature highlights — mirrors data/plans.js. Keep in sync if plans change.
 const FEATURES = {
-  starter: ["5% commission per booking", "Up to 3 services", "300 bookings / year", "Booking page + payments", "Email support"],
-  hostplus: ["0% commission", "Up to 5 services", "1,000 bookings / year", "Auto invoices + reminders", "Email + chat support"],
-  studio: ["0% commission", "Unlimited services & bookings", "Client CRM + history", "Advanced analytics + export", "WhatsApp + call support"],
+  free: ["5% commission per booking", "Unlimited services & bookings", "Booking page + payments", "24-hour reminders", "Email support"],
+  premium: ["0% commission", "Client CRM + history", "Follow-up & rebook automation", "Unlimited digital products", "Priority WhatsApp support"],
 };
 
 const inr0 = (n) =>
@@ -113,7 +111,7 @@ function StepperInput({ n, title, sublabel, value, min, max, step, prefix, onCha
 // Honest bar chart — heights are true (0-based) net-annual take-home; the winner
 // is coloured + crowned, others muted. No truncated axis, no exaggeration.
 function EarningsBars({ results, winnerKey }) {
-  const order = ["starter", "hostplus", "studio"];
+  const order = ["free", "premium"];
   const bars = order.map((k) => results.find((r) => r.plan.key === k)).filter(Boolean);
   const maxNet = Math.max(...bars.map((b) => b.netAnnual), 1);
   const BAR_MAX = 132;
@@ -126,10 +124,10 @@ function EarningsBars({ results, winnerKey }) {
           const h = Math.max(10, (Math.max(0, b.netAnnual) / maxNet) * BAR_MAX);
           return (
             <div key={b.plan.key} className="flex flex-1 flex-col items-center justify-end">
-              {isWin && <Crown size={16} className="mb-0.5" style={{ color: ACCENT.hostplus }} fill={ACCENT.hostplus} />}
+              {isWin && <Crown size={16} className="mb-0.5" style={{ color: ACCENT.premium }} fill={ACCENT.premium} />}
               <span className="mb-1 text-[11px] font-bold text-ink">{inr0(b.netAnnual)}</span>
               <div className="w-full max-w-[58px] rounded-t-lg transition-all duration-300"
-                style={{ height: h, background: isWin ? ACCENT.hostplus : "#d9d5cc", opacity: muted ? 0.5 : 1 }} />
+                style={{ height: h, background: isWin ? ACCENT.premium : "#d9d5cc", opacity: muted ? 0.5 : 1 }} />
             </div>
           );
         })}
@@ -138,7 +136,7 @@ function EarningsBars({ results, winnerKey }) {
         {bars.map((b) => (
           <div key={b.plan.key} className="flex-1 text-center">
             <p className="text-xs font-semibold text-ink">{b.plan.name}</p>
-            <p className="text-[10px] text-neutral-500">{b.plan.key === "starter" ? "5% fee" : "0% fee"}</p>
+            <p className="text-[10px] text-neutral-500">{b.plan.key === "free" ? "5% fee" : "0% fee"}</p>
           </div>
         ))}
       </div>
@@ -150,7 +148,7 @@ function PlanCard({ result, winnerKey, cycle }) {
   const { plan } = result;
   const Icon = ICON[plan.key] ?? Sparkles;
   const accent = ACCENT[plan.key];
-  const isRec = plan.key === "hostplus"; // Host+ is the recommended plan
+  const isRec = plan.key === "premium"; // Sloth Active is the recommended plan
   const monthly = plan.monthly;
   const yearly = ANNUAL_FEE[plan.key];
   const priceNote =
@@ -191,7 +189,7 @@ function PlanCard({ result, winnerKey, cycle }) {
 
       {result.capped && (
         <p className="mt-3 rounded-[8px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
-          Starter caps at {inr0(plan.maxServicePrice)} per session — Host+ prices above it.
+          This plan caps at {inr0(plan.maxServicePrice)} per session.
         </p>
       )}
       {result.outgrows && (
@@ -237,9 +235,9 @@ export default function EarningsCalculator() {
   const winnerKey = useMemo(() => pickWinner(results), [results]);
   const winner = results.find((r) => r.plan.key === winnerKey);
 
-  const winnerIsFree = winnerKey === "starter";
+  const winnerIsFree = winnerKey === "free";
   const delta = deltaVsFree(results, winnerKey);
-  const maxSaving = Math.max(annualSaving("hostplus"), annualSaving("studio"));
+  const maxSaving = annualSaving("premium");
 
   const animatedNet = useCountUp(winner.netAnnual);
   const canonical = `${SITE_URL}/earnings-calculator`;
@@ -248,7 +246,7 @@ export default function EarningsCalculator() {
     <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
       <Seo
         title="Earnings Calculator — see what you keep | Book A Sloth"
-        description="Book A Sloth earnings calculator: set your price and monthly bookings to see exactly what you keep — and which plan (Starter, Host+ or Studio) leaves you the most."
+        description="Book A Sloth earnings calculator: set your price and monthly bookings to see exactly what you keep — and whether Sloth or Sloth Active leaves you the most."
         canonical={canonical}
         image={ogCard("earnings-calculator", "png")}
       />
@@ -316,7 +314,7 @@ export default function EarningsCalculator() {
             </div>
 
             <div className="mt-6 grid gap-5 lg:grid-cols-3">
-              {["starter", "hostplus", "studio"].map((k) => (
+              {["free", "premium"].map((k) => (
                 <PlanCard key={k} result={results.find((r) => r.plan.key === k)} winnerKey={winnerKey} cycle={cycle} />
               ))}
             </div>

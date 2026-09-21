@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc, markLinkShared } from '../services/api';
 import { analytics, EVENTS } from '../services/analytics';
-import { normalizePlan } from '../utils/themeUtils';
+import { isFreePlan, planLabel } from '../utils/themeUtils';
 import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
 import WhatsAppVerify from '../components/whatsapp/WhatsAppVerify';
@@ -110,10 +110,10 @@ const Dashboard = () => {
 
   // Legacy paid vendors were backfilled to subscription_status='active' but have
   // NO auto-renew mandate — nudge them onto auto-renew before their period ends.
-  // Normalize the slug first: the free tier is `starter` but legacy aliases
-  // (`explorer`/`free`) must not read as paid here.
+  // Normalize the slug first: every free alias (`starter`/`explorer`/
+  // `starter_legacy`) must not read as paid here.
   const showLegacyBanner =
-    isHost && user?.plan && normalizePlan(user.plan) !== 'starter' &&
+    isHost && user?.plan && !isFreePlan(user.plan) &&
     user.subscription_status === 'active' && !user.has_payment_mandate &&
     !bannerDismissed;
 
@@ -143,8 +143,8 @@ const Dashboard = () => {
     () => bookings.some((b) => b.payment_status === 'paid' && Number(b.vendor_amount ?? b.amount ?? 0) > 0),
     [bookings]
   );
-  const isFreePlan = isHost && normalizePlan(user?.plan) === 'starter';
-  const showUpgradeNudge = isFreePlan && (commissionPaid > 0 || hasRealEarning) && !upgradeDismissed;
+  const onFreePlan = isHost && isFreePlan(user?.plan);
+  const showUpgradeNudge = onFreePlan && (commissionPaid > 0 || hasRealEarning) && !upgradeDismissed;
   const dismissUpgrade = () => {
     localStorage.setItem('upgradeNudgeDismissed', '1');
     setUpgradeDismissed(true);
@@ -348,11 +348,11 @@ const Dashboard = () => {
             <p className="text-sm font-semibold text-gray-900">
               {commissionPaid > 0
                 ? `You've paid ${fmtMoney(commissionPaid)} in platform commission`
-                : "You're on the free plan — 5% commission applies as you earn"}
+                : "You're on Sloth — 5% commission applies as you earn"}
             </p>
             <p className="mt-0.5 text-xs text-gray-600">
-              Host+ and Studio charge <span className="font-semibold">0% commission</span>
-              {commissionPaid > 0 ? ' — upgrade and keep every rupee.' : ', plus reminders and custom branding.'}
+              Sloth Active charges <span className="font-semibold">0% commission</span>
+              {commissionPaid > 0 ? ' — upgrade and keep every rupee.' : ', for under ₹10 a day.'}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -371,7 +371,7 @@ const Dashboard = () => {
         <div className="mb-5 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
           <CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" strokeWidth={2.25} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold capitalize text-gray-900">Your {user.plan} plan won't auto-renew</p>
+            <p className="text-sm font-semibold text-gray-900">Your {planLabel(user.plan, 'current')} plan won't auto-renew</p>
             <p className="mt-0.5 text-xs text-gray-600">Set up auto-renew so you never lose access when your current period ends.</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">

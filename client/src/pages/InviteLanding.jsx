@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getInviteConfig, recordInviteVisit, getVendorGoogleUrl } from '../services/api';
 import { STATS, Odometer } from './Home';
-import { STARTER_PLAN, PAID_PLANS } from '../data/plans';
+import { FREE_PLAN, PAID_PLANS } from '../data/plans';
 import useFeeOnly from '../hooks/useFeeOnly';
 import { TESTIMONIALS } from '../data/testimonials';
 import HowItWorks from '../components/home/HowItWorks';
@@ -59,7 +59,7 @@ export default function InviteLanding() {
   if (!label) return null; // brief blank while validating (or redirecting)
 
   const top3 = STATS.slice(0, 3);
-  const plans = feeOnly ? [...PAID_PLANS] : [STARTER_PLAN, ...PAID_PLANS];
+  const plans = feeOnly ? [...PAID_PLANS] : [FREE_PLAN, ...PAID_PLANS];
 
   return (
     <div className="min-h-screen bg-white text-ink">

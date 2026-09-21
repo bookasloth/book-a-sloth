@@ -125,8 +125,8 @@ const COMPARE = [
   { f: "WhatsApp reminders", basT: "Yes", aT: "No", a: false },
   { f: "INR billing (₹)", basT: "Yes", aT: "USD only", a: false },
   { f: "UPI / Razorpay integration", basT: "Native", aT: "No", a: false },
-  { f: "0% commission on paid plans", basT: "Yes", aT: "N/A", a: false },
-  { f: "Starting price", basT: "₹229 / month", aT: "~₹1,350 / month (USD)", a: false },
+  { f: "0% commission on Sloth Active", basT: "Yes", aT: "N/A", a: false },
+  { f: "Starting price", basT: "₹0 free · ₹399/mo paid", aT: "~₹1,350 / month (USD)", a: false },
   { f: "Intake forms", basT: "Yes", aT: "Yes", a: true },
   { f: "Google Calendar sync", basT: "Yes", aT: "Yes", a: true },
   { f: "Email reminders", basT: "Yes", aT: "Yes", a: true },
@@ -146,7 +146,7 @@ const INDUSTRIES = [
 const FAQ = [
   {
     q: "How is Book A Sloth different from Acuity Scheduling?",
-    a: "Acuity is built for the US market — USD billing, Stripe/Square payments, no UPI. Book A Sloth is built from the ground up for India: Razorpay + UPI payments, WhatsApp reminders, GST invoices, and pricing in INR starting at just ₹229/month.",
+    a: "Acuity is built for the US market — USD billing, Stripe/Square payments, no UPI. Book A Sloth is built from the ground up for India: Razorpay + UPI payments, WhatsApp reminders, GST invoices, and pricing in INR — free to start, ₹399/month when you upgrade.",
   },
   {
     q: "Can I migrate my Acuity clients to Book A Sloth?",
@@ -162,7 +162,7 @@ const FAQ = [
   },
   {
     q: "Is there a free plan? Acuity removed theirs.",
-    a: "Yes — Book A Sloth has a generous free Starter plan. No credit card, no trial countdown. Upgrade to Host+ (₹229/mo) or Studio (₹555/mo) when you need more features.",
+    a: "Yes — Book A Sloth has a generous free Sloth plan. No credit card, no trial countdown. Upgrade to Sloth Active (₹399/mo, or ₹3,599/yr) when you need more.",
   },
   {
     q: "I'm locked into Squarespace. Can I still use Book A Sloth?",
@@ -588,7 +588,7 @@ const AcuityAlternative = () => {
             Pricing that makes sense in India
           </h2>
           <p className="mt-2 text-center" style={{ color: ACU_BODY }}>
-            Acuity starts at ~₹1,350/mo (USD). We start at ₹229/mo. All plans billed in ₹.
+            Acuity starts at ~₹1,350/mo (USD). We start at ₹0. All plans billed in ₹, GST included.
           </p>
 
           <div className="mt-6 flex justify-center">
@@ -684,7 +684,7 @@ const AcuityAlternative = () => {
             })}
           </div>
           <p className="mt-6 text-center text-sm text-gray-400">
-            0% commission on paid plans · Prices in INR, excl. GST · Cancel anytime
+            0% commission on Sloth Active · All prices include GST · Cancel anytime
           </p>
         </div>
       </section>
