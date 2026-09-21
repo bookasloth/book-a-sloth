@@ -8,6 +8,9 @@ vi.mock('../services/api', () => ({
   getGuestBookings: vi.fn(() => Promise.resolve({ data: [] })),
   getPayoutBalance: vi.fn(() => Promise.resolve({ data: {} })),
   getMyKyc: vi.fn(() => Promise.resolve({ data: { status: 'not_started', pending_earnings: 0, payouts_ready: false } })),
+  getHostNudges: vi.fn(() => Promise.resolve({ data: { snoozed: {} } })),
+  dismissHostNudge: vi.fn(() => Promise.resolve({ data: { ok: true } })),
+  markLinkShared: vi.fn(() => Promise.resolve({})),
 }));
 vi.mock('../services/analytics', () => ({
   analytics: { track: vi.fn() },
@@ -21,6 +24,7 @@ vi.mock('../context/AuthContext', () => ({
 }));
 
 import Dashboard from '../pages/Dashboard';
+import { dismissHostNudge } from '../services/api';
 
 const legacy = { name: 'Asha', role: 'host', plan: 'creator', subscription_status: 'active', has_payment_mandate: false };
 
@@ -42,11 +46,12 @@ test('hides the banner once a mandate exists', async () => {
   expect(screen.queryByText(/won't auto-renew/i)).not.toBeInTheDocument();
 });
 
-test('dismiss hides the banner and persists', async () => {
+test('dismiss hides the banner and persists it server-side', async () => {
   mockUser = legacy;
   renderDash();
   await waitFor(() => screen.getByText(/won't auto-renew/i));
   fireEvent.click(screen.getByLabelText('Dismiss'));
   expect(screen.queryByText(/won't auto-renew/i)).not.toBeInTheDocument();
-  expect(localStorage.getItem('legacyPlanBannerDismissed')).toBe('1');
+  // Server-tracked now (host_nudges), so a dismiss sticks across devices — no localStorage.
+  expect(dismissHostNudge).toHaveBeenCalledWith('legacy');
 });

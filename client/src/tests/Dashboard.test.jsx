@@ -12,6 +12,9 @@ vi.mock('../services/api', () => ({
   getMyServices:    vi.fn().mockResolvedValue({ data: [] }),
   getPayoutBalance: vi.fn().mockResolvedValue({ data: {} }),
   getMyKyc:         vi.fn().mockResolvedValue({ data: { status: 'not_started', pending_earnings: 0, payouts_ready: false } }),
+  getHostNudges:    vi.fn().mockResolvedValue({ data: { snoozed: {} } }),
+  dismissHostNudge: vi.fn().mockResolvedValue({ data: { ok: true } }),
+  markLinkShared:   vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock('../services/analytics', () => ({
