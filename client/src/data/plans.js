@@ -81,41 +81,28 @@ export const PREMIUM_ANNUAL_SAVING = PREMIUM_PLAN.monthly * 12 - PREMIUM_PLAN.ye
 export const PREMIUM_ANNUAL_SAVE_PCT = Math.round((PREMIUM_ANNUAL_SAVING / (PREMIUM_PLAN.monthly * 12)) * 100); // 25
 
 /* ────────────────────────────────────────────────────────────────────────────
- * Everything both plans include.
+ * Full feature comparison — drives the detailed table on /pricing (Pricing.jsx).
  *
- * In a two-plan world most of the old comparison grid collapsed to ✓/✓, which is
- * noise in a table. These are listed once as a reassurance band instead, and the
- * table below carries only what actually DIFFERS.
+ * Every row maps to a REAL, enforced gate (honesty rule — never list what the
+ * server doesn't enforce):
+ *   commission_percentage · limits.free_services · limits.crm (free = 10 most
+ *   recent) · limits.reminder_flows (1h + reschedule alerts) · WhatsApp reminders
+ *   (free 2-month grace then email — bookingController.whatsappRemindersAllowed) ·
+ *   limits.followup_flows · limits.digital_products · limits.calendar_integrations ·
+ *   limits.ai_generations · support_type.
+ *
+ * Deliberately ABSENT: advanced_reports and data_export — they live in
+ * subscription_plans.features, which nothing on the server reads. Listing them
+ * would be a promise the product doesn't keep. Add the rows when the gates exist.
+ *
+ * Cell values: true (✓) · false (—) · a plain string (verbatim) · limited(tip)
+ * → a "Limited" chip whose exact figure lives in a tap/hover tooltip, so a small
+ * free-plan number is never printed bare on the page.
  * ──────────────────────────────────────────────────────────────────────────── */
-export const PLAN_INCLUDED = [
-  "Unlimited services",
-  "Unlimited bookings",
-  "Unlimited service categories",
-  "Public booking page + custom URL",
-  "Online and in-person appointments",
-  "Payment collection via UPI & cards",
-  "Booking confirmations (email + WhatsApp)",
-  "24-hour booking reminders",
-  "Reschedule & cancellation",
-  "Google Calendar + Meet",
-  "All profile theme colours",
-  "GST invoices",
-  "Earnings, payouts & transaction history",
-  "Guest reviews",
-];
 
-/* ────────────────────────────────────────────────────────────────────────────
- * Comparison table — ONLY rows the server actually enforces.
- *
- * Every row here maps to a real gate: commission_percentage, limits.crm,
- * limits.reminder_flows, limits.followup_flows, limits.digital_products,
- * limits.calendar_integrations, limits.ai_generations, support_type.
- *
- * Deliberately ABSENT: advanced_reports and data_export. They live in
- * subscription_plans.features, which nothing on the server reads — a Free
- * account reaches both today. Listing them would be a promise the product does
- * not keep. Add the rows when the gates exist, not before.
- * ──────────────────────────────────────────────────────────────────────────── */
+// A capped free-plan cell: renders "Limited", with the real figure in the tooltip.
+const limited = (tip) => ({ v: "Limited", tip });
+
 export const PLAN_COLUMNS = [
   { key: "free", name: "Sloth", slug: "free" },
   { key: "premium", name: "Sloth Active", slug: "premium", recommended: true },
@@ -123,37 +110,59 @@ export const PLAN_COLUMNS = [
 
 export const PLAN_MATRIX = [
   {
-    group: "Price",
+    group: "Price & commission",
     rows: [
-      { label: "Monthly", free: "₹0", premium: "₹399" },
-      { label: "Yearly", free: "₹0", premium: "₹3,599" },
+      { label: "Monthly price", free: "₹0", premium: "₹399" },
+      { label: "Yearly price", free: "₹0", premium: "₹3,599" },
       { label: "Commission on your bookings", free: "5%", premium: "0%" },
     ],
   },
   {
-    group: "Automation",
+    group: "Selling",
     rows: [
-      { label: "Booking reminders", free: "24h before", premium: "24h + 1h + reschedule alerts" },
+      { label: "Public booking page + custom URL", free: true, premium: true },
+      { label: "Online & in-person appointments", free: true, premium: true },
+      { label: "Paid services", free: "Unlimited", premium: "Unlimited" },
+      { label: "Free (₹0) services", free: limited("2 free services — a discovery call, not a whole business at ₹0"), premium: "Unlimited" },
+      { label: "Bookings", free: "Unlimited", premium: "Unlimited" },
+      { label: "Service categories", free: "Unlimited", premium: "Unlimited" },
+      { label: "UPI & card payments", free: true, premium: true },
+    ],
+  },
+  {
+    group: "Getting paid",
+    rows: [
+      { label: "GST tax invoices", free: true, premium: true },
+      { label: "Payouts to your bank (KYC)", free: true, premium: true },
+      { label: "Earnings & transaction history", free: true, premium: true },
+      { label: "Commission tracker — see what you've paid", free: true, premium: true },
+    ],
+  },
+  {
+    group: "Reminders",
+    rows: [
+      { label: "Booking confirmations (email + WhatsApp)", free: true, premium: true },
+      { label: "24-hour reminder", free: true, premium: true },
+      { label: "1-hour reminder", free: false, premium: true },
+      { label: "WhatsApp reminders", free: limited("Free for your first 2 months, then email reminders"), premium: true },
+      { label: "Reschedule & cancellation alerts", free: false, premium: true },
+    ],
+  },
+  {
+    group: "Clients & growth",
+    rows: [
+      { label: "Client CRM — records, notes, history", free: limited("Your 10 most recent clients"), premium: "Full" },
       { label: "Follow-up & rebook automation", free: false, premium: true },
+      { label: "Digital products", free: limited("3 digital products"), premium: "Unlimited" },
+      { label: "AI service writing", free: limited("10 generations every 6 months"), premium: "Unlimited" },
+      { label: "Calendar integrations", free: limited("1 calendar (Google)"), premium: "2 (Google + iCal)" },
     ],
   },
   {
-    group: "Clients",
+    group: "Profile & support",
     rows: [
-      { label: "Client CRM — records, history, notes", free: false, premium: true },
-    ],
-  },
-  {
-    group: "Limits",
-    rows: [
-      { label: "Digital products", free: "3", premium: "Unlimited" },
-      { label: "Calendar integrations", free: "1 (Google)", premium: "2 (Google + iCal)" },
-      { label: "AI service writing", free: "10 per 6 months", premium: "Unlimited" },
-    ],
-  },
-  {
-    group: "Support",
-    rows: [
+      { label: "Profile theme colours", free: true, premium: true },
+      { label: "Guest reviews", free: true, premium: true },
       { label: "Support", free: "Email", premium: "Priority — WhatsApp + email" },
     ],
   },

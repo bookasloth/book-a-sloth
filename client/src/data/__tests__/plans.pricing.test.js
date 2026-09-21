@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   ALL_PLANS, FREE_PLAN, PREMIUM_PLAN, PAID_PLANS,
-  PLAN_COLUMNS, PLAN_MATRIX, PLAN_INCLUDED,
+  PLAN_COLUMNS, PLAN_MATRIX,
   PREMIUM_ANNUAL_SAVING, PREMIUM_ANNUAL_SAVE_PCT, PREMIUM_PER_DAY,
 } from "../plans";
 
@@ -24,8 +24,6 @@ describe("plan data", () => {
 });
 
 // Prices shown to a customer are GST-INCLUSIVE — what Razorpay actually charges.
-// Quoting monthly ex-GST against yearly incl-GST is what made the old
-// ₹300/₹3,650 pair read as if a year cost MORE than twelve months.
 describe("pricing is coherent", () => {
   it("matches the DB ex-GST values grossed up by 18%", () => {
     expect(Math.round(338.13 * 1.18)).toBe(PREMIUM_PLAN.monthly); // 398.99 → ₹399
@@ -51,6 +49,8 @@ describe("pricing is coherent", () => {
 });
 
 describe("comparison table", () => {
+  const rows = PLAN_MATRIX.flatMap((s) => s.rows);
+
   it("every row has a value for both columns", () => {
     for (const section of PLAN_MATRIX) {
       expect(section.rows.length).toBeGreaterThan(0);
@@ -62,32 +62,36 @@ describe("comparison table", () => {
     }
   });
 
-  // A two-column table exists to show DIFFERENCE. Rows that read ✓/✓ belong in
-  // the "included on both" band instead, or the table is mostly noise.
-  it("carries no row that is identical on both plans", () => {
-    const same = PLAN_MATRIX.flatMap((s) => s.rows).filter((r) => r.free === r.premium);
-    expect(same).toEqual([]);
+  it("is a detailed comparison — at least 20 features", () => {
+    expect(rows.length).toBeGreaterThanOrEqual(20);
   });
 
-  // advanced_reports / data_export live in subscription_plans.features, which
-  // NOTHING on the server reads — a free account reaches both. Listing them
-  // would be a promise the product doesn't keep.
-  it("lists nothing the server does not enforce", () => {
-    const labels = PLAN_MATRIX.flatMap((s) => s.rows).map((r) => r.label.toLowerCase());
-    for (const banned of ["advanced analytics", "data export", "custom fields", "recurring clients", "multiple availability schedules", "priority feature access"]) {
-      expect(labels).not.toContain(banned);
+  // "Don't write smaller numbers — say Limited with a tooltip." Every capped
+  // free value is a limited(tip) object, never a bare integer in the cell.
+  it("hides small free-plan numbers behind a Limited chip, never bare", () => {
+    const limitedCells = rows.filter((r) => r.free && typeof r.free === "object" && r.free.v === "Limited");
+    expect(limitedCells.length).toBeGreaterThan(0);
+    for (const r of limitedCells) expect(r.free.tip).toBeTruthy(); // the real figure lives in the tooltip
+    const freeText = rows.map((r) => r.free).filter((v) => typeof v === "string");
+    for (const bare of ["2", "3", "10", "1", "1 (Google)", "10 per 6 months"]) {
+      expect(freeText).not.toContain(bare);
     }
   });
 
-  it("has an included-on-both band so the table stays difference-only", () => {
-    expect(PLAN_INCLUDED.length).toBeGreaterThan(5);
+  // advanced_reports / data_export etc. live in subscription_plans.features,
+  // which NOTHING on the server reads. Listing them = a promise we don't keep.
+  it("lists nothing the server does not enforce", () => {
+    const labels = rows.map((r) => r.label.toLowerCase());
+    for (const banned of ["advanced analytics", "data export", "custom fields", "recurring clients", "multiple availability schedules", "priority feature access", "powered by"]) {
+      expect(labels).not.toContain(banned);
+    }
   });
 });
 
 // The retired ladder must not resurface anywhere a customer can read it.
 describe("no legacy tiers leak into display copy", () => {
   it("drops Starter / Host+ / Studio / Enterprise naming and old prices", () => {
-    const blob = JSON.stringify({ ALL_PLANS, PLAN_MATRIX, PLAN_INCLUDED });
+    const blob = JSON.stringify({ ALL_PLANS, PLAN_MATRIX });
     for (const dead of ["Starter", "Host+", "Studio", "Enterprise", "229", "555", "1,499", "3,650"]) {
       expect(blob).not.toContain(dead);
     }
