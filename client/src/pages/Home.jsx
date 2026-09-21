@@ -330,7 +330,7 @@ const FEATURE_GROUPS = [
   { icon: CalendarCheck, title: "Get booked", desc: "Your page is live 24/7. Clients book while you sleep.", items: ["Personal booking page", "Availability management", "Two-way calendar sync"] },
   { icon: Wallet, title: "Get paid", desc: "Money in before the session. No invoicing, no chasing.", items: ["Razorpay — UPI, cards, netbanking", "Advance & full payments", "Automatic GST invoices"] },
   { icon: BellRing, title: "Get reminded", desc: "Automatic reminders and confirmations go out for you — no no-shows to chase.", items: ["Email & WhatsApp reminders", "Instant confirmations", "Post-session follow-ups"] },
-  { icon: FolderKanban, title: "Stay organized", desc: "Every client, every booking, every rupee — in one place.", items: ["Client history & receipts", "Private notes", "Bookings & revenue reports"] },
+  { icon: FolderKanban, title: "Get organized", desc: "Every client, every booking, every rupee — in one place.", items: ["Client history & receipts", "Private notes", "Bookings & revenue reports"] },
 ];
 
 
@@ -552,10 +552,9 @@ const Home = () => {
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT */}
           <div>
-            <Reveal instant as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
-              Get booked, paid, and reminded.
-              <br />
-              <span className="font-bold text-primary-cta">Without the admin.</span>
+            <Reveal instant as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
+              Get <span className="text-primary-cta">booked, paid, and reminded.</span>{" "}
+              <span className="font-bold">Without the admin.</span>
             </Reveal>
 
             <Reveal instant as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
@@ -572,14 +571,12 @@ const Home = () => {
                   className="btn flex w-full items-center justify-center gap-3 rounded-[5px] bg-ink py-3.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(16,24,40,0.16)] transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   <GoogleIcon />
-                  {googleLoading ? "Opening Google…" : "Continue with Google Account"}
+                  {googleLoading ? "Opening Google…" : "Create Your Free Booking Page"}
                 </button>
                 <p className="mt-3 text-xs leading-relaxed text-neutral-500">
                   By continuing, you agree to our{" "}
                   <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
-                  <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
-                  Why we{" "}
-                  <a href="#how-google" className="font-medium text-primary-cta underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
+                  <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.
                 </p>
               </div>
             </Reveal>
@@ -663,9 +660,8 @@ const Home = () => {
               render in the DOM (CSS-hidden per breakpoint), so this one is an h2
               to keep a single H1 per page for crawlers. */}
           <Reveal instant as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
-            Get booked, paid, and reminded.
-            <br />
-            <span className="font-bold text-primary-cta">Without the admin.</span>
+            Get <span className="text-primary-cta">booked, paid, and reminded.</span>{" "}
+            <span className="font-bold">Without the admin.</span>
           </Reveal>
 
           <Reveal instant as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
@@ -682,14 +678,12 @@ const Home = () => {
                 className="btn btn--outline flex w-full items-center justify-center gap-3 rounded-[5px] border border-black/[0.12] bg-white py-3.5 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-black/20 disabled:opacity-50"
               >
                 <GoogleIcon />
-                {googleLoading ? "Opening Google…" : "Continue with Google Account"}
+                {googleLoading ? "Opening Google…" : "Create Your Free Booking Page"}
               </button>
               <p className="mt-3 text-xs leading-relaxed text-neutral-500">
                 By continuing, you agree to our{" "}
                 <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
-                <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
-                Why we{" "}
-                <a href="#how-google" className="font-medium text-primary-cta underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
+                <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.
               </p>
             </div>
           </Reveal>
@@ -719,11 +713,11 @@ const Home = () => {
       {/* ════════════════ STATS STRIP (dark) ════════════════ */}
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-base font-semibold uppercase tracking-[0.2em] text-primary-cta sm:text-lg">
+          <Reveal as="p" className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-primary-cta sm:text-sm">
             Built for people who sell their time
           </Reveal>
-          <Reveal as="h2" delay={0.05} style={{ textWrap: "balance" }} className="mx-auto mt-3 max-w-[34rem] text-center text-4xl text-white sm:text-5xl">
-            Coaches, tutors, consultants, therapists and designers — already getting booked.
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[64rem] text-center text-2xl text-white sm:text-3xl">
+            Coaches, Doctors, Consultants, Therapists and Designers already getting appointments booked and paid.
           </Reveal>
           <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4 lg:gap-x-0 lg:divide-x lg:divide-white/10">
             {STATS.map((s, i) => (
@@ -998,7 +992,7 @@ const Home = () => {
             The outcome
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Get booked. Get paid. <span className="font-extrabold text-primary-cta">Get reminded. Stay organized.</span>
+            Get <span className="font-extrabold text-primary-cta">booked</span>. Get <span className="font-extrabold text-primary-cta">paid</span>. Get <span className="font-extrabold text-primary-cta">reminded</span>. Get <span className="font-extrabold text-primary-cta">organized</span>.
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Everything around the appointment, handled — so you focus on the actual work.
@@ -1203,7 +1197,7 @@ const Home = () => {
 
       {/* ════════════ PRICING (shared PricingCards — Sloth + Sloth Active) ════════════ */}
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[860px]">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
             Simple pricing. <span className="text-primary-cta">Zero commission.</span>
           </Reveal>
@@ -1215,19 +1209,13 @@ const Home = () => {
             <PricingCards />
           </Reveal>
 
-          <p className="mt-8 text-center text-sm text-neutral-500">
-            Not sure which plan? <span className="font-semibold text-ink">Start free</span> — you can upgrade in one click, anytime.
-          </p>
-          <p className="mt-4 text-center">
+          <p className="mt-8 text-center">
             <Link to="/pricing" className="text-sm font-semibold text-primary-cta hover:text-primary-dark hover:underline">
               Compare all plans &amp; features →
             </Link>
           </p>
           <p className="mt-3 text-center text-xs text-neutral-500">
             0% commission on Sloth Active · All prices include GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
-          </p>
-          <p className="mt-10 text-center text-xl font-bold text-ink sm:text-2xl">
-            Spend your time doing the work. <span className="text-primary-cta">Not managing the booking.</span>
           </p>
         </div>
       </section>
