@@ -2,13 +2,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CalendarClock, CheckCircle2, XCircle, CalendarDays, LayoutGrid, IndianRupee,
-  UserCheck, Hourglass, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck, MapPin,
+  UserCheck, Hourglass, Camera, UserCog, Tag, CalendarCheck, ShieldCheck, MapPin,
   Check, ArrowRight, Copy, Link2, MessageCircle, Wallet, Share2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc, markLinkShared } from '../services/api';
+import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc, markLinkShared, getHostNudges, dismissHostNudge } from '../services/api';
 import { analytics, EVENTS } from '../services/analytics';
-import { isFreePlan, planLabel } from '../utils/themeUtils';
+import { isFreePlan } from '../utils/themeUtils';
+import { buildNudges, pickNextStep } from '../lib/hostNudges';
+import NextStepCard from '../components/dashboard/NextStepCard';
 import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
 import WhatsAppVerify from '../components/whatsapp/WhatsAppVerify';
@@ -102,38 +104,16 @@ const Dashboard = () => {
   const [balance, setBalance] = useState(null);
   const [kyc, setKyc] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [bannerDismissed, setBannerDismissed] = useState(
-    () => localStorage.getItem('legacyPlanBannerDismissed') === '1'
-  );
   const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
   const [whatsappEntry, setWhatsappEntry] = useState(undefined); // { country, number } preserved across close
 
-  // Legacy paid vendors were backfilled to subscription_status='active' but have
-  // NO auto-renew mandate — nudge them onto auto-renew before their period ends.
-  // Normalize the slug first: every free alias (`starter`/`explorer`/
-  // `starter_legacy`) must not read as paid here.
-  const showLegacyBanner =
-    isHost && user?.plan && !isFreePlan(user.plan) &&
-    user.subscription_status === 'active' && !user.has_payment_mandate &&
-    !bannerDismissed;
-
-  const dismissBanner = () => {
-    localStorage.setItem('legacyPlanBannerDismissed', '1');
-    setBannerDismissed(true);
-  };
-
-  // Deferred KYC: host has earnings waiting but no payout-ready verification.
-  // We let hosts list + sell without KYC and only ask once money is on the line.
+  // ── Dashboard "Next step" — ONE ranked, server-dismissed nudge that replaces the
+  // old scattered localStorage banners (set up payouts / upgrade / legacy auto-renew
+  // / share). Ranking is a pure function over signals already loaded below; `snoozed`
+  // (server-tracked) makes a dismiss stick across devices instead of re-nagging. ───
+  const [snoozed, setSnoozed] = useState({});
+  const onFreePlan = isHost && isFreePlan(user?.plan);
   const pendingEarnings = Number(kyc?.pending_earnings) || 0;
-  const showKycNudge = isHost && pendingEarnings > 0 && !kyc?.payouts_ready;
-
-  // Earnings-triggered upgrade nudge (upgrade-on-success). Free-plan hosts pay 5%
-  // commission; paid plans are 0%. Show them what that has actually cost so far —
-  // real rupees, not a generic upsell. commission_applied is the per-booking
-  // snapshot (absent under schema-fallback → treated as 0).
-  const [upgradeDismissed, setUpgradeDismissed] = useState(
-    () => localStorage.getItem('upgradeNudgeDismissed') === '1'
-  );
   const commissionPaid = useMemo(
     () => bookings.reduce(
       (sum, b) => sum + (b.payment_status === 'paid' ? Number(b.commission_applied) || 0 : 0), 0),
@@ -143,24 +123,24 @@ const Dashboard = () => {
     () => bookings.some((b) => b.payment_status === 'paid' && Number(b.vendor_amount ?? b.amount ?? 0) > 0),
     [bookings]
   );
-  const onFreePlan = isHost && isFreePlan(user?.plan);
-  const showUpgradeNudge = onFreePlan && (commissionPaid > 0 || hasRealEarning) && !upgradeDismissed;
-  const dismissUpgrade = () => {
-    localStorage.setItem('upgradeNudgeDismissed', '1');
-    setUpgradeDismissed(true);
+  const nextStep = useMemo(() => pickNextStep(buildNudges({
+    isFreePlan: onFreePlan,
+    plan: user?.plan,
+    subscriptionStatus: user?.subscription_status,
+    hasPaymentMandate: user?.has_payment_mandate,
+    pendingEarnings, payoutsReady: !!kyc?.payouts_ready,
+    commissionPaid, hasRealEarning,
+    hasUsername: !!user?.username, servicesCount: services.length, bookingsCount: bookings.length,
+  }), snoozed), [onFreePlan, user, kyc, pendingEarnings, commissionPaid, hasRealEarning, services.length, bookings.length, snoozed]);
+
+  const dismissNudge = (key) => {
+    setSnoozed((s) => ({ ...s, [key]: new Date(Date.now() + 3650 * 86400000).toISOString() })); // optimistic hide
+    dismissHostNudge(key);
   };
 
-  // Share moment — the onboarding climax. A host who is live (username + a
-  // service) but has ZERO bookings needs exactly one thing: to send their link
-  // to their own audience. That's the only demand channel, so it gets a hero,
-  // not a thin banner. Hides the moment a booking arrives, or on dismiss.
-  const [shareMomentDismissed, setShareMomentDismissed] = useState(
-    () => localStorage.getItem('shareMomentDismissed') === '1'
-  );
+  // Share helpers — used by the share-hero variant of the Next-step card.
   const profileUrl = user?.username ? `${window.location.origin}/${user.username}` : '';
   const shareText = `Book a session with me on Book A Sloth: ${profileUrl}`;
-  const showShareMoment =
-    isHost && !!user?.username && services.length > 0 && bookings.length === 0 && !shareMomentDismissed;
   const trackShare = (method) => {
     analytics.track(EVENTS.PROFILE_LINK_SHARED, { method, source: 'share_moment' });
     markLinkShared(); // stamp the activation-funnel "shared" signal in the DB (idempotent)
@@ -172,10 +152,6 @@ const Dashboard = () => {
     }
     try { await navigator.clipboard.writeText(profileUrl); toast.success('Link copied!'); trackShare('copy'); }
     catch { toast.error('Could not share link'); }
-  };
-  const dismissShareMoment = () => {
-    localStorage.setItem('shareMomentDismissed', '1');
-    setShareMomentDismissed(true);
   };
 
   // Google-calendar return toast
@@ -205,6 +181,8 @@ const Dashboard = () => {
     getPayoutBalance().then(({ data }) => setBalance(data)).catch(() => {});
     // Deferred-KYC nudge signal: pending_earnings + payouts_ready. Best-effort.
     getMyKyc().then(({ data }) => setKyc(data)).catch(() => {});
+    // Server-tracked nudge snoozes (so a dismiss sticks across devices). Best-effort.
+    getHostNudges().then(({ data }) => setSnoozed(data?.snoozed || {})).catch(() => {});
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, [isHost]);
@@ -277,8 +255,9 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Share moment — the onboarding climax: live host, no bookings yet → share your link */}
-      {showShareMoment && (
+      {/* Next step — ONE ranked, server-dismissed nudge. Sharing is the top activation
+          priority and keeps its rich hero; KYC / upgrade / legacy render via NextStepCard. */}
+      {nextStep?.key === 'share' ? (
         <div className="mb-5 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -287,7 +266,7 @@ const Dashboard = () => {
                 Bookings come from people who see your link. Send it to your followers, groups and DMs — this is the one thing that gets you booked.
               </p>
             </div>
-            <button onClick={dismissShareMoment} aria-label="Dismiss" className="p-1 text-primary/50 hover:text-primary">
+            <button onClick={() => dismissNudge('share')} aria-label="Dismiss" className="p-1 text-primary/50 hover:text-primary">
               <XCircle className="h-4 w-4" strokeWidth={2.25} />
             </button>
           </div>
@@ -320,70 +299,9 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Deferred KYC — earnings waiting, payouts not set up yet (money to collect first) */}
-      {showKycNudge && (
-        <div className="mb-5 flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-4">
-          <Wallet className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" strokeWidth={2.25} />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900">
-              You've earned {fmtMoney(pendingEarnings)} — set up payouts to receive it
-            </p>
-            <p className="mt-0.5 text-xs text-gray-600">
-              Finish a quick one-time verification (PAN + bank). You only need to do this once.
-            </p>
-          </div>
-          <Link to="/dashboard/kyc" className="shrink-0 self-center whitespace-nowrap rounded bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-emerald-700">
-            Set up payouts
-          </Link>
-        </div>
-      )}
-
-      {/* Earnings-triggered upgrade nudge — free plan pays 5%, paid plans 0% */}
-      {showUpgradeNudge && (
-        <div className="mb-5 flex items-start gap-3 rounded-md border border-primary/20 bg-primary/5 p-4">
-          <IndianRupee className="mt-0.5 h-5 w-5 shrink-0 text-primary" strokeWidth={2.25} />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900">
-              {commissionPaid > 0
-                ? `You've paid ${fmtMoney(commissionPaid)} in platform commission`
-                : "You're on Sloth — 5% commission applies as you earn"}
-            </p>
-            <p className="mt-0.5 text-xs text-gray-600">
-              Sloth Active charges <span className="font-semibold">0% commission</span>
-              {commissionPaid > 0 ? ' — upgrade and keep every rupee.' : ', for under ₹10 a day.'}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Link to="/dashboard/upgrade" className="whitespace-nowrap rounded bg-primary px-3 py-1.5 text-xs font-bold text-white transition-colors hover:opacity-90">
-              See plans
-            </Link>
-            <button onClick={dismissUpgrade} aria-label="Dismiss" className="p-1 text-primary/60 hover:text-primary">
-              <XCircle className="h-4 w-4" strokeWidth={2.25} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Legacy plan → auto-renew migration nudge */}
-      {showLegacyBanner && (
-        <div className="mb-5 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
-          <CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" strokeWidth={2.25} />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900">Your {planLabel(user.plan, 'current')} plan won't auto-renew</p>
-            <p className="mt-0.5 text-xs text-gray-600">Set up auto-renew so you never lose access when your current period ends.</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Link to="/dashboard/upgrade" className="whitespace-nowrap rounded bg-amber-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-amber-700">
-              Set up auto-renew
-            </Link>
-            <button onClick={dismissBanner} aria-label="Dismiss" className="p-1 text-amber-500 hover:text-amber-700">
-              <XCircle className="h-4 w-4" strokeWidth={2.25} />
-            </button>
-          </div>
-        </div>
-      )}
+      ) : nextStep ? (
+        <NextStepCard nudge={nextStep} onDismiss={() => dismissNudge(nextStep.key)} />
+      ) : null}
 
       {/* Profile URL + Money — side by side on desktop, stacked on mobile */}
       <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-stretch">

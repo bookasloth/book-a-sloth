@@ -7,6 +7,7 @@ const {
 } = require('../controllers/hostController');
 const { gone } = require('../middleware/gone');
 const { changeUsername } = require('../controllers/usernameController');
+const { getHostNudges, dismissHostNudge } = require('../controllers/hostNudgeController');
 const { protect, requireHost } = require('../middleware/authMiddleware');
 const { attachPlan, enforceMinPrice } = require('../middleware/planMiddleware');
 const { requireFeature } = require('../middleware/requireFeature');
@@ -25,6 +26,10 @@ router.get('/services', protect, getMyServices);
 router.put('/services/:id', protect, requireHost, requireFeature('services'), ...serviceWriteRules, validate, attachPlan, enforceMinPrice, updateService);
 router.delete('/services/:id', protect, requireHost, deleteService);
 router.put('/availability', protect, requireHost, requireFeature('availability_editor'), setAvailability);
+// Dashboard "Next step" nudge dismissal state (server-tracked, cross-device).
+// MUST stay above the public /:username routes or "nudges" reads as a username.
+router.get('/nudges', protect, requireHost, getHostNudges);
+router.post('/nudges/:key/dismiss', protect, requireHost, dismissHostNudge);
 router.get('/:username/:slug', getServiceBySlug);
 router.get('/:username', getHostProfile);
 
