@@ -38,3 +38,13 @@ test('isSelfServable gates archived rows out of self-serve checkout', () => {
   expect(planService.isSelfServable({ slug: 'supreme', active: false })).toBe(false);
   expect(planService.isSelfServable(null)).toBe(false);
 });
+
+// Revenue floor: a ₹0 service earns nothing (0% of 0, and no booking fee on free
+// services in prod), so the free plan MUST cap them. v3.165 briefly set this to
+// -1 (unlimited), which let a host run a whole business at zero revenue; v3.166
+// restored the cap. This pins it so a future "make free more generous" edit can't
+// silently re-open the hole. Premium may be unlimited — those hosts already paid.
+test('free plan caps free (₹0) services; premium does not', async () => {
+  expect(await planService.getLimit('free', 'free_services')).toBe(2);
+  expect(await planService.getLimit('premium', 'free_services')).toBe(-1);
+});

@@ -34,7 +34,7 @@ const PREMIUM_LIMITS = { services: -1, free_services: -1, bookings_per_year: -1,
 const FALLBACK_PLANS = {
   free:         { name: 'Sloth', slug: 'free', annual_price: 0, monthly_price: 0, commission_percentage: 5, active: true,
     razorpay_plan_id_monthly: null, razorpay_plan_id_annual: null,
-    limits: { services: -1, free_services: -1, bookings_per_year: -1, digital_products: 3, calendar_integrations: 1, profile_theme_colors: -1, reminder_flows: 1, followup_flows: 0, categories: -1, crm: 0, ai_generations: 10 },
+    limits: { services: -1, free_services: 2, bookings_per_year: -1, digital_products: 3, calendar_integrations: 1, profile_theme_colors: -1, reminder_flows: 1, followup_flows: 0, categories: -1, crm: 0, ai_generations: 10 },
     features: {}, integrations: { calendar_apps: ['google_calendar'] }, support_type: 'standard', sort_order: 1 },
   premium:      { name: 'Sloth Active', slug: 'premium', annual_price: 3050, monthly_price: 338.13, commission_percentage: 0, active: true,
     razorpay_plan_id_monthly: null, razorpay_plan_id_annual: null,
