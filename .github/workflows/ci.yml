@@ -60,6 +60,9 @@ jobs:
               - 'server/**'
             client:
               - 'client/**'
+              # Bundled into the client by helpDocs.js and prerendered, so a
+              # malformed help article breaks the client build — test it.
+              - 'docs/help/**'
 
   server:
     name: Server (unit tests)
