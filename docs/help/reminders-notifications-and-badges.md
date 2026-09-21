@@ -21,8 +21,8 @@ Beyond email and WhatsApp, Book A Sloth shows notifications in-app on a **bell i
 Automated reminders go out before a session to cut down no-shows. **How many reminder points you get depends on your plan:**
 
 - The free tier doesn't include automated reminders.
-- Host+ includes a reminder before the session.
-- Studio includes the full set of reminders.
+- Sloth includes a 24-hour reminder before the session.
+- Sloth Active adds a 1-hour reminder and reschedule alerts.
 
 See the [pricing](/pricing) page for exactly what each plan includes.
 
@@ -36,7 +36,7 @@ If a badge you expected hasn't appeared, give it some time first. For verificati
 
 **What notifications does Book A Sloth send?** Booking confirmations, reschedules, cancellations, payment confirmations, refund updates, and (on paid plans) session reminders — over **email, WhatsApp, and the in-app bell**. Both guests and hosts get the ones relevant to them. They're triggered automatically when the related action happens.
 
-**Do reminders go out for every booking?** Confirmations do, always. **Reminders are plan-based** — the free tier has none, Host+ includes a reminder before the session, and Studio includes the full set. See [pricing](/pricing).
+**Do reminders go out for every booking?** Confirmations do, always. **Reminders are plan-based** — Sloth includes the 24-hour reminder, and Sloth Active adds the 1-hour reminder plus reschedule alerts. See [pricing](/pricing).
 
 **Do free bookings still get notifications?** Yes. A ₹0 booking gets the same confirmation as a paid one.
 
