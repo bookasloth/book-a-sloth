@@ -629,9 +629,9 @@ export default function SportsTurf() {
               For turf & sports arenas
             </Reveal>
             <Reveal as="h1" instant className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
-              Simple slot booking software for{' '}
+              A modern booking software for{' '}
               <span style={{ color: '#A3E635' }}>turf &amp; sports grounds</span>{' '}
-              of modern India.
+              to host games better.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-white/70 sm:mt-7 sm:text-lg lg:mx-0">
               Stop taking bookings over phone calls and WhatsApp. Let players see your open slots, book and pay online — for your turf, box-cricket ground or court.
