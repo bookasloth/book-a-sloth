@@ -17,7 +17,7 @@
 // New URL — keep in sync: App.jsx route (before /for/:profession), prerender.mjs
 // list, and Solutions.jsx CATEGORIES.
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -26,7 +26,7 @@ import {
   Wallet, BellRing, Bot, Palette,
   Receipt, History, Users, LineChart, Clock3, Landmark,
   FileText, Calculator, Building2, Video, ClipboardCheck, Scale,
-  BadgePercent, Lock, MapPin, Zap, Briefcase,
+  BadgePercent, Lock, MapPin, Zap, Briefcase, Share2, Mail,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
@@ -36,9 +36,14 @@ import {
   FREE_PLAN, PREMIUM_PLAN, PREMIUM_PER_DAY,
   PREMIUM_ANNUAL_SAVE_PCT,
 } from '../../data/plans';
+import CaIcon from './caIcons';
+import ToolLogo from './toolLogos';
+import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
+import outlookLogo from '../enterprise-v2/assets/logo/outlook.svg';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
+const MASCOT = '/images/ca-sloth.png'; // CA sloth mascot — transparent PNG cutout
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
@@ -53,48 +58,52 @@ const NAV = [
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian businesses'];
 
 const BENEFITS = [
-  { icon: CalendarCheck, title: 'Get Booked', desc: 'Let clients book appointments without the back-and-forth.' },
-  { icon: LayoutDashboard, title: 'Stay Organised', desc: 'Manage your calendar, availability and client meetings from one place.' },
-  { icon: MessageCircle, title: 'Automate Follow-Ups', desc: 'Send reminders and appointment updates automatically through WhatsApp.' },
-  { icon: TrendingUp, title: 'Grow Your Practice', desc: 'Understand bookings, revenue and client activity with useful business insights.' },
+  { icon: CalendarCheck, title: 'Get Booked', desc: 'Clients book and pay, without the back-and-forth.' },
+  { icon: LayoutDashboard, title: 'Stay Organised', desc: 'Calendar, availability and client meetings, all in one place.' },
+  { icon: MessageCircle, title: 'Automate Follow-Ups', desc: 'Automatic reminders and updates, sent over WhatsApp.' },
+  { icon: TrendingUp, title: 'Grow Your Practice', desc: 'See bookings, revenue and client activity with clear insights.' },
 ];
 
 const USE_CASES = [
-  { icon: FileText, label: 'Tax Consultation' },
-  { icon: Receipt, label: 'GST Consultation' },
-  { icon: Calculator, label: 'Income Tax Filing' },
-  { icon: ClipboardCheck, label: 'Audit Meetings' },
-  { icon: Building2, label: 'Company Registration' },
-  { icon: LineChart, label: 'Accounting Consultation' },
-  { icon: TrendingUp, label: 'Financial Advisory' },
-  { icon: Briefcase, label: 'Business Advisory' },
-  { icon: Landmark, label: 'Investment Consultation' },
-  { icon: Scale, label: 'Compliance Consultation' },
-  { icon: Video, label: 'Virtual Consultation' },
-  { icon: Users, label: 'Client Review Meetings' },
+  { icon: 'file-text-fill', label: 'Tax Consultation', desc: 'Plan and file with confidence.' },
+  { icon: 'receipt-fill', label: 'GST Consultation', desc: 'Registration, returns and advice.' },
+  { icon: 'calculator-fill', label: 'Income Tax Filing', desc: 'Returns filed accurately, on time.' },
+  { icon: 'clipboard-text-fill', label: 'Audit Meetings', desc: 'Statutory and internal audits.' },
+  { icon: 'buildings-fill', label: 'Company Registration', desc: 'Incorporate your business right.' },
+  { icon: 'notebook-fill', label: 'Accounting Consultation', desc: 'Books, ledgers and reporting.' },
+  { icon: 'chart-line-up-fill', label: 'Financial Advisory', desc: 'Grow and protect your wealth.' },
+  { icon: 'briefcase-fill', label: 'Business Advisory', desc: 'Strategy for your next stage.' },
+  { icon: 'bank-fill', label: 'Investment Consultation', desc: 'Make your money work harder.' },
+  { icon: 'scales-fill', label: 'Compliance Consultation', desc: 'Stay compliant, avoid penalties.' },
+  { icon: 'video-camera-fill', label: 'Virtual Consultation', desc: 'Meet online, from anywhere.' },
+  { icon: 'users-three-fill', label: 'Client Review Meetings', desc: 'Regular check-ins that matter.' },
 ];
 
 const STEPS = [
-  { n: '01', title: 'Create', desc: 'Set up your CA practice, services and availability.' },
-  { n: '02', title: 'Share', desc: 'Share your booking link with clients through WhatsApp, email or anywhere else.' },
-  { n: '03', title: 'Get Booked', desc: 'Clients choose a service and convenient time without calling back and forth.' },
-  { n: '04', title: 'Get Notified', desc: 'You and your client receive appointment confirmations and reminders automatically.' },
+  { title: 'Create & share your page', icon: LayoutDashboard, image: MASCOT, desc: 'Set up your practice, services and availability, then share your booking link anywhere.' },
+  { title: 'Clients book & pay', icon: CalendarCheck, image: MASCOT, desc: 'Clients pick a service and a time, and pay upfront — no calls, no back-and-forth.' },
+  { title: 'Everyone gets reminded', icon: BellRing, image: MASCOT, desc: 'You and your client get automatic confirmations and WhatsApp reminders.' },
 ];
+// ponytail: all steps share MASCOT until distinct per-step art is supplied.
 
-const FEATURES = [
-  { icon: CalendarCheck, label: 'Online Booking Page' },
-  { icon: Clock3, label: 'Calendar & Availability' },
-  { icon: MessageCircle, label: 'WhatsApp Reminders' },
-  { icon: Users, label: 'Client CRM' },
-  { icon: Wallet, label: 'Online Payments' },
-  { icon: LayoutDashboard, label: 'Service Management' },
-  { icon: History, label: 'Appointment History' },
-  { icon: LineChart, label: 'Revenue Analytics' },
-  { icon: TrendingUp, label: 'Business Insights' },
-  { icon: Palette, label: 'Custom Branding' },
-  { icon: BellRing, label: 'Automated Follow-Ups' },
-  { icon: Bot, label: 'AI Growth Copilot' },
+// Integration hub — REAL BAS integrations only, 5 either side of the mascot, each
+// wired to the centre by a curved brand-coloured current. `logo` = local asset
+// img; `icon` = colored SVG from toolLogos.
+const TOOLS_LEFT = [
+  { name: 'Google Calendar', icon: 'google-calendar', color: '#4285F4', sub: 'Two-way sync of your real availability' },
+  { name: 'Google Meet', icon: 'google-meet', color: '#00AC47', sub: 'Auto-add a video link to every booking' },
+  { name: 'Zoom', icon: 'zoom-icon', color: '#2D8CFF', sub: 'Share meeting links automatically' },
+  { name: 'Outlook', logo: outlookLogo, color: '#0078D4', sub: 'Keep your calendar in sync' },
+  { name: 'WhatsApp', icon: 'whatsapp-icon', color: '#25D366', sub: 'Send reminders and updates' },
 ];
+const TOOLS_RIGHT = [
+  { name: 'Razorpay', logo: razorpayLogo, color: '#3395FF', sub: 'Payments, refunds and GST invoices' },
+  { name: 'Google Pay', icon: 'google-pay', color: '#4285F4', sub: 'Accept instant UPI payments' },
+  { name: 'Gmail', icon: 'google-gmail', color: '#EA4335', sub: 'Automated email confirmations' },
+  { name: 'Google Drive', icon: 'google-drive', color: '#0F9D58', sub: 'Store bookings and documents' },
+  { name: 'Google', icon: 'google-icon', color: '#4285F4', sub: 'One-tap secure sign-in' },
+];
+const TOOLS_ALL = [...TOOLS_LEFT, ...TOOLS_RIGHT];
 
 const JOURNEY = [
   { icon: CalendarCheck, label: 'Client books consultation' },
@@ -178,13 +187,13 @@ function NavLink({ item, className, onClick }) {
 }
 
 function CtaButton({ to, children, variant = 'solid', className = '' }) {
-  const base = 'inline-flex items-center justify-center gap-2 rounded-[10px] px-6 py-3.5 text-sm font-semibold transition-all hover:no-underline';
+  const base = 'inline-flex items-center justify-center gap-2 rounded-[5px] px-6 py-3.5 text-sm font-semibold transition-all hover:no-underline';
   const styles = {
-    solid: 'text-white shadow-[0_10px_30px_-10px_rgba(254,81,0,0.6)] hover:brightness-105',
+    solid: 'text-white shadow-[0_4px_14px_rgba(16,24,40,0.16)] hover:brightness-105',
     ghost: 'border-2 border-[color:var(--ca-ink)]/12 bg-white text-[color:var(--ca-ink)] hover:border-[color:var(--ca-ink)]/25',
   };
   return (
-    <Link to={to} className={`${base} ${styles[variant]} ${className}`} style={variant === 'solid' ? { background: 'var(--ca-orange)' } : undefined}>
+    <Link to={to} className={`${base} ${styles[variant]} ${className}`} style={variant === 'solid' ? { background: 'var(--ca-primary)' } : undefined}>
       {children}
     </Link>
   );
@@ -192,7 +201,7 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 
 function Eyebrow({ children }) {
   return (
-    <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--ca-orange)' }}>
+    <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--ca-primary)' }}>
       {children}
     </span>
   );
@@ -206,7 +215,7 @@ function DashboardMock() {
         {/* top bar */}
         <div className="flex items-center justify-between border-b border-black/5 bg-[#FFF9F5] px-5 py-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ background: 'var(--ca-orange)' }}>SS</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>SS</span>
             <div className="leading-tight">
               <div className="text-[13px] font-bold text-[color:var(--ca-ink)]">Sharma &amp; Associates</div>
               <div className="text-[10px] text-neutral-400">Chartered Accountants</div>
@@ -231,7 +240,7 @@ function DashboardMock() {
         <div className="px-5 py-4">
           <div className="mb-2.5 flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-400">Today&apos;s meetings</span>
-            <span className="text-[10px] font-semibold" style={{ color: 'var(--ca-orange)' }}>View all</span>
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--ca-primary)' }}>View all</span>
           </div>
           <div className="space-y-2.5">
             {[
@@ -248,8 +257,8 @@ function DashboardMock() {
                   <div className="truncate text-[10px] text-neutral-400">{m.svc} · {m.mode}</div>
                 </div>
                 {m.paid
-                  ? <span className="flex items-center gap-1 rounded-full bg-[#16A34A]/10 px-2 py-0.5 text-[9px] font-bold text-[#16A34A]"><Check size={9} /> Paid</span>
-                  : <span className="rounded-full bg-[#FFF9F5] px-2 py-0.5 text-[9px] font-bold" style={{ color: 'var(--ca-orange)' }}>Confirmed</span>}
+                  ? <span className="flex items-center gap-1 rounded-full bg-[#61C155]/10 px-2 py-0.5 text-[9px] font-bold text-[#61C155]"><Check size={9} /> Paid</span>
+                  : <span className="rounded-full bg-[#FFF9F5] px-2 py-0.5 text-[9px] font-bold" style={{ color: 'var(--ca-primary)' }}>Confirmed</span>}
               </div>
             ))}
           </div>
@@ -257,10 +266,219 @@ function DashboardMock() {
       </div>
       {/* floating reminder chip */}
       <div className="absolute -right-3 bottom-8 hidden rounded-2xl bg-white px-3 py-2.5 shadow-xl ring-1 ring-black/5 sm:block">
-        <div className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400"><MessageCircle size={12} style={{ color: 'var(--ca-orange)' }} /> WhatsApp sent</div>
+        <div className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400"><MessageCircle size={12} style={{ color: 'var(--ca-primary)' }} /> WhatsApp sent</div>
         <div className="mt-0.5 text-[11px] font-bold text-[color:var(--ca-ink)]">Reminder · 1h before</div>
       </div>
     </div>
+  );
+}
+
+/* Floating glass card over the hero photo — mirrors the homepage hero. */
+function GlassCard({ icon: Icon, label, value, accent, className = '', float = '' }) {
+  return (
+    <div className={`sloth-glass ${float} absolute flex items-center gap-3 rounded-2xl px-4 py-3 ${className}`}>
+      <span
+        className="flex h-10 w-10 items-center justify-center rounded-xl"
+        style={accent
+          ? { backgroundColor: 'color-mix(in srgb, var(--ca-accent) 16%, transparent)', color: 'var(--ca-accent)' }
+          : { backgroundColor: 'rgba(17,17,17,0.05)', color: '#404040' }}
+      >
+        <Icon size={18} />
+      </span>
+      <div>
+        <div className="text-[11px] font-medium text-neutral-400">{label}</div>
+        <div className="text-sm font-semibold" style={{ color: accent ? 'var(--ca-accent)' : 'var(--ca-ink)' }}>{value}</div>
+      </div>
+    </div>
+  );
+}
+
+/* Service-category card. `active` cards render pre-filled (blue) in a checkerboard
+   and invert to the plain state on hover; plain cards do the opposite. */
+function UseCaseCard({ u, active }) {
+  const card = active
+    ? 'border-[#12648F] bg-[#12648F] hover:border-black/[0.06] hover:bg-white'
+    : 'border-black/[0.06] bg-white hover:border-[#12648F] hover:bg-[#12648F]';
+  const icon = active
+    ? 'bg-[#61C155] text-white ring-white group-hover:bg-[#12648F] group-hover:text-[#61C155] group-hover:ring-transparent'
+    : 'bg-[#12648F] text-[#61C155] ring-transparent group-hover:bg-[#61C155] group-hover:text-white group-hover:ring-white';
+  const arrow = active
+    ? 'bg-white text-[#61C155] group-hover:bg-[rgba(97,193,85,0.16)] group-hover:text-[#4a9e3c]'
+    : 'bg-[rgba(97,193,85,0.16)] text-[#4a9e3c] group-hover:bg-white group-hover:text-[#61C155]';
+  const title = active ? 'text-white group-hover:text-[color:var(--ca-ink)]' : 'text-[color:var(--ca-ink)] group-hover:text-white';
+  const desc = active ? 'text-white/80 group-hover:text-neutral-500' : 'text-neutral-500 group-hover:text-white/80';
+  return (
+    <Link to={START} className={`group flex h-full flex-col rounded-[14px] border p-5 transition-all duration-300 hover:shadow-[0_14px_34px_-20px_rgba(17,17,17,0.35)] hover:no-underline ${card}`}>
+      <div className="flex items-start justify-between">
+        <span className={`flex h-12 w-12 items-center justify-center rounded-full ring-2 transition-all duration-300 ${icon}`}>
+          <CaIcon name={u.icon} size={22} />
+        </span>
+        <span className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-300 ${arrow}`}>
+          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </div>
+      <h3 className={`mt-4 font-heading text-[15px] font-bold transition-colors duration-300 ${title}`}>{u.label}</h3>
+      <p className={`mt-1 text-[13px] leading-snug transition-colors duration-300 ${desc}`}>{u.desc}</p>
+    </Link>
+  );
+}
+
+/* How-it-works: left image tracks the active step; steps auto-advance every 2.5s
+   (looping) and a click selects a step and restarts the timer. */
+function HowItWorks({ steps }) {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setActive((a) => (a + 1) % steps.length), 2500);
+    return () => clearTimeout(t);
+  }, [active, steps.length]);
+  return (
+    <div className="mt-16 grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
+      {/* LEFT — image reflects the active step */}
+      <div className="relative mx-auto w-full max-w-md lg:mx-0">
+        <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#61C155]/20 blur-3xl" />
+        <div className="relative z-10 aspect-square">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.img
+              key={active}
+              src={steps[active].image}
+              alt=""
+              loading="lazy"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0 mx-auto h-full w-full object-contain drop-shadow-[0_24px_32px_rgba(17,17,17,0.16)]"
+            />
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* RIGHT — auto-advancing, clickable step timeline */}
+      <div className="relative">
+        <span aria-hidden className="absolute bottom-5 left-6 top-5 w-px bg-black/10" />
+        <div className="space-y-8">
+          {steps.map((s, i) => {
+            const on = i === active;
+            return (
+              <button key={s.title} type="button" onClick={() => setActive(i)} aria-current={on} className="relative flex w-full gap-5 text-left">
+                <span className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${on ? 'bg-[#61C155] text-white shadow-[0_8px_20px_-8px_rgba(97,193,85,0.7)]' : 'border-2 border-black/10 bg-white text-[color:var(--ca-primary)]'}`}>
+                  <s.icon size={20} />
+                </span>
+                <div className={`pt-1.5 transition-opacity duration-300 ${on ? 'opacity-100' : 'opacity-55'}`}>
+                  <h3 className="font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
+                  <p className="mt-1 max-w-sm text-sm leading-relaxed text-neutral-500">{s.desc}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* One integration card — logo + title + subtitle (reference style). */
+function ToolCard({ t, innerRef }) {
+  return (
+    <div ref={innerRef} className="flex w-full items-center gap-3 rounded-2xl border border-black/[0.05] bg-white px-4 py-3 shadow-[0_14px_34px_-20px_rgba(17,17,17,0.3)] lg:w-64">
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[color:var(--ca-grey)]">
+        {t.logo
+          ? <img src={t.logo} alt="" loading="lazy" className="h-6 w-6 object-contain" />
+          : <ToolLogo name={t.icon} size={24} className="h-6 w-6" />}
+      </span>
+      <div className="min-w-0">
+        <div className="text-sm font-bold leading-tight text-[color:var(--ca-ink)]">{t.name}</div>
+        <div className="mt-0.5 text-xs leading-snug text-neutral-500">{t.sub}</div>
+      </div>
+    </div>
+  );
+}
+
+/* Integration hub — mascot centre, 5 cards either side, each wired to the centre
+   by a curved brand-coloured current. Connectors are measured from the real DOM
+   (useLayoutEffect + ResizeObserver) so the geometry always tracks the layout. */
+function IntegrationHub() {
+  const wrapRef = useRef(null);
+  const centerRef = useRef(null);
+  const cardRefs = useRef({});
+  const [paths, setPaths] = useState([]);
+
+  useLayoutEffect(() => {
+    const compute = () => {
+      const wrap = wrapRef.current;
+      const center = centerRef.current;
+      if (!wrap || !center) return;
+      const wb = wrap.getBoundingClientRect();
+      const cb = center.getBoundingClientRect();
+      const cx = cb.left + cb.width / 2 - wb.left;
+      const cy = cb.top + cb.height / 2 - wb.top;
+      const Rc = cb.width / 2 - 6;
+      const next = [];
+      TOOLS_ALL.forEach((t, idx) => {
+        const el = cardRefs.current[t.name];
+        if (!el) return;
+        const rb = el.getBoundingClientRect();
+        const isLeft = idx < TOOLS_LEFT.length;
+        const sx = (isLeft ? rb.right : rb.left) - wb.left;
+        const sy = rb.top + rb.height / 2 - wb.top;
+        const dx = sx - cx;
+        const dy = sy - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const ex = cx + (dx / dist) * Rc;
+        const ey = cy + (dy / dist) * Rc;
+        const midx = (sx + ex) / 2;
+        next.push({ name: t.name, color: t.color, sx, sy, ex, ey, d: `M ${sx} ${sy} C ${midx} ${sy}, ${midx} ${ey}, ${ex} ${ey}` });
+      });
+      setPaths(next);
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    // IntersectionObserver: the section loads below the fold + is display:none
+    // under lg, so mount measures zero — recompute when it actually becomes visible.
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) compute(); }, { threshold: 0.01 });
+    if (wrapRef.current) { ro.observe(wrapRef.current); io.observe(wrapRef.current); }
+    const mq = window.matchMedia('(min-width: 1024px)');
+    mq.addEventListener('change', compute);
+    window.addEventListener('resize', compute);
+    const t = setTimeout(compute, 350); // after logos/fonts settle
+    return () => { ro.disconnect(); io.disconnect(); mq.removeEventListener('change', compute); window.removeEventListener('resize', compute); clearTimeout(t); };
+  }, []);
+
+  return (
+    <>
+      {/* mobile / tablet — plain card grid */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
+        {TOOLS_ALL.map((t) => <Reveal key={t.name}><ToolCard t={t} /></Reveal>)}
+      </div>
+
+      {/* desktop hub */}
+      <div ref={wrapRef} className="relative mx-auto hidden max-w-6xl lg:block">
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+          <style>{`@keyframes caFlow{to{stroke-dashoffset:-24}}.ca-thread{stroke-dasharray:4 8;animation:caFlow .9s linear infinite}@media(prefers-reduced-motion:reduce){.ca-thread{animation:none}}`}</style>
+          {paths.map((p, i) => (
+            <g key={p.name}>
+              <path d={p.d} fill="none" stroke={p.color} strokeWidth="2" strokeOpacity="0.2" />
+              <path d={p.d} fill="none" stroke={p.color} strokeWidth="2.5" className="ca-thread" style={{ animationDelay: `${i * 0.1}s` }} />
+              <circle cx={p.sx} cy={p.sy} r="4" fill={p.color} />
+              <circle cx={p.ex} cy={p.ey} r="4" fill={p.color} />
+            </g>
+          ))}
+        </svg>
+
+        <div className="relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-20">
+          <div className="flex flex-col items-end gap-6">
+            {TOOLS_LEFT.map((t) => <ToolCard key={t.name} t={t} innerRef={(el) => { cardRefs.current[t.name] = el; }} />)}
+          </div>
+          <div ref={centerRef} className="relative flex h-64 w-64 items-center justify-center">
+            <div aria-hidden className="absolute inset-0 rounded-full bg-gradient-to-br from-[color:var(--ca-cream)] to-white shadow-[0_30px_70px_-30px_rgba(17,17,17,0.35)] ring-1 ring-black/5" />
+            <img src={MASCOT} alt="Book A Sloth" className="relative z-10 h-52 w-52 object-contain" />
+          </div>
+          <div className="flex flex-col items-start gap-6">
+            {TOOLS_RIGHT.map((t) => <ToolCard key={t.name} t={t} innerRef={(el) => { cardRefs.current[t.name] = el; }} />)}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -272,7 +490,7 @@ function FaqAccordion() {
       {FAQ.map((f, i) => {
         const isOpen = open === i;
         return (
-          <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'rgba(254,81,0,0.35)' : 'rgba(17,17,17,0.08)' }}>
+          <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'rgba(18,100,143,0.35)' : 'rgba(17,17,17,0.08)' }}>
             <button
               type="button"
               onClick={() => setOpen(isOpen ? -1 : i)}
@@ -280,7 +498,7 @@ function FaqAccordion() {
               className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-[15px] font-semibold text-[color:var(--ca-ink)]"
             >
               {f.q}
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'rgba(254,81,0,0.1)', color: 'var(--ca-orange)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
+              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'rgba(18,100,143,0.1)', color: 'var(--ca-primary)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
                 <Plus size={15} />
               </span>
             </button>
@@ -359,7 +577,8 @@ export default function CharteredAccountants() {
   ];
 
   const styleVars = {
-    '--ca-orange': '#FE5100',
+    '--ca-primary': '#12648F',
+    '--ca-accent': '#61C155',
     '--ca-ink': '#111111',
     '--ca-cream': '#FFF9F5',
     '--ca-grey': '#F5F5F3',
@@ -414,7 +633,7 @@ export default function CharteredAccountants() {
                   <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-neutral-700 hover:bg-[color:var(--ca-cream)] hover:no-underline" />
                 ))}
                 <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-3">
-                  <Link to={LOGIN} className="flex-1 rounded-[10px] border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
+                  <Link to={LOGIN} className="flex-1 rounded-[5px] border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
                   <CtaButton to={START} className="flex-1">Start for Free <ArrowRight size={15} /></CtaButton>
                 </div>
               </div>
@@ -424,61 +643,65 @@ export default function CharteredAccountants() {
       </header>
 
       {/* ═══════════════ 2 · HERO ═══════════════ */}
-      <section className="relative px-5 pb-16 pt-14 sm:px-8 sm:pt-20" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
-        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="relative px-5 pb-14 pt-8 sm:px-8 sm:pb-20 sm:pt-12 lg:pb-28 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
+        <div className="mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+          {/* LEFT */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant><Eyebrow>Appointment Management for Chartered Accountants</Eyebrow></Reveal>
-            <Reveal as="h1" instant className="mt-5 font-heading text-[clamp(2.1rem,5.4vw,3.7rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Your CA practice runs on client meetings.{' '}
-              <span style={{ color: 'var(--ca-orange)' }}>Let Book A Sloth run them.</span>
+            <Reveal as="h1" instant className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-[color:var(--ca-ink)] sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
+              Simple appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants</span>{' '}
+              of modern India.
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
+            <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg lg:mx-0">
               Manage client appointments, availability, payments, reminders and follow-ups from one simple platform built for modern CA practices.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
-              <CtaButton to={START} className="w-full sm:w-auto">Start for Free <ArrowRight size={16} /></CtaButton>
-              <a href="#how" className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border-2 border-black/10 bg-white px-6 py-3.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:border-black/20 hover:no-underline sm:w-auto">
-                See How It Works
-              </a>
+            <Reveal instant delay={0.1} className="mt-6 flex flex-col items-center gap-3 sm:mt-9 sm:flex-row sm:gap-5 lg:justify-start">
+              <Link
+                to={START}
+                className="btn flex w-full items-center justify-center gap-2 rounded-[5px] px-7 py-3.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(16,24,40,0.16)] transition-opacity hover:opacity-90 hover:no-underline sm:w-auto"
+                style={{ background: 'var(--ca-primary)' }}
+              >
+                Create a Free Account <ArrowRight size={16} />
+              </Link>
+              <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline">
+                Book A Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
+            <Reveal instant delay={0.14} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:mt-9 lg:justify-start">
               {HERO_TRUST.map((t) => (
                 <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-500">
-                  <Check size={14} className="text-[#16A34A]" /> {t}
+                  <Check size={14} className="text-[#61C155]" /> {t}
                 </span>
               ))}
             </Reveal>
           </div>
-          <Reveal instant delay={0.08} className="lg:pl-4">
-            <DashboardMock />
+
+          {/* RIGHT — framed brand photo + floating glass cards (mirrors homepage hero) */}
+          <Reveal instant delay={0.1} className="relative hidden lg:block">
+            {/* soft backdrop so the transparent mascot sits on a surface */}
+            <div aria-hidden className="absolute left-1/2 top-1/2 h-[27rem] w-[27rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[rgba(18,100,143,0.12)] to-[rgba(97,193,85,0.14)]" />
+            <img src={MASCOT} alt="Book A Sloth — appointment booking for chartered accountants" loading="eager" className="relative z-10 mx-auto w-full max-w-[27rem] drop-shadow-[0_28px_36px_rgba(17,17,17,0.18)]" />
+            <GlassCard icon={CalendarCheck} label="New booking" value="GST Consult · 4:30 PM" float="sloth-float" className="top-6 -left-4" />
+            <GlassCard icon={Wallet} label="Fee received" value="₹2,500" accent float="sloth-float--mid" className="top-1/2 -right-6" />
+            <GlassCard icon={BellRing} label="WhatsApp reminder" value="Sent · 1h before" float="sloth-float--slow" className="bottom-10 left-2" />
           </Reveal>
         </div>
-      </section>
 
-      {/* ═══════════════ 3 · FOUR CORE BENEFITS ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Less scheduling. <span style={{ color: 'var(--ca-orange)' }}>More time for your clients.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">
-              Everything you need to keep your CA practice organised and your clients moving.
-            </Reveal>
-          </div>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
-            {BENEFITS.map((b, i) => (
-              <Reveal key={b.title} delay={(i % 4) * 0.07}>
-                <div className="flex h-full flex-col rounded-[16px] border border-black/[0.06] bg-white p-6 shadow-[0_8px_30px_rgba(17,17,17,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(17,17,17,0.14)] sm:p-7">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(254,81,0,0.1)', color: 'var(--ca-orange)' }}>
-                    <b.icon size={22} />
+        {/* Four benefits — compact strip, part of the hero (just below the fold) */}
+        <div className="mx-auto mt-12 grid max-w-7xl gap-3 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+          {BENEFITS.map((b, i) => (
+            <Reveal key={b.title} delay={(i % 4) * 0.06}>
+              <div className="group flex h-full flex-col rounded-[10px] border border-black/[0.06] bg-white p-4 transition-colors hover:border-[color:var(--ca-primary)]/30">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[rgba(18,100,143,0.1)] text-[#12648F] transition-colors duration-300 group-hover:bg-[#12648F] group-hover:text-white">
+                    <b.icon size={18} />
                   </span>
-                  <h3 className="mt-5 font-heading text-lg font-bold">{b.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{b.desc}</p>
+                  <h3 className="font-heading text-sm font-bold">{b.title}</h3>
                 </div>
-              </Reveal>
-            ))}
-          </div>
+                <p className="mt-2 text-xs leading-snug text-neutral-500">{b.desc}</p>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </section>
 
@@ -487,23 +710,22 @@ export default function CharteredAccountants() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--ca-orange)' }}>CA practices work.</span>
+              Built around the way <span style={{ color: 'var(--ca-primary)' }}>CA practices work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">
               From tax consultations to audits, registrations and financial advisory, manage every appointment in one place.
             </Reveal>
           </div>
-          <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {USE_CASES.map((u, i) => (
-              <Reveal key={u.label} delay={(i % 4) * 0.05}>
-                <div className="flex h-full items-center gap-3 rounded-[12px] border border-black/[0.06] bg-white px-4 py-3.5 transition-all duration-300 hover:border-[color:var(--ca-orange)]/30 hover:shadow-[0_10px_26px_-16px_rgba(17,17,17,0.25)]">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(254,81,0,0.1)', color: 'var(--ca-orange)' }}>
-                    <u.icon size={17} />
-                  </span>
-                  <span className="text-[13.5px] font-semibold leading-tight text-[color:var(--ca-ink)]">{u.label}</span>
-                </div>
-              </Reveal>
-            ))}
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {USE_CASES.map((u, i) => {
+              // 4-col checkerboard: row2+4 cols on row1/3, row1+3 cols on row2 pre-active.
+              const active = (Math.floor(i / 4) + (i % 4)) % 2 === 1;
+              return (
+                <Reveal key={u.label} delay={(i % 4) * 0.05}>
+                  <UseCaseCard u={u} active={active} />
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -511,44 +733,34 @@ export default function CharteredAccountants() {
       {/* ═══════════════ 5 · HOW IT WORKS ═══════════════ */}
       <section id="how" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="h2" className="mx-auto max-w-2xl text-center font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            From <span className="italic text-neutral-400">&ldquo;When are you free?&rdquo;</span> to booked in minutes.
-          </Reveal>
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((s, i) => (
-              <Reveal key={s.n} delay={i * 0.07}>
-                <div className="h-full rounded-[16px] border border-black/[0.06] bg-white p-7">
-                  <div className="font-heading text-4xl font-extrabold" style={{ color: 'rgba(254,81,0,0.35)' }}>{s.n}</div>
-                  <h3 className="mt-4 font-heading text-lg font-bold">{s.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-                </div>
-              </Reveal>
-            ))}
+          <div className="mx-auto max-w-3xl text-center">
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              How Book A Sloth helps <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants</span>
+            </Reveal>
+            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">
+              From &ldquo;When are you free?&rdquo; to booked in minutes — no back-and-forth.
+            </Reveal>
           </div>
+
+          <HowItWorks steps={STEPS} />
         </div>
       </section>
 
-      {/* ═══════════════ 6 · FEATURE SHOWCASE ═══════════════ */}
-      <section id="features" className="px-5 py-20 text-white sm:px-8 lg:py-28" style={{ background: 'var(--ca-ink)' }}>
+      {/* ═══════════════ 6 · FEATURE SHOWCASE (hub) ═══════════════ */}
+      <section id="features" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p"><span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--ca-orange)' }}>Everything Your Practice Needs</span></Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
-              One place for your appointments, clients and growth.
+            <Reveal as="p"><Eyebrow>Integrations</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Works with the tools you already use.
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
+              Connect your calendar, meetings, payments and WhatsApp — Book A Sloth fits your workflow, no rewiring.
             </Reveal>
           </div>
-          <div className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {FEATURES.map((f, i) => (
-              <Reveal key={f.label} delay={(i % 4) * 0.05}>
-                <div className="flex h-full items-center gap-3 rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3.5 transition-colors hover:border-[color:var(--ca-orange)]/40 hover:bg-white/[0.07]">
-                  <f.icon size={18} className="flex-shrink-0" style={{ color: 'var(--ca-orange)' }} />
-                  <span className="text-[13.5px] font-semibold leading-tight text-white/90">{f.label}</span>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal delay={0.1} className="mt-12 text-center">
-            <Link to="/pricing" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-orange)' }}>
+          <div className="mt-12"><IntegrationHub /></div>
+          <Reveal delay={0.1} className="mt-14 text-center">
+            <Link to="/pricing" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
               Explore All Features <ArrowRight size={16} />
             </Link>
           </Reveal>
@@ -559,7 +771,7 @@ export default function CharteredAccountants() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-5xl text-center">
           <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            Give every client a <span style={{ color: 'var(--ca-orange)' }}>smoother experience.</span>
+            Give every client a <span style={{ color: 'var(--ca-primary)' }}>smoother experience.</span>
           </Reveal>
           <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-2xl text-base text-neutral-500">
             From the first booking to the final follow-up, Book A Sloth keeps your client journey organised.
@@ -569,7 +781,7 @@ export default function CharteredAccountants() {
               {JOURNEY.map((j, i) => (
                 <div key={j.label} className="flex items-center gap-2.5 sm:gap-3">
                   <div className="flex items-center gap-2 rounded-full border border-black/[0.06] bg-white px-4 py-2.5 shadow-[0_6px_20px_-12px_rgba(17,17,17,0.3)]">
-                    <j.icon size={15} style={{ color: 'var(--ca-orange)' }} />
+                    <j.icon size={15} style={{ color: 'var(--ca-primary)' }} />
                     <span className="text-[13px] font-semibold text-[color:var(--ca-ink)]">{j.label}</span>
                   </div>
                   {i < JOURNEY.length - 1 && <ArrowRight size={15} className="text-neutral-300" />}
@@ -598,12 +810,12 @@ export default function CharteredAccountants() {
                 <figure className="flex h-full flex-col justify-between rounded-[16px] border border-black/[0.06] bg-white p-7 shadow-[0_8px_30px_rgba(17,17,17,0.05)]">
                   <div>
                     <div className="flex gap-0.5">
-                      {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} className="fill-[#FE5100] text-[#FE5100]" />)}
+                      {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} className="fill-[#12648F] text-[#12648F]" />)}
                     </div>
                     <blockquote className="mt-4 text-[15px] font-semibold leading-snug text-[color:var(--ca-ink)]">&ldquo;{t.quote}&rdquo;</blockquote>
                   </div>
                   <figcaption className="mt-6 flex items-center gap-3">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--ca-orange)' }}>{t.name.charAt(0)}</span>
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.charAt(0)}</span>
                     <div>
                       <div className="text-sm font-bold text-[color:var(--ca-ink)]">{t.name}</div>
                       <div className="text-xs text-neutral-400">{t.role}</div>
@@ -622,14 +834,14 @@ export default function CharteredAccountants() {
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="p"><Eyebrow>Why Book A Sloth</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              More than a booking tool. <span style={{ color: 'var(--ca-orange)' }}>A better way to run your practice.</span>
+              More than a booking tool. <span style={{ color: 'var(--ca-primary)' }}>A better way to run your practice.</span>
             </Reveal>
           </div>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
             {WHY.map((w, i) => (
               <Reveal key={w.title} delay={(i % 4) * 0.07}>
                 <div className="h-full rounded-[16px] border border-black/[0.06] bg-white p-6 sm:p-7">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(254,81,0,0.1)', color: 'var(--ca-orange)' }}>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(18,100,143,0.1)', color: 'var(--ca-primary)' }}>
                     <w.icon size={20} />
                   </span>
                   <h3 className="mt-5 font-heading text-base font-bold">{w.title}</h3>
@@ -646,7 +858,7 @@ export default function CharteredAccountants() {
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 lg:grid-cols-4">
           {TRUST_STRIP.map((s, i) => (
             <Reveal key={s.label} delay={i * 0.06} className="text-center">
-              <s.icon size={20} className="mx-auto" style={{ color: 'var(--ca-orange)' }} />
+              <s.icon size={20} className="mx-auto" style={{ color: 'var(--ca-primary)' }} />
               <div className="mt-2 font-heading text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{s.value}</div>
               <p className="mx-auto mt-1.5 max-w-[14rem] text-xs leading-snug text-white/50">{s.label}</p>
             </Reveal>
@@ -660,7 +872,7 @@ export default function CharteredAccountants() {
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="p"><Eyebrow>Simple, Transparent Pricing</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Start small. <span style={{ color: 'var(--ca-orange)' }}>Grow when your practice does.</span>
+              Start small. <span style={{ color: 'var(--ca-primary)' }}>Grow when your practice does.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
               Choose a plan that fits your practice today. Upgrade when you need more.
@@ -670,11 +882,11 @@ export default function CharteredAccountants() {
           {/* billing toggle */}
           <Reveal delay={0.1} className="mt-8 flex items-center justify-center gap-3">
             <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-400'}`}>Monthly</button>
-            <button type="button" role="switch" aria-checked={yearly} onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ca-orange)' : '#d4d4d4', minHeight: 0 }}>
+            <button type="button" role="switch" aria-checked={yearly} onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ca-primary)' : '#d4d4d4', minHeight: 0 }}>
               <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: yearly ? '22px' : '2px' }} />
             </button>
             <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-400'}`}>
-              Yearly <span className="ml-1 rounded-full bg-[#16A34A]/12 px-2 py-0.5 text-xs font-bold text-[#16A34A]">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
+              Yearly <span className="ml-1 rounded-full bg-[#61C155]/12 px-2 py-0.5 text-xs font-bold text-[#61C155]">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
             </span>
           </Reveal>
 
@@ -693,7 +905,7 @@ export default function CharteredAccountants() {
                 <ul className="mt-6 space-y-2.5">
                   {FREE_PLAN.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                      <Check size={16} className="mt-0.5 flex-shrink-0 text-[#16A34A]" /> {f}
+                      <Check size={16} className="mt-0.5 flex-shrink-0 text-[#61C155]" /> {f}
                     </li>
                   ))}
                 </ul>
@@ -702,12 +914,12 @@ export default function CharteredAccountants() {
 
             {/* Sloth Active (premium) — recommended */}
             <Reveal delay={0.08}>
-              <div className="relative flex h-full flex-col rounded-[18px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(254,81,0,0.5)]" style={{ borderColor: 'var(--ca-orange)' }}>
-                <span className="absolute -top-3 left-7 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white" style={{ background: 'var(--ca-orange)' }}>Most popular</span>
+              <div className="relative flex h-full flex-col rounded-[18px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(16,24,40,0.14)]" style={{ borderColor: 'var(--ca-primary)' }}>
+                <span className="absolute -top-3 left-7 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white" style={{ background: 'var(--ca-primary)' }}>Most popular</span>
                 <div className="font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
                 <p className="mt-1 text-sm text-neutral-500">{PREMIUM_PLAN.persona.title}</p>
                 <div className="mt-5 flex items-end gap-1.5">
-                  <span className="font-heading text-4xl font-extrabold tracking-tight" style={{ color: 'var(--ca-orange)' }}>{priceLabel}</span>
+                  <span className="font-heading text-4xl font-extrabold tracking-tight" style={{ color: 'var(--ca-primary)' }}>{priceLabel}</span>
                   <span className="pb-1 text-sm text-neutral-400">{pricePer}</span>
                 </div>
                 <p className="mt-1 text-xs font-semibold text-neutral-400">
@@ -718,7 +930,7 @@ export default function CharteredAccountants() {
                 <ul className="mt-3 space-y-2.5">
                   {PREMIUM_PLAN.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-700">
-                      <Check size={16} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--ca-orange)' }} /> {f}
+                      <Check size={16} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--ca-primary)' }} /> {f}
                     </li>
                   ))}
                 </ul>
@@ -747,7 +959,7 @@ export default function CharteredAccountants() {
             Built for Indian professionals. Designed for the way modern businesses actually work.
           </Reveal>
           <Reveal delay={0.14} className="mt-8">
-            <Link to="/about" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-orange)' }}>
+            <Link to="/about" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
               Learn More About Us <ArrowRight size={16} />
             </Link>
           </Reveal>
@@ -758,7 +970,7 @@ export default function CharteredAccountants() {
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-3xl">
           <Reveal as="h2" className="text-center font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            Questions? <span style={{ color: 'var(--ca-orange)' }}>We&apos;ve got answers.</span>
+            Questions? <span style={{ color: 'var(--ca-primary)' }}>We&apos;ve got answers.</span>
           </Reveal>
           <div className="mt-12"><FaqAccordion /></div>
         </div>
@@ -767,8 +979,8 @@ export default function CharteredAccountants() {
       {/* ═══════════════ 14 · FINAL CTA ═══════════════ */}
       <section className="px-5 py-24 text-center sm:px-8" style={{ background: 'var(--ca-ink)' }}>
         <div className="mx-auto max-w-2xl">
-          <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: 'rgba(254,81,0,0.2)' }}>
-            <Zap size={26} style={{ color: 'var(--ca-orange)' }} />
+          <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: 'rgba(18,100,143,0.2)' }}>
+            <Zap size={26} style={{ color: 'var(--ca-primary)' }} />
           </Reveal>
           <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
             Spend less time managing appointments. Spend more time growing your practice.
@@ -798,7 +1010,7 @@ export default function CharteredAccountants() {
                 <ul className="mt-4 space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.label}>
-                      <NavLink item={l} className="text-sm text-neutral-600 transition-colors hover:text-[color:var(--ca-orange)] hover:no-underline" />
+                      <NavLink item={l} className="text-sm text-neutral-600 transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline" />
                     </li>
                   ))}
                 </ul>
