@@ -101,7 +101,14 @@ export const serviceJsonLd = ({ service = {}, vendor = {}, siteUrl = SITE_URL, a
     provider: vendor.name
       ? { '@type': 'Person', name: vendor.name, url: vendor.username ? `${site}/${vendor.username}` : undefined }
       : undefined,
-    offers: {
+    // Price-on-request hides the fee, so the numeric price is omitted from the
+    // Offer too — the schema must not leak what the page deliberately hides.
+    offers: service.price_on_request ? {
+      '@type': 'Offer',
+      priceCurrency: service.currency || 'INR',
+      availability: 'https://schema.org/InStock',
+      url,
+    } : {
       '@type': 'Offer',
       price: String(service.price ?? 0),
       priceCurrency: service.currency || 'INR',

@@ -893,7 +893,10 @@ const ServiceBooking = () => {
 
   // Payment step is needed whenever there's an amount to pay: a paid service, OR
   // (interim fee-only mode) a ₹0 service that still owes the booking fee.
-  const isPaid = service.price > 0 || fees.feeOnly;
+  // "Price on request" services are a no-payment enquiry — the host quotes the fee
+  // offline — so they skip the payment step entirely (overrides fee-only too).
+  const priceOnRequest = service.price_on_request === true;
+  const isPaid = !priceOnRequest && (service.price > 0 || fees.feeOnly);
   // BUG-16 fix: logged-in users skip the OTP verification step
   const STEPS = [
     "time",
@@ -1004,7 +1007,7 @@ const ServiceBooking = () => {
                       <path d="M6 5h12M6 9h12M9 5c3 0 5 1.5 5 4s-2 4-5 4H6l6 6" />
                     </svg>
                     <span className="text-sm font-semibold text-gray-900">
-                      {service.price === 0 ? "Free" : `₹${service.price}`}
+                      {priceOnRequest ? "Price on request" : service.price === 0 ? "Free" : `₹${service.price}`}
                     </span>
                   </div>
                   {/* Duration */}
@@ -1377,7 +1380,7 @@ const ServiceBooking = () => {
                     <div className="flex items-center justify-between px-4 py-3 rounded-b" style={{ background: `${tc}17` }}>
                       <span className="font-bold text-[16px]">Total Amount</span>
                       <span className="font-bold text-[20px]" style={{ color: tc }}>
-                        {isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
+                        {priceOnRequest ? "Price on request" : isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
                       </span>
                     </div>
                   </div>

@@ -130,6 +130,15 @@ describe('serviceJsonLd', () => {
     expect(ld.url).toBe('https://bookasloth.com/john-doe/business-consultation');
   });
 
+  test('price_on_request omits the numeric price from the Offer (never leak the fee)', () => {
+    const ld = serviceJsonLd({
+      service: { title: 'Tax Filing', slug: 'tax-filing', price: 5000, price_on_request: true },
+      vendor: VENDOR, siteUrl: SITE,
+    });
+    expect(ld.offers.price).toBeUndefined();
+    expect(ld.offers).toMatchObject({ '@type': 'Offer', priceCurrency: 'INR' });
+  });
+
   test('includes aggregateRating only when there are reviews', () => {
     const withReviews = serviceJsonLd({ service: { title: 'X', slug: 'x', price: 0 }, vendor: VENDOR, siteUrl: SITE, avgRating: 4.5, reviewCount: 12 });
     expect(withReviews.aggregateRating).toMatchObject({ '@type': 'AggregateRating', ratingValue: 4.5, reviewCount: 12 });

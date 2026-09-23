@@ -169,11 +169,15 @@ const getServiceTag = (service) => {
 };
 
 // ─── Meta columns helper ──────────────────────────────────────────────────────
-const MetaRow = ({ price, duration, mode }) => (
+// Compact price label for the narrow 3-col stat cells. "Price on request" hides
+// the fee (host quotes offline); shortened to "On request" so it fits the cell.
+const cardPriceLabel = (s) => (s.price_on_request ? 'On request' : s.price === 0 ? 'Free' : `₹${s.price}`);
+
+const MetaRow = ({ service: s, duration, mode }) => (
   <div className="grid grid-cols-3 gap-2 py-3"
     style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
     {[
-      { val: price === 0 ? 'Free' : `₹${price}`, lbl: 'Price' },
+      { val: cardPriceLabel(s), lbl: 'Price' },
       { val: `${duration} min`,                   lbl: 'Duration' },
       { val: mode === 'offline' ? 'In-person' : 'Online', lbl: 'Mode' },
     ].map(({ val, lbl }) => (
@@ -208,7 +212,7 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
           </div>
           <div className="grid grid-cols-3 gap-3 mt-2">
             {[
-              { val: s.price === 0 ? 'Free' : `₹${s.price}`, lbl: 'Price' },
+              { val: cardPriceLabel(s), lbl: 'Price' },
               { val: `${s.duration} min`,                      lbl: 'Duration' },
               { val: s.meeting_mode === 'offline' ? 'In-person' : 'Online', lbl: 'Mode' },
             ].map(({ val, lbl }) => (
@@ -254,7 +258,7 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
       </p>
 
       {/* Meta */}
-      <MetaRow price={s.price} duration={s.duration} mode={s.meeting_mode} />
+      <MetaRow service={s} duration={s.duration} mode={s.meeting_mode} />
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-3">

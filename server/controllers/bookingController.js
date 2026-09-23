@@ -410,7 +410,10 @@ const createBooking = async (req, res) => {
     // law requires the host's PAN. So a host must have PAN on file before they can
     // receive any paid booking. Free (₹0) bookings withhold nothing and are exempt.
     // (With PAN guaranteed on every paid booking, TDS is always the 1% with-PAN rate.)
-    if (service.price > 0) {
+    // "Price on request" books as a no-payment enquiry (host quotes offline), so
+    // it is treated as ₹0 here: no PAN gate, no fee, no Razorpay. The stored price
+    // is ignored for the money model — the flag wins.
+    if (!service.price_on_request && service.price > 0) {
       const { data: panRow } = await supabaseAdmin
         .from("kyc_submissions")
         .select("user_id")
@@ -425,7 +428,9 @@ const createBooking = async (req, res) => {
     }
 
     // ── Pricing snapshot (final money model — pricingEngine, no inline formulas) ──
-    const bookingValue = service.price; // service amount; add-ons not yet supported
+    // Price-on-request → ₹0 enquiry (see PAN gate above): host discusses the fee
+    // with the guest directly; the platform charges nothing at booking time.
+    const bookingValue = service.price_on_request ? 0 : service.price; // service amount; add-ons not yet supported
 
     // Commission % is read from the vendor's subscription plan record (DB-driven,
     // admin-editable). Expired paid plans fall back to the free tier.
@@ -447,7 +452,9 @@ const createBooking = async (req, res) => {
       platformFee:          feeSetting,
       gstRate,
       razorpayFee:          0,
-      chargeFeeOnFree:      feeOnlyMode,   // ₹0 service still owes the booking fee
+      // ₹0 service still owes the booking fee under fee-only mode — EXCEPT a
+      // price-on-request enquiry, which is a pure no-payment lead (no fee at all).
+      chargeFeeOnFree:      feeOnlyMode && !service.price_on_request,
     });
     const platformFee  = pricing.platformFee;
     const commission   = pricing.commission;
