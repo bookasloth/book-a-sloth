@@ -2,15 +2,15 @@
 //
 // Doubles as the SEO discovery hub it replaced: the category grid links every
 // /for/:profession page in static HTML, so those pages aren't orphaned in the
-// SEO audit (its original job). CATEGORIES is hand-mapped 1:1 to the eleven
-// /for/* professions — keep the two in sync when a profession page is added.
+// SEO audit (its original job). CATEGORIES is hand-mapped to the /for/* profession
+// pages — keep it in sync with scripts/prerender.mjs when a profession is added.
 //
 // Styling follows the homepage house style (pages/Home.jsx): canvas/ink/primary
 // tokens, soft rounded cards, orange uppercase eyebrows, Reveal scroll-ins.
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Scale, Stethoscope, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
+  Scale, Calculator, Stethoscope, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
   Camera, CalendarDays, Building2, UserCheck, Zap, ShieldCheck, Heart, Moon, Smile,
   Search, ArrowRight, PlayCircle, Compass,
 } from 'lucide-react';
@@ -26,7 +26,8 @@ const DESCRIPTION =
 // label/sublabel from the design; `to` is the crawlable /for/* link.
 const CATEGORIES = [
   { icon: Compass,       label: 'Architects & Designers',     sub: 'Architecture & Interior Design Studios', to: '/for/architects' },
-  { icon: Scale,         label: 'Lawyers & CAs',              sub: 'Legal, Tax & Financial Experts',        to: '/for/lawyers' },
+  { icon: Scale,         label: 'Lawyers & Advocates',        sub: 'Legal & Litigation Experts',            to: '/for/lawyers' },
+  { icon: Calculator,    label: 'Chartered Accountants',      sub: 'Tax, GST & Financial Experts',          to: '/for/chartered-accountants' },
   { icon: Stethoscope,   label: 'Doctors & Clinics',          sub: 'Healthcare Professionals',              to: '/for/doctors' },
   { icon: Smile,         label: 'Dentists & Clinics',         sub: 'Dental & Orthodontic Care',             to: '/for/dentists' },
   { icon: BarChart3,     label: 'Business Consultants',       sub: 'Advisors & Growth Experts',             to: '/for/business-consultant' },
