@@ -270,7 +270,7 @@ const SidebarCta = ({ accent }) => {
         Book A Sloth
       </span>
       <h3 className="mt-4 font-heading text-lg font-bold leading-snug" style={{ color: HEAD_TX }}>
-        Get booked &amp; paid — start free today
+        Get appointments booked &amp; paid — start free today
       </h3>
       <p className="mt-2 text-sm leading-relaxed" style={{ color: BODY_DIM }}>
         Publish your services, share one link and get paid at 0% commission. Sign up in seconds — no card required.
