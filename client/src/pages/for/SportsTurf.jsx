@@ -49,7 +49,7 @@ import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const MASCOT = '/images/ca-sloth.webp'; // shared brand sloth mascot (transparent webp)
+const MASCOT = '/images/turf-owner.webp'; // sporty sloth mascot — transparent cutout (122KB webp)
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
@@ -90,12 +90,12 @@ const STEPS = [
 
 // Integration hub — REAL BAS integrations only. Turf is in-person, so no
 // Meet/Zoom video tools (dropped vs the CA page). 3 cards either side of centre.
-const ROW_COLORS = ['#16A34A', '#A3E635', '#38BDF8', '#F59E0B']; // turf-green · lime · sky · amber
+const ROW_COLORS = ['#15803D', '#A3E635', '#38BDF8', '#F59E0B']; // turf-green · lime · sky · amber
 const SPARKS = [
   { left: '9%', top: '7%', rot: 22, color: '#A3E635' },
-  { left: '46%', top: '3%', rot: -14, color: '#16A34A' },
+  { left: '46%', top: '3%', rot: -14, color: '#15803D' },
   { left: '90%', top: '9%', rot: -24, color: '#38BDF8' },
-  { left: '5%', top: '60%', rot: 108, color: '#16A34A' },
+  { left: '5%', top: '60%', rot: 108, color: '#15803D' },
   { left: '95%', top: '56%', rot: 66, color: '#A3E635' },
   { left: '50%', top: '93%', rot: 4, color: '#F59E0B' },
 ];
@@ -173,7 +173,7 @@ const FOOTER_COLS = [
     { label: 'Consultants', to: '/for/business-consultant' },
     { label: 'Salons', to: '/for/salon' },
     { label: 'Fitness', to: '/for/fitness' },
-    { label: 'More', to: '/solutions' },
+    { label: 'More professions', to: '/solutions' },
   ] },
   { title: 'Resources', links: [
     { label: 'Blog', to: '/blog' },
@@ -234,14 +234,14 @@ function GlassCard({ icon: Icon, label, value, accent, className = '', float = '
    checkerboard and invert to plain on hover; plain cards do the opposite. */
 function UseCaseCard({ u, active }) {
   const card = active
-    ? 'border-[#16A34A] bg-[#16A34A] hover:border-black/[0.06] hover:bg-white'
-    : 'border-black/[0.06] bg-white hover:border-[#16A34A] hover:bg-[#16A34A]';
+    ? 'border-[#15803D] bg-[#15803D] hover:border-black/[0.06] hover:bg-white'
+    : 'border-black/[0.06] bg-white hover:border-[#15803D] hover:bg-[#15803D]';
   const icon = active
-    ? 'bg-[#A3E635] text-[#12321f] ring-white group-hover:bg-[#16A34A] group-hover:text-white group-hover:ring-transparent'
-    : 'bg-[#16A34A] text-[#A3E635] ring-transparent group-hover:bg-[#A3E635] group-hover:text-[#12321f] group-hover:ring-white';
+    ? 'bg-[#A3E635] text-[#12321f] ring-white group-hover:bg-[#15803D] group-hover:text-white group-hover:ring-transparent'
+    : 'bg-[#15803D] text-[#A3E635] ring-transparent group-hover:bg-[#A3E635] group-hover:text-[#12321f] group-hover:ring-white';
   const arrow = active
-    ? 'bg-white text-[#16A34A] group-hover:bg-[rgba(22,163,74,0.16)] group-hover:text-[#15803D]'
-    : 'bg-[rgba(22,163,74,0.12)] text-[#15803D] group-hover:bg-white group-hover:text-[#16A34A]';
+    ? 'bg-white text-[#15803D] group-hover:bg-[rgba(22,163,74,0.16)] group-hover:text-[#15803D]'
+    : 'bg-[rgba(22,163,74,0.12)] text-[#15803D] group-hover:bg-white group-hover:text-[#15803D]';
   const title = active ? 'text-white group-hover:text-[color:var(--ca-ink)]' : 'text-[color:var(--ca-ink)] group-hover:text-white';
   const desc = active ? 'text-white/80 group-hover:text-neutral-500' : 'text-neutral-500 group-hover:text-white/80';
   return (
@@ -272,7 +272,7 @@ function HowItWorks({ steps }) {
     <div className="mt-16 grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
       {/* LEFT — image reflects the active step */}
       <div className="relative mx-auto w-full max-w-md lg:mx-0">
-        <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#16A34A]/20 blur-3xl" />
+        <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#15803D]/20 blur-3xl" />
         <div className="relative z-10 aspect-square">
           <AnimatePresence mode="wait" initial={false}>
             <motion.img
@@ -298,7 +298,7 @@ function HowItWorks({ steps }) {
             const on = i === active;
             return (
               <button key={s.title} type="button" onClick={() => setActive(i)} aria-current={on} className="relative flex w-full gap-5 text-left">
-                <span className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${on ? 'bg-[#16A34A] text-white shadow-[0_8px_20px_-8px_rgba(22,163,74,0.7)]' : 'border-2 border-black/10 bg-white text-[color:var(--ca-primary)]'}`}>
+                <span className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${on ? 'bg-[#15803D] text-white shadow-[0_8px_20px_-8px_rgba(22,163,74,0.7)]' : 'border-2 border-black/10 bg-white text-[color:var(--ca-primary)]'}`}>
                   <s.icon size={20} />
                 </span>
                 <div className="pt-1.5">
@@ -435,14 +435,14 @@ function IntegrationHub() {
           <div className="flex flex-col items-center">
             <div ref={centerRef} className="relative flex h-60 w-60 items-center justify-center">
               <div aria-hidden className="absolute inset-[-34px] rounded-full border border-dashed border-[#A3E635]/70" />
-              <div aria-hidden className="absolute inset-[-14px] rounded-full border border-[#16A34A]/20" />
+              <div aria-hidden className="absolute inset-[-14px] rounded-full border border-[#15803D]/20" />
               <div className="relative flex h-full w-full items-center justify-center rounded-full bg-white shadow-[0_30px_70px_-30px_rgba(17,17,17,0.3)] ring-1 ring-black/5">
                 <img src={MASCOT} alt="Book A Sloth" className="h-52 w-52 object-contain" />
               </div>
             </div>
             <div className="relative mt-4 text-center">
               <span className="font-heading text-sm font-semibold italic text-neutral-500">Your Ground, Connected</span>
-              <svg width="130" height="8" viewBox="0 0 130 8" fill="none" className="mx-auto mt-1"><path d="M2 5 C 34 1, 96 1, 128 4" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" /></svg>
+              <svg width="130" height="8" viewBox="0 0 130 8" fill="none" className="mx-auto mt-1"><path d="M2 5 C 34 1, 96 1, 128 4" stroke="#15803D" strokeWidth="2" strokeLinecap="round" /></svg>
             </div>
           </div>
 
@@ -550,7 +550,7 @@ export default function SportsTurf() {
 
   // Floodlit-night palette — legacy --ca-* var names kept so shared classNames work.
   const styleVars = {
-    '--ca-primary': '#16A34A', // turf green
+    '--ca-primary': '#15803D', // turf green (AA-safe: 5:1 with white text/links)
     '--ca-accent': '#22C55E',  // brighter green (readable on light tints)
     '--ca-ink': '#0B0F12',     // stadium night / near-black text
     '--ca-cream': '#F1FBF4',   // faint mint section bg
@@ -567,7 +567,7 @@ export default function SportsTurf() {
         robots="index, follow, max-image-preview:large, max-snippet:-1"
         siteName="Book A Sloth"
         locale="en_IN"
-        themeColor="#16A34A"
+        themeColor="#15803D"
         ogTitle={seo.ogTitle}
         ogDescription={seo.ogDescription}
         jsonLd={jsonLd}
@@ -678,7 +678,7 @@ export default function SportsTurf() {
                   </span>
                   <div className="font-heading text-sm font-bold text-white">{b.title}</div>
                 </div>
-                <p className="mt-2 text-xs leading-snug text-white/55">{b.desc}</p>
+                <p className="mt-2 text-xs leading-snug text-white/70">{b.desc}</p>
               </div>
             </Reveal>
           ))}
@@ -776,7 +776,7 @@ export default function SportsTurf() {
 
             {/* green — number */}
             <Reveal delay={0.06}>
-              <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-7 text-white" style={{ background: '#16A34A' }}>
+              <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-7 text-white" style={{ background: '#15803D' }}>
                 <CardPattern variant="dots" light corner="br" />
                 <span className="relative z-10 text-[11px] font-bold uppercase tracking-[0.15em] text-white/80">You keep</span>
                 <div>
@@ -830,7 +830,7 @@ export default function SportsTurf() {
             {CA_TESTIMONIALS.map((t, i) => {
               const dark = t.tone !== 'white';
               const bg = t.tone === 'blue' ? 'var(--ca-primary)' : t.tone === 'ink' ? 'var(--ca-ink)' : undefined;
-              const star = t.tone === 'white' ? '#16A34A' : t.tone === 'ink' ? '#A3E635' : '#ffffff';
+              const star = t.tone === 'white' ? '#15803D' : t.tone === 'ink' ? '#A3E635' : '#ffffff';
               const avStyle = t.tone === 'blue' ? { background: '#fff', color: 'var(--ca-primary)' } : t.tone === 'ink' ? { background: 'rgba(255,255,255,0.15)', color: '#fff' } : { background: 'var(--ca-primary)', color: '#fff' };
               return (
                 <Reveal key={t.name} delay={(i % 3) * 0.06} className={`mb-5 break-inside-avoid rounded-[16px] p-6 ${t.tone === 'white' ? 'border border-black/[0.06] bg-white shadow-[0_8px_30px_rgba(17,17,17,0.05)]' : ''}`} style={bg ? { background: bg } : undefined}>
@@ -949,7 +949,7 @@ export default function SportsTurf() {
               <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: yearly ? '22px' : '2px' }} />
             </button>
             <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>
-              Yearly <span className="ml-1 rounded-full bg-[#16A34A]/12 px-2 py-0.5 text-xs font-bold text-[#16A34A]">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
+              Yearly <span className="ml-1 rounded-full bg-[#15803D]/12 px-2 py-0.5 text-xs font-bold text-[#15803D]">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
             </span>
           </Reveal>
 
@@ -971,7 +971,7 @@ export default function SportsTurf() {
                   <ul className="mt-6 flex flex-col gap-3">
                     {FREE_PLAN.features.slice(0, 5).map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                        <Check size={16} className="mt-0.5 shrink-0 text-[#16A34A]" />
+                        <Check size={16} className="mt-0.5 shrink-0 text-[#15803D]" />
                         <span>{f}</span>
                       </li>
                     ))}
@@ -985,7 +985,7 @@ export default function SportsTurf() {
                 <div className="relative flex h-full flex-col rounded-[18px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(16,24,40,0.14)]" style={{ borderColor: 'var(--ca-primary)' }}>
                   <div className="flex items-center justify-between">
                     <div className="font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
-                    {yearly && <span className="rounded-full bg-[#16A34A] px-2.5 py-0.5 text-xs font-bold text-white">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
+                    {yearly && <span className="rounded-full bg-[#15803D] px-2.5 py-0.5 text-xs font-bold text-white">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
                   </div>
                   <p className="mt-1 text-sm text-neutral-500">Keep every rupee. Automate the rest.</p>
                   <div className="mt-6 flex items-end gap-1">
@@ -1014,7 +1014,7 @@ export default function SportsTurf() {
           </div>
 
           <Reveal delay={0.12} className="mt-8 flex flex-col items-center gap-2 text-center">
-            <span className="flex items-center gap-1.5 text-sm text-neutral-500"><Lock size={14} className="text-[#16A34A]" /> Access to all features with no hidden fees</span>
+            <span className="flex items-center gap-1.5 text-sm text-neutral-500"><Lock size={14} className="text-[#15803D]" /> Access to all features with no hidden fees</span>
             <Link to="/pricing" className="text-sm font-semibold text-neutral-500 underline-offset-4 hover:text-[color:var(--ca-ink)] hover:underline">
               Compare every feature on the full pricing page
             </Link>
@@ -1027,7 +1027,7 @@ export default function SportsTurf() {
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* LEFT — mascot */}
           <Reveal className="relative order-2 mx-auto w-full max-w-md lg:order-1 lg:mx-0">
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#16A34A]/15 blur-3xl" />
+            <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#15803D]/15 blur-3xl" />
             <img src={MASCOT} alt="Book A Sloth mascot" loading="lazy" className="relative z-10 mx-auto w-full max-w-[22rem] drop-shadow-[0_24px_32px_rgba(17,17,17,0.16)]" />
           </Reveal>
 
@@ -1077,7 +1077,7 @@ export default function SportsTurf() {
           <Reveal delay={0.14} className="mt-8">
             <CtaButton to={START} className="!px-8 !py-4">Start for Free <ArrowRight size={16} /></CtaButton>
           </Reveal>
-          <Reveal as="p" delay={0.18} className="mt-4 text-xs text-white/40">No credit card required</Reveal>
+          <Reveal as="p" delay={0.18} className="mt-4 text-xs text-white/60">No credit card required</Reveal>
         </div>
       </section>
 
