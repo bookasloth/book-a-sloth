@@ -118,7 +118,8 @@ Order matters. The database goes first, then code.
 - [ ] Guest WhatsApp OTP login → `/user` loads.
 - [ ] One booking reaches the Razorpay checkout (don't need to pay).
 - [ ] Each manifest row's "Verify live" check.
-- [ ] Tag the release: `node scripts/release.mjs v2026.09` (tag = one-command rollback reference).
+- [ ] Tag the release: `node scripts/release.mjs v2026.9.0` (tag = one-command rollback reference; the script only
+      accepts `vX.Y.Z`, so hotfixes after the release become `v2026.9.1`, `v2026.9.2`, and so on).
 
 ## 9. Rollback
 
