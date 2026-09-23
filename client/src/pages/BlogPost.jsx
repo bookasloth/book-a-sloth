@@ -240,17 +240,9 @@ const AuthorLink = ({ name, className, style }) => (
 // sticky, offset clears the top-0 navbar). Hidden on mobile — the bottom CTA
 // band already covers small screens. "Create free account" reuses the vendor
 // Google OAuth flow (same as /be-a-sloth); "Book a demo" points at the live
-// /demo host page. Card colours match the info/table blocks above.
-const GoogleGlyph = () => (
-  <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" />
-    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z" />
-    <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 010-4.2V7.06H2.18a11 11 0 000 9.88l3.66-2.84z" />
-    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A11 11 0 0012 1 11 11 0 002.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" />
-  </svg>
-);
-
-const SidebarCta = ({ accent }) => {
+// /demo host page. Primary button takes the post's page (band) colour; text
+// flips dark/light off the theme so it stays readable on any category.
+const SidebarCta = ({ theme }) => {
   const { startVendorGoogleAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const signup = async () => {
@@ -265,20 +257,15 @@ const SidebarCta = ({ accent }) => {
   return (
     <div className="sticky top-24 rounded-xl border p-6"
       style={{ borderColor: 'rgba(255,255,255,0.10)', backgroundColor: 'rgba(255,255,255,0.03)' }}>
-      <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]"
-        style={{ color: accent, backgroundColor: `${accent}1a` }}>
-        Book A Sloth
-      </span>
-      <h3 className="mt-4 font-heading text-lg font-bold leading-snug" style={{ color: HEAD_TX }}>
+      <h3 className="font-heading text-lg font-bold leading-snug" style={{ color: HEAD_TX }}>
         Get appointments booked &amp; paid — start free today
       </h3>
       <p className="mt-2 text-sm leading-relaxed" style={{ color: BODY_DIM }}>
-        Publish your services, share one link and get paid at 0% commission. Sign up in seconds — no card required.
+        Publish your services, share one link and get paid at 0% commission.
       </p>
       <button type="button" onClick={signup} disabled={loading}
-        className="btn mt-5 flex w-full items-center justify-center gap-2.5 rounded-[8px] py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ backgroundColor: '#FFFFFF', color: '#141416' }}>
-        <GoogleGlyph />
+        className="btn mt-5 flex w-full items-center justify-center rounded-[8px] py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+        style={{ backgroundColor: theme.band, color: theme.light ? '#141416' : '#FFFFFF' }}>
         {loading ? 'Opening Google…' : 'Create free account'}
       </button>
       <Link to="/demo"
@@ -478,7 +465,7 @@ const BlogPost = () => {
           </div>
 
           <aside className="hidden lg:block">
-            <SidebarCta accent={t.accent} />
+            <SidebarCta theme={t} />
           </aside>
         </div>
       </div>
