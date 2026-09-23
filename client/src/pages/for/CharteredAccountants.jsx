@@ -43,7 +43,7 @@ import outlookLogo from '../enterprise-v2/assets/logo/outlook.svg';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const MASCOT = '/images/ca-sloth.png'; // CA sloth mascot — transparent PNG cutout
+const MASCOT = '/images/ca-sloth.webp'; // CA sloth mascot — transparent cutout (216KB webp)
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
@@ -162,7 +162,7 @@ const FOOTER_COLS = [
     { label: 'Doctors', to: '/for/doctors' },
     { label: 'Salons', to: '/for/salon' },
     { label: 'Freelancers', to: '/for/freelancers' },
-    { label: 'More', to: '/solutions' },
+    { label: 'More professions', to: '/solutions' },
   ] },
   { title: 'Resources', links: [
     { label: 'Blog', to: '/blog' },
@@ -218,7 +218,7 @@ function DashboardMock() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>SS</span>
             <div className="leading-tight">
               <div className="text-[13px] font-bold text-[color:var(--ca-ink)]">Sharma &amp; Associates</div>
-              <div className="text-[10px] text-neutral-400">Chartered Accountants</div>
+              <div className="text-[10px] text-neutral-500">Chartered Accountants</div>
             </div>
           </div>
           <span className="rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-semibold text-[#1d4ed8]">Today · Tue</span>
@@ -232,14 +232,14 @@ function DashboardMock() {
           ].map((s) => (
             <div key={s.l} className="bg-white px-3 py-3 text-center">
               <div className="font-heading text-xl font-extrabold text-[color:var(--ca-ink)]">{s.v}</div>
-              <div className="mt-0.5 text-[10px] text-neutral-400">{s.l}</div>
+              <div className="mt-0.5 text-[10px] text-neutral-500">{s.l}</div>
             </div>
           ))}
         </div>
         {/* today's meetings */}
         <div className="px-5 py-4">
           <div className="mb-2.5 flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-400">Today&apos;s meetings</span>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Today&apos;s meetings</span>
             <span className="text-[10px] font-semibold" style={{ color: 'var(--ca-primary)' }}>View all</span>
           </div>
           <div className="space-y-2.5">
@@ -254,7 +254,7 @@ function DashboardMock() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[12px] font-bold text-[color:var(--ca-ink)]">{m.name}</div>
-                  <div className="truncate text-[10px] text-neutral-400">{m.svc} · {m.mode}</div>
+                  <div className="truncate text-[10px] text-neutral-500">{m.svc} · {m.mode}</div>
                 </div>
                 {m.paid
                   ? <span className="flex items-center gap-1 rounded-full bg-[#61C155]/10 px-2 py-0.5 text-[9px] font-bold text-[#61C155]"><Check size={9} /> Paid</span>
@@ -266,7 +266,7 @@ function DashboardMock() {
       </div>
       {/* floating reminder chip */}
       <div className="absolute -right-3 bottom-8 hidden rounded-2xl bg-white px-3 py-2.5 shadow-xl ring-1 ring-black/5 sm:block">
-        <div className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400"><MessageCircle size={12} style={{ color: 'var(--ca-primary)' }} /> WhatsApp sent</div>
+        <div className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-500"><MessageCircle size={12} style={{ color: 'var(--ca-primary)' }} /> WhatsApp sent</div>
         <div className="mt-0.5 text-[11px] font-bold text-[color:var(--ca-ink)]">Reminder · 1h before</div>
       </div>
     </div>
@@ -286,7 +286,7 @@ function GlassCard({ icon: Icon, label, value, accent, className = '', float = '
         <Icon size={18} />
       </span>
       <div>
-        <div className="text-[11px] font-medium text-neutral-400">{label}</div>
+        <div className="text-[11px] font-medium text-neutral-500">{label}</div>
         <div className="text-sm font-semibold" style={{ color: accent ? 'var(--ca-accent)' : 'var(--ca-ink)' }}>{value}</div>
       </div>
     </div>
@@ -364,8 +364,8 @@ function HowItWorks({ steps }) {
                 <span className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${on ? 'bg-[#61C155] text-white shadow-[0_8px_20px_-8px_rgba(97,193,85,0.7)]' : 'border-2 border-black/10 bg-white text-[color:var(--ca-primary)]'}`}>
                   <s.icon size={20} />
                 </span>
-                <div className={`pt-1.5 transition-opacity duration-300 ${on ? 'opacity-100' : 'opacity-55'}`}>
-                  <h3 className="font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
+                <div className="pt-1.5">
+                  <h3 className={`font-heading text-lg font-bold transition-colors duration-300 ${on ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>{s.title}</h3>
                   <p className="mt-1 max-w-sm text-sm leading-relaxed text-neutral-500">{s.desc}</p>
                 </div>
               </button>
@@ -696,7 +696,7 @@ export default function CharteredAccountants() {
                   <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[rgba(18,100,143,0.1)] text-[#12648F] transition-colors duration-300 group-hover:bg-[#12648F] group-hover:text-white">
                     <b.icon size={18} />
                   </span>
-                  <h3 className="font-heading text-sm font-bold">{b.title}</h3>
+                  <div className="font-heading text-sm font-bold text-[color:var(--ca-ink)]">{b.title}</div>
                 </div>
                 <p className="mt-2 text-xs leading-snug text-neutral-500">{b.desc}</p>
               </div>
@@ -818,7 +818,7 @@ export default function CharteredAccountants() {
                     <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.charAt(0)}</span>
                     <div>
                       <div className="text-sm font-bold text-[color:var(--ca-ink)]">{t.name}</div>
-                      <div className="text-xs text-neutral-400">{t.role}</div>
+                      <div className="text-xs text-neutral-500">{t.role}</div>
                     </div>
                   </figcaption>
                 </figure>
@@ -881,11 +881,11 @@ export default function CharteredAccountants() {
 
           {/* billing toggle */}
           <Reveal delay={0.1} className="mt-8 flex items-center justify-center gap-3">
-            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-400'}`}>Monthly</button>
-            <button type="button" role="switch" aria-checked={yearly} onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ca-primary)' : '#d4d4d4', minHeight: 0 }}>
+            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>Monthly</button>
+            <button type="button" role="switch" aria-checked={yearly} aria-label="Toggle monthly or yearly billing" onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ca-primary)' : '#d4d4d4', minHeight: 0 }}>
               <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: yearly ? '22px' : '2px' }} />
             </button>
-            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-400'}`}>
+            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>
               Yearly <span className="ml-1 rounded-full bg-[#61C155]/12 px-2 py-0.5 text-xs font-bold text-[#61C155]">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
             </span>
           </Reveal>
@@ -898,9 +898,9 @@ export default function CharteredAccountants() {
                 <p className="mt-1 text-sm text-neutral-500">{FREE_PLAN.persona.title}</p>
                 <div className="mt-5 flex items-end gap-1.5">
                   <span className="font-heading text-4xl font-extrabold tracking-tight">₹0</span>
-                  <span className="pb-1 text-sm text-neutral-400">/ forever</span>
+                  <span className="pb-1 text-sm text-neutral-500">/ forever</span>
                 </div>
-                <p className="mt-1 text-xs font-semibold text-neutral-400">{FREE_PLAN.badge}</p>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">{FREE_PLAN.badge}</p>
                 <CtaButton to={START} variant="ghost" className="mt-6 w-full">Get Started</CtaButton>
                 <ul className="mt-6 space-y-2.5">
                   {FREE_PLAN.features.map((f) => (
@@ -920,13 +920,13 @@ export default function CharteredAccountants() {
                 <p className="mt-1 text-sm text-neutral-500">{PREMIUM_PLAN.persona.title}</p>
                 <div className="mt-5 flex items-end gap-1.5">
                   <span className="font-heading text-4xl font-extrabold tracking-tight" style={{ color: 'var(--ca-primary)' }}>{priceLabel}</span>
-                  <span className="pb-1 text-sm text-neutral-400">{pricePer}</span>
+                  <span className="pb-1 text-sm text-neutral-500">{pricePer}</span>
                 </div>
-                <p className="mt-1 text-xs font-semibold text-neutral-400">
+                <p className="mt-1 text-xs font-semibold text-neutral-500">
                   {yearly ? `Just ${PREMIUM_PER_DAY}/day · billed yearly` : 'Billed monthly · switch to yearly to save'} · + 18% GST
                 </p>
                 <CtaButton to={START} className="mt-6 w-full">Start Free, Upgrade Anytime</CtaButton>
-                <p className="mt-3 text-xs text-neutral-400">{PREMIUM_PLAN.intro}</p>
+                <p className="mt-3 text-xs text-neutral-500">{PREMIUM_PLAN.intro}</p>
                 <ul className="mt-3 space-y-2.5">
                   {PREMIUM_PLAN.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-700">
@@ -1006,7 +1006,7 @@ export default function CharteredAccountants() {
             </div>
             {FOOTER_COLS.map((col) => (
               <div key={col.title}>
-                <div className="text-xs font-bold uppercase tracking-wide text-neutral-400">{col.title}</div>
+                <div className="text-xs font-bold uppercase tracking-wide text-neutral-600">{col.title}</div>
                 <ul className="mt-4 space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.label}>
@@ -1018,8 +1018,8 @@ export default function CharteredAccountants() {
             ))}
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-black/5 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-neutral-400">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
-            <p className="text-xs text-neutral-400">Made for India&apos;s Chartered Accountants</p>
+            <p className="text-xs text-neutral-500">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+            <p className="text-xs text-neutral-500">Made for India&apos;s Chartered Accountants</p>
           </div>
         </div>
       </footer>
