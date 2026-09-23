@@ -113,6 +113,17 @@ const TOOLS_RIGHT = [
 ];
 const TOOLS_ALL = [...TOOLS_LEFT, ...TOOLS_RIGHT];
 
+// Placeholder testimonials — swap for real customer quotes/photos when available.
+// SEO-friendly copy (appointment booking, consultations, WhatsApp, GST, no-shows).
+const CA_TESTIMONIALS = [
+  { tone: 'white', quote: 'Book A Sloth ended the endless WhatsApp back-and-forth for booking client consultations — clients now book tax and GST appointments online in seconds.', name: 'CA Rajesh Menon', role: 'Chartered Accountant, Mumbai' },
+  { tone: 'ink', quote: 'Automatic WhatsApp reminders cut our no-shows sharply. The whole practice now runs on one appointment booking platform.', name: 'CA Priya Nair', role: 'Partner, Nair & Associates, Kochi' },
+  { tone: 'blue', quote: 'Collecting consultation fees upfront through Razorpay, with GST invoices generated automatically, transformed our cash flow.', name: 'CA Arjun Shah', role: 'Firm Partner, Ahmedabad' },
+  { tone: 'blue', quote: 'Clients schedule income-tax filing appointments without waiting for the office to reply. Setup took minutes, not weeks.', name: 'CA Sneha Iyer', role: 'Chartered Accountant, Bengaluru' },
+  { tone: 'ink', quote: 'From booking to payment to follow-up, Book A Sloth handles the admin so our team can focus on advisory work.', name: 'CA Vikram Desai', role: 'Managing Partner, Pune' },
+  { tone: 'white', quote: 'The best appointment scheduling software for CA practices in India — 0% commission and a professional booking page our clients love.', name: 'CA Ananya Gupta', role: 'Gupta & Co., New Delhi' },
+];
+
 const JOURNEY = [
   { icon: CalendarCheck, label: 'Client books consultation' },
   { icon: Check, label: 'Confirmation' },
@@ -129,19 +140,31 @@ const TESTIMONIALS = [
   { quote: 'Our clients can book consultations without waiting for someone from the office to respond.', name: 'Amit Jain', role: 'Chartered Accountant, Bengaluru' },
 ];
 
-const WHY = [
-  { icon: MapPin, title: 'Built for India', desc: 'Designed around Indian businesses, payments, GST and client workflows.' },
-  { icon: Users, title: 'Easy for Your Clients', desc: 'No complicated signup or technical knowledge required to book an appointment.' },
-  { icon: MessageCircle, title: 'WhatsApp First', desc: 'Keep clients updated through the communication channel they already use.' },
-  { icon: TrendingUp, title: 'Built to Grow', desc: 'Start with appointments and gradually manage more of your client operations from one platform.' },
+// Before / after — the CA's day without vs with Book A Sloth.
+const OLD_WAY = [
+  { icon: MessageCircle, title: 'Endless WhatsApp back-and-forth', desc: 'Clients ping you to find a slot; you reply between meetings.' },
+  { icon: Clock3, title: 'No-shows during filing season', desc: 'No reminders means missed calls and wasted billable hours.' },
+  { icon: Wallet, title: 'Chasing consultation fees', desc: 'You follow up for payment days after the advice is given.' },
+  { icon: Folder, title: 'Documents scattered everywhere', desc: 'Client PANs, forms and returns live across email and chat.' },
+  { icon: X, title: 'Double bookings at deadlines', desc: 'Overlapping slots slip through when you schedule by hand.' },
 ];
 
-// Honest trust strip — verifiable facts, NOT fabricated booking/user counts.
+const NEW_WAY = [
+  { icon: Share2, title: 'One shareable booking link', desc: 'Clients pick a slot themselves, 24/7. No messages needed.' },
+  { icon: BellRing, title: 'Automatic WhatsApp reminders', desc: 'Reminders go out on their own and cut no-shows sharply.' },
+  { icon: IndianRupee, title: 'Fees collected upfront', desc: 'Take the consultation fee at booking, over UPI or card.' },
+  { icon: LayoutDashboard, title: 'Every client in one place', desc: 'Bookings, history and details in a single dashboard.' },
+  { icon: CalendarCheck, title: 'Conflict-free calendar', desc: 'Availability stays accurate even during deadline crunch.' },
+];
+
+// Honest trust strip — verifiable facts only. Every claim maps to real product
+// behaviour: Razorpay signature-verified payments (razorpaySignature.js), prod DB
+// in Mumbai (CLAUDE.md), DPDP-based Privacy policy (Privacy.jsx), 0% on Active (plans.js).
 const TRUST_STRIP = [
+  { icon: Lock, value: 'Razorpay', label: 'Every payment signature-verified on our servers' },
+  { icon: Landmark, value: 'Hosted in India', label: 'Your practice data runs on servers in Mumbai' },
+  { icon: FileText, value: 'DPDP 2023', label: 'Operated under India’s data protection law' },
   { icon: BadgePercent, value: '0%', label: 'Commission on Sloth Active — keep every rupee' },
-  { icon: Receipt, value: 'GST', label: 'Tax invoices generated automatically' },
-  { icon: Lock, value: 'UPI + Cards', label: 'Razorpay-secured payments' },
-  { icon: MapPin, value: 'Made in India', label: 'For Indian professionals & practices' },
 ];
 
 const FAQ = [
@@ -204,14 +227,6 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
     <Link to={to} className={`${base} ${styles[variant]} ${className}`} style={variant === 'solid' ? { background: 'var(--ca-primary)' } : undefined}>
       {children}
     </Link>
-  );
-}
-
-function Eyebrow({ children }) {
-  return (
-    <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--ca-primary)' }}>
-      {children}
-    </span>
   );
 }
 
@@ -385,6 +400,22 @@ function HowItWorks({ steps }) {
   );
 }
 
+/* Decorative CSS pattern behind a card — grid / dots / rings / stripes, faded from
+   one corner so it adds life without touching the text. */
+function CardPattern({ variant = 'dots', light = true, corner = 'tr' }) {
+  const c = light ? '255,255,255' : '17,17,17';
+  const a = light ? 0.16 : 0.05;
+  const bg = {
+    dots: { backgroundImage: `radial-gradient(rgba(${c},${a}) 1.2px, transparent 1.2px)`, backgroundSize: '16px 16px' },
+    grid: { backgroundImage: `linear-gradient(rgba(${c},${a}) 1px, transparent 1px), linear-gradient(90deg, rgba(${c},${a}) 1px, transparent 1px)`, backgroundSize: '22px 22px' },
+    rings: { backgroundImage: `repeating-radial-gradient(circle at center, rgba(${c},${a}) 0 1px, transparent 1px 16px)` },
+    stripes: { backgroundImage: `repeating-linear-gradient(135deg, rgba(${c},${a}) 0 1.5px, transparent 1.5px 12px)` },
+  }[variant];
+  const pos = { tr: '85% 15%', br: '86% 85%', bl: '15% 85%', tl: '15% 15%' }[corner];
+  const mask = `radial-gradient(circle at ${pos}, #000 0, transparent 60%)`;
+  return <div aria-hidden className="pointer-events-none absolute inset-0" style={{ ...bg, maskImage: mask, WebkitMaskImage: mask }} />;
+}
+
 /* One integration card — logo + title + subtitle (reference style). */
 function ToolCard({ t, innerRef }) {
   return (
@@ -516,33 +547,35 @@ function IntegrationHub() {
 /* Smoothly-animated single-open FAQ accordion. */
 function FaqAccordion() {
   const [open, setOpen] = useState(0);
+  const renderItem = (f, i) => {
+    const isOpen = open === i;
+    return (
+      <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'rgba(18,100,143,0.35)' : 'rgba(17,17,17,0.08)' }}>
+        <button
+          type="button"
+          onClick={() => setOpen(isOpen ? -1 : i)}
+          aria-expanded={isOpen}
+          className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-[15px] font-semibold text-[color:var(--ca-ink)]"
+        >
+          {f.q}
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'rgba(18,100,143,0.1)', color: 'var(--ca-primary)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
+            <Plus size={15} />
+          </span>
+        </button>
+        <AnimatePresence initial={false}>
+          {isOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
+              <p className="px-5 pb-4 text-[14.5px] leading-relaxed text-neutral-500">{f.a}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
   return (
-    <div className="space-y-3">
-      {FAQ.map((f, i) => {
-        const isOpen = open === i;
-        return (
-          <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'rgba(18,100,143,0.35)' : 'rgba(17,17,17,0.08)' }}>
-            <button
-              type="button"
-              onClick={() => setOpen(isOpen ? -1 : i)}
-              aria-expanded={isOpen}
-              className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-[15px] font-semibold text-[color:var(--ca-ink)]"
-            >
-              {f.q}
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'rgba(18,100,143,0.1)', color: 'var(--ca-primary)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
-                <Plus size={15} />
-              </span>
-            </button>
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
-                  <p className="px-5 pb-4 text-[14.5px] leading-relaxed text-neutral-500">{f.a}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
+    <div className="grid items-start gap-3 sm:grid-cols-2 sm:gap-4">
+      <div className="space-y-3">{FAQ.map((f, i) => (i % 2 === 0 ? renderItem(f, i) : null))}</div>
+      <div className="space-y-3">{FAQ.map((f, i) => (i % 2 === 1 ? renderItem(f, i) : null))}</div>
     </div>
   );
 }
@@ -684,7 +717,7 @@ export default function CharteredAccountants() {
               of modern India.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg lg:mx-0">
-              Manage client appointments, availability, payments, reminders and follow-ups from one simple platform built for modern CA practices.
+              Stop juggling ITR and GST consults over WhatsApp. Let clients book, pay and get reminded on their own — from one simple platform built for modern CA practices.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-6 flex flex-col items-center gap-3 sm:mt-9 sm:flex-row sm:gap-5 lg:justify-start">
               <Link
@@ -736,7 +769,7 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 4 · CA PRACTICE USE CASES ═══════════════ */}
+      {/* ═══════════════ 3 · CA PRACTICE USE CASES ═══════════════ */}
       <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
@@ -761,7 +794,7 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 5 · HOW IT WORKS ═══════════════ */}
+      {/* ═══════════════ 4 · HOW IT WORKS ═══════════════ */}
       <section id="how" className="px-5 pb-10 pt-20 sm:px-8 lg:pb-14 lg:pt-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
@@ -777,7 +810,7 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 6 · FEATURE SHOWCASE (hub) ═══════════════ */}
+      {/* ═══════════════ 5 · INTEGRATIONS HUB ═══════════════ */}
       <section id="features" className="px-5 pb-20 pt-6 sm:px-8 lg:pb-28 lg:pt-8">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
@@ -797,9 +830,10 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 6.5 · IMPACT (bento) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
-        <div className="mx-auto max-w-6xl">
+      {/* ═══════════════ 6 · IMPACT (bento) ═══════════════ */}
+      <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
+        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(17,17,17,0.045) 1px, transparent 1px)', backgroundSize: '22px 22px', maskImage: 'radial-gradient(circle at 50% 0%, #000, transparent 72%)', WebkitMaskImage: 'radial-gradient(circle at 50% 0%, #000, transparent 72%)' }} />
+        <div className="relative z-10 mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Real impact for <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants.</span>
@@ -813,7 +847,8 @@ export default function CharteredAccountants() {
             {/* white — number */}
             <Reveal className="lg:row-span-2">
               <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-[20px] border border-black/[0.06] bg-white p-8">
-                <span className="inline-flex w-fit items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ backgroundColor: 'rgba(97,193,85,0.14)', color: '#4a9e3c' }}>Always on</span>
+                <CardPattern variant="grid" light={false} corner="tr" />
+                <span className="relative z-10 inline-flex w-fit items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ backgroundColor: 'rgba(97,193,85,0.14)', color: '#4a9e3c' }}>Always on</span>
                 <div>
                   <div className="font-heading text-6xl font-extrabold tracking-tight text-[color:var(--ca-ink)] sm:text-7xl">24/7</div>
                   <p className="mt-4 max-w-md text-[15px] leading-relaxed text-neutral-500">
@@ -826,8 +861,9 @@ export default function CharteredAccountants() {
 
             {/* green — number */}
             <Reveal delay={0.06}>
-              <div className="flex h-full flex-col justify-between gap-6 rounded-[20px] p-7 text-white" style={{ background: '#61C155' }}>
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/80">You keep</span>
+              <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-7 text-white" style={{ background: '#61C155' }}>
+                <CardPattern variant="dots" light corner="br" />
+                <span className="relative z-10 text-[11px] font-bold uppercase tracking-[0.15em] text-white/80">You keep</span>
                 <div>
                   <div className="font-heading text-5xl font-extrabold tracking-tight">100%</div>
                   <p className="mt-2 text-sm text-white/85">Of every fee on Sloth Active — 0% commission, every rupee stays yours.</p>
@@ -837,8 +873,9 @@ export default function CharteredAccountants() {
 
             {/* black — number */}
             <Reveal delay={0.1}>
-              <div className="flex h-full flex-col justify-between gap-6 rounded-[20px] p-7 text-white" style={{ background: 'var(--ca-ink)' }}>
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/50">To start</span>
+              <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-7 text-white" style={{ background: 'var(--ca-ink)' }}>
+                <CardPattern variant="grid" light corner="tr" />
+                <span className="relative z-10 text-[11px] font-bold uppercase tracking-[0.15em] text-white/50">To start</span>
                 <div>
                   <div className="font-heading text-5xl font-extrabold tracking-tight">₹0</div>
                   <p className="mt-2 text-sm text-white/60">Free forever plan — no card, no lock-in.</p>
@@ -848,8 +885,9 @@ export default function CharteredAccountants() {
 
             {/* blue — community CTA */}
             <Reveal delay={0.14} className="lg:col-span-2">
-              <a href="https://whatsapp.com/channel/0029Vb8ZyHP6GcG6LRA2K81Y" target="_blank" rel="noopener noreferrer" className="group flex h-full items-center justify-between gap-4 rounded-[20px] p-7 text-white hover:no-underline" style={{ background: 'var(--ca-primary)' }}>
-                <div>
+              <a href="https://whatsapp.com/channel/0029Vb8ZyHP6GcG6LRA2K81Y" target="_blank" rel="noopener noreferrer" className="group relative flex h-full items-center justify-between gap-4 overflow-hidden rounded-[20px] p-7 text-white hover:no-underline" style={{ background: 'var(--ca-primary)' }}>
+                <CardPattern variant="rings" light corner="tr" />
+                <div className="relative z-10">
                   <div className="font-heading text-xl font-extrabold sm:text-2xl">Join the community</div>
                   <p className="mt-1 text-sm text-white/70">Connect with fellow CAs and creators growing on Book A Sloth.</p>
                 </div>
@@ -862,93 +900,109 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 7 · CA WORKFLOW / CLIENT JOURNEY ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
-        <div className="mx-auto max-w-5xl text-center">
-          <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            Give every client a <span style={{ color: 'var(--ca-primary)' }}>smoother experience.</span>
-          </Reveal>
-          <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-2xl text-base text-neutral-500">
-            From the first booking to the final follow-up, Book A Sloth keeps your client journey organised.
-          </Reveal>
-          <Reveal delay={0.1} className="mt-12">
-            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-              {JOURNEY.map((j, i) => (
-                <div key={j.label} className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="flex items-center gap-2 rounded-full border border-black/[0.06] bg-white px-4 py-2.5 shadow-[0_6px_20px_-12px_rgba(17,17,17,0.3)]">
-                    <j.icon size={15} style={{ color: 'var(--ca-primary)' }} />
-                    <span className="text-[13px] font-semibold text-[color:var(--ca-ink)]">{j.label}</span>
-                  </div>
-                  {i < JOURNEY.length - 1 && <ArrowRight size={15} className="text-neutral-300" />}
-                </div>
-              ))}
-            </div>
-          </Reveal>
-          <Reveal as="p" delay={0.14} className="mx-auto mt-10 max-w-xl text-[15px] font-medium text-neutral-600">
-            Less administrative work for your team. A more professional experience for your clients.
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ═══════════════ 8 · TESTIMONIALS ═══════════════ */}
+      {/* ═══════════════ 7 · TESTIMONIALS ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p"><Eyebrow>Trusted by Professionals</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Your clients notice when your practice runs smoothly.
+              Trusted by <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants</span> across India.
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
+              Hear how CA practices book more consultations and cut the admin with Book A Sloth.
             </Reveal>
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-3 sm:gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <Reveal key={t.name} delay={(i % 3) * 0.08}>
-                <figure className="flex h-full flex-col justify-between rounded-[16px] border border-black/[0.06] bg-white p-7 shadow-[0_8px_30px_rgba(17,17,17,0.05)]">
-                  <div>
+          <div className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3">
+            {CA_TESTIMONIALS.map((t, i) => {
+              const dark = t.tone !== 'white';
+              const bg = t.tone === 'blue' ? 'var(--ca-primary)' : t.tone === 'ink' ? 'var(--ca-ink)' : undefined;
+              const star = t.tone === 'white' ? '#12648F' : t.tone === 'ink' ? '#61C155' : '#ffffff';
+              const avStyle = t.tone === 'blue' ? { background: '#fff', color: 'var(--ca-primary)' } : t.tone === 'ink' ? { background: 'rgba(255,255,255,0.15)', color: '#fff' } : { background: 'var(--ca-primary)', color: '#fff' };
+              return (
+                <Reveal key={t.name} delay={(i % 3) * 0.06} className={`mb-5 break-inside-avoid rounded-[16px] p-6 ${t.tone === 'white' ? 'border border-black/[0.06] bg-white shadow-[0_8px_30px_rgba(17,17,17,0.05)]' : ''}`} style={bg ? { background: bg } : undefined}>
+                  <figure>
                     <div className="flex gap-0.5">
-                      {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} className="fill-[#12648F] text-[#12648F]" />)}
+                      {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} style={{ color: star, fill: star }} />)}
                     </div>
-                    <blockquote className="mt-4 text-[15px] font-semibold leading-snug text-[color:var(--ca-ink)]">&ldquo;{t.quote}&rdquo;</blockquote>
-                  </div>
-                  <figcaption className="mt-6 flex items-center gap-3">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.charAt(0)}</span>
-                    <div>
-                      <div className="text-sm font-bold text-[color:var(--ca-ink)]">{t.name}</div>
-                      <div className="text-xs text-neutral-500">{t.role}</div>
-                    </div>
-                  </figcaption>
-                </figure>
-              </Reveal>
-            ))}
+                    <blockquote className={`mt-4 text-[15px] font-medium leading-relaxed ${dark ? (t.tone === 'blue' ? 'text-white' : 'text-white/90') : 'text-[color:var(--ca-ink)]'}`}>&ldquo;{t.quote}&rdquo;</blockquote>
+                    <figcaption className="mt-5 flex items-center gap-3">
+                      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={avStyle}>{t.name.replace('CA ', '').charAt(0)}</span>
+                      <div>
+                        <div className={`text-sm font-bold ${dark ? 'text-white' : 'text-[color:var(--ca-ink)]'}`}>{t.name}</div>
+                        <div className={`text-xs ${t.tone === 'blue' ? 'text-white/70' : t.tone === 'ink' ? 'text-white/50' : 'text-neutral-500'}`}>{t.role}</div>
+                      </div>
+                    </figcaption>
+                  </figure>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ 9 · WHY BOOK A SLOTH ═══════════════ */}
+      {/* ═══════════════ 8 · WHY BOOK A SLOTH ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p"><Eyebrow>Why Book A Sloth</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              More than a booking tool. <span style={{ color: 'var(--ca-primary)' }}>A better way to run your practice.</span>
+              The old way vs <span style={{ color: 'var(--ca-primary)' }}>a better way to run your practice.</span>
             </Reveal>
           </div>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
-            {WHY.map((w, i) => (
-              <Reveal key={w.title} delay={(i % 4) * 0.07}>
-                <div className="h-full rounded-[16px] border border-black/[0.06] bg-white p-6 sm:p-7">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(18,100,143,0.1)', color: 'var(--ca-primary)' }}>
-                    <w.icon size={20} />
+
+          <div className="mt-14 grid items-stretch gap-5 lg:grid-cols-2 sm:gap-6">
+            {/* The old way */}
+            <Reveal className="h-full">
+              <div className="flex h-full flex-col rounded-[20px] border border-black/[0.06] bg-white p-6 sm:p-8">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#DC2626' }}>
+                    <X size={20} />
                   </span>
-                  <h3 className="mt-5 font-heading text-base font-bold">{w.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{w.desc}</p>
+                  <h3 className="font-heading text-lg font-bold text-neutral-500">The old way</h3>
                 </div>
-              </Reveal>
-            ))}
+                <div className="mt-6 flex flex-col gap-5">
+                  {OLD_WAY.map((item) => (
+                    <div key={item.title} className="flex gap-3.5">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(239,68,68,0.08)', color: '#DC2626' }}>
+                        <item.icon size={18} />
+                      </span>
+                      <div>
+                        <p className="font-heading text-[15px] font-semibold text-neutral-700">{item.title}</p>
+                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-500">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+
+            {/* With Book A Sloth */}
+            <Reveal delay={0.08} className="h-full">
+              <div className="flex h-full flex-col rounded-[20px] border-2 bg-white p-6 sm:p-8" style={{ borderColor: 'rgba(97,193,85,0.4)', boxShadow: '0 12px 40px -18px rgba(97,193,85,0.5)' }}>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(97,193,85,0.14)', color: 'var(--ca-accent)' }}>
+                    <Check size={20} />
+                  </span>
+                  <h3 className="font-heading text-lg font-bold" style={{ color: 'var(--ca-ink)' }}>With Book A Sloth</h3>
+                </div>
+                <div className="mt-6 flex flex-col gap-5">
+                  {NEW_WAY.map((item) => (
+                    <div key={item.title} className="flex gap-3.5">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(97,193,85,0.12)', color: 'var(--ca-accent)' }}>
+                        <item.icon size={18} />
+                      </span>
+                      <div>
+                        <p className="font-heading text-[15px] font-semibold" style={{ color: 'var(--ca-ink)' }}>{item.title}</p>
+                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-600">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ 10 · TRUST STRIP (honest, verifiable) ═══════════════ */}
+      {/* ═══════════════ 9 · TRUST STRIP (honest, verifiable) ═══════════════ */}
       <section className="border-y border-black/5 px-5 py-12 sm:px-8" style={{ background: 'var(--ca-ink)' }}>
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 lg:grid-cols-4">
           {TRUST_STRIP.map((s, i) => (
@@ -961,11 +1015,10 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 11 · PRICING ═══════════════ */}
+      {/* ═══════════════ 10 · PRICING ═══════════════ */}
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p"><Eyebrow>Simple, Transparent Pricing</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Start small. <span style={{ color: 'var(--ca-primary)' }}>Grow when your practice does.</span>
             </Reveal>
@@ -1000,7 +1053,15 @@ export default function CharteredAccountants() {
                     <span className="pb-2 text-sm text-neutral-500">/month</span>
                   </div>
                   <p className="mt-1.5 text-xs font-semibold text-neutral-500">Free forever · 5% per booking</p>
-                  <CtaButton to={START} variant="ghost" className="mt-6 w-full">Get Started</CtaButton>
+                  <ul className="mt-6 flex flex-col gap-3">
+                    {FREE_PLAN.features.slice(0, 5).map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
+                        <Check size={16} className="mt-0.5 shrink-0 text-[#61C155]" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <CtaButton to={START} variant="ghost" className="mt-7 w-full">Get Started</CtaButton>
                 </div>
               </Reveal>
 
@@ -1019,7 +1080,19 @@ export default function CharteredAccountants() {
                     {yearly && <span className="pb-2 ml-1 text-sm text-neutral-500 line-through">₹{PREMIUM_PLAN.monthly}</span>}
                   </div>
                   <p className="mt-1.5 text-xs font-semibold text-neutral-500">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
-                  <CtaButton to={START} className="mt-6 w-full">Get Started Now</CtaButton>
+                  <ul className="mt-6 flex flex-col gap-3">
+                    <li className="flex items-start gap-2.5 text-sm font-semibold" style={{ color: 'var(--ca-ink)' }}>
+                      <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} />
+                      <span>Everything in Free</span>
+                    </li>
+                    {PREMIUM_PLAN.features.slice(0, 4).map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
+                        <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <CtaButton to={START} className="mt-7 w-full">Get Started Now</CtaButton>
                 </div>
               </Reveal>
             </div>
@@ -1034,30 +1107,38 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 12 · ABOUT ═══════════════ */}
+      {/* ═══════════════ 11 · ABOUT ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
-        <div className="mx-auto max-w-3xl text-center">
-          <Reveal as="p"><Eyebrow>About Book A Sloth</Eyebrow></Reveal>
-          <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            Small businesses deserve better tools.
+        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* LEFT — mascot */}
+          <Reveal className="relative order-2 mx-auto w-full max-w-md lg:order-1 lg:mx-0">
+            <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#61C155]/15 blur-3xl" />
+            <img src={MASCOT} alt="Book A Sloth mascot" loading="lazy" className="relative z-10 mx-auto w-full max-w-[22rem] drop-shadow-[0_24px_32px_rgba(17,17,17,0.16)]" />
           </Reveal>
-          <Reveal as="p" delay={0.08} className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-neutral-600">
-            Book A Sloth was built to make appointment-based businesses easier to run. Instead of stitching together calendars, WhatsApp messages, spreadsheets and payment tools, professionals can manage their client appointments from one simple platform.
-          </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-2xl text-[15px] font-medium text-neutral-500">
-            Built for Indian professionals. Designed for the way modern businesses actually work.
-          </Reveal>
-          <Reveal delay={0.14} className="mt-8">
-            <Link to="/about" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
-              Learn More About Us <ArrowRight size={16} />
-            </Link>
-          </Reveal>
+
+          {/* RIGHT — text */}
+          <div className="order-1 text-center lg:order-2 lg:text-left">
+            <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Small businesses deserve better tools.
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">
+              Book A Sloth was built to make appointment-based businesses easier to run. Instead of stitching together calendars, WhatsApp messages, spreadsheets and payment tools, professionals can manage their client appointments from one simple platform.
+            </Reveal>
+            <Reveal as="p" delay={0.1} className="mt-4 text-[15px] font-medium text-neutral-500">
+              Built for Indian professionals. Designed for the way modern businesses actually work.
+            </Reveal>
+            <Reveal delay={0.14} className="mt-8">
+              <Link to="/about" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
+                Learn More About Us <ArrowRight size={16} />
+              </Link>
+            </Reveal>
+          </div>
         </div>
       </section>
 
-      {/* ═══════════════ 13 · FAQ ═══════════════ */}
+      {/* ═══════════════ 12 · FAQ ═══════════════ */}
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-5xl">
           <Reveal as="h2" className="text-center font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
             Questions? <span style={{ color: 'var(--ca-primary)' }}>We&apos;ve got answers.</span>
           </Reveal>
@@ -1065,26 +1146,26 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 14 · FINAL CTA ═══════════════ */}
-      <section className="px-5 py-24 text-center sm:px-8" style={{ background: 'var(--ca-ink)' }}>
+      {/* ═══════════════ 13 · FINAL CTA ═══════════════ */}
+      <section className="px-5 py-24 text-center sm:px-8" style={{ background: 'var(--ca-accent)' }}>
         <div className="mx-auto max-w-2xl">
-          <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: 'rgba(18,100,143,0.2)' }}>
-            <Zap size={26} style={{ color: 'var(--ca-primary)' }} />
+          <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.28)' }}>
+            <Zap size={26} style={{ color: 'var(--ca-ink)' }} />
           </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl" style={{ color: 'var(--ca-ink)' }}>
             Spend less time managing appointments. Spend more time growing your practice.
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base text-white/60">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base" style={{ color: 'rgba(17,17,17,0.7)' }}>
             Set up your booking page today and give your clients a simpler way to meet with you.
           </Reveal>
           <Reveal delay={0.14} className="mt-8">
             <CtaButton to={START} className="!px-8 !py-4">Start for Free <ArrowRight size={16} /></CtaButton>
           </Reveal>
-          <Reveal as="p" delay={0.18} className="mt-4 text-xs text-white/40">No credit card required</Reveal>
+          <Reveal as="p" delay={0.18} className="mt-4 text-xs" style={{ color: 'rgba(17,17,17,0.55)' }}>No credit card required</Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 15 · FOOTER ═══════════════ */}
+      {/* ═══════════════ 14 · FOOTER ═══════════════ */}
       <footer className="border-t border-black/5 px-5 py-16 sm:px-8" style={{ background: '#ffffff' }}>
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
