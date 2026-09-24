@@ -243,28 +243,24 @@ function UseCaseRow({ u, n }) {
   );
 }
 
-/* Lawyers "process" — a formal vertical numbered timeline with a gold rail.
-   (Distinct from CA's image + auto-advance and Turf's horizontal playbook.) */
+/* Lawyers "process" — 3 steps laid out horizontally: numbered gold-ringed circles
+   on a horizontal gold rail, title + desc centred below each. */
 function HowItWorks({ steps }) {
   return (
-    <div className="relative mx-auto mt-14 max-w-2xl">
-      <span aria-hidden className="absolute bottom-6 left-[27px] top-6 w-px" style={{ background: 'linear-gradient(180deg, transparent, rgba(198,161,91,0.6), transparent)' }} />
-      <div className="space-y-10">
-        {steps.map((s, i) => (
-          <Reveal key={s.title} delay={i * 0.1} className="relative flex gap-6">
-            <span className="relative z-10 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border bg-white font-heading text-lg font-extrabold" style={{ borderColor: 'rgba(198,161,91,0.5)', color: 'var(--ca-primary)' }}>
-              {String(i + 1).padStart(2, '0')}
-            </span>
-            <div className="pt-2">
-              <div className="flex items-center gap-2.5">
-                <s.icon size={18} style={{ color: 'var(--ca-accent)' }} />
-                <h3 className="font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
-              </div>
-              <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-            </div>
-          </Reveal>
-        ))}
-      </div>
+    <div className="relative mt-14 grid gap-8 md:grid-cols-3 md:gap-6">
+      <span aria-hidden className="pointer-events-none absolute left-[16.66%] right-[16.66%] top-7 hidden h-px md:block" style={{ background: 'linear-gradient(90deg, transparent, rgba(198,161,91,0.6), transparent)' }} />
+      {steps.map((s, i) => (
+        <Reveal key={s.title} delay={i * 0.1} className="relative text-center">
+          <span className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full border bg-white font-heading text-lg font-extrabold" style={{ borderColor: 'rgba(198,161,91,0.5)', color: 'var(--ca-primary)' }}>
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <div className="mt-5 flex items-center justify-center gap-2">
+            <s.icon size={18} style={{ color: 'var(--ca-accent)' }} />
+            <h3 className="font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
+          </div>
+          <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-neutral-500">{s.desc}</p>
+        </Reveal>
+      ))}
     </div>
   );
 }
@@ -306,9 +302,9 @@ function ToolRow({ t }) {
    (Distinct from CA's connector diagram and Turf's bold logo grid.) */
 function IntegrationHub() {
   return (
-    <div className="mx-auto grid max-w-3xl gap-x-12 sm:grid-cols-2">
+    <div className="mx-auto grid max-w-5xl gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
       {TOOLS_ALL.map((t, i) => (
-        <Reveal key={t.name} delay={(i % 2) * 0.05}>
+        <Reveal key={t.name} delay={(i % 3) * 0.05}>
           <ToolRow t={t} />
         </Reveal>
       ))}
@@ -616,14 +612,9 @@ export default function LawyersPage() {
             </Reveal>
           </div>
 
-          {/* 2×2 gold-ruled stat cards */}
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
-            {[
-              { v: '24/7', l: 'Bookings, day or night', note: 'Your booking page never sleeps — clients reserve consultations any time.' },
-              { v: '100%', l: 'Kept on Sloth Active', note: '0% commission — every rupee you earn stays yours.' },
-              { v: '₹0', l: 'To get started', note: 'Free forever plan — no card, no lock-in.' },
-              { v: 'GST', l: 'Invoices, automatic', note: 'A tax invoice generated for every paid booking.' },
-            ].map((s, i) => (
+          {/* gold-ruled stat cards — 3 across, then 2 across */}
+          {(() => {
+            const Stat = ({ s, i }) => (
               <Reveal key={s.l} delay={i * 0.06}>
                 <div className="relative h-full overflow-hidden rounded-[16px] border border-black/[0.08] bg-white p-8">
                   <span aria-hidden className="absolute inset-x-0 top-0 h-[3px]" style={{ background: 'linear-gradient(90deg, var(--ca-primary), #C6A15B)' }} />
@@ -632,8 +623,23 @@ export default function LawyersPage() {
                   <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{s.note}</p>
                 </div>
               </Reveal>
-            ))}
-          </div>
+            );
+            const row1 = [
+              { v: '24/7', l: 'Bookings, day or night', note: 'Your booking page never sleeps — clients reserve consultations any time.' },
+              { v: '100%', l: 'Kept on Sloth Active', note: '0% commission — every rupee you earn stays yours.' },
+              { v: '₹0', l: 'To get started', note: 'Free forever plan — no card, no lock-in.' },
+            ];
+            const row2 = [
+              { v: 'GST', l: 'Invoices, automatic', note: 'A tax invoice generated for every paid booking.' },
+              { v: 'UPI', l: 'Cards & netbanking', note: 'Accept payments online, securely through Razorpay.' },
+            ];
+            return (
+              <div className="mt-12 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-3">{row1.map((s, i) => <Stat key={s.l} s={s} i={i} />)}</div>
+                <div className="grid gap-4 sm:grid-cols-2">{row2.map((s, i) => <Stat key={s.l} s={s} i={i} />)}</div>
+              </div>
+            );
+          })()}
 
           {/* community CTA — formal navy bar */}
           <Reveal delay={0.1} className="mt-4">
@@ -661,23 +667,24 @@ export default function LawyersPage() {
               Hear how practices book more consultations and cut the admin with Book A Sloth.
             </Reveal>
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2">
-            {CA_TESTIMONIALS.map((t, i) => (
-              <Reveal key={t.name} delay={(i % 2) * 0.06}>
-                <figure className="relative flex h-full flex-col rounded-[16px] border border-black/[0.08] bg-white p-7">
-                  <span aria-hidden className="font-heading text-5xl leading-none" style={{ color: 'rgba(198,161,91,0.55)' }}>&ldquo;</span>
-                  <blockquote className="-mt-3 text-[15px] leading-relaxed text-neutral-700">{t.quote}</blockquote>
-                  <figcaption className="mt-6 flex items-center gap-3 border-t border-black/[0.06] pt-5">
-                    <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.replace('Adv. ', '').charAt(0)}</span>
-                    <div>
-                      <div className="text-sm font-bold text-[color:var(--ca-ink)]">{t.name}</div>
-                      <div className="text-xs text-neutral-500">{t.role}</div>
+          {/* auto-scrolling marquee (right → left); smaller cards, name + rating pinned bottom */}
+          <div className="relative mt-12 overflow-hidden" style={{ maskImage: 'linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent)', WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent)' }}>
+            <style>{`@keyframes lwMarquee{to{transform:translateX(-50%)}}.lw-marquee{animation:lwMarquee 44s linear infinite}.lw-marquee:hover{animation-play-state:paused}@media(prefers-reduced-motion:reduce){.lw-marquee{animation:none}}`}</style>
+            <div className="lw-marquee flex w-max items-stretch gap-5">
+              {[...CA_TESTIMONIALS, ...CA_TESTIMONIALS].map((t, i) => (
+                <figure key={i} className="flex w-72 flex-shrink-0 flex-col rounded-[16px] border border-black/[0.08] bg-white p-6">
+                  <span aria-hidden className="font-heading text-4xl leading-none" style={{ color: 'rgba(198,161,91,0.55)' }}>&ldquo;</span>
+                  <blockquote className="-mt-2 text-[13.5px] leading-relaxed text-neutral-700">{t.quote}</blockquote>
+                  <figcaption className="mt-auto flex items-center gap-2.5 border-t border-black/[0.06] pt-4">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.replace('Adv. ', '').charAt(0)}</span>
+                    <div className="min-w-0">
+                      <div className="truncate text-[13px] font-bold text-[color:var(--ca-ink)]">{t.name}</div>
+                      <span className="mt-0.5 flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={11} style={{ color: '#C6A15B', fill: '#C6A15B' }} />)}</span>
                     </div>
-                    <span className="ml-auto flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={12} style={{ color: '#C6A15B', fill: '#C6A15B' }} />)}</span>
                   </figcaption>
                 </figure>
-              </Reveal>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
