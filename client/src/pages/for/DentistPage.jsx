@@ -285,7 +285,7 @@ function HowItWorks({ steps }) {
         const on = i === active;
         return (
           <Reveal key={s.title} delay={i * 0.1} className="relative text-center">
-            <button type="button" onClick={() => setActive(i)} aria-current={on} className="mx-auto block">
+            <button type="button" onClick={() => setActive(i)} aria-current={on} aria-label={`Step ${i + 1}: ${s.title}`} className="mx-auto block">
               <span
                 className="relative z-20 mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white transition-all duration-500"
                 style={{
