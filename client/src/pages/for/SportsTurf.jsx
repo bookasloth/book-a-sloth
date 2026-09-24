@@ -25,7 +25,7 @@
 // New URL — keep in sync: App.jsx route (before /for/:profession), prerender.mjs
 // list, and Solutions.jsx CATEGORIES.
 
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -89,16 +89,7 @@ const STEPS = [
 // ponytail: all steps share MASCOT until distinct per-step art is supplied.
 
 // Integration hub — REAL BAS integrations only. Turf is in-person, so no
-// Meet/Zoom video tools (dropped vs the CA page). 3 cards either side of centre.
-const ROW_COLORS = ['#15803D', '#A3E635', '#38BDF8', '#F59E0B']; // turf-green · lime · sky · amber
-const SPARKS = [
-  { left: '9%', top: '7%', rot: 22, color: '#A3E635' },
-  { left: '46%', top: '3%', rot: -14, color: '#15803D' },
-  { left: '90%', top: '9%', rot: -24, color: '#38BDF8' },
-  { left: '5%', top: '60%', rot: 108, color: '#15803D' },
-  { left: '95%', top: '56%', rot: 66, color: '#A3E635' },
-  { left: '50%', top: '93%', rot: 4, color: '#F59E0B' },
-];
+// Meet/Zoom video tools (dropped vs the CA page).
 const TOOLS_LEFT = [
   { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
   { name: 'WhatsApp Automation', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
@@ -230,86 +221,48 @@ function GlassCard({ icon: Icon, label, value, accent, className = '', float = '
   );
 }
 
-/* Sport-category card. `active` cards render pre-filled (turf-green) in a
-   checkerboard and invert to plain on hover; plain cards do the opposite. */
-function UseCaseCard({ u, active }) {
-  const card = active
-    ? 'border-[#15803D] bg-[#15803D] hover:border-black/[0.06] hover:bg-white'
-    : 'border-black/[0.06] bg-white hover:border-[#15803D] hover:bg-[#15803D]';
-  const icon = active
-    ? 'bg-[#A3E635] text-[#12321f] ring-white group-hover:bg-[#15803D] group-hover:text-white group-hover:ring-transparent'
-    : 'bg-[#15803D] text-[#A3E635] ring-transparent group-hover:bg-[#A3E635] group-hover:text-[#12321f] group-hover:ring-white';
-  const arrow = active
-    ? 'bg-white text-[#15803D] group-hover:bg-[rgba(22,163,74,0.16)] group-hover:text-[#15803D]'
-    : 'bg-[rgba(22,163,74,0.12)] text-[#15803D] group-hover:bg-white group-hover:text-[#15803D]';
-  const title = active ? 'text-white group-hover:text-[color:var(--ca-ink)]' : 'text-[color:var(--ca-ink)] group-hover:text-white';
-  const desc = active ? 'text-white/80 group-hover:text-neutral-500' : 'text-neutral-500 group-hover:text-white/80';
+/* Sport-category "scoreboard tile" — uniform dark floodlit card with a lime
+   top-accent bar and a faint diagonal stripe; the icon lights up lime on hover.
+   (Distinct from the CA page's alternating checkerboard grid.) */
+function UseCaseCard({ u }) {
   return (
-    <Link to={START} className={`group flex h-full flex-col rounded-[14px] border p-5 transition-all duration-300 hover:shadow-[0_14px_34px_-20px_rgba(17,17,17,0.35)] hover:no-underline ${card}`}>
-      <div className="flex items-start justify-between">
-        <span className={`flex h-12 w-12 items-center justify-center rounded-full ring-2 transition-all duration-300 ${icon}`}>
+    <Link to={START} className="group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-white/10 bg-[#0F1613] p-5 transition-colors duration-300 hover:border-[#A3E635]/50 hover:no-underline">
+      <span aria-hidden className="absolute inset-x-0 top-0 h-[3px]" style={{ background: 'linear-gradient(90deg, #15803D, #A3E635)' }} />
+      <span aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: 'repeating-linear-gradient(135deg, rgba(163,230,53,0.07) 0 1.5px, transparent 1.5px 12px)', maskImage: 'radial-gradient(circle at 88% 90%, #000, transparent 60%)', WebkitMaskImage: 'radial-gradient(circle at 88% 90%, #000, transparent 60%)' }} />
+      <div className="relative flex items-start justify-between">
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(163,230,53,0.14)] text-[#A3E635] transition-colors duration-300 group-hover:bg-[#A3E635] group-hover:text-[#0F1613]">
           <u.icon size={22} />
         </span>
-        <span className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-300 ${arrow}`}>
-          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
-        </span>
+        <ArrowRight size={16} className="mt-1 text-white/25 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-[#A3E635]" />
       </div>
-      <h3 className={`mt-4 font-heading text-[15px] font-bold transition-colors duration-300 ${title}`}>{u.label}</h3>
-      <p className={`mt-1 text-[13px] leading-snug transition-colors duration-300 ${desc}`}>{u.desc}</p>
+      <h3 className="relative mt-4 font-heading text-[15px] font-bold text-white">{u.label}</h3>
+      <p className="relative mt-1 text-[13px] leading-snug text-white/60">{u.desc}</p>
     </Link>
   );
 }
 
 /* How-it-works: left image tracks the active step; steps auto-advance every 2.5s
    (looping) and a click selects a step and restarts the timer. */
+/* Turf "playbook" — a horizontal 3-step row with big faint numbers, an icon badge
+   and a connecting line. (Distinct from the CA page's image + auto-advance timeline.) */
 function HowItWorks({ steps }) {
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setActive((a) => (a + 1) % steps.length), 2500);
-    return () => clearTimeout(t);
-  }, [active, steps.length]);
   return (
-    <div className="mt-16 grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
-      {/* LEFT — image reflects the active step */}
-      <div className="relative mx-auto w-full max-w-md lg:mx-0">
-        <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#15803D]/20 blur-3xl" />
-        <div className="relative z-10 aspect-square">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.img
-              key={active}
-              src={steps[active].image}
-              alt=""
-              loading="lazy"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-0 mx-auto h-full w-full object-contain drop-shadow-[0_24px_32px_rgba(17,17,17,0.16)]"
-            />
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* RIGHT — auto-advancing, clickable step timeline */}
-      <div className="relative">
-        <span aria-hidden className="absolute bottom-5 left-6 top-5 w-px bg-black/10" />
-        <div className="space-y-8">
-          {steps.map((s, i) => {
-            const on = i === active;
-            return (
-              <button key={s.title} type="button" onClick={() => setActive(i)} aria-current={on} className="relative flex w-full gap-5 text-left">
-                <span className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${on ? 'bg-[#15803D] text-white shadow-[0_8px_20px_-8px_rgba(22,163,74,0.7)]' : 'border-2 border-black/10 bg-white text-[color:var(--ca-primary)]'}`}>
-                  <s.icon size={20} />
-                </span>
-                <div className="pt-1.5">
-                  <h3 className={`font-heading text-lg font-bold transition-colors duration-300 ${on ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>{s.title}</h3>
-                  <p className="mt-1 max-w-sm text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div className="relative mt-16 grid gap-6 md:grid-cols-3">
+      <span aria-hidden className="pointer-events-none absolute left-8 right-8 top-[3.4rem] hidden h-px md:block" style={{ background: 'linear-gradient(90deg, transparent, rgba(21,128,61,0.35), transparent)' }} />
+      {steps.map((s, i) => (
+        <Reveal key={s.title} delay={i * 0.1} className="relative">
+          <div className="flex h-full flex-col rounded-[16px] border border-black/[0.06] bg-white p-6 shadow-[0_14px_34px_-24px_rgba(17,17,17,0.3)]">
+            <div className="flex items-center justify-between">
+              <span className="font-heading text-5xl font-extrabold leading-none tracking-tight" style={{ color: 'rgba(21,128,61,0.18)' }}>{String(i + 1).padStart(2, '0')}</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-[0_8px_20px_-10px_rgba(21,128,61,0.8)]" style={{ background: 'var(--ca-primary)' }}>
+                <s.icon size={22} />
+              </span>
+            </div>
+            <h3 className="mt-5 font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
+          </div>
+        </Reveal>
+      ))}
     </div>
   );
 }
@@ -331,9 +284,9 @@ function CardPattern({ variant = 'dots', light = true, corner = 'tr' }) {
 }
 
 /* One integration card — logo + title + subtitle. */
-function ToolCard({ t, innerRef }) {
+function ToolCard({ t }) {
   return (
-    <div ref={innerRef} className="flex w-full items-center gap-3 rounded-2xl border border-black/[0.05] bg-white px-4 py-3 shadow-[0_14px_34px_-20px_rgba(17,17,17,0.3)] lg:w-64">
+    <div className="flex h-full w-full items-center gap-3 rounded-2xl border border-black/[0.05] bg-white px-4 py-3.5 shadow-[0_14px_34px_-20px_rgba(17,17,17,0.3)] transition-colors hover:border-[#15803D]/30">
       <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[color:var(--ca-grey)]">
         {t.logo
           ? <img src={t.logo} alt="" loading="lazy" className="h-6 w-6 object-contain" />
@@ -347,111 +300,20 @@ function ToolCard({ t, innerRef }) {
   );
 }
 
-/* Integration hub — mascot centre with a halo, 3 cards either side, each wired in
-   by a dashed row-coloured connector. Geometry is measured from the real DOM. */
+/* Turf integrations — a bold, even logo-card grid (no mascot-centre connector hub).
+   Distinct from the CA page's DOM-measured connector diagram. */
 function IntegrationHub() {
-  const wrapRef = useRef(null);
-  const centerRef = useRef(null);
-  const cardRefs = useRef({});
-  const [conns, setConns] = useState([]);
-
-  useLayoutEffect(() => {
-    const compute = () => {
-      const wrap = wrapRef.current;
-      const center = centerRef.current;
-      if (!wrap || !center) return;
-      const wb = wrap.getBoundingClientRect();
-      const cb = center.getBoundingClientRect();
-      const cx = cb.left + cb.width / 2 - wb.left;
-      const cy = cb.top + cb.height / 2 - wb.top;
-      const Rc = cb.width / 2;
-      const next = [];
-      TOOLS_ALL.forEach((t, idx) => {
-        const el = cardRefs.current[t.name];
-        if (!el) return;
-        const rb = el.getBoundingClientRect();
-        const isLeft = idx < TOOLS_LEFT.length;
-        const sx = (isLeft ? rb.right : rb.left) - wb.left;
-        const sy = rb.top + rb.height / 2 - wb.top;
-        const dx = sx - cx;
-        const dy = sy - cy;
-        const dist = Math.hypot(dx, dy) || 1;
-        const ux = dx / dist;
-        const uy = dy / dist;
-        const ex = cx + ux * (Rc - 4);          // dashed line ends at the halo edge
-        const ey = cy + uy * (Rc - 4);
-        const midx = (sx + ex) / 2;
-        next.push({ name: t.name, color: ROW_COLORS[idx % ROW_COLORS.length], sx, sy, d: `M ${sx} ${sy} C ${midx} ${sy}, ${midx} ${ey}, ${ex} ${ey}` });
-      });
-      setConns(next);
-    };
-    compute();
-    // rAF so layout is applied before we measure (display:none→block, resize, etc.)
-    const run = () => requestAnimationFrame(compute);
-    const ro = new ResizeObserver(run);
-    // The section loads below the fold + is display:none under lg, so mount
-    // measures zero — recompute when it actually becomes visible.
-    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) run(); }, { threshold: 0.01 });
-    if (wrapRef.current) { ro.observe(wrapRef.current); io.observe(wrapRef.current); }
-    const mq = window.matchMedia('(min-width: 1024px)');
-    mq.addEventListener('change', run);
-    window.addEventListener('resize', run);
-    const t = setTimeout(compute, 400); // after logos/fonts settle
-    return () => { ro.disconnect(); io.disconnect(); mq.removeEventListener('change', run); window.removeEventListener('resize', run); clearTimeout(t); };
-  }, []);
-
   return (
-    <>
-      {/* mobile / tablet — plain card grid */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
-        {TOOLS_ALL.map((t) => <Reveal key={t.name}><ToolCard t={t} /></Reveal>)}
-      </div>
-
-      {/* desktop hub */}
-      <div ref={wrapRef} className="relative mx-auto hidden max-w-6xl lg:block">
-        {/* soft green backdrop */}
-        <div aria-hidden className="absolute left-1/2 top-1/2 h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(22,163,74,0.13), transparent 68%)' }} />
-        {/* decorative sparks */}
-        {SPARKS.map((s, i) => (
-          <span key={i} aria-hidden className="absolute h-4 w-[3px] rounded-full" style={{ left: s.left, top: s.top, transform: `rotate(${s.rot}deg)`, background: s.color, opacity: 0.7 }} />
+    <div className="relative mx-auto max-w-5xl">
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-[46rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(closest-side, rgba(21,128,61,0.10), transparent)' }} />
+      <div className="relative grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+        {TOOLS_ALL.map((t, i) => (
+          <Reveal key={t.name} delay={(i % 3) * 0.06}>
+            <ToolCard t={t} />
+          </Reveal>
         ))}
-
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-          <style>{`@keyframes stFlow{to{stroke-dashoffset:-16}}.st-dash{stroke-dasharray:1.5 7;stroke-linecap:round;animation:stFlow 1.1s linear infinite}@media(prefers-reduced-motion:reduce){.st-dash{animation:none}}`}</style>
-          {conns.map((p, i) => (
-            <g key={p.name}>
-              <path d={p.d} fill="none" stroke={p.color} strokeWidth="2.5" className="st-dash" style={{ animationDelay: `${i * 0.08}s` }} />
-              <circle cx={p.sx} cy={p.sy} r="3.5" fill={p.color} />
-            </g>
-          ))}
-        </svg>
-
-        <div className="relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-24">
-          <div className="flex flex-col items-end gap-10">
-            {TOOLS_LEFT.map((t) => <ToolCard key={t.name} t={t} innerRef={(el) => { cardRefs.current[t.name] = el; }} />)}
-          </div>
-
-          {/* centre — mascot + halo + caption */}
-          <div className="flex flex-col items-center">
-            <div ref={centerRef} className="relative flex h-60 w-60 items-center justify-center">
-              <div aria-hidden className="absolute inset-[-34px] rounded-full border border-dashed border-[#A3E635]/70" />
-              <div aria-hidden className="absolute inset-[-14px] rounded-full border border-[#15803D]/20" />
-              <div className="relative flex h-full w-full items-center justify-center rounded-full bg-white shadow-[0_30px_70px_-30px_rgba(17,17,17,0.3)] ring-1 ring-black/5">
-                <img src={MASCOT} alt="Book A Sloth" className="h-52 w-52 object-contain" />
-              </div>
-            </div>
-            <div className="relative mt-4 text-center">
-              <span className="font-heading text-sm font-semibold italic text-neutral-500">Your Ground, Connected</span>
-              <svg width="130" height="8" viewBox="0 0 130 8" fill="none" className="mx-auto mt-1"><path d="M2 5 C 34 1, 96 1, 128 4" stroke="#15803D" strokeWidth="2" strokeLinecap="round" /></svg>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-start gap-10">
-            {TOOLS_RIGHT.map((t) => <ToolCard key={t.name} t={t} innerRef={(el) => { cardRefs.current[t.name] = el; }} />)}
-          </div>
-        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -697,14 +559,11 @@ export default function SportsTurf() {
             </Reveal>
           </div>
           <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {USE_CASES.map((u, i) => {
-              const active = (Math.floor(i / 4) + (i % 4)) % 2 === 1;
-              return (
-                <Reveal key={u.label} delay={(i % 4) * 0.05}>
-                  <UseCaseCard u={u} active={active} />
-                </Reveal>
-              );
-            })}
+            {USE_CASES.map((u, i) => (
+              <Reveal key={u.label} delay={(i % 4) * 0.05}>
+                <UseCaseCard u={u} />
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -745,73 +604,47 @@ export default function SportsTurf() {
         </div>
       </section>
 
-      {/* ═══════════════ 6 · IMPACT (bento) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
-        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(17,17,17,0.045) 1px, transparent 1px)', backgroundSize: '22px 22px', maskImage: 'radial-gradient(circle at 50% 0%, #000, transparent 72%)', WebkitMaskImage: 'radial-gradient(circle at 50% 0%, #000, transparent 72%)' }} />
+      {/* ═══════════════ 6 · IMPACT (scoreboard band) ═══════════════ */}
+      <section className="relative overflow-hidden px-5 py-20 text-white sm:px-8 lg:py-24" style={{ background: 'var(--ca-ink)' }}>
+        <div aria-hidden className="pointer-events-none absolute -top-20 left-1/2 h-64 w-[46rem] max-w-full -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(closest-side, rgba(163,230,53,0.14), transparent)' }} />
+        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 84px)', maskImage: 'linear-gradient(180deg, transparent, #000 40%, transparent)', WebkitMaskImage: 'linear-gradient(180deg, transparent, #000 40%, transparent)' }} />
         <div className="relative z-10 mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Real impact for <span style={{ color: 'var(--ca-primary)' }}>turf &amp; arena owners.</span>
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+              Real impact for <span style={{ color: '#A3E635' }}>turf &amp; arena owners.</span>
             </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">
+            <Reveal as="p" delay={0.06} className="mt-3 text-base text-white/60">
               Fill more slots, chase fewer payments — and keep every rupee you earn.
             </Reveal>
           </div>
 
-          <div className="mt-12 grid gap-4 lg:grid-cols-3 lg:grid-rows-2">
-            {/* white — number */}
-            <Reveal className="lg:row-span-2">
-              <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-[20px] border border-black/[0.06] bg-white p-8">
-                <CardPattern variant="grid" light={false} corner="tr" />
-                <span className="relative z-10 inline-flex w-fit items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ backgroundColor: 'rgba(22,163,74,0.14)', color: '#15803D' }}>Always on</span>
-                <div>
-                  <div className="font-heading text-6xl font-extrabold tracking-tight text-[color:var(--ca-ink)] sm:text-7xl">24/7</div>
-                  <p className="mt-4 max-w-md text-[15px] leading-relaxed text-neutral-500">
-                    Your booking page never sleeps — players reserve slots on your ground any time, day or night, while you focus on running it.
-                  </p>
-                </div>
-                <TrendingUp aria-hidden size={200} strokeWidth={1} className="pointer-events-none absolute -bottom-8 -right-8 text-black/[0.03]" />
-              </div>
-            </Reveal>
-
-            {/* green — number */}
-            <Reveal delay={0.06}>
-              <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-7 text-white" style={{ background: '#15803D' }}>
-                <CardPattern variant="dots" light corner="br" />
-                <span className="relative z-10 text-[11px] font-bold uppercase tracking-[0.15em] text-white/80">You keep</span>
-                <div>
-                  <div className="font-heading text-5xl font-extrabold tracking-tight">100%</div>
-                  <p className="mt-2 text-sm text-white/85">Of every slot fee on Sloth Active — 0% commission, every rupee stays yours.</p>
-                </div>
-              </div>
-            </Reveal>
-
-            {/* black — number */}
-            <Reveal delay={0.1}>
-              <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-7 text-white" style={{ background: 'var(--ca-ink)' }}>
-                <CardPattern variant="grid" light corner="tr" />
-                <span className="relative z-10 text-[11px] font-bold uppercase tracking-[0.15em] text-white/50">To start</span>
-                <div>
-                  <div className="font-heading text-5xl font-extrabold tracking-tight">₹0</div>
-                  <p className="mt-2 text-sm text-white/60">Free forever plan — no card, no lock-in.</p>
-                </div>
-              </div>
-            </Reveal>
-
-            {/* accent — community CTA */}
-            <Reveal delay={0.14} className="lg:col-span-2">
-              <a href="https://whatsapp.com/channel/0029Vb8ZyHP6GcG6LRA2K81Y" target="_blank" rel="noopener noreferrer" className="group relative flex h-full items-center justify-between gap-4 overflow-hidden rounded-[20px] p-7 text-white hover:no-underline" style={{ background: 'var(--ca-primary)' }}>
-                <CardPattern variant="rings" light corner="tr" />
-                <div className="relative z-10">
-                  <div className="font-heading text-xl font-extrabold sm:text-2xl">Join the community</div>
-                  <p className="mt-1 text-sm text-white/70">Connect with fellow turf owners and creators growing on Book A Sloth.</p>
-                </div>
-                <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-white transition-transform group-hover:translate-x-1" style={{ color: 'var(--ca-primary)' }}>
-                  <ArrowRight size={22} />
-                </span>
-              </a>
-            </Reveal>
+          {/* scoreboard row */}
+          <div className="mt-12 grid gap-px overflow-hidden rounded-[20px] border border-white/10 bg-white/10 sm:grid-cols-3">
+            {[
+              { v: '24/7', l: 'Bookings taken, day or night', note: 'Your page never sleeps' },
+              { v: '100%', l: 'Kept on Sloth Active', note: '0% commission — every rupee yours' },
+              { v: '₹0', l: 'To get started', note: 'Free forever, no card' },
+            ].map((s, i) => (
+              <Reveal key={s.l} delay={i * 0.08} className="bg-[#0B0F12] p-8 text-center">
+                <div className="font-heading text-5xl font-extrabold tracking-tight sm:text-6xl" style={{ color: '#A3E635' }}>{s.v}</div>
+                <div className="mt-3 text-sm font-semibold text-white">{s.l}</div>
+                <p className="mt-1 text-xs text-white/55">{s.note}</p>
+              </Reveal>
+            ))}
           </div>
+
+          {/* community CTA bar */}
+          <Reveal delay={0.12} className="mt-4">
+            <a href="https://whatsapp.com/channel/0029Vb8ZyHP6GcG6LRA2K81Y" target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between gap-4 rounded-[20px] border border-[#A3E635]/30 bg-[#A3E635]/[0.08] p-6 hover:no-underline sm:p-7">
+              <div>
+                <div className="font-heading text-lg font-extrabold text-white sm:text-xl">Join the community</div>
+                <p className="mt-1 text-sm text-white/60">Connect with fellow turf owners growing on Book A Sloth.</p>
+              </div>
+              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[#0B0F12] transition-transform group-hover:translate-x-1" style={{ background: '#A3E635' }}>
+                <ArrowRight size={20} />
+              </span>
+            </a>
+          </Reveal>
         </div>
       </section>
 
@@ -826,30 +659,43 @@ export default function SportsTurf() {
               Hear how grounds fill more slots and cut the admin with Book A Sloth.
             </Reveal>
           </div>
-          <div className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3">
-            {CA_TESTIMONIALS.map((t, i) => {
-              const dark = t.tone !== 'white';
-              const bg = t.tone === 'blue' ? 'var(--ca-primary)' : t.tone === 'ink' ? 'var(--ca-ink)' : undefined;
-              const star = t.tone === 'white' ? '#15803D' : t.tone === 'ink' ? '#A3E635' : '#ffffff';
-              const avStyle = t.tone === 'blue' ? { background: '#fff', color: 'var(--ca-primary)' } : t.tone === 'ink' ? { background: 'rgba(255,255,255,0.15)', color: '#fff' } : { background: 'var(--ca-primary)', color: '#fff' };
-              return (
-                <Reveal key={t.name} delay={(i % 3) * 0.06} className={`mb-5 break-inside-avoid rounded-[16px] p-6 ${t.tone === 'white' ? 'border border-black/[0.06] bg-white shadow-[0_8px_30px_rgba(17,17,17,0.05)]' : ''}`} style={bg ? { background: bg } : undefined}>
-                  <figure>
-                    <div className="flex gap-0.5">
-                      {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} style={{ color: star, fill: star }} />)}
-                    </div>
-                    <blockquote className={`mt-4 text-[15px] font-medium leading-relaxed ${dark ? (t.tone === 'blue' ? 'text-white' : 'text-white/90') : 'text-[color:var(--ca-ink)]'}`}>&ldquo;{t.quote}&rdquo;</blockquote>
-                    <figcaption className="mt-5 flex items-center gap-3">
-                      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={avStyle}>{t.name.charAt(0)}</span>
+          <div className="mt-12 grid gap-5 lg:grid-cols-5">
+            {/* featured quote */}
+            <Reveal className="lg:col-span-2">
+              <figure className="relative flex h-full flex-col justify-between overflow-hidden rounded-[20px] p-8 text-white" style={{ background: 'var(--ca-ink)' }}>
+                <span aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: 'repeating-linear-gradient(135deg, rgba(163,230,53,0.06) 0 1.5px, transparent 1.5px 12px)', maskImage: 'radial-gradient(circle at 90% 90%, #000, transparent 60%)', WebkitMaskImage: 'radial-gradient(circle at 90% 90%, #000, transparent 60%)' }} />
+                <div className="relative">
+                  <div className="flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={16} style={{ color: '#A3E635', fill: '#A3E635' }} />)}</div>
+                  <blockquote className="mt-5 font-heading text-xl font-semibold leading-snug text-white sm:text-2xl">&ldquo;{CA_TESTIMONIALS[0].quote}&rdquo;</blockquote>
+                </div>
+                <figcaption className="relative mt-8 flex items-center gap-3">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl text-base font-bold" style={{ background: '#A3E635', color: '#0B0F12' }}>{CA_TESTIMONIALS[0].name.charAt(0)}</span>
+                  <div>
+                    <div className="text-sm font-bold text-white">{CA_TESTIMONIALS[0].name}</div>
+                    <div className="text-xs text-white/55">{CA_TESTIMONIALS[0].role}</div>
+                  </div>
+                </figcaption>
+              </figure>
+            </Reveal>
+
+            {/* supporting cards */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:col-span-3">
+              {CA_TESTIMONIALS.slice(1).map((t, i) => (
+                <Reveal key={t.name} delay={(i % 2) * 0.06}>
+                  <figure className="flex h-full flex-col rounded-[16px] border border-black/[0.06] bg-white p-5 shadow-[0_8px_30px_rgba(17,17,17,0.05)]">
+                    <div className="flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={13} style={{ color: '#15803D', fill: '#15803D' }} />)}</div>
+                    <blockquote className="mt-3 text-[13.5px] leading-relaxed text-neutral-600">&ldquo;{t.quote}&rdquo;</blockquote>
+                    <figcaption className="mt-4 flex items-center gap-2.5">
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.charAt(0)}</span>
                       <div>
-                        <div className={`text-sm font-bold ${dark ? 'text-white' : 'text-[color:var(--ca-ink)]'}`}>{t.name}</div>
-                        <div className={`text-xs ${t.tone === 'blue' ? 'text-white/70' : t.tone === 'ink' ? 'text-white/50' : 'text-neutral-500'}`}>{t.role}</div>
+                        <div className="text-[13px] font-bold text-[color:var(--ca-ink)]">{t.name}</div>
+                        <div className="text-[11px] text-neutral-500">{t.role}</div>
                       </div>
                     </figcaption>
                   </figure>
                 </Reveal>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -863,57 +709,45 @@ export default function SportsTurf() {
             </Reveal>
           </div>
 
-          <div className="mt-14 grid items-stretch gap-5 lg:grid-cols-2 sm:gap-6">
-            {/* The old way */}
-            <Reveal className="h-full">
-              <div className="flex h-full flex-col rounded-[20px] border border-black/[0.06] bg-white p-6 sm:p-8">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#DC2626' }}>
-                    <X size={20} />
-                  </span>
-                  <h3 className="font-heading text-lg font-bold text-neutral-500">The old way</h3>
-                </div>
-                <div className="mt-6 flex flex-col gap-5">
-                  {OLD_WAY.map((item) => (
-                    <div key={item.title} className="flex gap-3.5">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(239,68,68,0.08)', color: '#DC2626' }}>
-                        <item.icon size={18} />
-                      </span>
-                      <div>
-                        <p className="font-heading text-[15px] font-semibold text-neutral-700">{item.title}</p>
-                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-500">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
+          <Reveal className="relative mt-14 grid overflow-hidden rounded-[24px] shadow-[0_24px_60px_-30px_rgba(17,17,17,0.4)] lg:grid-cols-2">
+            {/* VS badge on the seam */}
+            <div aria-hidden className="absolute left-1/2 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 lg:block">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white font-heading text-lg font-extrabold text-white shadow-xl" style={{ background: 'var(--ca-primary)' }}>VS</span>
+            </div>
 
-            {/* With Book A Sloth */}
-            <Reveal delay={0.08} className="h-full">
-              <div className="flex h-full flex-col rounded-[20px] border-2 bg-white p-6 sm:p-8" style={{ borderColor: 'rgba(22,163,74,0.4)', boxShadow: '0 12px 40px -18px rgba(22,163,74,0.5)' }}>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(22,163,74,0.14)', color: 'var(--ca-primary)' }}>
-                    <Check size={20} />
-                  </span>
-                  <h3 className="font-heading text-lg font-bold" style={{ color: 'var(--ca-ink)' }}>With Book A Sloth</h3>
-                </div>
-                <div className="mt-6 flex flex-col gap-5">
-                  {NEW_WAY.map((item) => (
-                    <div key={item.title} className="flex gap-3.5">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(22,163,74,0.12)', color: 'var(--ca-primary)' }}>
-                        <item.icon size={18} />
-                      </span>
-                      <div>
-                        <p className="font-heading text-[15px] font-semibold" style={{ color: 'var(--ca-ink)' }}>{item.title}</p>
-                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-600">{item.desc}</p>
-                      </div>
+            {/* OLD WAY half */}
+            <div className="bg-white p-7 sm:p-9">
+              <h3 className="flex items-center gap-2 font-heading text-lg font-bold text-neutral-500"><X size={18} className="text-[#DC2626]" /> The old way</h3>
+              <div className="mt-6 flex flex-col gap-4">
+                {OLD_WAY.map((item) => (
+                  <div key={item.title} className="flex gap-3">
+                    <item.icon size={17} className="mt-0.5 shrink-0 text-[#DC2626]" />
+                    <div>
+                      <p className="text-[14px] font-semibold text-neutral-700">{item.title}</p>
+                      <p className="mt-0.5 text-[13px] leading-snug text-neutral-500">{item.desc}</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            </Reveal>
-          </div>
+            </div>
+
+            {/* NEW WAY half — dark floodlit */}
+            <div className="relative overflow-hidden p-7 text-white sm:p-9" style={{ background: 'var(--ca-ink)' }}>
+              <span aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: 'repeating-linear-gradient(135deg, rgba(163,230,53,0.06) 0 1.5px, transparent 1.5px 12px)', maskImage: 'radial-gradient(circle at 92% 8%, #000, transparent 65%)', WebkitMaskImage: 'radial-gradient(circle at 92% 8%, #000, transparent 65%)' }} />
+              <h3 className="relative flex items-center gap-2 font-heading text-lg font-bold text-white"><Check size={18} style={{ color: '#A3E635' }} /> With Book A Sloth</h3>
+              <div className="relative mt-6 flex flex-col gap-4">
+                {NEW_WAY.map((item) => (
+                  <div key={item.title} className="flex gap-3">
+                    <item.icon size={17} className="mt-0.5 shrink-0" style={{ color: '#A3E635' }} />
+                    <div>
+                      <p className="text-[14px] font-semibold text-white">{item.title}</p>
+                      <p className="mt-0.5 text-[13px] leading-snug text-white/60">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -980,34 +814,37 @@ export default function SportsTurf() {
                 </div>
               </Reveal>
 
-              {/* Sloth Active (premium) — recommended */}
+              {/* Sloth Active (premium) — recommended, dark floodlit */}
               <Reveal delay={0.08}>
-                <div className="relative flex h-full flex-col rounded-[18px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(16,24,40,0.14)]" style={{ borderColor: 'var(--ca-primary)' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
-                    {yearly && <span className="rounded-full bg-[#15803D] px-2.5 py-0.5 text-xs font-bold text-white">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
+                <div className="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 p-7 text-white shadow-[0_24px_60px_-24px_rgba(21,128,61,0.5)]" style={{ background: 'var(--ca-ink)', borderColor: '#A3E635' }}>
+                  <span aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: 'repeating-linear-gradient(135deg, rgba(163,230,53,0.06) 0 1.5px, transparent 1.5px 12px)', maskImage: 'radial-gradient(circle at 90% 8%, #000, transparent 62%)', WebkitMaskImage: 'radial-gradient(circle at 90% 8%, #000, transparent 62%)' }} />
+                  <div className="relative flex items-center justify-between">
+                    <div className="font-heading text-lg font-bold text-white">{PREMIUM_PLAN.name}</div>
+                    {yearly && <span className="rounded-full px-2.5 py-0.5 text-xs font-bold text-[#0B0F12]" style={{ background: '#A3E635' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
                   </div>
-                  <p className="mt-1 text-sm text-neutral-500">Keep every rupee. Automate the rest.</p>
-                  <div className="mt-6 flex items-end gap-1">
-                    <span className="pb-1.5 text-2xl font-bold" style={{ color: 'var(--ca-primary)' }}>₹</span>
-                    <span className="font-heading text-5xl font-extrabold tracking-tight" style={{ color: 'var(--ca-primary)' }}>{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
-                    <span className="pb-2 text-sm text-neutral-500">/month</span>
-                    {yearly && <span className="pb-2 ml-1 text-sm text-neutral-500 line-through">₹{PREMIUM_PLAN.monthly}</span>}
+                  <p className="relative mt-1 text-sm text-white/60">Keep every rupee. Automate the rest.</p>
+                  <div className="relative mt-6 flex items-end gap-1">
+                    <span className="pb-1.5 text-2xl font-bold" style={{ color: '#A3E635' }}>₹</span>
+                    <span className="font-heading text-5xl font-extrabold tracking-tight" style={{ color: '#A3E635' }}>{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
+                    <span className="pb-2 text-sm text-white/60">/month</span>
+                    {yearly && <span className="pb-2 ml-1 text-sm text-white/45 line-through">₹{PREMIUM_PLAN.monthly}</span>}
                   </div>
-                  <p className="mt-1.5 text-xs font-semibold text-neutral-500">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
-                  <ul className="mt-6 flex flex-col gap-3">
-                    <li className="flex items-start gap-2.5 text-sm font-semibold" style={{ color: 'var(--ca-ink)' }}>
-                      <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} />
+                  <p className="relative mt-1.5 text-xs font-semibold text-white/60">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
+                  <ul className="relative mt-6 flex flex-col gap-3">
+                    <li className="flex items-start gap-2.5 text-sm font-semibold text-white">
+                      <Check size={16} className="mt-0.5 shrink-0" style={{ color: '#A3E635' }} />
                       <span>Everything in Free</span>
                     </li>
                     {PREMIUM_PLAN.features.slice(0, 4).map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                        <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} />
+                      <li key={f} className="flex items-start gap-2.5 text-sm text-white/80">
+                        <Check size={16} className="mt-0.5 shrink-0" style={{ color: '#A3E635' }} />
                         <span>{f}</span>
                       </li>
                     ))}
                   </ul>
-                  <CtaButton to={START} className="mt-7 w-full">Get Started Now</CtaButton>
+                  <Link to={START} className="relative mt-7 inline-flex w-full items-center justify-center gap-2 rounded-[5px] px-6 py-3.5 text-sm font-semibold text-[#0B0F12] transition-opacity hover:opacity-90 hover:no-underline" style={{ background: '#A3E635' }}>
+                    Get Started Now <ArrowRight size={15} />
+                  </Link>
                 </div>
               </Reveal>
             </div>
