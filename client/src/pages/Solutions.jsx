@@ -10,7 +10,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Scale, Stethoscope, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
+  Scale, Stethoscope, Smile, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
   Camera, CalendarDays, Building2, UserCheck, Zap, ShieldCheck, Heart,
   Search, ArrowRight, PlayCircle,
 } from 'lucide-react';
@@ -27,6 +27,7 @@ const DESCRIPTION =
 const CATEGORIES = [
   { icon: Scale,         label: 'Lawyers & CAs',              sub: 'Legal, Tax & Financial Experts',        to: '/for/lawyers' },
   { icon: Stethoscope,   label: 'Doctors & Clinics',          sub: 'Healthcare Professionals',              to: '/for/doctors' },
+  { icon: Smile,         label: 'Dental Clinics',             sub: 'Dentists & Dental Practices',           to: '/for/dentist' },
   { icon: BarChart3,     label: 'Business Consultants',       sub: 'Advisors & Growth Experts',             to: '/for/business-consultant' },
   { icon: Flower2,       label: 'Salons & Spas',              sub: 'Beauty & Wellness',                     to: '/for/salon' },
   { icon: Laptop,        label: 'Freelancers',                sub: 'Designers, Developers, Writers & More', to: '/for/freelancers' },

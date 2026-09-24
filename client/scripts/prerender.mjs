@@ -102,6 +102,7 @@ const PRERENDER_ROUTES = [
   '/for/lawyers',
   '/for/doctors',
   '/for/doctors-india',
+  '/for/dentist',
   '/for/business-consultant',
   '/for/salon',
   '/for/freelancers',

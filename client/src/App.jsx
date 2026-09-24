@@ -207,6 +207,7 @@ const Explore         = lazy(() => import('./pages/Explore'));
 const ServicesDirectory  = lazy(() => import('./pages/services/ServicesDirectory'));
 const ProfessionServices = lazy(() => import('./pages/services/ProfessionServices'));
 const ProfessionLanding  = lazy(() => import('./pages/for/ProfessionLanding'));
+const DentistPage        = lazy(() => import('./pages/for/DentistPage'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 
 // Admin — Operations
@@ -638,6 +639,7 @@ function App() {
           <Route path="/services/:profession" element={<ProfessionServices />} />
 
           {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession */}
+          <Route path="/for/dentist" element={<DentistPage />} />
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
