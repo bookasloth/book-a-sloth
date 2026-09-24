@@ -14,14 +14,14 @@
 // New URL — keep in sync: App.jsx route (before /for/:profession), prerender.mjs,
 // Solutions.jsx.
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus,
   CalendarCheck, LayoutDashboard, MessageCircle, BellRing, Wallet,
   Clock3, Landmark, FileText, Lock, BadgePercent, Zap, Share2, IndianRupee,
-  Smile, Sparkles, Stethoscope, Activity, ShieldCheck, Baby, Syringe, Phone,
+  Smile, Sparkles, Stethoscope, Activity, ShieldCheck, Baby, Syringe, Phone, Star,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
@@ -91,6 +91,17 @@ const CLINIC_FEATURES = [
   { icon: BellRing, title: 'Fewer empty chairs', desc: 'Automatic WhatsApp and email reminders before each appointment cut no-shows.' },
   { icon: LayoutDashboard, title: 'One diary, always current', desc: 'Every appointment in a single live view — no double-booked slots.' },
   { icon: ShieldCheck, title: 'Private by design', desc: 'We never publish patient reviews or ratings. Your booking page shows only what you choose.' },
+];
+
+// Placeholder testimonials — dental CLINIC OWNERS reviewing Book A Sloth (the
+// software), NOT patients reviewing the dentist (which NMC bars). Swap for real
+// clinic quotes when available. Software/admin-focused; all 5-star; no fabricated dates.
+const DENTIST_TESTIMONIALS = [
+  { name: 'Dr. Kavya Nair', role: 'Nair Dental Care, Kochi', quote: 'Our front desk used to spend the whole morning on the phone. Patients now book their own slots and the reminders have cut our no-shows right down.' },
+  { name: 'Dr. Arjun Mehta', role: 'Smile Studio, Pune', quote: 'Setup took an evening. One clear diary means no more double-booked chairs — exactly what a busy clinic needs.' },
+  { name: 'Dr. Sneha Rao', role: 'DentaCare, Bengaluru', quote: 'Collecting the consult fee online before the visit tidied up our billing, and the GST invoices are generated automatically.' },
+  { name: 'Dr. Imran Sheikh', role: 'City Dental, Hyderabad', quote: 'A calm, professional booking page — and 0% commission on Active means every rupee stays with the practice.' },
+  { name: 'Dr. Ananya Gupta', role: 'Bright Smile, Delhi', quote: 'The WhatsApp reminders alone save us hours every week that we used to spend chasing confirmations.' },
 ];
 
 const OLD_WAY = [
@@ -291,6 +302,79 @@ function IntegrationHub() {
         {TOOLS_ALL.map((t, i) => (
           <Reveal key={t.name} delay={(i % 3) * 0.06}><ToolCard t={t} /></Reveal>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* Animated testimonials — reviewers on a soft arc (active one enlarged), with the
+   active quote in serif on the right. Auto-advances every 3.5s; click to select.
+   These are CLINIC-OWNER reviews of the software, not patient reviews. */
+function AnimatedTestimonials({ items }) {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setActive((a) => (a + 1) % items.length), 3500);
+    return () => clearTimeout(t);
+  }, [active, items.length]);
+  const a = items[active];
+  return (
+    <div className="mt-12 grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+      {/* LEFT — reviewers on a soft arc */}
+      <div className="relative mx-auto w-full max-w-sm">
+        <svg aria-hidden viewBox="0 0 40 400" preserveAspectRatio="none" className="pointer-events-none absolute left-1 top-0 h-full w-10">
+          <path d="M 34 8 C 6 130, 6 270, 34 392" fill="none" stroke="rgba(14,116,144,0.25)" strokeWidth="1.5" />
+        </svg>
+        <ul className="relative space-y-2">
+          {items.map((t, i) => {
+            const on = i === active;
+            const offset = Math.round(Math.sin((i / (items.length - 1)) * Math.PI) * 34); // arc bulge
+            return (
+              <li key={t.name} style={{ marginLeft: `${offset}px` }}>
+                <button type="button" onClick={() => setActive(i)} aria-current={on} className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all">
+                  <span
+                    className="flex flex-shrink-0 items-center justify-center rounded-full font-heading font-bold text-white transition-all duration-300"
+                    style={{
+                      height: on ? 56 : 40, width: on ? 56 : 40,
+                      fontSize: on ? 18 : 14,
+                      background: 'var(--ca-primary)',
+                      opacity: on ? 1 : 0.5,
+                      boxShadow: on ? '0 10px 24px -10px rgba(14,116,144,0.8)' : 'none',
+                    }}
+                  >
+                    {t.name.replace(/^Dr\.\s*/, '').charAt(0)}
+                  </span>
+                  <div className={`min-w-0 transition-opacity duration-300 ${on ? 'opacity-100' : 'opacity-55'}`}>
+                    <div className={`truncate font-heading font-bold text-[color:var(--ca-ink)] ${on ? 'text-[15px]' : 'text-sm'}`}>{t.name}</div>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      <span className="flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={11} style={{ color: 'var(--ca-accent)', fill: 'var(--ca-accent)' }} />)}</span>
+                      <span className="truncate text-[11px] text-neutral-500">{t.role}</span>
+                    </div>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {/* RIGHT — active quote */}
+      <div className="relative min-h-[9rem]">
+        <span aria-hidden className="font-heading text-6xl leading-none" style={{ color: 'color-mix(in srgb, var(--ca-primary) 22%, transparent)' }}>&ldquo;</span>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.blockquote
+            key={active}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="-mt-6 font-heading text-lg font-medium italic leading-relaxed text-neutral-700 sm:text-xl"
+          >
+            {a.quote}
+            <footer className="mt-4 font-sans text-sm font-bold not-italic text-[color:var(--ca-ink)]">
+              {a.name} <span className="font-medium text-neutral-500">· {a.role}</span>
+            </footer>
+          </motion.blockquote>
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -554,6 +638,22 @@ export default function DentistPage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 7b · TESTIMONIALS (clinic owners about Book A Sloth) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="p" className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--ca-primary)' }}>Customer reviews</Reveal>
+            <Reveal as="h2" delay={0.05} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              What clinics say about <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
+              Reviews from dental practices using Book A Sloth — about the software, not patient reviews.
+            </Reveal>
+          </div>
+          <Reveal delay={0.1}><AnimatedTestimonials items={DENTIST_TESTIMONIALS} /></Reveal>
         </div>
       </section>
 
