@@ -31,12 +31,12 @@
 // New URL — keep in sync: App.jsx route (before /for/:profession), prerender.mjs
 // already lists /for/lawyers, and Solutions.jsx already links it.
 
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus, Star,
-  CalendarCheck, LayoutDashboard, MessageCircle, TrendingUp,
+  CalendarCheck, LayoutDashboard, MessageCircle,
   Wallet, BellRing,
   Users, Clock3, Landmark, Folder,
   FileText, Scale, Gavel, ShieldCheck, Briefcase, Building2,
@@ -95,16 +95,7 @@ const STEPS = [
 ];
 // ponytail: all steps share MASCOT until distinct per-step art is supplied.
 
-// Integration hub — REAL BAS integrations only, 3 cards either side of centre.
-const ROW_COLORS = ['#1F3A5F', '#C6A15B', '#38618C', '#8C6D1F']; // navy · gold · steel · bronze
-const SPARKS = [
-  { left: '9%', top: '7%', rot: 22, color: '#C6A15B' },
-  { left: '46%', top: '3%', rot: -14, color: '#1F3A5F' },
-  { left: '90%', top: '9%', rot: -24, color: '#38618C' },
-  { left: '5%', top: '60%', rot: 108, color: '#1F3A5F' },
-  { left: '95%', top: '56%', rot: 66, color: '#C6A15B' },
-  { left: '50%', top: '93%', rot: 4, color: '#8C6D1F' },
-];
+// Integration list — REAL BAS integrations only.
 const TOOLS_LEFT = [
   { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
   { name: 'WhatsApp Automation', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
@@ -234,85 +225,45 @@ function GlassCard({ icon: Icon, label, value, accent, className = '', float = '
   );
 }
 
-/* Practice-area card. `active` cards render pre-filled (navy) in a checkerboard
-   and invert to plain on hover; plain cards do the opposite. */
-function UseCaseCard({ u, active }) {
-  const card = active
-    ? 'border-[#1F3A5F] bg-[#1F3A5F] hover:border-black/[0.06] hover:bg-white'
-    : 'border-black/[0.06] bg-white hover:border-[#1F3A5F] hover:bg-[#1F3A5F]';
-  const icon = active
-    ? 'bg-[#C6A15B] text-[#1F2A1B] ring-white group-hover:bg-[#1F3A5F] group-hover:text-[#C6A15B] group-hover:ring-transparent'
-    : 'bg-[#1F3A5F] text-[#C6A15B] ring-transparent group-hover:bg-[#C6A15B] group-hover:text-[#1F2A1B] group-hover:ring-white';
-  const arrow = active
-    ? 'bg-white text-[#1F3A5F] group-hover:bg-[rgba(198,161,91,0.22)] group-hover:text-[#8C6D1F]'
-    : 'bg-[rgba(31,58,95,0.1)] text-[#1F3A5F] group-hover:bg-white group-hover:text-[#1F3A5F]';
-  const title = active ? 'text-white group-hover:text-[color:var(--ca-ink)]' : 'text-[color:var(--ca-ink)] group-hover:text-white';
-  const desc = active ? 'text-white/80 group-hover:text-neutral-500' : 'text-neutral-500 group-hover:text-white/80';
+/* Practice-area editorial list row — a big faint number, a gold-accented icon +
+   title, rule-separated. (Distinct from CA's checkerboard grid and Turf's dark tiles.) */
+function UseCaseRow({ u, n }) {
   return (
-    <Link to={START} className={`group flex h-full flex-col rounded-[14px] border p-5 transition-all duration-300 hover:shadow-[0_14px_34px_-20px_rgba(17,17,17,0.35)] hover:no-underline ${card}`}>
-      <div className="flex items-start justify-between">
-        <span className={`flex h-12 w-12 items-center justify-center rounded-full ring-2 transition-all duration-300 ${icon}`}>
-          <u.icon size={22} />
-        </span>
-        <span className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-300 ${arrow}`}>
-          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
-        </span>
+    <Link to={START} className="group flex items-start gap-5 border-b border-black/[0.08] py-6 hover:no-underline">
+      <span className="font-heading text-2xl font-extrabold leading-none tabular-nums" style={{ color: 'rgba(31,58,95,0.28)' }}>{String(n).padStart(2, '0')}</span>
+      <div className="flex-1">
+        <div className="flex items-center gap-2.5">
+          <u.icon size={18} style={{ color: 'var(--ca-accent)' }} />
+          <h3 className="font-heading text-[16px] font-bold text-[color:var(--ca-ink)] transition-colors group-hover:text-[color:var(--ca-primary)]">{u.label}</h3>
+        </div>
+        <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{u.desc}</p>
       </div>
-      <h3 className={`mt-4 font-heading text-[15px] font-bold transition-colors duration-300 ${title}`}>{u.label}</h3>
-      <p className={`mt-1 text-[13px] leading-snug transition-colors duration-300 ${desc}`}>{u.desc}</p>
+      <ArrowRight size={16} className="mt-1 shrink-0 text-neutral-300 transition-all group-hover:translate-x-0.5 group-hover:text-[color:var(--ca-primary)]" />
     </Link>
   );
 }
 
-/* How-it-works: left image tracks the active step; steps auto-advance every 2.5s
-   (looping) and a click selects a step and restarts the timer. */
+/* Lawyers "process" — a formal vertical numbered timeline with a gold rail.
+   (Distinct from CA's image + auto-advance and Turf's horizontal playbook.) */
 function HowItWorks({ steps }) {
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setActive((a) => (a + 1) % steps.length), 2500);
-    return () => clearTimeout(t);
-  }, [active, steps.length]);
   return (
-    <div className="mt-16 grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
-      {/* LEFT — image reflects the active step */}
-      <div className="relative mx-auto w-full max-w-md lg:mx-0">
-        <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F3A5F]/15 blur-3xl" />
-        <div className="relative z-10 aspect-square">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.img
-              key={active}
-              src={steps[active].image}
-              alt=""
-              loading="lazy"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-0 mx-auto h-full w-full object-contain drop-shadow-[0_24px_32px_rgba(17,17,17,0.16)]"
-            />
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* RIGHT — auto-advancing, clickable step timeline */}
-      <div className="relative">
-        <span aria-hidden className="absolute bottom-5 left-6 top-5 w-px bg-black/10" />
-        <div className="space-y-8">
-          {steps.map((s, i) => {
-            const on = i === active;
-            return (
-              <button key={s.title} type="button" onClick={() => setActive(i)} aria-current={on} className="relative flex w-full gap-5 text-left">
-                <span className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${on ? 'bg-[#1F3A5F] text-white shadow-[0_8px_20px_-8px_rgba(31,58,95,0.7)]' : 'border-2 border-black/10 bg-white text-[color:var(--ca-primary)]'}`}>
-                  <s.icon size={20} />
-                </span>
-                <div className="pt-1.5">
-                  <h3 className={`font-heading text-lg font-bold transition-colors duration-300 ${on ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>{s.title}</h3>
-                  <p className="mt-1 max-w-sm text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+    <div className="relative mx-auto mt-14 max-w-2xl">
+      <span aria-hidden className="absolute bottom-6 left-[27px] top-6 w-px" style={{ background: 'linear-gradient(180deg, transparent, rgba(198,161,91,0.6), transparent)' }} />
+      <div className="space-y-10">
+        {steps.map((s, i) => (
+          <Reveal key={s.title} delay={i * 0.1} className="relative flex gap-6">
+            <span className="relative z-10 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border bg-white font-heading text-lg font-extrabold" style={{ borderColor: 'rgba(198,161,91,0.5)', color: 'var(--ca-primary)' }}>
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <div className="pt-2">
+              <div className="flex items-center gap-2.5">
+                <s.icon size={18} style={{ color: 'var(--ca-accent)' }} />
+                <h3 className="font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
+              </div>
+              <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
+            </div>
+          </Reveal>
+        ))}
       </div>
     </div>
   );
@@ -334,14 +285,14 @@ function CardPattern({ variant = 'dots', light = true, corner = 'tr' }) {
   return <div aria-hidden className="pointer-events-none absolute inset-0" style={{ ...bg, maskImage: mask, WebkitMaskImage: mask }} />;
 }
 
-/* One integration card — logo + title + subtitle. */
-function ToolCard({ t, innerRef }) {
+/* One integration list row — logo + label + note (understated, rule-separated). */
+function ToolRow({ t }) {
   return (
-    <div ref={innerRef} className="flex w-full items-center gap-3 rounded-2xl border border-black/[0.05] bg-white px-4 py-3 shadow-[0_14px_34px_-20px_rgba(17,17,17,0.3)] lg:w-64">
-      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[color:var(--ca-grey)]">
+    <div className="flex items-center gap-3.5 border-b border-black/[0.08] py-4">
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[color:var(--ca-grey)]">
         {t.logo
-          ? <img src={t.logo} alt="" loading="lazy" className="h-6 w-6 object-contain" />
-          : <ToolLogo name={t.icon} size={24} className="h-6 w-6" />}
+          ? <img src={t.logo} alt="" loading="lazy" className="h-5 w-5 object-contain" />
+          : <ToolLogo name={t.icon} size={20} className="h-5 w-5" />}
       </span>
       <div className="min-w-0">
         <div className="text-sm font-bold leading-tight text-[color:var(--ca-ink)]">{t.name}</div>
@@ -351,108 +302,17 @@ function ToolCard({ t, innerRef }) {
   );
 }
 
-/* Integration hub — mascot centre with a halo, 3 cards either side, each wired in
-   by a dashed row-coloured connector. Geometry is measured from the real DOM. */
+/* Lawyers integrations — an understated, rule-separated two-column list.
+   (Distinct from CA's connector diagram and Turf's bold logo grid.) */
 function IntegrationHub() {
-  const wrapRef = useRef(null);
-  const centerRef = useRef(null);
-  const cardRefs = useRef({});
-  const [conns, setConns] = useState([]);
-
-  useLayoutEffect(() => {
-    const compute = () => {
-      const wrap = wrapRef.current;
-      const center = centerRef.current;
-      if (!wrap || !center) return;
-      const wb = wrap.getBoundingClientRect();
-      const cb = center.getBoundingClientRect();
-      const cx = cb.left + cb.width / 2 - wb.left;
-      const cy = cb.top + cb.height / 2 - wb.top;
-      const Rc = cb.width / 2;
-      const next = [];
-      TOOLS_ALL.forEach((t, idx) => {
-        const el = cardRefs.current[t.name];
-        if (!el) return;
-        const rb = el.getBoundingClientRect();
-        const isLeft = idx < TOOLS_LEFT.length;
-        const sx = (isLeft ? rb.right : rb.left) - wb.left;
-        const sy = rb.top + rb.height / 2 - wb.top;
-        const dx = sx - cx;
-        const dy = sy - cy;
-        const dist = Math.hypot(dx, dy) || 1;
-        const ux = dx / dist;
-        const uy = dy / dist;
-        const ex = cx + ux * (Rc - 4);          // dashed line ends at the halo edge
-        const ey = cy + uy * (Rc - 4);
-        const midx = (sx + ex) / 2;
-        next.push({ name: t.name, color: ROW_COLORS[idx % ROW_COLORS.length], sx, sy, d: `M ${sx} ${sy} C ${midx} ${sy}, ${midx} ${ey}, ${ex} ${ey}` });
-      });
-      setConns(next);
-    };
-    compute();
-    const run = () => requestAnimationFrame(compute);
-    const ro = new ResizeObserver(run);
-    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) run(); }, { threshold: 0.01 });
-    if (wrapRef.current) { ro.observe(wrapRef.current); io.observe(wrapRef.current); }
-    const mq = window.matchMedia('(min-width: 1024px)');
-    mq.addEventListener('change', run);
-    window.addEventListener('resize', run);
-    const t = setTimeout(compute, 400); // after logos/fonts settle
-    return () => { ro.disconnect(); io.disconnect(); mq.removeEventListener('change', run); window.removeEventListener('resize', run); clearTimeout(t); };
-  }, []);
-
   return (
-    <>
-      {/* mobile / tablet — plain card grid */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
-        {TOOLS_ALL.map((t) => <Reveal key={t.name}><ToolCard t={t} /></Reveal>)}
-      </div>
-
-      {/* desktop hub */}
-      <div ref={wrapRef} className="relative mx-auto hidden max-w-6xl lg:block">
-        {/* soft navy backdrop */}
-        <div aria-hidden className="absolute left-1/2 top-1/2 h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(31,58,95,0.12), transparent 68%)' }} />
-        {/* decorative sparks */}
-        {SPARKS.map((s, i) => (
-          <span key={i} aria-hidden className="absolute h-4 w-[3px] rounded-full" style={{ left: s.left, top: s.top, transform: `rotate(${s.rot}deg)`, background: s.color, opacity: 0.7 }} />
-        ))}
-
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-          <style>{`@keyframes lwFlow{to{stroke-dashoffset:-16}}.lw-dash{stroke-dasharray:1.5 7;stroke-linecap:round;animation:lwFlow 1.1s linear infinite}@media(prefers-reduced-motion:reduce){.lw-dash{animation:none}}`}</style>
-          {conns.map((p, i) => (
-            <g key={p.name}>
-              <path d={p.d} fill="none" stroke={p.color} strokeWidth="2.5" className="lw-dash" style={{ animationDelay: `${i * 0.08}s` }} />
-              <circle cx={p.sx} cy={p.sy} r="3.5" fill={p.color} />
-            </g>
-          ))}
-        </svg>
-
-        <div className="relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-24">
-          <div className="flex flex-col items-end gap-10">
-            {TOOLS_LEFT.map((t) => <ToolCard key={t.name} t={t} innerRef={(el) => { cardRefs.current[t.name] = el; }} />)}
-          </div>
-
-          {/* centre — mascot + halo + caption */}
-          <div className="flex flex-col items-center">
-            <div ref={centerRef} className="relative flex h-60 w-60 items-center justify-center">
-              <div aria-hidden className="absolute inset-[-34px] rounded-full border border-dashed border-[#C6A15B]/70" />
-              <div aria-hidden className="absolute inset-[-14px] rounded-full border border-[#1F3A5F]/20" />
-              <div className="relative flex h-full w-full items-center justify-center rounded-full bg-white shadow-[0_30px_70px_-30px_rgba(17,17,17,0.3)] ring-1 ring-black/5">
-                <img src={MASCOT} alt="Book A Sloth" className="h-52 w-52 object-contain" />
-              </div>
-            </div>
-            <div className="relative mt-4 text-center">
-              <span className="font-heading text-sm font-semibold italic text-neutral-500">Your Practice, Connected</span>
-              <svg width="130" height="8" viewBox="0 0 130 8" fill="none" className="mx-auto mt-1"><path d="M2 5 C 34 1, 96 1, 128 4" stroke="#C6A15B" strokeWidth="2" strokeLinecap="round" /></svg>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-start gap-10">
-            {TOOLS_RIGHT.map((t) => <ToolCard key={t.name} t={t} innerRef={(el) => { cardRefs.current[t.name] = el; }} />)}
-          </div>
-        </div>
-      </div>
-    </>
+    <div className="mx-auto grid max-w-3xl gap-x-12 sm:grid-cols-2">
+      {TOOLS_ALL.map((t, i) => (
+        <Reveal key={t.name} delay={(i % 2) * 0.05}>
+          <ToolRow t={t} />
+        </Reveal>
+      ))}
+    </div>
   );
 }
 
@@ -697,15 +557,12 @@ export default function LawyersPage() {
               From consultations to document review and litigation strategy, manage every appointment in one place.
             </Reveal>
           </div>
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {USE_CASES.map((u, i) => {
-              const active = (Math.floor(i / 4) + (i % 4)) % 2 === 1;
-              return (
-                <Reveal key={u.label} delay={(i % 4) * 0.05}>
-                  <UseCaseCard u={u} active={active} />
-                </Reveal>
-              );
-            })}
+          <div className="mt-10 grid gap-x-14 sm:grid-cols-2">
+            {USE_CASES.map((u, i) => (
+              <Reveal key={u.label} delay={(i % 2) * 0.05}>
+                <UseCaseRow u={u} n={i + 1} />
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -759,60 +616,37 @@ export default function LawyersPage() {
             </Reveal>
           </div>
 
-          <div className="mt-12 grid gap-4 lg:grid-cols-3 lg:grid-rows-2">
-            {/* white — number */}
-            <Reveal className="lg:row-span-2">
-              <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-[20px] border border-black/[0.06] bg-white p-8">
-                <CardPattern variant="grid" light={false} corner="tr" />
-                <span className="relative z-10 inline-flex w-fit items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ backgroundColor: 'rgba(161,98,7,0.14)', color: '#8C6D1F' }}>Always on</span>
-                <div>
-                  <div className="font-heading text-6xl font-extrabold tracking-tight text-[color:var(--ca-ink)] sm:text-7xl">24/7</div>
-                  <p className="mt-4 max-w-md text-[15px] leading-relaxed text-neutral-500">
-                    Your booking page never sleeps — clients reserve consultations any time, day or night, while you focus on the matter at hand.
-                  </p>
+          {/* 2×2 gold-ruled stat cards */}
+          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+            {[
+              { v: '24/7', l: 'Bookings, day or night', note: 'Your booking page never sleeps — clients reserve consultations any time.' },
+              { v: '100%', l: 'Kept on Sloth Active', note: '0% commission — every rupee you earn stays yours.' },
+              { v: '₹0', l: 'To get started', note: 'Free forever plan — no card, no lock-in.' },
+              { v: 'GST', l: 'Invoices, automatic', note: 'A tax invoice generated for every paid booking.' },
+            ].map((s, i) => (
+              <Reveal key={s.l} delay={i * 0.06}>
+                <div className="relative h-full overflow-hidden rounded-[16px] border border-black/[0.08] bg-white p-8">
+                  <span aria-hidden className="absolute inset-x-0 top-0 h-[3px]" style={{ background: 'linear-gradient(90deg, var(--ca-primary), #C6A15B)' }} />
+                  <div className="font-heading text-5xl font-extrabold tracking-tight sm:text-6xl" style={{ color: 'var(--ca-primary)' }}>{s.v}</div>
+                  <div className="mt-3 font-heading text-base font-bold text-[color:var(--ca-ink)]">{s.l}</div>
+                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{s.note}</p>
                 </div>
-                <TrendingUp aria-hidden size={200} strokeWidth={1} className="pointer-events-none absolute -bottom-8 -right-8 text-black/[0.03]" />
-              </div>
-            </Reveal>
-
-            {/* accent — number */}
-            <Reveal delay={0.06}>
-              <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-7 text-white" style={{ background: 'var(--ca-accent)' }}>
-                <CardPattern variant="dots" light corner="br" />
-                <span className="relative z-10 text-[11px] font-bold uppercase tracking-[0.15em] text-white/80">You keep</span>
-                <div>
-                  <div className="font-heading text-5xl font-extrabold tracking-tight">100%</div>
-                  <p className="mt-2 text-sm text-white/85">Of every fee on Sloth Active — 0% commission, every rupee stays yours.</p>
-                </div>
-              </div>
-            </Reveal>
-
-            {/* ink — number */}
-            <Reveal delay={0.1}>
-              <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-[20px] p-7 text-white" style={{ background: 'var(--ca-ink)' }}>
-                <CardPattern variant="grid" light corner="tr" />
-                <span className="relative z-10 text-[11px] font-bold uppercase tracking-[0.15em] text-white/50">To start</span>
-                <div>
-                  <div className="font-heading text-5xl font-extrabold tracking-tight">₹0</div>
-                  <p className="mt-2 text-sm text-white/60">Free forever plan — no card, no lock-in.</p>
-                </div>
-              </div>
-            </Reveal>
-
-            {/* navy — community CTA */}
-            <Reveal delay={0.14} className="lg:col-span-2">
-              <a href="https://whatsapp.com/channel/0029Vb8ZyHP6GcG6LRA2K81Y" target="_blank" rel="noopener noreferrer" className="group relative flex h-full items-center justify-between gap-4 overflow-hidden rounded-[20px] p-7 text-white hover:no-underline" style={{ background: 'var(--ca-primary)' }}>
-                <CardPattern variant="rings" light corner="tr" />
-                <div className="relative z-10">
-                  <div className="font-heading text-xl font-extrabold sm:text-2xl">Join the community</div>
-                  <p className="mt-1 text-sm text-white/70">Connect with fellow professionals growing on Book A Sloth.</p>
-                </div>
-                <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-white transition-transform group-hover:translate-x-1" style={{ color: 'var(--ca-primary)' }}>
-                  <ArrowRight size={22} />
-                </span>
-              </a>
-            </Reveal>
+              </Reveal>
+            ))}
           </div>
+
+          {/* community CTA — formal navy bar */}
+          <Reveal delay={0.1} className="mt-4">
+            <a href="https://whatsapp.com/channel/0029Vb8ZyHP6GcG6LRA2K81Y" target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between gap-4 rounded-[16px] p-7 text-white hover:no-underline" style={{ background: 'var(--ca-primary)' }}>
+              <div>
+                <div className="font-heading text-lg font-extrabold sm:text-xl">Join the community</div>
+                <p className="mt-1 text-sm text-white/70">Connect with fellow professionals growing on Book A Sloth.</p>
+              </div>
+              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-transform group-hover:translate-x-1" style={{ background: '#C6A15B', color: 'var(--ca-ink)' }}>
+                <ArrowRight size={20} />
+              </span>
+            </a>
+          </Reveal>
         </div>
       </section>
 
@@ -827,30 +661,23 @@ export default function LawyersPage() {
               Hear how practices book more consultations and cut the admin with Book A Sloth.
             </Reveal>
           </div>
-          <div className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3">
-            {CA_TESTIMONIALS.map((t, i) => {
-              const dark = t.tone !== 'white';
-              const bg = t.tone === 'blue' ? 'var(--ca-primary)' : t.tone === 'ink' ? 'var(--ca-ink)' : undefined;
-              const star = t.tone === 'white' ? '#1F3A5F' : t.tone === 'ink' ? '#C6A15B' : '#ffffff';
-              const avStyle = t.tone === 'blue' ? { background: '#fff', color: 'var(--ca-primary)' } : t.tone === 'ink' ? { background: 'rgba(255,255,255,0.15)', color: '#fff' } : { background: 'var(--ca-primary)', color: '#fff' };
-              return (
-                <Reveal key={t.name} delay={(i % 3) * 0.06} className={`mb-5 break-inside-avoid rounded-[16px] p-6 ${t.tone === 'white' ? 'border border-black/[0.06] bg-white shadow-[0_8px_30px_rgba(17,17,17,0.05)]' : ''}`} style={bg ? { background: bg } : undefined}>
-                  <figure>
-                    <div className="flex gap-0.5">
-                      {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} style={{ color: star, fill: star }} />)}
+          <div className="mt-12 grid gap-5 sm:grid-cols-2">
+            {CA_TESTIMONIALS.map((t, i) => (
+              <Reveal key={t.name} delay={(i % 2) * 0.06}>
+                <figure className="relative flex h-full flex-col rounded-[16px] border border-black/[0.08] bg-white p-7">
+                  <span aria-hidden className="font-heading text-5xl leading-none" style={{ color: 'rgba(198,161,91,0.55)' }}>&ldquo;</span>
+                  <blockquote className="-mt-3 text-[15px] leading-relaxed text-neutral-700">{t.quote}</blockquote>
+                  <figcaption className="mt-6 flex items-center gap-3 border-t border-black/[0.06] pt-5">
+                    <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.replace('Adv. ', '').charAt(0)}</span>
+                    <div>
+                      <div className="text-sm font-bold text-[color:var(--ca-ink)]">{t.name}</div>
+                      <div className="text-xs text-neutral-500">{t.role}</div>
                     </div>
-                    <blockquote className={`mt-4 text-[15px] font-medium leading-relaxed ${dark ? (t.tone === 'blue' ? 'text-white' : 'text-white/90') : 'text-[color:var(--ca-ink)]'}`}>&ldquo;{t.quote}&rdquo;</blockquote>
-                    <figcaption className="mt-5 flex items-center gap-3">
-                      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={avStyle}>{t.name.replace('Adv. ', '').charAt(0)}</span>
-                      <div>
-                        <div className={`text-sm font-bold ${dark ? 'text-white' : 'text-[color:var(--ca-ink)]'}`}>{t.name}</div>
-                        <div className={`text-xs ${t.tone === 'blue' ? 'text-white/70' : t.tone === 'ink' ? 'text-white/50' : 'text-neutral-500'}`}>{t.role}</div>
-                      </div>
-                    </figcaption>
-                  </figure>
-                </Reveal>
-              );
-            })}
+                    <span className="ml-auto flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={12} style={{ color: '#C6A15B', fill: '#C6A15B' }} />)}</span>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -864,56 +691,24 @@ export default function LawyersPage() {
             </Reveal>
           </div>
 
-          <div className="mt-14 grid items-stretch gap-5 lg:grid-cols-2 sm:gap-6">
-            {/* The old way */}
-            <Reveal className="h-full">
-              <div className="flex h-full flex-col rounded-[20px] border border-black/[0.06] bg-white p-6 sm:p-8">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#DC2626' }}>
-                    <X size={20} />
-                  </span>
-                  <h3 className="font-heading text-lg font-bold text-neutral-500">The old way</h3>
+          <div className="mx-auto mt-12 max-w-4xl overflow-hidden rounded-[16px] border border-black/[0.08] bg-white shadow-[0_14px_40px_-24px_rgba(17,17,17,0.25)]">
+            {/* header row */}
+            <div className="grid grid-cols-2 border-b-2" style={{ borderColor: 'var(--ca-primary)' }}>
+              <div className="flex items-center gap-2 px-5 py-4 sm:px-6"><X size={16} className="text-[#DC2626]" /><span className="font-heading text-sm font-bold text-neutral-500">The old way</span></div>
+              <div className="flex items-center gap-2 border-l border-black/[0.06] px-5 py-4 sm:px-6" style={{ background: 'rgba(31,58,95,0.04)' }}><Check size={16} style={{ color: 'var(--ca-primary)' }} /><span className="font-heading text-sm font-bold" style={{ color: 'var(--ca-ink)' }}>With Book A Sloth</span></div>
+            </div>
+            {OLD_WAY.map((o, i) => (
+              <Reveal key={o.title} className={`grid grid-cols-2 ${i % 2 ? '' : 'bg-black/[0.015]'}`}>
+                <div className="border-t border-black/[0.06] px-5 py-4 sm:px-6">
+                  <p className="text-[14px] font-semibold text-neutral-700">{o.title}</p>
+                  <p className="mt-0.5 text-[13px] leading-snug text-neutral-500">{o.desc}</p>
                 </div>
-                <div className="mt-6 flex flex-col gap-5">
-                  {OLD_WAY.map((item) => (
-                    <div key={item.title} className="flex gap-3.5">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(239,68,68,0.08)', color: '#DC2626' }}>
-                        <item.icon size={18} />
-                      </span>
-                      <div>
-                        <p className="font-heading text-[15px] font-semibold text-neutral-700">{item.title}</p>
-                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-500">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
+                <div className="border-l border-t border-black/[0.06] px-5 py-4 sm:px-6" style={{ background: 'rgba(31,58,95,0.03)' }}>
+                  <p className="text-[14px] font-semibold" style={{ color: 'var(--ca-ink)' }}>{NEW_WAY[i]?.title}</p>
+                  <p className="mt-0.5 text-[13px] leading-snug text-neutral-600">{NEW_WAY[i]?.desc}</p>
                 </div>
-              </div>
-            </Reveal>
-
-            {/* With Book A Sloth */}
-            <Reveal delay={0.08} className="h-full">
-              <div className="flex h-full flex-col rounded-[20px] border-2 bg-white p-6 sm:p-8" style={{ borderColor: 'rgba(31,58,95,0.4)', boxShadow: '0 12px 40px -18px rgba(31,58,95,0.5)' }}>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(31,58,95,0.14)', color: 'var(--ca-primary)' }}>
-                    <Check size={20} />
-                  </span>
-                  <h3 className="font-heading text-lg font-bold" style={{ color: 'var(--ca-ink)' }}>With Book A Sloth</h3>
-                </div>
-                <div className="mt-6 flex flex-col gap-5">
-                  {NEW_WAY.map((item) => (
-                    <div key={item.title} className="flex gap-3.5">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(31,58,95,0.12)', color: 'var(--ca-primary)' }}>
-                        <item.icon size={18} />
-                      </span>
-                      <div>
-                        <p className="font-heading text-[15px] font-semibold" style={{ color: 'var(--ca-ink)' }}>{item.title}</p>
-                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-600">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -983,10 +778,14 @@ export default function LawyersPage() {
 
               {/* Sloth Active (premium) — recommended */}
               <Reveal delay={0.08}>
-                <div className="relative flex h-full flex-col rounded-[18px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(16,24,40,0.14)]" style={{ borderColor: 'var(--ca-primary)' }}>
+                <div className="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(16,24,40,0.14)]" style={{ borderColor: 'var(--ca-primary)' }}>
+                  <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: 'linear-gradient(90deg, var(--ca-primary), #C6A15B)' }} />
                   <div className="flex items-center justify-between">
-                    <div className="font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
-                    {yearly && <span className="rounded-full bg-[#1F3A5F] px-2.5 py-0.5 text-xs font-bold text-white">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
+                    <div className="flex items-center gap-2">
+                      <div className="font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[color:var(--ca-ink)]" style={{ background: 'rgba(198,161,91,0.25)' }}>Recommended</span>
+                    </div>
+                    {yearly && <span className="rounded-full px-2.5 py-0.5 text-xs font-bold text-[color:var(--ca-ink)]" style={{ background: '#C6A15B' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
                   </div>
                   <p className="mt-1 text-sm text-neutral-500">Keep every rupee. Automate the rest.</p>
                   <div className="mt-6 flex items-end gap-1">
