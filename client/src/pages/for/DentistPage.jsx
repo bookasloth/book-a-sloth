@@ -262,18 +262,48 @@ function UseCaseCard({ u }) {
 
 /* How-it-works — clean horizontal 3-step with teal numbered discs + connector. */
 function HowItWorks({ steps }) {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setActive((a) => (a + 1) % steps.length), 2000);
+    return () => clearTimeout(t);
+  }, [active, steps.length]);
+  const centers = ['16.667%', '50%', '83.333%']; // column centres for a 3-col grid
   return (
     <div className="relative mt-14 grid gap-8 md:grid-cols-3 md:gap-6">
-      <span aria-hidden className="pointer-events-none absolute left-[16.66%] right-[16.66%] top-7 hidden h-px md:block" style={{ background: 'linear-gradient(90deg, transparent, rgba(14,116,144,0.4), transparent)' }} />
-      {steps.map((s, i) => (
-        <Reveal key={s.title} delay={i * 0.1} className="relative text-center">
-          <span className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_10px_24px_-10px_rgba(14,116,144,0.8)]" style={{ background: 'var(--ca-primary)' }}>
-            <s.icon size={22} />
-          </span>
-          <h3 className="mt-5 font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
-          <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-        </Reveal>
-      ))}
+      {/* rail */}
+      <span aria-hidden className="pointer-events-none absolute left-[16.667%] right-[16.667%] top-7 hidden h-px md:block" style={{ background: 'linear-gradient(90deg, transparent, rgba(14,116,144,0.4), transparent)' }} />
+      {/* beacon — travels 1→2→3 then loops */}
+      <motion.span
+        aria-hidden
+        className="pointer-events-none absolute top-7 z-10 hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full md:block"
+        style={{ background: 'var(--ca-accent)', boxShadow: '0 0 0 6px rgba(15,118,110,0.18)' }}
+        initial={false}
+        animate={{ left: centers[active] }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      />
+      {steps.map((s, i) => {
+        const on = i === active;
+        return (
+          <Reveal key={s.title} delay={i * 0.1} className="relative text-center">
+            <button type="button" onClick={() => setActive(i)} aria-current={on} className="mx-auto block">
+              <span
+                className="relative z-20 mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white transition-all duration-500"
+                style={{
+                  background: 'var(--ca-primary)',
+                  transform: on ? 'scale(1.08)' : 'scale(1)',
+                  boxShadow: on
+                    ? '0 0 0 6px rgba(14,116,144,0.15), 0 14px 30px -10px rgba(14,116,144,0.9)'
+                    : '0 10px 24px -12px rgba(14,116,144,0.55)',
+                }}
+              >
+                <s.icon size={22} />
+              </span>
+            </button>
+            <h3 className={`mt-5 font-heading text-lg font-bold transition-colors duration-300 ${on ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>{s.title}</h3>
+            <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-neutral-500">{s.desc}</p>
+          </Reveal>
+        );
+      })}
     </div>
   );
 }
@@ -317,61 +347,73 @@ function AnimatedTestimonials({ items }) {
     return () => clearTimeout(t);
   }, [active, items.length]);
   const a = items[active];
+  const n = items.length;
+  // Window of exactly 3 on the arc: prev (top), active (middle), next (bottom).
+  // Everything else is hidden. Middle is enlarged + rightmost on the curve.
+  const slots = [
+    { k: (active - 1 + n) % n, pos: 'top' },
+    { k: active, pos: 'mid' },
+    { k: (active + 1) % n, pos: 'bot' },
+  ];
   return (
-    <div className="mt-12 grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-      {/* LEFT — reviewers on a soft arc */}
-      <div className="relative mx-auto w-full max-w-sm">
-        <svg aria-hidden viewBox="0 0 40 400" preserveAspectRatio="none" className="pointer-events-none absolute left-1 top-0 h-full w-10">
-          <path d="M 34 8 C 6 130, 6 270, 34 392" fill="none" stroke="rgba(14,116,144,0.25)" strokeWidth="1.5" />
-        </svg>
-        <ul className="relative space-y-2">
-          {items.map((t, i) => {
-            const on = i === active;
-            const offset = Math.round(Math.sin((i / (items.length - 1)) * Math.PI) * 34); // arc bulge
-            return (
-              <li key={t.name} style={{ marginLeft: `${offset}px` }}>
-                <button type="button" onClick={() => setActive(i)} aria-current={on} className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all">
-                  <span
-                    className="flex flex-shrink-0 items-center justify-center rounded-full font-heading font-bold text-white transition-all duration-300"
-                    style={{
-                      height: on ? 56 : 40, width: on ? 56 : 40,
-                      fontSize: on ? 18 : 14,
-                      background: 'var(--ca-primary)',
-                      opacity: on ? 1 : 0.5,
-                      boxShadow: on ? '0 10px 24px -10px rgba(14,116,144,0.8)' : 'none',
-                    }}
+    <div className="mt-12 grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
+      {/* LEFT — straight rail + dots; 3 rows, middle = highlighted active card w/ tail.
+          On advance the rows shuffle up (wheel) and a new reviewer enters at the bottom. */}
+      <div className="relative pl-7">
+        <span aria-hidden className="absolute bottom-5 left-1.5 top-5 w-px bg-black/10" />
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={active}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col gap-3"
+          >
+            {slots.map((s) => {
+              const t = items[s.k];
+              const on = s.pos === 'mid';
+              return (
+                <div key={s.pos} className="relative flex min-h-[80px] items-center">
+                  <span aria-hidden className="absolute -left-[22px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-2 ring-white" style={{ background: on ? 'var(--ca-primary)' : '#c3d3d3' }} />
+                  <button
+                    type="button"
+                    onClick={() => setActive(s.k)}
+                    aria-current={on}
+                    className="flex w-full items-center gap-4 rounded-2xl px-3 py-3 text-left"
+                    style={on ? { background: 'rgba(14,116,144,0.06)', boxShadow: '0 16px 36px -24px rgba(14,116,144,0.7)', outline: '1px solid rgba(14,116,144,0.15)', opacity: 1 } : { opacity: 0.72 }}
                   >
-                    {t.name.replace(/^Dr\.\s*/, '').charAt(0)}
-                  </span>
-                  <div className={`min-w-0 transition-opacity duration-300 ${on ? 'opacity-100' : 'opacity-55'}`}>
-                    <div className={`truncate font-heading font-bold text-[color:var(--ca-ink)] ${on ? 'text-[15px]' : 'text-sm'}`}>{t.name}</div>
-                    <div className="mt-0.5 flex items-center gap-1.5">
-                      <span className="flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={11} style={{ color: 'var(--ca-accent)', fill: 'var(--ca-accent)' }} />)}</span>
-                      <span className="truncate text-[11px] text-neutral-500">{t.role}</span>
+                    <span
+                      className="flex flex-shrink-0 items-center justify-center rounded-full font-heading font-bold ring-4 ring-white"
+                      style={on
+                        ? { height: 60, width: 60, fontSize: 20, background: 'var(--ca-primary)', color: '#fff', boxShadow: '0 12px 26px -10px rgba(14,116,144,0.9)' }
+                        : { height: 46, width: 46, fontSize: 15, background: 'var(--ca-grey)', color: 'var(--ca-ink)' }}
+                    >
+                      {t.name.replace(/^Dr\.\s*/, '').charAt(0)}
+                    </span>
+                    <div className="min-w-0">
+                      <div className={`truncate font-heading font-bold text-[color:var(--ca-ink)] ${on ? 'text-[16px]' : 'text-[15px]'}`}>{t.name}</div>
+                      <div className="mt-1 flex gap-0.5">{[0, 1, 2, 3, 4].map((st) => <Star key={st} size={13} style={{ color: 'var(--ca-accent)', fill: 'var(--ca-accent)' }} />)}</div>
+                      <div className="mt-1 truncate text-xs text-neutral-500">{t.role}</div>
                     </div>
-                  </div>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+                    {on && <span aria-hidden className="absolute right-[-7px] top-1/2 hidden h-3.5 w-3.5 -translate-y-1/2 rotate-45 lg:block" style={{ background: 'rgba(14,116,144,0.06)', borderRight: '1px solid rgba(14,116,144,0.15)', borderTop: '1px solid rgba(14,116,144,0.15)' }} />}
+                  </button>
+                </div>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* RIGHT — active quote */}
-      <div className="relative min-h-[9rem]">
-        <span aria-hidden className="font-heading text-6xl leading-none" style={{ color: 'color-mix(in srgb, var(--ca-primary) 22%, transparent)' }}>&ldquo;</span>
+      {/* RIGHT — quote card */}
+      <div className="relative rounded-[24px] border border-black/[0.06] bg-white p-8 shadow-[0_30px_70px_-40px_rgba(14,116,144,0.5)] sm:p-10">
+        <span aria-hidden className="font-heading text-6xl leading-none" style={{ color: 'var(--ca-primary)' }}>&ldquo;</span>
         <AnimatePresence mode="wait" initial={false}>
-          <motion.blockquote
-            key={active}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="-mt-6 font-heading text-lg font-medium italic leading-relaxed text-neutral-700 sm:text-xl"
-          >
-            {a.quote}
-            <footer className="mt-4 font-sans text-sm font-bold not-italic text-[color:var(--ca-ink)]">
-              {a.name} <span className="font-medium text-neutral-500">· {a.role}</span>
+          <motion.blockquote key={active} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} className="-mt-4">
+            <p className="font-heading text-lg font-medium italic leading-relaxed text-neutral-700 sm:text-2xl sm:leading-relaxed">{a.quote}</p>
+            <footer className="mt-6 border-t border-black/[0.06] pt-5">
+              <div className="font-heading text-[15px] font-bold text-[color:var(--ca-ink)]">{a.name}</div>
+              <div className="mt-0.5 text-sm text-neutral-500">{a.role}</div>
             </footer>
           </motion.blockquote>
         </AnimatePresence>
