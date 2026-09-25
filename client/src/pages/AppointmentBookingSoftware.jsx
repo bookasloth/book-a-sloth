@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Calendar, CreditCard, Bell, ShieldCheck, Globe, Zap, Users, IndianRupee,
   Stethoscope, Scissors, Dumbbell, BarChart3, GraduationCap, Camera, Scale, Building2,
-  Check, ArrowRight, Plus, Sparkles, Star, Percent, Clock, CalendarCheck,
+  Check, ArrowRight, Plus, Sparkles, Star, Percent, Clock, CalendarCheck, Image as ImageIcon,
 } from "lucide-react";
 import Reveal from "../components/home/Reveal";
 import Seo from "../components/common/Seo";
@@ -27,33 +27,39 @@ import { ogCard } from "../config/ogImages";
 const ROUTE_START = "/be-a-sloth";
 const CANONICAL = `${SITE_URL}/appointment-booking-software`;
 
+// Real assets the founder will supply drop into client/public/images/abs/.
+// Every icon/photo slot below points here and falls back gracefully until the
+// file exists (icons → lucide vector, photos → labelled placeholder), so the
+// page never breaks before the assets land. See the asset manifest in the PR.
+const ASSET_BASE = "/images/abs";
+
 const STATS = [
-  { icon: Percent, value: "0%", label: "Commission on the paid plan" },
-  { icon: IndianRupee, value: "₹9.86", label: "A day for Sloth Active" },
-  { icon: Bell, value: "24×7", label: "Automatic WhatsApp & email reminders" },
-  { icon: Zap, value: "5 min", label: "To set up your booking page" },
+  { slug: "commission", icon: Percent, value: "0%", label: "Commission on the paid plan" },
+  { slug: "per-day", icon: IndianRupee, value: "₹9.86", label: "A day for Sloth Active" },
+  { slug: "reminders", icon: Bell, value: "24×7", label: "Automatic WhatsApp & email reminders" },
+  { slug: "setup", icon: Zap, value: "5 min", label: "To set up your booking page" },
 ];
 
 const FEATURES = [
-  { icon: Globe, title: "Your own booking page", desc: "A shareable link where clients pick a service and a slot in seconds — no app to install, works on any phone." },
-  { icon: CreditCard, title: "Payments built in", desc: "Collect the fee upfront over UPI or card through Razorpay, so no-shows cost you nothing." },
-  { icon: Bell, title: "Automatic reminders", desc: "Confirmation, 24-hour and 1-hour reminders over email and WhatsApp — the software chases, not you." },
-  { icon: Calendar, title: "Calendar sync", desc: "Two-way Google Calendar and Meet, so a booking blocks your time and creates the meeting link instantly." },
-  { icon: IndianRupee, title: "GST invoices & payouts", desc: "Every paid booking generates a GST invoice and settles to your bank after KYC — books that reconcile themselves." },
-  { icon: Users, title: "Client CRM", desc: "Records, notes and history for every client, with follow-up and rebook automation to fill quiet weeks." },
+  { slug: "booking-page", icon: Globe, title: "Your own booking page", desc: "A shareable link where clients pick a service and a slot in seconds — no app to install, works on any phone." },
+  { slug: "payments", icon: CreditCard, title: "Payments built in", desc: "Collect the fee upfront over UPI or card through Razorpay, so no-shows cost you nothing." },
+  { slug: "reminders", icon: Bell, title: "Automatic reminders", desc: "Confirmation, 24-hour and 1-hour reminders over email and WhatsApp — the software chases, not you." },
+  { slug: "calendar", icon: Calendar, title: "Calendar sync", desc: "Two-way Google Calendar and Meet, so a booking blocks your time and creates the meeting link instantly." },
+  { slug: "invoices", icon: IndianRupee, title: "GST invoices & payouts", desc: "Every paid booking generates a GST invoice and settles to your bank after KYC — books that reconcile themselves." },
+  { slug: "crm", icon: Users, title: "Client CRM", desc: "Records, notes and history for every client, with follow-up and rebook automation to fill quiet weeks." },
 ];
 
 // Supporting keyword → the /for/* landing that already ranks for it, so this
 // page also passes internal-link equity to the profession pages.
 const PROFESSIONS = [
-  { icon: Stethoscope, kw: "Doctor & clinic appointment booking software", to: "/for/doctors", desc: "Medical, dental and hospital scheduling with patient reminders, upfront consultation fees and GST receipts." },
-  { icon: Scissors, kw: "Salon & spa appointment booking software", to: "/for/salon", desc: "Hair salon and spa bookings with deposits, service menus and no-show protection — the best fit for beauty & wellness." },
-  { icon: Dumbbell, kw: "Gym & fitness appointment booking software", to: "/for/fitness", desc: "Class and personal-training slots, session packs and reminders that keep members turning up." },
-  { icon: BarChart3, kw: "Consultant appointment booking software", to: "/for/business-consultant", desc: "Advisory and coaching calls booked and paid before they start, with automatic follow-ups." },
-  { icon: GraduationCap, kw: "Tutor appointment booking software", to: "/for/tutors", desc: "Online and in-person classes, recurring slots and parent reminders in one link." },
-  { icon: Camera, kw: "Photographer appointment booking software", to: "/for/photographers", desc: "Shoots booked with a deposit, calendar-synced, and confirmed without the back-and-forth." },
-  { icon: Scale, kw: "Lawyer & CA appointment booking software", to: "/for/lawyers", desc: "Paid consultations with clean GST invoicing for legal, tax and financial practices." },
-  { icon: Building2, kw: "Agency appointment booking software", to: "/for/agencies", desc: "One booking page for the whole team, with payments and reminders handled end to end." },
+  { slug: "doctors", icon: Stethoscope, kw: "Doctor & clinic appointment booking software", to: "/for/doctors", desc: "Medical, dental and hospital scheduling with patient reminders, upfront consultation fees and GST receipts." },
+  { slug: "salon", icon: Scissors, kw: "Salon & spa appointment booking software", to: "/for/salon", desc: "Hair salon and spa bookings with deposits, service menus and no-show protection — the best fit for beauty & wellness." },
+  { slug: "fitness", icon: Dumbbell, kw: "Gym & fitness appointment booking software", to: "/for/fitness", desc: "Class and personal-training slots, session packs and reminders that keep members turning up." },
+  { slug: "consultant", icon: BarChart3, kw: "Consultant appointment booking software", to: "/for/business-consultant", desc: "Advisory and coaching calls booked and paid before they start, with automatic follow-ups." },
+  { slug: "tutors", icon: GraduationCap, kw: "Tutor appointment booking software", to: "/for/tutors", desc: "Online and in-person classes, recurring slots and parent reminders in one link." },
+  { slug: "photographers", icon: Camera, kw: "Photographer appointment booking software", to: "/for/photographers", desc: "Shoots booked with a deposit, calendar-synced, and confirmed without the back-and-forth." },
+  { slug: "lawyers", icon: Scale, kw: "Lawyer & CA appointment booking software", to: "/for/lawyers", desc: "Paid consultations with clean GST invoicing for legal, tax and financial practices." },
+  { slug: "agencies", icon: Building2, kw: "Agency appointment booking software", to: "/for/agencies", desc: "One booking page for the whole team, with payments and reminders handled end to end." },
 ];
 
 const FAQ = [
@@ -155,73 +161,56 @@ function TAvatar({ src, name }) {
   );
 }
 
-/* Hero product mockup — a CSS booking page (no screenshot), with a floating
-   "fee received" chip. Brand tokens, not the /for/ page's --lp vars. */
-function BookingMock() {
-  const services = [
-    { name: "Consultation — 30 min", meta: "Video · Google Meet", price: "₹1,500" },
-    { name: "Follow-up session", meta: "In-person", price: "₹800" },
-    { name: "Priority slot — same day", meta: "Video", price: "₹2,500" },
-  ];
+/* Labelled placeholder shown until a real photo is dropped in. Prints the exact
+   file + pixel size the founder needs to supply. Keeps the page's layout stable
+   (holds the aspect ratio) so nothing reflows when the real image lands. */
+function Placeholder({ w, h, file, className = "" }) {
   return (
-    <div className="relative mx-auto w-full max-w-sm">
-      <div className="overflow-hidden rounded-[14px] bg-white shadow-[0_40px_90px_-30px_rgba(26,26,26,0.5)] ring-1 ring-black/10">
-        <div className="flex items-center gap-2 border-b border-black/5 bg-neutral-50 px-4 py-2.5">
-          <span className="flex gap-1.5" aria-hidden>
-            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-          </span>
-          <div className="ml-2 flex-1 truncate rounded-full bg-white px-3 py-1 text-[11px] text-neutral-400 ring-1 ring-inset ring-black/5">
-            bookasloth.com/your-name
-          </div>
-        </div>
-        <div className="p-5">
-          <div className="relative">
-            <div className="h-14 rounded-[8px] bg-gradient-to-r from-primary to-primary-cta" />
-            <div className="absolute -bottom-5 left-3 flex h-12 w-12 items-center justify-center rounded-2xl border-[3px] border-white bg-primary-cta text-sm font-bold text-white">
-              BA
-            </div>
-          </div>
-          <div className="pl-1 pt-6">
-            <div className="text-sm font-bold text-ink">Your booking page</div>
-            <span className="mt-0.5 inline-block rounded-full bg-primary/12 px-2 py-0.5 text-[10px] font-semibold text-primary">
-              Accepting bookings
-            </span>
-          </div>
-          <div className="mt-4 space-y-2.5">
-            {services.map((s) => (
-              <div key={s.name} className="flex items-center justify-between rounded-[8px] border border-neutral-100 bg-white p-3">
-                <div className="min-w-0">
-                  <div className="truncate text-xs font-semibold text-ink">{s.name}</div>
-                  <div className="mt-0.5 text-[10px] text-neutral-400">{s.meta}</div>
-                </div>
-                <div className="flex items-center gap-2 pl-2">
-                  <span className="text-xs font-bold text-ink">{s.price}</span>
-                  <span className="rounded-[6px] bg-primary-cta px-2.5 py-1 text-[10px] font-bold text-white">Book</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex items-center gap-1.5 pl-0.5 text-[10px] font-medium text-neutral-500">
-            <ShieldCheck size={12} className="text-primary-cta" />
-            Fee paid securely before the appointment
-          </div>
-        </div>
-      </div>
-      {/* Floating chips */}
-      <div className="absolute -right-3 top-14 hidden rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5 sm:block">
-        <div className="text-[10px] font-medium text-neutral-400">Fee received</div>
-        <div className="text-sm font-bold text-primary-cta">₹2,500</div>
-      </div>
-      <div className="absolute -left-4 bottom-16 hidden items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5 sm:flex">
-        <CalendarCheck size={16} className="text-primary" />
-        <div>
-          <div className="text-[10px] font-medium text-neutral-400">New booking</div>
-          <div className="text-xs font-bold text-ink">Confirmed · 4:30 PM</div>
-        </div>
-      </div>
+    <div
+      className={`flex flex-col items-center justify-center gap-2 rounded-[14px] border-2 border-dashed border-primary/30 bg-primary/5 p-6 text-center ${className}`}
+      style={{ aspectRatio: `${w} / ${h}` }}
+    >
+      <ImageIcon size={30} className="text-primary/50" />
+      <span className="text-sm font-semibold text-primary/80">{file}</span>
+      <span className="text-xs text-neutral-400">{w} × {h}px</span>
     </div>
+  );
+}
+
+/* Photo slot: renders the real image once it exists at ASSET_BASE/<file>,
+   otherwise the labelled Placeholder. */
+function AssetPhoto({ file, alt, w, h, className = "" }) {
+  const [missing, setMissing] = useState(false);
+  if (missing) return <Placeholder w={w} h={h} file={`${ASSET_BASE}/${file}`} className={className} />;
+  return (
+    <img
+      src={`${ASSET_BASE}/${file}`}
+      alt={alt}
+      width={w}
+      height={h}
+      loading="lazy"
+      decoding="async"
+      className={className}
+      onError={() => setMissing(true)}
+    />
+  );
+}
+
+/* Icon slot: prefers a real custom SVG at ASSET_BASE/icons/<slug>.svg, falls
+   back to the lucide vector until then — so the page looks finished today and
+   auto-upgrades when the branded icon set is dropped in. */
+function IconSlot({ slug, Icon, size = 22 }) {
+  const [missing, setMissing] = useState(false);
+  if (missing || !slug) return <Icon size={size} />;
+  return (
+    <img
+      src={`${ASSET_BASE}/icons/${slug}.svg`}
+      alt=""
+      width={size}
+      height={size}
+      style={{ width: size, height: size }}
+      onError={() => setMissing(true)}
+    />
   );
 }
 
@@ -316,9 +305,26 @@ export default function AppointmentBookingSoftware() {
               </div>
             </Reveal>
           </div>
-          {/* RIGHT — product mockup */}
-          <Reveal delay={0.12} className="hidden lg:block">
-            <BookingMock />
+          {/* RIGHT — hero photo slot + floating proof chips */}
+          <Reveal delay={0.12} className="relative mx-auto hidden w-full max-w-md lg:block">
+            <AssetPhoto
+              file="hero-booking.webp"
+              alt="A Book A Sloth appointment booking page open on a phone"
+              w={1040}
+              h={1160}
+              className="w-full rounded-[14px] border border-black/5 object-cover shadow-[0_40px_90px_-30px_rgba(26,26,26,0.5)]"
+            />
+            <div className="absolute -right-3 top-14 rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5">
+              <div className="text-[10px] font-medium text-neutral-400">Fee received</div>
+              <div className="text-sm font-bold text-primary-cta">₹2,500</div>
+            </div>
+            <div className="absolute -left-4 bottom-16 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5">
+              <CalendarCheck size={16} className="text-primary" />
+              <div>
+                <div className="text-[10px] font-medium text-neutral-400">New booking</div>
+                <div className="text-xs font-bold text-ink">Confirmed · 4:30 PM</div>
+              </div>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -328,7 +334,9 @@ export default function AppointmentBookingSoftware() {
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 lg:grid-cols-4">
           {STATS.map((s, i) => (
             <Reveal key={s.label} delay={i * 0.06} className="text-center">
-              <s.icon size={22} className="mx-auto text-primary" />
+              <span className="mx-auto flex h-[22px] w-[22px] items-center justify-center text-primary">
+                <IconSlot slug={s.slug} Icon={s.icon} size={22} />
+              </span>
               <div className="mt-2 font-heading text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{s.value}</div>
               <p className="mx-auto mt-1.5 max-w-[13rem] text-xs leading-snug text-neutral-400">{s.label}</p>
             </Reveal>
@@ -370,7 +378,7 @@ export default function AppointmentBookingSoftware() {
               <Reveal key={f.title} delay={(i % 3) * 0.06}>
                 <div className="flex h-full flex-col rounded-[10px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)]">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <f.icon size={22} />
+                    <IconSlot slug={f.slug} Icon={f.icon} size={22} />
                   </span>
                   <h3 className="mt-5 font-heading text-base font-bold text-ink">{f.title}</h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{f.desc}</p>
@@ -435,7 +443,7 @@ export default function AppointmentBookingSoftware() {
                   className="flex h-full items-start gap-4 rounded-[10px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:no-underline hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)]"
                 >
                   <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <p.icon size={20} />
+                    <IconSlot slug={p.slug} Icon={p.icon} size={20} />
                   </span>
                   <span className="min-w-0">
                     <span className="block font-heading text-base font-bold text-ink">{p.kw}</span>
