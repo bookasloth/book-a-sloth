@@ -12,7 +12,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Scale, Stethoscope, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
   Camera, CalendarDays, Building2, UserCheck, Zap, ShieldCheck, Heart, Moon,
-  Search, ArrowRight, PlayCircle,
+  Search, ArrowRight, PlayCircle, Compass,
 } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import Reveal from '../components/home/Reveal';
@@ -25,6 +25,7 @@ const DESCRIPTION =
 
 // label/sublabel from the design; `to` is the crawlable /for/* link.
 const CATEGORIES = [
+  { icon: Compass,       label: 'Architects & Designers',     sub: 'Architecture & Interior Design Studios', to: '/for/architects' },
   { icon: Scale,         label: 'Lawyers & CAs',              sub: 'Legal, Tax & Financial Experts',        to: '/for/lawyers' },
   { icon: Stethoscope,   label: 'Doctors & Clinics',          sub: 'Healthcare Professionals',              to: '/for/doctors' },
   { icon: BarChart3,     label: 'Business Consultants',       sub: 'Advisors & Growth Experts',             to: '/for/business-consultant' },
