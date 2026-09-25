@@ -1,18 +1,27 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Sprout, Rocket } from "lucide-react";
-import { FREE_PLAN, PREMIUM_PLAN, PREMIUM_PER_DAY, PREMIUM_ANNUAL_SAVE_PCT } from "../../data/plans";
+import {
+  FREE_PLAN,
+  PREMIUM_PLAN,
+  PREMIUM_PER_DAY,
+  PREMIUM_ANNUAL_SAVE_PCT,
+  PREMIUM_YEARLY_PER_MONTH,
+} from "../../data/plans";
 import useFeeOnly from "../../hooks/useFeeOnly";
 
 const ROUTE_START = "/be-a-sloth"; // must match Home.jsx
 const ICONS = { Sprout, Rocket };
 
+// Glow is hover-only now: the accent shadow lives in a CSS var and is applied
+// via a `group-hover` / `hover` shadow class, so the cards sit calm until the
+// pointer lands on them (design ask — no always-on glow).
 function AccentIcon({ name, accent, size = 20 }) {
   const Icon = ICONS[name] ?? Rocket;
   return (
     <span
-      className="inline-flex h-10 w-10 items-center justify-center rounded-[6px]"
-      style={{ color: accent, background: `${accent}14`, boxShadow: `0 0 18px ${accent}55` }}
+      className="inline-flex h-10 w-10 items-center justify-center rounded-[6px] transition-shadow duration-300 group-hover:shadow-[0_0_18px_var(--ig)]"
+      style={{ color: accent, background: `${accent}14`, "--ig": `${accent}66` }}
     >
       <Icon size={size} strokeWidth={1.75} />
     </span>
@@ -47,18 +56,40 @@ function Features({ plan }) {
   );
 }
 
+// The top-right chip. Recommended card shows the yearly saving ONLY on the
+// yearly tab (the 25% is an annual figure — showing it on Monthly was the bug).
+// On the monthly tab it shows the always-true "0% commission" instead. Free
+// card keeps its per-booking badge.
+function PlanBadge({ plan, yearly }) {
+  if (plan.recommended) {
+    return yearly ? (
+      <span
+        className="rounded-full px-3 py-1 text-xs font-semibold text-white"
+        style={{ background: plan.accent }}
+      >
+        Save {PREMIUM_ANNUAL_SAVE_PCT}%
+      </span>
+    ) : (
+      <span
+        className="rounded-full px-3 py-1 text-xs font-semibold"
+        style={{ color: plan.accent, background: `${plan.accent}14` }}
+      >
+        0% commission
+      </span>
+    );
+  }
+  return <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-primary">{plan.badge}</span>;
+}
+
 function PlanCard({ plan, yearly, children }) {
   const recommended = !!plan.recommended;
+  // Base shadow is soft and static; the accent glow only appears on hover
+  // (--glow), so a card lights up under the pointer and never before.
+  const glow = recommended ? `${plan.accent}80` : "rgba(26,26,26,0.16)";
   return (
     <div
-      className={`relative flex h-full flex-col rounded-[6px] border bg-white p-7 sm:p-8 ${
-        recommended ? "" : "border-black/5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
-      }`}
-      style={
-        recommended
-          ? { borderColor: `${plan.accent}4d`, boxShadow: `0 24px 60px -30px ${plan.accent}73` }
-          : undefined
-      }
+      className="group relative flex h-full flex-col rounded-[10px] border bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] transition-shadow duration-300 hover:shadow-[0_24px_60px_-28px_var(--glow)] sm:p-8"
+      style={{ borderColor: recommended ? `${plan.accent}4d` : "rgba(0,0,0,0.06)", "--glow": glow }}
     >
       <div className="flex items-center justify-between">
         <span
@@ -67,16 +98,7 @@ function PlanCard({ plan, yearly, children }) {
         >
           {plan.name}
         </span>
-        {recommended ? (
-          <span
-            className="rounded-full px-3 py-1 text-xs font-semibold text-white"
-            style={{ background: plan.accent }}
-          >
-            Save {PREMIUM_ANNUAL_SAVE_PCT}%
-          </span>
-        ) : (
-          <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-primary">{plan.badge}</span>
-        )}
+        <PlanBadge plan={plan} yearly={yearly} />
       </div>
       <p className="mt-3 text-sm text-neutral-500">{plan.tagline}</p>
       {children}
@@ -93,9 +115,10 @@ export default function PricingCards() {
   // signup still works — we just don't advertise it. Reverts on Route go-live.
   const feeOnly = useFeeOnly();
 
-  // Yearly is the headline: ₹3,599 is where the "under ₹10 a day" figure comes
-  // from. Monthly (₹399) is shown as the alternative, never as the anchor.
-  const price = yearly ? PREMIUM_PLAN.yearly : PREMIUM_PLAN.monthly;
+  // On the yearly tab we lead with the monthly-equivalent (₹3,599 / 12 = ₹300)
+  // so annual reads as the cheaper per-month price, with the real ₹3,599/year
+  // charge stated underneath. Monthly leads with ₹399. Both are GST-inclusive.
+  const displayPrice = yearly ? PREMIUM_YEARLY_PER_MONTH : PREMIUM_PLAN.monthly;
 
   return (
     <div>
@@ -105,18 +128,18 @@ export default function PricingCards() {
           <button
             type="button"
             onClick={() => setYearly(false)}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${!yearly ? "bg-ink text-white" : "text-neutral-500 hover:text-ink"}`}
+            className={`rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${!yearly ? "bg-ink text-white" : "text-neutral-500 hover:text-ink"}`}
           >
             Monthly
           </button>
           <button
             type="button"
             onClick={() => setYearly(true)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${yearly ? "bg-ink text-white" : "text-neutral-500 hover:text-ink"}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${yearly ? "bg-ink text-white" : "text-neutral-500 hover:text-ink"}`}
           >
             Yearly
             <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${yearly ? "bg-primary text-white" : "bg-primary/10 text-primary"}`}>
-              Best value
+              Save {PREMIUM_ANNUAL_SAVE_PCT}%
             </span>
           </button>
         </div>
@@ -127,7 +150,7 @@ export default function PricingCards() {
         {!feeOnly && (
           <PlanCard plan={FREE_PLAN} yearly={yearly}>
             <div className="mt-6 flex items-end gap-2">
-              <span className="text-5xl font-extrabold text-ink">₹0</span>
+              <span className="font-heading text-5xl font-extrabold text-ink">₹0</span>
               <span className="mb-1.5 text-sm text-neutral-400">/ forever</span>
             </div>
             <p className="mt-1 text-xs text-neutral-400">
@@ -145,13 +168,13 @@ export default function PricingCards() {
         {/* Sloth Active — premium */}
         <PlanCard plan={PREMIUM_PLAN} yearly={yearly}>
           <div className="mt-6 flex items-end gap-2">
-            <span className="text-5xl font-extrabold text-ink">₹{price.toLocaleString("en-IN")}</span>
-            <span className="mb-1.5 text-sm text-neutral-400">/ {yearly ? "year" : "month"}</span>
+            <span className="font-heading text-5xl font-extrabold text-ink">₹{displayPrice.toLocaleString("en-IN")}</span>
+            <span className="mb-1.5 text-sm text-neutral-400">/ month</span>
           </div>
           <p className="mt-1 text-xs text-neutral-400">
             {yearly
-              ? `under ${PREMIUM_PER_DAY} a day · incl. GST`
-              : `or ₹${PREMIUM_PLAN.yearly.toLocaleString("en-IN")}/year and save ${PREMIUM_ANNUAL_SAVE_PCT}% · incl. GST`}
+              ? `billed ₹${PREMIUM_PLAN.yearly.toLocaleString("en-IN")}/year · under ${PREMIUM_PER_DAY} a day · incl. GST`
+              : `or ₹${PREMIUM_PLAN.yearly.toLocaleString("en-IN")}/year — save ${PREMIUM_ANNUAL_SAVE_PCT}% · incl. GST`}
           </p>
           <Link
             to={ROUTE_START}
