@@ -1,5 +1,5 @@
 // /for/astrologers — bespoke, conversion-focused landing page for astrologers,
-// Vedic consultants, tarot readers & numerologists in India.
+// Vedic astrologers, tarot readers & numerologists in India.
 //
 // STANDALONE page (not the data-driven ProfessionLanding template): ported from
 // the "AstroSathi" design in the Profession-Pages brief, re-skinned to Book A
@@ -39,9 +39,11 @@ import meetLogo from '../enterprise-v2/assets/logo/meet.svg';
 import zoomLogo from '../enterprise-v2/assets/logo/zoom.svg';
 import calendarLogo from '../enterprise-v2/assets/logo/calendar.svg';
 
+const WHATSAPP_LOGO = '/for/astrologers/whatsapp.svg'; // green WhatsApp mark (public asset)
+
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const HERO_IMG = '/for/astrologers/astro-hero.webp';
+const HERO_IMG = '/for/astrologers/hero-sloth.webp';
 const ABOUT_IMG = '/for/astrologers/astro-about.webp';
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
@@ -54,7 +56,7 @@ const NAV = [
   { label: 'Resources', to: '/blog' },
 ];
 
-const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian consultants'];
+const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian astrologers'];
 
 const BENEFITS = [
   { icon: CalendarCheck, title: 'Get Booked', desc: 'Seekers book and pay for a reading, without the DM back-and-forth.' },
@@ -64,15 +66,16 @@ const BENEFITS = [
 ];
 
 // Astro service types — the consultations an astrologer sells on Book A Sloth.
+// `ring` = 3 heading-related icons that orbit the corner ring motif.
 const SERVICES = [
-  { icon: Moon, label: 'Horoscope Reading', desc: 'Birth-chart readings, booked by slot.' },
-  { icon: Heart, label: 'Love & Relationship', desc: 'Compatibility and guidance sessions.' },
-  { icon: Briefcase, label: 'Career & Finance', desc: 'Timing and direction consultations.' },
-  { icon: HandHeart, label: 'Health & Wellness', desc: 'Remedial and well-being guidance.' },
-  { icon: Compass, label: 'Vastu Consultation', desc: 'Home and workplace alignment.' },
-  { icon: Hash, label: 'Numerology', desc: 'Name and number analysis calls.' },
-  { icon: Flame, label: 'Puja & Remedies', desc: 'Ritual guidance and remedies.' },
-  { icon: Sparkles, label: 'Life Guidance', desc: 'Open sessions for life’s big questions.' },
+  { icon: Moon, label: 'Horoscope Reading', desc: 'Birth-chart readings, booked by slot.', ring: [Moon, Star, Sparkles] },
+  { icon: Heart, label: 'Love & Relationship', desc: 'Compatibility and guidance sessions.', ring: [Heart, Users, Sparkles] },
+  { icon: Briefcase, label: 'Career & Finance', desc: 'Timing and direction consultations.', ring: [Briefcase, TrendingUp, Wallet] },
+  { icon: HandHeart, label: 'Health & Wellness', desc: 'Remedial and well-being guidance.', ring: [HandHeart, Heart, Sparkles] },
+  { icon: Compass, label: 'Vastu Consultation', desc: 'Home and workplace alignment.', ring: [Compass, MapPin, Star] },
+  { icon: Hash, label: 'Numerology', desc: 'Name and number analysis calls.', ring: [Hash, Star, Sparkles] },
+  { icon: Flame, label: 'Puja & Remedies', desc: 'Ritual guidance and remedies.', ring: [Flame, Sparkles, Sun] },
+  { icon: Sparkles, label: 'Life Guidance', desc: 'Open sessions for life’s big questions.', ring: [Sparkles, Sun, Compass] },
 ];
 
 const STEPS = [
@@ -84,6 +87,7 @@ const STEPS = [
 // REAL Book A Sloth integrations only.
 const TOOLS = [
   { name: 'Google Calendar', logo: calendarLogo, sub: 'Two-way sync of your real availability' },
+  { name: 'WhatsApp', logo: WHATSAPP_LOGO, sub: 'Send reminders and updates' },
   { name: 'Google Meet', logo: meetLogo, sub: 'Auto-add a video link to every reading' },
   { name: 'Zoom', logo: zoomLogo, sub: 'Share meeting links automatically' },
   { name: 'Outlook', logo: outlookLogo, sub: 'Keep your calendar in sync' },
@@ -91,23 +95,28 @@ const TOOLS = [
 ];
 
 const JOURNEY = [
-  { icon: CalendarCheck, label: 'Seeker books reading' },
-  { icon: Check, label: 'Confirmation' },
-  { icon: MessageCircle, label: 'WhatsApp reminder' },
-  { icon: Video, label: 'Session' },
-  { icon: Wallet, label: 'Payment' },
-  { icon: BellRing, label: 'Follow-up' },
+  { icon: CalendarCheck, label: 'Seeker books reading', sub: 'A slot picked from your live availability.' },
+  { icon: Check, label: 'Instant confirmation', sub: 'Booking confirmed the moment they pay.' },
+  { icon: MessageCircle, label: 'WhatsApp reminder', sub: 'A nudge before the session — no no-shows.' },
+  { icon: Video, label: 'The session', sub: 'Meet online or in person, your choice.' },
+  { icon: Wallet, label: 'Paid upfront', sub: 'Fee collected before you begin.' },
+  { icon: BellRing, label: 'Gentle follow-up', sub: 'A thank-you and an easy rebook.' },
 ];
 
 // Structured for easy swap when real customer quotes are approved.
+// Placeholder testimonials — swap for real, approved quotes. Pool of 6 feeds the
+// 3 rotating columns (2 each), so no duplicate shows at once.
 const TESTIMONIALS = [
   { quote: 'The DM chaos is gone. Seekers pick a slot, pay for the reading, and my day is planned before I wake up.', name: 'Priya Sharma', role: 'Vedic Astrologer, Jaipur', avatar: '/for/astrologers/astro-priya.svg' },
   { quote: 'Upfront payment ended the no-shows. People who book a session actually show up for it now.', name: 'Rohit Verma', role: 'Numerologist, Pune', avatar: '/for/astrologers/astro-rohit.svg' },
   { quote: 'One link in my Instagram bio does everything — bookings, reminders, invoices. I just read the charts.', name: 'Anjali Nair', role: 'Tarot Reader, Kochi', avatar: '' },
+  { quote: 'Clients love the WhatsApp reminders. My repeat bookings have gone up without me chasing anyone.', name: 'Deepak Rao', role: 'Vedic Astrologer, Hyderabad', avatar: '' },
+  { quote: 'Setting up my services took ten minutes. Now every consultation is booked and paid before it starts.', name: 'Meera Iyer', role: 'Vastu Expert, Chennai', avatar: '' },
+  { quote: 'GST invoices are generated automatically — my accountant is happier and so am I.', name: 'Kabir Singh', role: 'Astrologer, Delhi', avatar: '' },
 ];
 
 const WHY = [
-  { icon: MapPin, title: 'Built for India', desc: 'Designed around Indian consultants, UPI payments, GST and the way seekers already reach you.' },
+  { icon: MapPin, title: 'Built for India', desc: 'Designed around Indian astrologers, UPI payments, GST and the way seekers already reach you.' },
   { icon: Users, title: 'Easy for Your Seekers', desc: 'No signup or app to install — clients open your link, pick a slot and pay in seconds.' },
   { icon: MessageCircle, title: 'WhatsApp First', desc: 'Confirmations and reminders go out on the channel your clients already live on.' },
   { icon: Lock, title: 'Private & Secure', desc: 'Sessions and client details stay confidential; payments are Razorpay-secured.' },
@@ -118,11 +127,11 @@ const TRUST_STRIP = [
   { icon: BadgePercent, value: '0%', label: 'Commission on Sloth Active — keep every rupee' },
   { icon: Receipt, value: 'GST', label: 'Tax invoices generated automatically' },
   { icon: Lock, value: 'UPI + Cards', label: 'Razorpay-secured payments' },
-  { icon: MapPin, value: 'Made in India', label: 'For Indian consultants & practices' },
+  { icon: MapPin, value: 'Made in India', label: 'For Indian astrologers & practices' },
 ];
 
 const FAQ = [
-  { q: 'Is Book A Sloth suitable for astrologers and tarot readers?', a: 'Yes. Whether you read birth charts, tarot or numbers, Book A Sloth manages your services, availability, client bookings, payments and reminders from one place — so solo consultants and larger practices can run sessions without the manual coordination.' },
+  { q: 'Is Book A Sloth suitable for astrologers and tarot readers?', a: 'Yes. Whether you read birth charts, tarot or numbers, Book A Sloth manages your services, availability, client bookings, payments and reminders from one place — so solo astrologers and larger practices can run sessions without the manual coordination.' },
   { q: 'Can seekers book a reading online?', a: 'Yes. Clients open your booking link, choose a service such as a horoscope reading or a Vastu consultation, pick a convenient slot and confirm — no DMs or waiting for a reply.' },
   { q: 'Can I share my booking link on Instagram and WhatsApp?', a: 'Yes. Your booking link works anywhere — put it in your Instagram bio, share it on WhatsApp status, in your email signature or on your website. One link handles every booking request.' },
   { q: 'Can I send WhatsApp reminders?', a: 'Yes. Book A Sloth sends automatic booking confirmations and reminders over WhatsApp and email before each session, which cuts no-shows. WhatsApp reminders are included on the Sloth Active plan (and free for your first two months on the Sloth plan).' },
@@ -145,7 +154,7 @@ const FOOTER_COLS = [
     { label: 'Doctors', to: '/for/doctors' },
     { label: 'Salons', to: '/for/salon' },
     { label: 'Tutors', to: '/for/tutors' },
-    { label: 'More', to: '/solutions' },
+    { label: 'More professions', to: '/solutions' },
   ] },
   { title: 'Resources', links: [
     { label: 'Blog', to: '/blog' },
@@ -168,80 +177,199 @@ function NavLink({ item, className, onClick }) {
   return <a href={item.href} className={className} onClick={onClick}>{item.label}</a>;
 }
 
+// Plain pill; on mouse-LEAVE it flicks a one-shot sparkle trail (magic wand).
+// `cast` bumps a key so the overlay remounts and replays its CSS animation
+// each time, then clears itself when the ring animation ends. No hover state.
+const CAST_SPARKS = [
+  { dx: '34px', dy: '-20px' }, { dx: '-30px', dy: '-16px' }, { dx: '22px', dy: '18px' },
+  { dx: '-26px', dy: '14px' }, { dx: '4px', dy: '-26px' }, { dx: '40px', dy: '4px' },
+];
+// Golden sparkle positions around the ACTIVE how-it-works step icon box.
+const STEP_SPARKS = [
+  { top: '-6px', left: '-6px', width: '7px', height: '7px', animationDelay: '0ms' },
+  { top: '-8px', right: '4px', width: '5px', height: '5px', animationDelay: '280ms' },
+  { bottom: '-6px', right: '-6px', width: '7px', height: '7px', animationDelay: '150ms' },
+  { bottom: '-4px', left: '6px', width: '4px', height: '4px', animationDelay: '440ms' },
+  { top: '42%', right: '-9px', width: '5px', height: '5px', animationDelay: '600ms' },
+];
 function CtaButton({ to, children, className = '' }) {
+  const [cast, setCast] = useState(0);
   return (
     <Link
       to={to}
-      className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(107,92,231,0.28)] transition-all hover:no-underline hover:brightness-105 ${className}`}
+      onMouseLeave={() => setCast((c) => c + 1)}
+      className={`relative inline-flex items-center justify-center gap-2 overflow-visible rounded-full px-6 py-3.5 text-sm font-semibold text-white transition-transform hover:no-underline active:scale-[0.98] ${className}`}
       style={{ background: 'linear-gradient(120deg, var(--as-secondary), var(--as-primary))' }}
     >
       {children}
+      {cast > 0 && (
+        <span key={cast} className="as-cast" aria-hidden onAnimationEnd={(e) => { if (e.animationName.includes('as-cast-ring')) setCast(0); }}>
+          <i className="as-ring" />
+          {CAST_SPARKS.map((s, i) => (
+            <i key={i} className="as-spark" style={{ '--dx': s.dx, '--dy': s.dy, animationDelay: `${i * 18}ms` }} />
+          ))}
+        </span>
+      )}
     </Link>
   );
 }
 
-function Eyebrow({ children }) {
+/* Corner ring motif for a service card — 2 concentric circles + 3 heading icons
+   orbiting the middle ring. Positioned so only the inner quarter shows (card clips). */
+function CardRings({ icons }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: 'var(--as-secondary)' }}>
-      <Sparkles size={13} /> {children}
-    </span>
+    <div className="as-rings" aria-hidden>
+      <span className="as-ring as-ring-outer" />
+      <span className="as-ring as-ring-mid" />
+      <span className="as-ring as-ring-inner" />
+      <div className="as-ring-orbit">
+        {icons.map((Ic, i) => (
+          <span key={i} className="as-orbit-icon" style={{ '--a': `${i * 120}deg` }}>
+            <span><Ic size={13} /></span>
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
-/* Hero product mockup — a themed astrologer booking page (pure CSS/JSX). */
-function BookingMock() {
+/* A distinct COSMIC background per bento card (6 variants) — starfields, nebulae,
+   a shooting star, a galaxy. `c(a)` yields the star/ink colour at alpha `a` (white
+   on purple cards, deep-indigo on gold cards). All original CSS, no imagery. */
+function BentoSpace({ i, c }) {
+  const cover = { position: 'absolute', inset: 0 };
+  // reusable scattered-star field
+  const stars = (a) => [
+    `radial-gradient(1.4px 1.4px at 14% 22%, ${c(a)}, transparent)`,
+    `radial-gradient(1px 1px at 68% 16%, ${c(a)}, transparent)`,
+    `radial-gradient(1.6px 1.6px at 38% 66%, ${c(a)}, transparent)`,
+    `radial-gradient(1px 1px at 84% 60%, ${c(a)}, transparent)`,
+    `radial-gradient(1.2px 1.2px at 26% 86%, ${c(a)}, transparent)`,
+    `radial-gradient(1px 1px at 58% 44%, ${c(a)}, transparent)`,
+    `radial-gradient(1.3px 1.3px at 90% 30%, ${c(a)}, transparent)`,
+    `radial-gradient(1px 1px at 48% 12%, ${c(a)}, transparent)`,
+  ].join(', ');
+  switch (i % 6) {
+    case 0: // dense starfield
+      return <span aria-hidden style={{ ...cover, backgroundImage: stars(0.8) }} />;
+    case 1: // nebula clouds + a few stars
+      return <span aria-hidden style={{ ...cover, backgroundImage: `radial-gradient(circle at 82% 18%, ${c(0.22)}, transparent 46%), radial-gradient(circle at 16% 78%, ${c(0.16)}, transparent 42%), ${stars(0.7)}` }} />;
+    case 2: // twinkling stars
+      return <span aria-hidden className="as-bento-twinkle" style={{ ...cover, backgroundImage: stars(0.85) }} />;
+    case 3: // shooting star + stars
+      return (<>
+        <span aria-hidden style={{ ...cover, backgroundImage: stars(0.6) }} />
+        <span aria-hidden style={{ position: 'absolute', top: '26%', right: '14%', height: '2px', width: '96px', transform: 'rotate(38deg)', transformOrigin: 'right center', background: `linear-gradient(90deg, transparent, ${c(0.85)})`, borderRadius: '9999px' }} />
+        <span aria-hidden style={{ position: 'absolute', top: 'calc(26% - 2px)', right: '13%', height: '6px', width: '6px', borderRadius: '9999px', background: c(0.95), boxShadow: `0 0 8px 2px ${c(0.6)}` }} />
+      </>);
+    case 4: // milky-way band + stars
+      return (<>
+        <span aria-hidden style={{ position: 'absolute', inset: '-20%', transform: 'rotate(-24deg)', background: `linear-gradient(90deg, transparent, ${c(0.16)} 45%, ${c(0.16)} 55%, transparent)`, filter: 'blur(6px)' }} />
+        <span aria-hidden style={{ ...cover, backgroundImage: stars(0.7) }} />
+      </>);
+    default: // galaxy — faint concentric glow + stars
+      return (<>
+        <span aria-hidden style={{ position: 'absolute', right: '-30px', top: '-30px', height: '150px', width: '150px', borderRadius: '9999px', background: `repeating-radial-gradient(circle, ${c(0.14)} 0 1px, transparent 1px 12px)` }} />
+        <span aria-hidden style={{ position: 'absolute', right: '8px', top: '8px', height: '10px', width: '10px', borderRadius: '9999px', background: c(0.9), boxShadow: `0 0 12px 3px ${c(0.5)}` }} />
+        <span aria-hidden style={{ ...cover, backgroundImage: stars(0.6) }} />
+      </>);
+  }
+}
+
+/* Prominent bento card — solid alternating purple/gold, a unique background shape
+   per card, a title-related icon and a big ghosted step number. */
+function BentoCard({ step, icon: Icon, title, sub, gold, shape }) {
+  const c = (a) => gold ? `rgba(36,28,78,${a})` : `rgba(255,255,255,${a})`;
   return (
-    <div className="relative mx-auto w-full max-w-sm">
-      <div className="overflow-hidden rounded-[16px] bg-white shadow-[0_40px_90px_-30px_rgba(47,35,115,0.4)] ring-1 ring-black/[0.06]">
-        <div className="flex items-center gap-2 border-b border-black/5 bg-[color:var(--as-lavender)] px-4 py-2.5">
-          <span className="flex gap-1.5" aria-hidden>
-            <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--as-line)]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--as-line)]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--as-line)]" />
-          </span>
-          <div className="ml-2 flex-1 truncate rounded-full bg-white px-3 py-1 text-[11px] text-neutral-400 ring-1 ring-inset ring-black/5">
-            bookasloth.com/shreya-jyotish
-          </div>
-        </div>
-        <div className="p-5">
-          <div className="relative">
-            <div className="h-14 rounded-[8px]" style={{ background: 'linear-gradient(110deg, var(--as-primary), var(--as-secondary))' }} />
-            <div className="absolute -bottom-5 left-3 flex h-12 w-12 items-center justify-center rounded-2xl border-[3px] border-white text-sm font-bold text-white" style={{ background: 'var(--as-secondary)' }}>
-              S
-            </div>
-          </div>
-          <div className="pl-1 pt-6">
-            <div className="text-sm font-bold text-[color:var(--as-ink)]">Shreya · Vedic Astrologer</div>
-            <span className="mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
-              Jyotish · Numerology
-            </span>
-          </div>
-          <div className="mt-4 space-y-2.5">
-            {[
-              { name: 'Kundli Reading', meta: '45 min · Online', price: '₹1,499' },
-              { name: 'Love & Relationship', meta: '30 min · Online', price: '₹999' },
-            ].map((s) => (
-              <div key={s.name} className="flex items-center justify-between rounded-[8px] border border-[color:var(--as-line)] bg-white p-3">
-                <div className="min-w-0">
-                  <div className="truncate text-xs font-semibold text-[color:var(--as-ink)]">{s.name}</div>
-                  <div className="mt-0.5 text-[10px] text-neutral-400">{s.meta}</div>
-                </div>
-                <div className="flex items-center gap-2 pl-2">
-                  <span className="text-xs font-bold text-[color:var(--as-ink)]">{s.price}</span>
-                  <span className="rounded-[6px] px-2.5 py-1 text-[10px] font-bold text-white" style={{ background: 'var(--as-secondary)' }}>Book</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex items-center gap-1.5 pl-0.5 text-[10px] font-medium text-neutral-500">
-            <Lock size={12} style={{ color: 'var(--as-secondary)' }} />
-            Fee paid securely before the session
-          </div>
-        </div>
+    <div
+      className="relative flex h-full min-h-[178px] flex-col justify-between overflow-hidden rounded-[20px] p-6 shadow-[0_20px_45px_-24px_rgba(47,35,115,0.5)]"
+      style={{ background: gold ? 'var(--as-gold)' : 'var(--as-secondary)', color: gold ? 'var(--as-deep)' : '#ffffff' }}
+    >
+      <div className="pointer-events-none absolute inset-0" aria-hidden><BentoSpace i={shape} c={c} /></div>
+
+      <div className="relative z-10 flex items-center justify-between">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: c(gold ? 0.14 : 0.18), color: gold ? 'var(--as-primary)' : 'var(--as-gold)' }}>
+          <Icon size={24} />
+        </span>
+        <span className="text-[2.6rem] font-bold leading-none" style={{ color: c(0.28) }}>{step}</span>
       </div>
-      <div className="absolute -right-3 top-16 hidden rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5 sm:block">
-        <div className="text-[10px] font-medium text-neutral-400">Fee received</div>
-        <div className="text-sm font-bold" style={{ color: 'var(--as-secondary)' }}>₹1,499</div>
+      <div className="relative z-10 mt-6">
+        <h3 className="text-lg font-bold leading-tight" style={{ color: 'inherit' }}>{title}</h3>
+        <p className="mt-1.5 text-sm leading-snug" style={{ opacity: 0.82 }}>{sub}</p>
+      </div>
+    </div>
+  );
+}
+
+/* Testimonial avatar — real photo, else an initial disc. */
+function TAvatar({ t }) {
+  return t.avatar
+    ? <img src={t.avatar} alt={t.name} loading="lazy" width={64} height={64} className="h-16 w-16 rounded-full object-cover shadow-[0_8px_20px_-8px_rgba(47,35,115,0.5)] ring-4 ring-white" />
+    : <span className="flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white shadow-[0_8px_20px_-8px_rgba(47,35,115,0.5)] ring-4 ring-white" style={{ background: 'var(--as-secondary)' }}>{t.name.charAt(0)}</span>;
+}
+
+/* Testimonial card — avatar overlapping the top, quote badge, name/role/quote/stars. */
+function TCard({ t }) {
+  return (
+    <div className="relative mt-9 rounded-[18px] border border-[color:var(--as-line)] bg-white px-6 pb-7 pt-11 text-center shadow-[0_18px_45px_-28px_rgba(47,35,115,0.5)]">
+      <div className="absolute -top-8 left-1/2 -translate-x-1/2"><TAvatar t={t} /></div>
+      <span aria-hidden className="absolute left-5 top-7 flex h-9 w-9 items-center justify-center rounded-full text-xl font-bold leading-none" style={{ background: 'color-mix(in srgb, var(--as-gold) 28%, white)', color: 'var(--as-gold)' }}>&ldquo;</span>
+      <h3 className="text-lg font-bold text-[color:var(--as-ink)]">{t.name}</h3>
+      <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-neutral-500">{t.role}</p>
+      <p className="mt-3 text-sm leading-relaxed text-neutral-500">{t.quote}</p>
+      <div className="mt-4 flex justify-center gap-0.5">
+        {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} style={{ color: 'var(--as-gold)', fill: 'var(--as-gold)' }} />)}
+      </div>
+    </div>
+  );
+}
+
+/* One rotating column — swaps its card up-and-out for the next, at a random
+   3–5s interval so the three columns cycle out of sync. */
+function TestimonialColumn({ items, className = '' }) {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (items.length < 2) return undefined;
+    let timer;
+    const tick = () => { timer = setTimeout(() => { setIdx((i) => (i + 1) % items.length); tick(); }, 3000 + Math.random() * 2000); };
+    tick();
+    return () => clearTimeout(timer);
+  }, [items.length]);
+  const item = items[idx] || items[0];
+  if (!item) return null;
+  return (
+    <div className={`relative h-[360px] ${className}`}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={item.name}
+          className="absolute inset-x-0 top-0"
+          initial={{ y: 48, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -48, opacity: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <TCard t={item} />
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* Floating glass chip over the hero image — mirrors the CA / homepage hero. */
+function GlassCard({ icon: Icon, label, value, accent, className = '' }) {
+  return (
+    <div className={`absolute flex items-center gap-3 rounded-2xl border border-white/60 bg-white/80 px-4 py-3 shadow-[0_18px_40px_-20px_rgba(47,35,115,0.4)] backdrop-blur-md ${className}`}>
+      <span
+        className="flex h-10 w-10 items-center justify-center rounded-xl"
+        style={accent
+          ? { backgroundColor: 'color-mix(in srgb, var(--as-secondary) 16%, transparent)', color: 'var(--as-secondary)' }
+          : { backgroundColor: 'rgba(31,27,58,0.06)', color: '#4a4560' }}
+      >
+        <Icon size={18} />
+      </span>
+      <div>
+        <div className="text-[11px] font-medium text-neutral-400">{label}</div>
+        <div className="text-sm font-semibold" style={{ color: accent ? 'var(--as-secondary)' : 'var(--as-ink)' }}>{value}</div>
       </div>
     </div>
   );
@@ -256,10 +384,10 @@ function HowItWorks({ steps }) {
   }, [active, steps.length]);
   return (
     <div className="mt-14 grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
-      <div className="relative mx-auto w-full max-w-md lg:mx-0">
-        <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: 'color-mix(in srgb, var(--as-secondary) 22%, transparent)' }} />
+      <div className="relative mx-auto w-full max-w-[39rem] lg:mx-0">
+        <div aria-hidden className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: 'color-mix(in srgb, var(--as-secondary) 22%, transparent)' }} />
         <div className="relative z-10 aspect-square">
-          <img src={ABOUT_IMG} alt="Book A Sloth for astrologers" loading="lazy" className="absolute inset-0 mx-auto h-full w-full object-contain drop-shadow-[0_24px_32px_rgba(47,35,115,0.16)]" />
+          <img src={ABOUT_IMG} alt="Book A Sloth for astrologers" loading="lazy" decoding="async" width="1100" height="619" className="absolute inset-0 mx-auto h-full w-full object-contain drop-shadow-[0_24px_32px_rgba(47,35,115,0.16)]" />
         </div>
       </div>
       <div className="relative">
@@ -268,13 +396,14 @@ function HowItWorks({ steps }) {
           {steps.map((s, i) => {
             const on = i === active;
             return (
-              <button key={s.title} type="button" onClick={() => setActive(i)} aria-current={on} aria-label={s.title} className="relative flex w-full gap-5 text-left">
+              <button key={s.title} type="button" onClick={() => setActive(i)} aria-current={on} className="relative flex w-full gap-5 text-left">
                 <span className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${on ? 'text-white shadow-[0_8px_20px_-8px_rgba(107,92,231,0.7)]' : 'border-2 border-black/10 bg-white'}`} style={on ? { background: 'var(--as-secondary)' } : { color: 'var(--as-primary)' }}>
                   <s.icon size={20} />
+                  {on && STEP_SPARKS.map((sp, k) => <i key={k} className="as-step-spark" style={sp} aria-hidden />)}
                 </span>
-                <div className={`pt-1.5 transition-opacity duration-300 ${on ? 'opacity-100' : 'opacity-55'}`}>
+                <div className={`pt-1.5 transition-opacity duration-300 ${on ? 'opacity-100' : 'opacity-90'}`}>
                   <h3 className="text-lg font-bold text-[color:var(--as-ink)]">{s.title}</h3>
-                  <p className="mt-1 max-w-sm text-sm leading-relaxed text-neutral-500">{s.desc}</p>
+                  <p className="mt-1 max-w-sm text-sm leading-relaxed text-neutral-600">{s.desc}</p>
                 </div>
               </button>
             );
@@ -328,7 +457,7 @@ export default function Astrologers() {
   const canonical = `${SITE_URL}/for/astrologers`;
   const seo = {
     title: 'Appointment Booking Software for Astrologers | Book A Sloth',
-    description: 'Book A Sloth is appointment booking software for astrologers, tarot readers, numerologists and Vedic consultants in India. Let seekers book readings online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for astrologers, tarot readers, numerologists and Vedic astrologers in India. Let seekers book readings online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
     keywords: 'appointment booking software for astrologers, astrology consultation booking, book astrology reading online, tarot booking software, numerology appointment scheduling, Vedic astrologer booking page India, astrologer scheduling software',
     ogTitle: 'Your astrology practice runs on readings. Let Book A Sloth run the bookings.',
     ogDescription: 'Seekers book readings, pay upfront and get WhatsApp reminders — automatically. The booking page every astrologer in India should already have.',
@@ -379,7 +508,7 @@ export default function Astrologers() {
     '--as-bg': '#FFFEFC',
     '--as-primary': '#2F2373',
     '--as-secondary': '#6B5CE7',
-    '--as-gold': '#F5C86B',
+    '--as-gold': '#E8A93C',
     '--as-lavender': '#F3EEFF',
     '--as-line': '#E7DDFB',
     '--as-ink': '#1F1B3A',
@@ -388,12 +517,104 @@ export default function Astrologers() {
 
   return (
     <main className="astro-lp overflow-x-clip text-[color:var(--as-ink)]" style={{ ...styleVars, background: 'var(--as-bg)' }}>
-      {/* Scoped fonts — ditto of the AstroSathi brief (Playfair headings + Inter body),
-          confined to .astro-lp so the global Plus Jakarta/Poppins theme is untouched. */}
+      {/* Scoped fonts — headings serif + Poppins body, confined to .astro-lp so the
+          global theme is untouched.
+          NOTE: the brief asked for Tiempos Headline Semibold (Klim Type Foundry — a
+          PAID, licensed font). It is NOT bundled here because it can't be redistributed
+          without a licence. Fraunces (open, Google Fonts) stands in as a close
+          high-contrast serif. To use real Tiempos: drop the licensed .woff2 into
+          /public/for/astrologers/, add an @font-face for it below, and change the
+          heading font-family to 'Tiempos Headline'. */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap');
-        .astro-lp{font-family:'Inter',system-ui,-apple-system,sans-serif;}
-        .astro-lp h1,.astro-lp h2,.astro-lp h3,.astro-lp h4{font-family:'Playfair Display',Georgia,serif;letter-spacing:-0.01em;}
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
+        .astro-lp{font-family:'Poppins',system-ui,-apple-system,sans-serif;}
+        .astro-lp h1,.astro-lp h2,.astro-lp h3,.astro-lp h4{font-family:'Fraunces','Tiempos Headline',Georgia,serif;font-weight:600;letter-spacing:-0.01em;}
+
+        /* ── Magic-wand cast — plain button; a one-shot sparkle trail fires only
+              when the cursor LEAVES the button (JS toggles .as-cast, remounted per
+              leave so it plays once and fades). No hover state, no idle glow. ── */
+        .astro-lp .as-cast { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 5; }
+        .astro-lp .as-cast .as-ring {
+          position: absolute; inset: -3px; border-radius: inherit;
+          box-shadow: 0 0 0 1.5px color-mix(in srgb, #c4b5fd 90%, transparent), 0 0 22px 2px color-mix(in srgb, var(--as-secondary) 70%, transparent);
+          animation: as-cast-ring 620ms cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        .astro-lp .as-cast .as-spark {
+          position: absolute; top: 50%; left: 50%; height: 6px; width: 6px; border-radius: 9999px;
+          background: radial-gradient(circle, #fff 0%, #c4b5fd 55%, transparent 70%);
+          animation: as-cast-spark 640ms cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        @keyframes as-cast-ring {
+          0%   { opacity: .9; transform: scale(.86); }
+          100% { opacity: 0; transform: scale(1.18); }
+        }
+        @keyframes as-cast-spark {
+          0%   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+          100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.2); }
+        }
+
+        /* ── Sparkle starfield (hero) — layered twinkling dots, pure CSS ── */
+        @keyframes as-twinkle { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+        @keyframes as-drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+        .astro-lp .as-stars { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        .astro-lp .as-stars::before, .astro-lp .as-stars::after {
+          content: ''; position: absolute; inset: -10%;
+          background-repeat: no-repeat;
+        }
+        .astro-lp .as-stars::before {
+          background-image:
+            radial-gradient(1.5px 1.5px at 12% 22%, #fff, transparent),
+            radial-gradient(1.5px 1.5px at 78% 14%, #d8ccff, transparent),
+            radial-gradient(2px 2px at 32% 68%, #fff, transparent),
+            radial-gradient(1px 1px at 60% 40%, #c4b5fd, transparent),
+            radial-gradient(1.5px 1.5px at 88% 60%, #fff, transparent),
+            radial-gradient(1px 1px at 46% 12%, #fff, transparent);
+          animation: as-twinkle 4s ease-in-out infinite, as-drift 9s ease-in-out infinite alternate;
+        }
+        .astro-lp .as-stars::after {
+          background-image:
+            radial-gradient(1px 1px at 22% 48%, #c4b5fd, transparent),
+            radial-gradient(1.5px 1.5px at 68% 76%, #fff, transparent),
+            radial-gradient(1px 1px at 92% 30%, #d8ccff, transparent),
+            radial-gradient(2px 2px at 8% 80%, #fff, transparent),
+            radial-gradient(1px 1px at 54% 88%, #c4b5fd, transparent);
+          animation: as-twinkle 5.5s ease-in-out infinite 1s, as-drift 11s ease-in-out infinite alternate-reverse;
+        }
+        /* ── Corner ring motif (service cards) — 2 concentric circles bleeding out
+              of the top-right corner (card clips ~3/4), 3 heading icons orbiting the
+              middle ring. ── */
+        @keyframes as-ring-spin { to { transform: rotate(360deg); } }
+        @keyframes as-ring-spin-rev { to { transform: rotate(-360deg); } }
+        .astro-lp .as-rings { position: absolute; top: 0; right: 0; width: 178px; height: 178px; transform: translate(42%, -42%); pointer-events: none; z-index: 0; --rmid: 59px; opacity: 0; transition: opacity .35s ease; }
+        .astro-lp .group:hover .as-rings { opacity: 1; }
+        .astro-lp .as-ring { position: absolute; border-radius: 9999px; border: 1.5px solid rgba(255,255,255,.4); }
+        .astro-lp .as-ring-outer { inset: 0; }
+        .astro-lp .as-ring-mid { inset: 30px; }
+        .astro-lp .as-ring-inner { inset: 60px; }
+        .astro-lp .as-ring-orbit { position: absolute; inset: 30px; animation: as-ring-spin 18s linear infinite; }
+        .astro-lp .as-orbit-icon { position: absolute; top: 50%; left: 50%; height: 26px; width: 26px; margin: -13px; transform: rotate(var(--a)) translateY(calc(-1 * var(--rmid))); }
+        .astro-lp .as-orbit-icon > span { display: flex; height: 100%; width: 100%; align-items: center; justify-content: center; border-radius: 9999px; background: var(--as-lavender); color: var(--as-secondary); box-shadow: 0 2px 8px -3px rgba(47,35,115,.3); transition: background .3s, color .3s; animation: as-ring-spin-rev 18s linear infinite; }
+        .astro-lp .group:hover .as-ring { border-color: rgba(255,255,255,.4); }
+        .astro-lp .group:hover .as-orbit-icon > span { background: rgba(255,255,255,.18); color: var(--as-gold); }
+
+        /* twinkling bento background (variant 2) */
+        .astro-lp .as-bento-twinkle { animation: as-twinkle 3s ease-in-out infinite; }
+
+        /* golden sparkle around the active how-it-works step */
+        @keyframes as-sparkle { 0%,100% { opacity: .15; transform: scale(.5); } 50% { opacity: 1; transform: scale(1); } }
+        .astro-lp .as-step-spark { position: absolute; border-radius: 9999px; pointer-events: none;
+          background: radial-gradient(circle, #fff 0%, var(--as-gold) 55%, transparent 72%);
+          box-shadow: 0 0 6px 1px color-mix(in srgb, var(--as-gold) 75%, transparent);
+          animation: as-sparkle 1.5s ease-in-out infinite; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .astro-lp .as-stars::before, .astro-lp .as-stars::after,
+          .astro-lp .as-cast .as-ring, .astro-lp .as-cast .as-spark,
+          .astro-lp .as-ring-orbit, .astro-lp .as-orbit-icon > span, .astro-lp .as-step-spark { animation: none; }
+          .astro-lp .as-cast { display: none; }
+        }
       `}</style>
 
       <Seo
@@ -414,7 +635,7 @@ export default function Astrologers() {
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
           <Link to="/" className="flex items-center gap-2 hover:no-underline" aria-label="Book A Sloth — home">
-            <img src="/favicon.svg" alt="" className="h-7 w-7 rounded-md" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <img src="/favicon.svg" alt="" width={28} height={28} className="h-7 w-7 rounded-md" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="text-[15px] font-extrabold tracking-tight text-[color:var(--as-ink)]">Book A Sloth</span>
           </Link>
           <nav className="hidden items-center gap-7 lg:flex">
@@ -447,44 +668,53 @@ export default function Astrologers() {
         </AnimatePresence>
       </header>
 
-      {/* ═══════════════ 2 · HERO ═══════════════ */}
-      <section id="top" className="relative px-5 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-14 lg:pb-24" style={{ background: 'linear-gradient(180deg, var(--as-lavender) 0%, #ffffff 100%)' }}>
-        <div className="mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1fr_1fr] lg:gap-12">
+      {/* ═══════════════ 2 · HERO (dark, starfield) ═══════════════ */}
+      <section id="top" className="relative overflow-hidden px-5 pb-14 pt-10 text-white sm:px-8 sm:pb-20 sm:pt-14 lg:pb-24" style={{ background: 'radial-gradient(120% 100% at 70% 0%, #2c2166 0%, var(--as-deep) 45%, #150f36 100%)' }}>
+        {/* twinkling sparkle layer */}
+        <div className="as-stars" aria-hidden />
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[3fr_2fr] lg:gap-12">
           <div className="text-center lg:text-left">
-            <Reveal as="div" instant><Eyebrow>For Astrologers &amp; Vedic Consultants</Eyebrow></Reveal>
-            <Reveal as="h1" instant delay={0.04} className="mt-4 text-[clamp(1.8rem,7vw,2.9rem)] font-bold leading-[1.08] text-[color:var(--as-ink)] lg:text-[3rem]">
-              Simple booking software for{' '}
-              <span style={{ color: 'var(--as-secondary)' }}>astrologers</span>{' '}
-              of modern India.
+            <Reveal as="h1" instant className="text-[clamp(1.8rem,7vw,2.9rem)] font-bold leading-[1.08] text-white lg:text-[3rem]">
+              Powerful booking software for{' '}
+              <span style={{ color: '#c4b5fd' }}>astrologers</span>,{' '}
+              without the complicated setup.
             </Reveal>
-            <Reveal as="p" instant delay={0.08} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
-              Let seekers book and pay for readings online. Manage your services, availability, payments, reminders and follow-ups from one calm platform built for consultants.
+            <Reveal as="p" instant delay={0.08} className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg lg:mx-0">
+              Let seekers book and pay for readings online. Manage your services, availability, payments, reminders and follow-ups from one calm platform built for astrologers.
             </Reveal>
-            <Reveal instant delay={0.12} className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:gap-5 lg:justify-start">
+            <Reveal instant delay={0.12} className="mt-7 flex flex-col items-center gap-3 lg:flex-row lg:gap-5 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
-              <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--as-ink)] transition-colors hover:text-[color:var(--as-secondary)] hover:no-underline">
+              <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-white/90 transition-colors hover:text-white hover:no-underline">
                 Book A Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Reveal>
             <Reveal instant delay={0.16} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
               {HERO_TRUST.map((t) => (
-                <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-500">
-                  <Check size={14} style={{ color: 'var(--as-secondary)' }} /> {t}
+                <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-white/65">
+                  <Check size={14} style={{ color: '#c4b5fd' }} /> {t}
                 </span>
               ))}
             </Reveal>
           </div>
 
-          {/* RIGHT — hero illustration + booking mockup */}
-          <Reveal instant delay={0.1} className="relative">
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-[26rem] w-[26rem] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--as-secondary) 18%, transparent), transparent 70%)' }} />
-            <img src={HERO_IMG} alt="Book A Sloth — booking software for astrologers" loading="eager" width="640" height="640" className="relative z-10 mx-auto w-full max-w-[24rem] drop-shadow-[0_28px_36px_rgba(47,35,115,0.2)]" />
-            <div className="absolute -bottom-4 left-0 z-20 hidden sm:block lg:-left-6"><BookingMock /></div>
+          {/* RIGHT — big hero illustration + floating glass chips (CA hero structure) */}
+          <Reveal instant delay={0.1} className="relative hidden lg:block">
+            <div aria-hidden className="absolute left-1/2 top-1/2 h-[56rem] w-[56rem] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--as-secondary) 18%, transparent), transparent 70%)' }} />
+            <img src={HERO_IMG} alt="Book A Sloth — booking software for astrologers" loading="eager" fetchpriority="high" decoding="async" width="1100" height="852" className="relative z-10 mx-auto h-auto w-full max-w-none drop-shadow-[0_28px_36px_rgba(47,35,115,0.2)] lg:translate-x-6 lg:scale-[1.2]" />
+            <GlassCard icon={CalendarCheck} label="New booking" value="Kundli Reading · 5:30 PM" className="top-0 -left-12 z-20" />
+            <GlassCard icon={Wallet} label="Fee received" value="₹1,499" accent className="top-1/2 right-0 z-20" />
+            <GlassCard icon={BellRing} label="WhatsApp reminder" value="Sent · 1h before" className="bottom-2 -left-10 z-30" />
+          </Reveal>
+
+          {/* Mobile/tablet — image only (no floating chips) */}
+          <Reveal instant delay={0.1} className="relative lg:hidden">
+            <div aria-hidden className="absolute left-1/2 top-1/2 h-[32rem] w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--as-secondary) 18%, transparent), transparent 70%)' }} />
+            <img src={HERO_IMG} alt="" loading="eager" decoding="async" width="1100" height="852" className="relative z-10 mx-auto h-auto w-full max-w-[30rem] drop-shadow-[0_28px_36px_rgba(47,35,115,0.2)]" />
           </Reveal>
         </div>
 
         {/* Four benefits strip */}
-        <div className="mx-auto mt-16 grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+        <div className="relative z-10 mx-auto mt-16 grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
           {BENEFITS.map((b, i) => (
             <Reveal key={b.title} delay={(i % 4) * 0.06}>
               <div className="group flex h-full flex-col rounded-[12px] border border-[color:var(--as-line)] bg-white p-4 transition-colors hover:border-[color:var(--as-secondary)]">
@@ -492,9 +722,9 @@ export default function Astrologers() {
                   <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-300 group-hover:text-white" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
                     <b.icon size={18} />
                   </span>
-                  <h3 className="text-sm font-bold">{b.title}</h3>
+                  <p className="text-sm font-bold">{b.title}</p>
                 </div>
-                <p className="mt-2 text-xs leading-snug text-neutral-500">{b.desc}</p>
+                <p className="mt-2 text-xs leading-snug text-neutral-600">{b.desc}</p>
               </div>
             </Reveal>
           ))}
@@ -505,9 +735,8 @@ export default function Astrologers() {
       <section id="services" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Every Kind of Reading</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--as-secondary)' }}>consultants work.</span>
+            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
+              Built around the way <span style={{ color: 'var(--as-secondary)' }}>astrologers work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
               From birth-chart readings to Vastu, numerology and remedies — set up every service you offer, each with its own price, duration and availability.
@@ -516,12 +745,15 @@ export default function Astrologers() {
           <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {SERVICES.map((s, i) => (
               <Reveal key={s.label} delay={(i % 4) * 0.05}>
-                <Link to={START} className="group flex h-full flex-col rounded-[14px] border border-[color:var(--as-line)] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-20px_rgba(47,35,115,0.3)] hover:no-underline">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-300 group-hover:text-white" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
-                    <s.icon size={22} />
-                  </span>
-                  <h3 className="mt-4 text-[15px] font-bold text-[color:var(--as-ink)]">{s.label}</h3>
-                  <p className="mt-1 text-[13px] leading-snug text-neutral-500">{s.desc}</p>
+                <Link to={START} className="group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-[color:var(--as-line)] bg-white p-5 transition-colors duration-300 hover:border-[color:var(--as-secondary)] hover:bg-[color:var(--as-secondary)] hover:shadow-[0_18px_40px_-20px_rgba(47,35,115,0.4)] hover:no-underline">
+                  <CardRings icons={s.ring} />
+                  <div className="relative z-10 flex h-full flex-col">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full ring-2 ring-transparent transition-all duration-300 group-hover:bg-white group-hover:ring-[color:var(--as-gold)]" style={{ backgroundColor: 'var(--as-secondary)', color: 'var(--as-gold)' }}>
+                      <s.icon size={29} />
+                    </span>
+                    <h3 className="mt-4 text-[19.5px] font-bold leading-tight text-[color:var(--as-ink)] group-hover:text-white">{s.label}</h3>
+                    <p className="mt-1 text-[13px] leading-snug text-neutral-500 group-hover:text-white/80">{s.desc}</p>
+                  </div>
                 </Link>
               </Reveal>
             ))}
@@ -548,8 +780,7 @@ export default function Astrologers() {
       <section id="integrations" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Integrations</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
+            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
               Works with the tools you already use.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
@@ -559,10 +790,8 @@ export default function Astrologers() {
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {TOOLS.map((t, i) => (
               <Reveal key={t.name} delay={(i % 3) * 0.06}>
-                <div className="flex items-center gap-3 rounded-2xl border border-[color:var(--as-line)] bg-white px-4 py-3.5 shadow-[0_14px_34px_-24px_rgba(47,35,115,0.4)]">
-                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[color:var(--as-lavender)]">
-                    <img src={t.logo} alt="" loading="lazy" className="h-6 w-6 object-contain" />
-                  </span>
+                <div className="flex items-center gap-3.5 rounded-2xl border border-[color:var(--as-line)] bg-white px-4 py-3.5 shadow-[0_14px_34px_-24px_rgba(47,35,115,0.4)]">
+                  <img src={t.logo} alt={t.name} loading="lazy" width={36} height={36} className="h-9 w-9 flex-shrink-0 object-contain" />
                   <div className="min-w-0">
                     <div className="text-sm font-bold leading-tight text-[color:var(--as-ink)]">{t.name}</div>
                     <div className="mt-0.5 text-xs leading-snug text-neutral-500">{t.sub}</div>
@@ -574,90 +803,91 @@ export default function Astrologers() {
         </div>
       </section>
 
-      {/* ═══════════════ 6 · CLIENT JOURNEY ═══════════════ */}
+      {/* ═══════════════ 6 · CLIENT JOURNEY (bento) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-5xl text-center">
-          <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
-            Give every seeker a <span style={{ color: 'var(--as-secondary)' }}>calmer experience.</span>
-          </Reveal>
-          <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-2xl text-base text-neutral-500">
-            From the first booking to the final follow-up, Book A Sloth keeps your sessions organised.
-          </Reveal>
-          <Reveal delay={0.1} className="mt-12">
-            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-              {JOURNEY.map((j, i) => (
-                <div key={j.label} className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="flex items-center gap-2 rounded-full border border-[color:var(--as-line)] bg-white px-4 py-2.5 shadow-[0_6px_20px_-12px_rgba(47,35,115,0.3)]">
-                    <j.icon size={15} style={{ color: 'var(--as-secondary)' }} />
-                    <span className="text-[13px] font-semibold text-[color:var(--as-ink)]">{j.label}</span>
-                  </div>
-                  {i < JOURNEY.length - 1 && <ArrowRight size={15} className="text-neutral-300" />}
-                </div>
-              ))}
-            </div>
-          </Reveal>
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
+              Give every seeker a <span style={{ color: 'var(--as-secondary)' }}>calmer experience.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-2xl text-base text-neutral-500">
+              From the first booking to the final follow-up, Book A Sloth keeps your sessions organised.
+            </Reveal>
+          </div>
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5">
+            {JOURNEY.map((j, i) => (
+              <Reveal key={j.label} delay={(i % 3) * 0.07}>
+                <BentoCard step={i + 1} icon={j.icon} title={j.label} sub={j.sub} gold={i % 2 === 1} shape={i} />
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ═══════════════ 7 · ABOUT / WHY (image) ═══════════════ */}
       <section id="why" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <Reveal className="relative order-2 lg:order-1">
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: 'color-mix(in srgb, var(--as-secondary) 20%, transparent)' }} />
-            <img src={ABOUT_IMG} alt="Book A Sloth for astrology practices" loading="lazy" className="relative z-10 mx-auto w-full max-w-md object-contain drop-shadow-[0_24px_40px_rgba(47,35,115,0.18)]" />
+        <div className="mx-auto max-w-2xl text-center">
+          <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
+            More than a booking link. <span style={{ color: 'var(--as-secondary)' }}>A calmer way to practise.</span>
           </Reveal>
-          <div className="order-1 lg:order-2">
-            <Reveal as="div"><Eyebrow>Why Book A Sloth</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
-              More than a booking link. <span style={{ color: 'var(--as-secondary)' }}>A calmer way to practise.</span>
-            </Reveal>
-            <div className="mt-9 grid gap-5 sm:grid-cols-2">
-              {WHY.map((w, i) => (
-                <Reveal key={w.title} delay={(i % 2) * 0.08}>
-                  <div className="h-full rounded-[16px] border border-[color:var(--as-line)] bg-white p-5">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
-                      <w.icon size={20} />
-                    </span>
-                    <h3 className="mt-4 text-base font-bold">{w.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{w.desc}</p>
+        </div>
+
+        {/* Desktop — image centred, 4 cards fanned to NW / NE / SW / SE behind it */}
+        <div className="relative mx-auto mt-14 hidden h-[480px] max-w-5xl lg:block">
+          <div aria-hidden className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: 'color-mix(in srgb, var(--as-secondary) 24%, transparent)' }} />
+          {WHY.map((w, i) => {
+            // NW, NE, SW, SE — wide 2:1 bars; inner corners tuck under the image
+            const pos = [
+              'left-0 top-6', 'right-0 top-6', 'left-0 bottom-6', 'right-0 bottom-6',
+            ][i];
+            return (
+              <Reveal key={w.title} delay={i * 0.08} className={`absolute z-10 w-[24rem] ${pos}`}>
+                <div className="flex items-start gap-4 rounded-[18px] border border-[color:var(--as-line)] bg-white p-5 shadow-[0_20px_45px_-24px_rgba(47,35,115,0.45)]">
+                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
+                    <w.icon size={20} />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-bold">{w.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-neutral-500">{w.desc}</p>
                   </div>
-                </Reveal>
-              ))}
-            </div>
+                </div>
+              </Reveal>
+            );
+          })}
+          <img src={ABOUT_IMG} alt="Book A Sloth for astrology practices" loading="lazy" decoding="async" width="1100" height="619" className="absolute left-1/2 top-1/2 z-20 w-[34rem] object-contain drop-shadow-[0_28px_50px_rgba(47,35,115,0.28)]" style={{ transform: 'translate(-50%, calc(-50% - 40px))' }} />
+        </div>
+
+        {/* Mobile / tablet — image then a simple card grid */}
+        <div className="mt-12 lg:hidden">
+          <img src={ABOUT_IMG} alt="" loading="lazy" decoding="async" width="1100" height="619" className="mx-auto w-full max-w-xs object-contain drop-shadow-[0_24px_40px_rgba(47,35,115,0.18)]" />
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
+            {WHY.map((w, i) => (
+              <Reveal key={w.title} delay={(i % 2) * 0.08}>
+                <div className="h-full rounded-[16px] border border-[color:var(--as-line)] bg-white p-5">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
+                    <w.icon size={20} />
+                  </span>
+                  <h3 className="mt-4 text-base font-bold">{w.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{w.desc}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ 8 · TESTIMONIALS ═══════════════ */}
+      {/* ═══════════════ 8 · TESTIMONIALS (rotating columns) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Trusted by Consultants</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
-              Your seekers notice when your practice runs smoothly.
+            <Reveal as="p" className="text-sm font-bold uppercase tracking-[0.22em]" style={{ color: 'var(--as-secondary)' }}>Testimonials</Reveal>
+            <Reveal as="h2" delay={0.05} className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">
+              Loved by astrologers across India.
             </Reveal>
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-3 sm:gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <Reveal key={t.name} delay={(i % 3) * 0.08}>
-                <figure className="flex h-full flex-col justify-between rounded-[16px] border border-[color:var(--as-line)] bg-white p-7 shadow-[0_8px_30px_rgba(47,35,115,0.05)]">
-                  <div>
-                    <div className="flex gap-0.5">
-                      {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} style={{ color: 'var(--as-gold)', fill: 'var(--as-gold)' }} />)}
-                    </div>
-                    <blockquote className="mt-4 text-[15px] font-semibold leading-snug text-[color:var(--as-ink)]">&ldquo;{t.quote}&rdquo;</blockquote>
-                  </div>
-                  <figcaption className="mt-6 flex items-center gap-3">
-                    {t.avatar
-                      ? <img src={t.avatar} alt={t.name} loading="lazy" className="h-11 w-11 flex-shrink-0 rounded-full object-cover" />
-                      : <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--as-secondary)' }}>{t.name.charAt(0)}</span>}
-                    <div>
-                      <div className="text-sm font-bold text-[color:var(--as-ink)]">{t.name}</div>
-                      <div className="text-xs text-neutral-400">{t.role}</div>
-                    </div>
-                  </figcaption>
-                </figure>
-              </Reveal>
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((col) => (
+              <TestimonialColumn key={col} items={[TESTIMONIALS[col], TESTIMONIALS[col + 3]].filter(Boolean)} className={col === 2 ? 'hidden lg:block' : col === 1 ? 'hidden sm:block' : ''} />
             ))}
           </div>
         </div>
@@ -679,8 +909,7 @@ export default function Astrologers() {
       {/* ═══════════════ 10 · PRICING TEASER ═══════════════ */}
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
         <div className="mx-auto max-w-3xl text-center">
-          <Reveal as="div"><Eyebrow>Simple Pricing</Eyebrow></Reveal>
-          <Reveal as="h2" delay={0.05} className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
+          <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
             Start free. Upgrade to <span style={{ color: 'var(--as-secondary)' }}>0% commission</span> when you are ready.
           </Reveal>
           <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
@@ -726,12 +955,12 @@ export default function Astrologers() {
             <div className="lg:col-span-1">
               <div className="text-lg font-extrabold text-white">Book A Sloth</div>
               <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/55">
-                The calm way for astrologers and consultants in India to get booked, paid and reminded.
+                The calm way for astrologers in India to get booked, paid and reminded.
               </p>
             </div>
             {FOOTER_COLS.map((col) => (
               <div key={col.title}>
-                <div className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{col.title}</div>
+                <div className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">{col.title}</div>
                 <ul className="mt-4 space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.label}>
@@ -746,7 +975,7 @@ export default function Astrologers() {
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row">
             <p className="text-xs text-white/50">© {new Date().getFullYear()} Book A Sloth · Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
-            <p className="text-xs uppercase tracking-[0.18em] text-white/35">Made for India&apos;s astrologers</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-white/60">Made for India&apos;s astrologers</p>
           </div>
         </div>
       </footer>
