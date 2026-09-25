@@ -60,7 +60,7 @@ const PRODUCT_MENU = [
 // tone omitted on purpose: MegaMenu auto-rotates the tile colour by index.
 const WHOFOR_MENU = [
   { header: 'Professional Services', items: [
-    { label: 'Chartered Accountants & CA Firms', href: '/explore?q=accountant',    desc: 'Book paid consults instantly', icon: Calculator }, // → /for/accountants
+    { label: 'Chartered Accountants & CA Firms', href: '/for/chartered-accountants', desc: 'Book paid consults instantly', icon: Calculator },
     { label: 'Architects & Interior Designers',  href: '/for/architects',          desc: 'Win design clients faster',    icon: Compass },
     { label: 'Astrologers & Vedic Consultants',  href: '/for/astrologers',         desc: 'Fill your reading calendar',   icon: Sparkles },
     { label: 'Business & Management Consultants',href: '/for/business-consultant', desc: 'Book advisory calls that pay', icon: Briefcase },
@@ -68,7 +68,7 @@ const WHOFOR_MENU = [
     { label: 'Beauticians & Salons',             href: '/for/salon',               desc: 'Fill your chair all week',     icon: Scissors },
   ] },
   { header: 'Medical Specialists', items: [
-    { label: 'Dentists & Dental Clinics',       href: '/explore?q=dentist',        desc: 'Cut no-shows, fill chairs',   icon: Smile }, // → /for/dentists
+    { label: 'Dentists & Dental Clinics',       href: '/for/dentists',             desc: 'Cut no-shows, fill chairs',   icon: Smile },
     { label: 'Dermatologists & Skin Clinics',   href: '/explore?q=dermatologist',  desc: 'Book skin consults 24/7',     icon: Sun },   // → /for/dermatologists
     { label: 'Gynecologists & OB-GYNs',         href: '/explore?q=gynecologist',   desc: 'Book visits around the clock',icon: HeartPulse }, // → /for/gynecologists
     { label: 'Pediatricians & Child Care',      href: '/explore?q=pediatrician',   desc: 'Fill your clinic, skip calls',icon: Baby }, // → /for/pediatricians
