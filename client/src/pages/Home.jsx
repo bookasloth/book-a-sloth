@@ -713,9 +713,6 @@ const Home = () => {
       {/* ════════════════ STATS STRIP (dark) ════════════════ */}
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-primary-cta sm:text-sm">
-            Built for people who sell their time
-          </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[64rem] text-center text-2xl text-white sm:text-3xl">
             Coaches, Doctors, Consultants, Therapists and Designers already getting appointments booked and paid.
           </Reveal>
@@ -879,9 +876,6 @@ const Home = () => {
       {/* ════════════════ HOW THE CALM WORKS ════════════════ */}
       <section id="how-it-works" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
-            Still managing appointments on WhatsApp?
-          </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
             Everything around the appointment, <span className="font-extrabold text-primary-cta">automated.</span>
           </Reveal>
@@ -988,9 +982,6 @@ const Home = () => {
       {/* ════════════════ FEATURE BREAKDOWN (dark) ════════════════ */}
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
-            The outcome
-          </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
             Get <span className="font-extrabold text-primary-cta">booked</span>. Get <span className="font-extrabold text-primary-cta">paid</span>. Get <span className="font-extrabold text-primary-cta">reminded</span>. Get <span className="font-extrabold text-primary-cta">organized</span>.
           </Reveal>
@@ -1157,9 +1148,6 @@ const Home = () => {
       <section id="manifesto" className="px-5 py-20 sm:px-8 lg:py-32">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-12">
           <Reveal className="lg:col-span-4">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
-              The Calm Economy
-            </p>
             <h2 className="mt-4 text-4xl leading-[1.05] text-ink sm:text-5xl">
               Work slower.
               <br />
@@ -1199,10 +1187,10 @@ const Home = () => {
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
         <div className="mx-auto max-w-[860px]">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-            Simple pricing. <span className="text-primary-cta">Zero commission.</span>
+            Simple pricing. <span className="text-primary-cta">No surprises.</span>
           </Reveal>
           <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-[750px] text-center text-neutral-500">
-            Start free. Upgrade when your bookings demand it. Keep everything you earn — always.
+            Start free — we take 5% only when you get paid. Go Active for 0% commission and keep every rupee.
           </Reveal>
 
           <Reveal delay={0.12} className="mt-8">
@@ -1328,9 +1316,6 @@ const Home = () => {
       {/* ════════════════ FAQ ════════════════ */}
       <section id="faq" className="px-5 pb-20 pt-12 sm:px-8 lg:pb-28 lg:pt-16">
         <div className="mx-auto max-w-3xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
-            FAQ
-          </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
             Questions, answered.
           </Reveal>
@@ -1371,7 +1356,6 @@ const Home = () => {
         <Reveal className="mx-auto max-w-7xl">
           <div className="lg:flex lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">Compare</p>
               <h2 className="mt-4 max-w-[750px] text-4xl leading-tight text-white sm:text-5xl">
                 A calmer alternative to the tools you know.
               </h2>
@@ -1456,9 +1440,6 @@ const Home = () => {
       {/* ════════════════ TRUST & SECURITY ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary-cta">
-            Trust & security
-          </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
             Your money and data, <span className="font-extrabold text-primary-cta">handled carefully.</span>
           </Reveal>
