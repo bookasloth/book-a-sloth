@@ -520,6 +520,30 @@ const TEMPLATES = [
     cta_label: 'Set up my page', cta_url: '{{dashboard_url}}',
   }; })(),
 
+  // ── Guest welcome (founder voice, from Shubham) ───────────────────────────────
+  // Fired once when a brand-new guest account is created (OTP or email/password).
+  // Plain, personal note in the Resend-founder-email spirit, wrapped in our shell.
+
+  (() => { const t = themeForCategory('Welcome'); return {
+    event_key: 'GUEST_WELCOME', audience: 'all', category: 'Profile', sender_key: 'shubham',
+    name: 'Guest Welcome', subject: 'Welcome to Book A Sloth, {{first_name}}',
+    preview_text: 'A quick hello from the founder — and three ways to get started.',
+    email_category: 'Welcome',
+    email_reason: 'You are receiving this email because you recently created a Book A Sloth account.',
+    html_content:
+      eyebrow(t.text, 'Welcome') + h('Welcome to Book A Sloth, {{first_name}}') +
+      lead("I'm Shubham, founder of Book A Sloth. I started it because booking time with the people you actually want to meet should feel effortless — no back-and-forth, no friction.") +
+      lead('Three ways to get started:') +
+      `<ol style="margin:0 0 18px;padding-left:20px;font-size:16px;line-height:1.7;color:#374151;font-family:'Poppins','Plus Jakarta Sans',Arial,sans-serif;">` +
+        `<li><a href="{{website_url}}" style="color:{{brand_color}};font-weight:600;text-decoration:none;">Explore creators</a> and find someone worth your time</li>` +
+        `<li>Book your first session in a couple of taps</li>` +
+        `<li>Manage everything from your bookings dashboard</li>` +
+      `</ol>` +
+      lead('<strong>P.S.</strong> What brought you here? Just hit reply and let me know — I read every email.') +
+      lead('— Shubham<br/>Founder, Book A Sloth'),
+    cta_label: 'Explore creators', cta_url: '{{website_url}}',
+  }; })(),
+
   // ── First earning → payouts (reframed: lead with the win, KYC as how-to-claim) ─
 
   (() => { const t = themeForCategory('Payment Receipt'); return {
