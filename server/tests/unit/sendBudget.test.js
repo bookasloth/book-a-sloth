@@ -5,16 +5,26 @@ const mockSupa = { supabaseAdmin: { from: jest.fn() } };
 jest.mock('../../config/supabase', () => mockSupa);
 jest.mock('../../utils/logger', () => ({ logger: { warn: jest.fn(), info: jest.fn() } }));
 
-// Filter-aware query stub. email_logs → campaign count, or `bounced` when the query
-// filters status='bounced' (the breaker). crm_messages → crm count.
-function mockCounts(campaign, crm, { bounced = 0, err = false } = {}) {
+// Filter-aware query stub.
+//   email_logs        → campaign count, or `bounced` when filtering status='bounced'.
+//   crm_messages      → crm count.
+//   email_campaigns   → cold-campaign id list (coldCampaigns rows).
+//   campaign_recipients → coldSent count (cold emails already sent today).
+function mockCounts(campaign, crm, { bounced = 0, coldSent = 0, coldCampaigns = 1, err = false } = {}) {
   mockSupa.supabaseAdmin.from.mockImplementation((t) => {
     const filt = {};
     const o = {
       select: () => o, eq: (c, v) => { filt[c] = v; return o; }, gte: () => o, in: () => o,
       then: (r) => {
-        if (err) return Promise.resolve({ count: null, error: { message: 'boom' } }).then(r);
-        const count = t === 'email_logs' ? (filt.status === 'bounced' ? bounced : campaign) : crm;
+        if (err) return Promise.resolve({ count: null, data: null, error: { message: 'boom' } }).then(r);
+        if (t === 'email_campaigns') {
+          const data = Array.from({ length: coldCampaigns }, (_, i) => ({ id: `c${i}` }));
+          return Promise.resolve({ data, error: null }).then(r);
+        }
+        let count;
+        if (t === 'email_logs') count = filt.status === 'bounced' ? bounced : campaign;
+        else if (t === 'campaign_recipients') count = coldSent;
+        else count = crm;
         return Promise.resolve({ count, error: null }).then(r);
       },
     };
@@ -68,6 +78,24 @@ test('coldAllowanceNow inside window = min(ramp, remainder)', async () => {
 test('coldAllowanceNow squeezed by CRM usage (remainder < ramp)', async () => {
   at(MON_18); mockCounts(85, 0);            // remainder 5 < ramp 60
   await expect(sendBudget.coldAllowanceNow()).resolves.toBe(5);
+});
+
+// Regression: the ramp must subtract cold already sent today (the 2026-09-24 overshoot).
+// campaign_recipients.sent_at is lag-free, so a mid-window tick sees prior cold sends.
+test('coldAllowanceNow subtracts cold already sent today (no ramp overshoot)', async () => {
+  at(MON_18); mockCounts(30, 0, { coldSent: 50 }); // ramp 60 − 50 sent = 10; remainder 60
+  await expect(sendBudget.coldAllowanceNow()).resolves.toBe(10);
+});
+
+test('coldAllowanceNow is 0 once the daily ramp is spent', async () => {
+  at(MON_18); mockCounts(30, 0, { coldSent: 60 }); // ramp 60 − 60 = 0
+  await expect(sendBudget.coldAllowanceNow()).resolves.toBe(0);
+});
+
+test('coldSentToday is 0 when no cold campaigns exist', async () => {
+  at(MON_18); mockCounts(30, 0, { coldCampaigns: 0, coldSent: 99 });
+  await expect(sendBudget.coldSentToday()).resolves.toBe(0);
+  await expect(sendBudget.coldAllowanceNow()).resolves.toBe(60); // full ramp, remainder 60
 });
 
 test('coldAllowanceNow is 0 outside the 18:00 window', async () => {
