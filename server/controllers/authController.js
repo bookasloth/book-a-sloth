@@ -251,15 +251,13 @@ const ensureGuestProfile = async (email, name = "Guest") => {
     // Brand-new guest account → welcome note from the founder. This is the single
     // create chokepoint every OTP path (send-otp + verify-otp) routes through and
     // the early "existing" return above means it fires exactly once, at creation.
-    // Fire-and-forget: NotificationEngine never throws, and this must never slow
-    // or block OTP delivery / the booking. Phone-only guests (no email) never
-    // reach here — ensureGuestProfile returns null before this.
-    // require() synchronously (not inside the deferred callback) so it resolves
-    // before any Jest teardown — a lazy require inside runInBackground would run
-    // after the test env is torn down and throw.
-    const notify = require("../services/notificationEngine");
-    runInBackground("guest-welcome", () =>
-      notify.send({
+    // Phone-only guests (no email) never reach here — ensureGuestProfile returns
+    // null before this. Awaited in a try/catch (mirrors the Google host
+    // VENDOR_WELCOME path) rather than backgrounded: the engine only QUEUES the
+    // email, so the added cost is ~one insert on a guest's FIRST OTP; a
+    // background send would leave a promise racing Jest teardown (CI-only flake).
+    try {
+      await require("../services/notificationEngine").send({
         event: "GUEST_WELCOME",
         data: {
           email: normalizedEmail,
@@ -268,7 +266,10 @@ const ensureGuestProfile = async (email, name = "Guest") => {
           emailData: { first_name: profile.first_name || (profile.name || "").split(" ")[0] || "there" },
           recipientUserId: profile.id,
         },
-      }));
+      });
+    } catch (e) {
+      console.error("ensureGuestProfile: GUEST_WELCOME send error (non-fatal):", e.message);
+    }
     return profile;
   } catch (_) {
     const { data: again } = await supabaseAdmin
@@ -375,11 +376,10 @@ const registerVendor = async (req, res) => {
 
     // Brand-new host (email/password path) → same VENDOR_WELCOME the Google host
     // path sends. This door is effectively unused in prod (host login is Google-only)
-    // but closing the gap keeps every host-signup route consistent. Fire-and-forget.
-    // require() synchronously so it resolves before any Jest teardown.
-    const notifyHost = require("../services/notificationEngine");
-    runInBackground("vendor-welcome", () =>
-      notifyHost.send({
+    // but closing the gap keeps every host-signup route consistent. Awaited in a
+    // try/catch, mirroring the Google host path (line ~632).
+    try {
+      await require("../services/notificationEngine").send({
         event: "VENDOR_WELCOME",
         data: {
           email: profile.email,
@@ -388,7 +388,10 @@ const registerVendor = async (req, res) => {
           emailData: { first_name: profile.first_name || (profile.name || "").split(" ")[0] || "there" },
           recipientUserId: profile.id,
         },
-      }));
+      });
+    } catch (e) {
+      console.error("registerVendor: VENDOR_WELCOME send error (non-fatal):", e.message);
+    }
 
     // Sign in to get session (disposable client — never poisons supabaseAdmin)
     const { data: signInData, error: signInError } =
@@ -786,12 +789,11 @@ const registerUser = async (req, res) => {
       role: "guest",
     });
 
-    // Brand-new guest (email/password path) → founder welcome. Fire-and-forget;
-    // never blocks the signup response. (The OTP path is covered in ensureGuestProfile.)
-    // require() synchronously so it resolves before any Jest teardown.
-    const notifyGuest = require("../services/notificationEngine");
-    runInBackground("guest-welcome", () =>
-      notifyGuest.send({
+    // Brand-new guest (email/password path) → founder welcome. Awaited in a
+    // try/catch (mirrors the Google host VENDOR_WELCOME path); the engine queues
+    // the email so this is cheap. (The OTP path is covered in ensureGuestProfile.)
+    try {
+      await require("../services/notificationEngine").send({
         event: "GUEST_WELCOME",
         data: {
           email: profile.email,
@@ -800,7 +802,10 @@ const registerUser = async (req, res) => {
           emailData: { first_name: profile.first_name || (profile.name || "").split(" ")[0] || "there" },
           recipientUserId: profile.id,
         },
-      }));
+      });
+    } catch (e) {
+      console.error("registerUser: GUEST_WELCOME send error (non-fatal):", e.message);
+    }
 
     const { data: signInData, error: signInError } =
       await signInWithPassword(email, password);
