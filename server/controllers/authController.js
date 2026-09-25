@@ -247,7 +247,30 @@ const ensureGuestProfile = async (email, name = "Guest") => {
 
   // 3. Create the profile row (or fetch it if it raced into existence).
   try {
-    return await upsertProfile({ id: userId, name: guestName, email: normalizedEmail, role: "guest" });
+    const profile = await upsertProfile({ id: userId, name: guestName, email: normalizedEmail, role: "guest" });
+    // Brand-new guest account → welcome note from the founder. This is the single
+    // create chokepoint every OTP path (send-otp + verify-otp) routes through and
+    // the early "existing" return above means it fires exactly once, at creation.
+    // Phone-only guests (no email) never reach here — ensureGuestProfile returns
+    // null before this. Awaited in a try/catch (mirrors the Google host
+    // VENDOR_WELCOME path) rather than backgrounded: the engine only QUEUES the
+    // email, so the added cost is ~one insert on a guest's FIRST OTP; a
+    // background send would leave a promise racing Jest teardown (CI-only flake).
+    try {
+      await require("../services/notificationEngine").send({
+        event: "GUEST_WELCOME",
+        data: {
+          email: normalizedEmail,
+          name: profile.name,
+          emailUser: { name: profile.name, email: normalizedEmail, username: profile.username },
+          emailData: { first_name: profile.first_name || (profile.name || "").split(" ")[0] || "there" },
+          recipientUserId: profile.id,
+        },
+      });
+    } catch (e) {
+      console.error("ensureGuestProfile: GUEST_WELCOME send error (non-fatal):", e.message);
+    }
+    return profile;
   } catch (_) {
     const { data: again } = await supabaseAdmin
       .from("profiles")
@@ -350,6 +373,25 @@ const registerVendor = async (req, res) => {
       email: authData.user.email || email,
       role: "host",
     });
+
+    // Brand-new host (email/password path) → same VENDOR_WELCOME the Google host
+    // path sends. This door is effectively unused in prod (host login is Google-only)
+    // but closing the gap keeps every host-signup route consistent. Awaited in a
+    // try/catch, mirroring the Google host path (line ~632).
+    try {
+      await require("../services/notificationEngine").send({
+        event: "VENDOR_WELCOME",
+        data: {
+          email: profile.email,
+          name: profile.name,
+          emailUser: { name: profile.name, email: profile.email, username: profile.username },
+          emailData: { first_name: profile.first_name || (profile.name || "").split(" ")[0] || "there" },
+          recipientUserId: profile.id,
+        },
+      });
+    } catch (e) {
+      console.error("registerVendor: VENDOR_WELCOME send error (non-fatal):", e.message);
+    }
 
     // Sign in to get session (disposable client — never poisons supabaseAdmin)
     const { data: signInData, error: signInError } =
@@ -746,6 +788,24 @@ const registerUser = async (req, res) => {
       email: authData.user.email || email,
       role: "guest",
     });
+
+    // Brand-new guest (email/password path) → founder welcome. Awaited in a
+    // try/catch (mirrors the Google host VENDOR_WELCOME path); the engine queues
+    // the email so this is cheap. (The OTP path is covered in ensureGuestProfile.)
+    try {
+      await require("../services/notificationEngine").send({
+        event: "GUEST_WELCOME",
+        data: {
+          email: profile.email,
+          name: profile.name,
+          emailUser: { name: profile.name, email: profile.email, username: profile.username },
+          emailData: { first_name: profile.first_name || (profile.name || "").split(" ")[0] || "there" },
+          recipientUserId: profile.id,
+        },
+      });
+    } catch (e) {
+      console.error("registerUser: GUEST_WELCOME send error (non-fatal):", e.message);
+    }
 
     const { data: signInData, error: signInError } =
       await signInWithPassword(email, password);

@@ -30,6 +30,7 @@ const EMAIL_ONLY_EVENTS = [
   ['SUBSCRIPTION_EXPIRING', 'Premium Expiring'],
   ['SUBSCRIPTION_RENEWED', 'Premium Renewed'],
   ['VENDOR_WELCOME', 'Host Welcome'],
+  ['GUEST_WELCOME', 'Guest Welcome'],
   ['KYC_EARN_NUDGE', 'First Earning — Payout Nudge'],
   ['PAYOUT_SENT', 'Payout — On The Way'],
   ['PAYOUT_VERIFICATION_NEEDED', 'Payout — Verification Needed'],
