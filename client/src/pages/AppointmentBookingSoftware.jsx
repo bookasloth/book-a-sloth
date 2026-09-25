@@ -305,24 +305,22 @@ export default function AppointmentBookingSoftware() {
               </div>
             </Reveal>
           </div>
-          {/* RIGHT — hero photo slot + floating proof chips */}
-          <Reveal delay={0.12} className="relative mx-auto hidden w-full max-w-md lg:block">
+          {/* RIGHT — hero illustration + floating payment chip */}
+          <Reveal delay={0.12} className="relative mx-auto w-full max-w-md">
             <AssetPhoto
-              file="hero-booking.webp"
-              alt="A Book A Sloth appointment booking page open on a phone"
-              w={1040}
-              h={1160}
-              className="w-full rounded-[14px] border border-black/5 object-cover shadow-[0_40px_90px_-30px_rgba(26,26,26,0.5)]"
+              file="illustrations/sloth-laptop-booking.webp"
+              alt="A relaxed sloth at a laptop getting a New Booking notification"
+              w={1320}
+              h={1040}
+              className="w-full rounded-[16px] ring-1 ring-black/5 shadow-[0_40px_90px_-30px_rgba(26,26,26,0.5)]"
             />
-            <div className="absolute -right-3 top-14 rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5">
-              <div className="text-[10px] font-medium text-neutral-400">Fee received</div>
-              <div className="text-sm font-bold text-primary-cta">₹2,500</div>
-            </div>
-            <div className="absolute -left-4 bottom-16 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5">
-              <CalendarCheck size={16} className="text-primary" />
+            <div className="absolute -left-3 bottom-8 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-cta/10">
+                <CalendarCheck size={15} className="text-primary-cta" />
+              </span>
               <div>
-                <div className="text-[10px] font-medium text-neutral-400">New booking</div>
-                <div className="text-xs font-bold text-ink">Confirmed · 4:30 PM</div>
+                <div className="text-[10px] font-medium text-neutral-400">Payment received</div>
+                <div className="text-xs font-bold text-ink">₹2,500 · upfront</div>
               </div>
             </div>
           </Reveal>
@@ -347,19 +345,30 @@ export default function AppointmentBookingSoftware() {
       {/* ── What is it (AEO definition band) ─────────────────── */}
       <section className="relative overflow-hidden px-5 py-16 sm:px-8 lg:py-20">
         <Orb className="left-1/2 top-0 h-64 w-64 -translate-x-1/2 bg-primary/8" />
-        <div className="relative mx-auto max-w-3xl text-center">
-          <Reveal as="span" className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-            The basics
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="mt-4 text-2xl font-extrabold text-ink sm:text-3xl">
-            What is appointment booking software?
-          </Reveal>
-          <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-[720px] text-neutral-600">
-            Appointment booking software lets your clients see when you're free and book a slot
-            online, instead of messaging back and forth. Good software also takes the payment
-            upfront, sends automatic reminders, syncs your calendar and issues an invoice — so
-            an appointment is booked, paid and confirmed without you lifting a finger. Book A
-            Sloth does all of that from a single shareable link.
+        <div className="relative mx-auto grid max-w-5xl items-center gap-10 lg:grid-cols-[1fr_0.8fr]">
+          <div className="text-center lg:text-left">
+            <Reveal as="span" className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+              The basics
+            </Reveal>
+            <Reveal as="h2" delay={0.05} className="mt-4 text-2xl font-extrabold text-ink sm:text-3xl">
+              What is appointment booking software?
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-4 text-neutral-600">
+              Appointment booking software lets your clients see when you're free and book a slot
+              online, instead of messaging back and forth. Good software also takes the payment
+              upfront, sends automatic reminders, syncs your calendar and issues an invoice — so
+              an appointment is booked, paid and confirmed without you lifting a finger. Book A
+              Sloth does all of that from a single shareable link.
+            </Reveal>
+          </div>
+          <Reveal delay={0.1} className="mx-auto w-full max-w-xs">
+            <AssetPhoto
+              file="illustrations/sloth-orbit-icons.webp"
+              alt="A sloth at a laptop surrounded by calendar, payment, reminder and email icons"
+              w={1320}
+              h={1040}
+              className="w-full rounded-[16px] ring-1 ring-black/5 shadow-[0_24px_60px_-30px_rgba(26,26,26,0.35)]"
+            />
           </Reveal>
         </div>
       </section>
@@ -569,6 +578,13 @@ export default function AppointmentBookingSoftware() {
           <Orb className="-left-16 -top-16 h-56 w-56 bg-primary/25" />
           <Orb className="-right-16 -bottom-16 h-56 w-56 bg-primary-cta/20" />
           <div className="relative">
+            <AssetPhoto
+              file="illustrations/sloth-sleeping-cat.webp"
+              alt="A sloth napping with a cat — more time for what matters"
+              w={1320}
+              h={1040}
+              className="mx-auto mb-6 w-full max-w-[240px] rounded-[16px] ring-1 ring-white/10"
+            />
             <h2 className="text-3xl font-extrabold text-primary sm:text-4xl">Get booked, paid and reminded.</h2>
             <p className="mx-auto mt-3 max-w-[520px] text-neutral-300">
               Set up your appointment booking software in minutes. Free to start, upgrade whenever your bookings grow.
