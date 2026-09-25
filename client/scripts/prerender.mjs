@@ -101,6 +101,7 @@ const PRERENDER_ROUTES = [
   ...MOMENTS.map((m) => `/moments/${m.slug}`),
   '/for/astrologers',
   '/for/architects',
+  '/for/dentists',
   '/for/lawyers',
   '/for/doctors',
   '/for/doctors-india',

@@ -209,6 +209,7 @@ const ProfessionServices = lazy(() => import('./pages/services/ProfessionService
 const ProfessionLanding  = lazy(() => import('./pages/for/ProfessionLanding'));
 const Astrologers        = lazy(() => import('./pages/for/Astrologers'));
 const ArchitectPage      = lazy(() => import('./pages/for/ArchitectPage'));
+const DentistPage        = lazy(() => import('./pages/for/DentistPage'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 
 // Admin — Operations
@@ -643,6 +644,7 @@ function App() {
           {/* Bespoke standalone /for pages must precede the :profession catch-all. */}
           <Route path="/for/astrologers" element={<Astrologers />} />
           <Route path="/for/architects" element={<ArchitectPage />} />
+          <Route path="/for/dentists" element={<DentistPage />} />
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
