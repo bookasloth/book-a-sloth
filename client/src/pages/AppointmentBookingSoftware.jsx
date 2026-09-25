@@ -385,8 +385,8 @@ export default function AppointmentBookingSoftware() {
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f, i) => (
               <Reveal key={f.title} delay={(i % 3) * 0.06}>
-                <div className="flex h-full flex-col rounded-[10px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)]">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <div className="group flex h-full flex-col rounded-[10px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-colors duration-300 hover:border-primary/30">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary/20">
                     <IconSlot slug={f.slug} Icon={f.icon} size={22} />
                   </span>
                   <h3 className="mt-5 font-heading text-base font-bold text-ink">{f.title}</h3>
@@ -449,16 +449,16 @@ export default function AppointmentBookingSoftware() {
               <Reveal key={p.kw} delay={(i % 2) * 0.06}>
                 <Link
                   to={p.to}
-                  className="flex h-full items-start gap-4 rounded-[10px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:no-underline hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)]"
+                  className="group flex h-full items-start gap-4 rounded-[10px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-colors duration-300 hover:border-primary/30 hover:bg-primary/[0.02] hover:no-underline"
                 >
-                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary/20">
                     <IconSlot slug={p.slug} Icon={p.icon} size={20} />
                   </span>
                   <span className="min-w-0">
                     <span className="block font-heading text-base font-bold text-ink">{p.kw}</span>
                     <span className="mt-1 block text-sm leading-relaxed text-neutral-500">{p.desc}</span>
                     <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary-cta">
-                      Explore <ArrowRight size={14} />
+                      Explore <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                   </span>
                 </Link>
