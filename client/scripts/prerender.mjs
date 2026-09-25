@@ -99,6 +99,7 @@ const PRERENDER_ROUTES = [
   // no lucide) so this list never drifts as moments are added.
   '/moments',
   ...MOMENTS.map((m) => `/moments/${m.slug}`),
+  '/for/astrologers',
   '/for/architects',
   '/for/lawyers',
   '/for/doctors',

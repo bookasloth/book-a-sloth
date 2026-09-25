@@ -207,6 +207,7 @@ const Explore         = lazy(() => import('./pages/Explore'));
 const ServicesDirectory  = lazy(() => import('./pages/services/ServicesDirectory'));
 const ProfessionServices = lazy(() => import('./pages/services/ProfessionServices'));
 const ProfessionLanding  = lazy(() => import('./pages/for/ProfessionLanding'));
+const Astrologers        = lazy(() => import('./pages/for/Astrologers'));
 const ArchitectPage      = lazy(() => import('./pages/for/ArchitectPage'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 
@@ -639,7 +640,8 @@ function App() {
           <Route path="/services/:profession" element={<ProfessionServices />} />
 
           {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession */}
-          {/* Bespoke pages must precede the /for/:profession catch-all */}
+          {/* Bespoke standalone /for pages must precede the :profession catch-all. */}
+          <Route path="/for/astrologers" element={<Astrologers />} />
           <Route path="/for/architects" element={<ArchitectPage />} />
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
