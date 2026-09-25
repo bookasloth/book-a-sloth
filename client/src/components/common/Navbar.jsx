@@ -61,8 +61,8 @@ const PRODUCT_MENU = [
 const WHOFOR_MENU = [
   { header: 'Professional Services', items: [
     { label: 'Chartered Accountants & CA Firms', href: '/explore?q=accountant',    desc: 'Book paid consults instantly', icon: Calculator }, // → /for/accountants
-    { label: 'Architects & Interior Designers',  href: '/explore?q=architect',     desc: 'Win design clients faster',    icon: Compass },    // → /for/architects
-    { label: 'Astrologers & Vedic Consultants',  href: '/explore?q=astrologer',    desc: 'Fill your reading calendar',   icon: Sparkles },   // → /for/astrologers
+    { label: 'Architects & Interior Designers',  href: '/for/architects',          desc: 'Win design clients faster',    icon: Compass },
+    { label: 'Astrologers & Vedic Consultants',  href: '/for/astrologers',         desc: 'Fill your reading calendar',   icon: Sparkles },
     { label: 'Business & Management Consultants',href: '/for/business-consultant', desc: 'Book advisory calls that pay', icon: Briefcase },
     { label: 'Lawyers & Legal Advisors',         href: '/for/lawyers',             desc: 'Book paid legal consults',     icon: Scale },
     { label: 'Beauticians & Salons',             href: '/for/salon',               desc: 'Fill your chair all week',     icon: Scissors },
