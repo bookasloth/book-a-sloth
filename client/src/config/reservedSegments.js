@@ -15,6 +15,7 @@ export const RESERVED_FIRST_SEGMENTS = [
   // Legal document set — see components/common/LegalLayout.jsx POLICIES.
   'guest-terms', 'host-agreement', 'host-fees',
   'contact', 'get-in-touch', 'enterprise', 'earnings-calculator', 'how-it-works',
+  'appointment-booking-software', // SEO landing (pages/AppointmentBookingSoftware.jsx)
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'manage-booking', 'lp', 'for', 'invite',
   // /og/blog/:slug — render target for the OG card generator (see pages/OgCard.jsx).
