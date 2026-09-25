@@ -131,9 +131,13 @@ const HOST_SEO_COLS =
 // public page never renders. The card only needs title/slug/desc/price/duration/
 // mode (+ created_at for the "New" tag). Matches the schema-fallback set below so
 // both query paths return an identical lean shape.
-const SERVICE_PUBLIC_COLS =
+// price_on_request (v3.169) is kept SEPARATE so a pre-migration DB degrades to
+// SERVICE_PUBLIC_COLS_BASE (shows the price, current behaviour) instead of the
+// whole profile losing its services.
+const SERVICE_PUBLIC_COLS_BASE =
   "id, host_id, title, slug, description, short_description, type, duration, " +
   "price, currency, meeting_mode, is_active, created_at, updated_at";
+const SERVICE_PUBLIC_COLS = `${SERVICE_PUBLIC_COLS_BASE}, price_on_request`;
 
 // ??? Profile slug helpers ????????????????????????????????????????????????????
 const slugifyUsername = (text) =>
@@ -287,7 +291,7 @@ const buildHostProfile = async (username) => {
   ) {
     const fallback = await supabaseAdmin
       .from("services")
-      .select(SERVICE_PUBLIC_COLS)
+      .select(SERVICE_PUBLIC_COLS_BASE)
       .eq("host_id", host.id)
       .eq("is_active", true)
       .limit(100);
@@ -364,6 +368,7 @@ const updateProfile = async (req, res) => {
       background_key,
       reschedule_fee,
       date_of_birth,
+      is_indexable,
     } = req.body;
 
     // Username is NOT editable here. Changes go through the gated, rate-limited
@@ -463,6 +468,13 @@ const updateProfile = async (req, res) => {
       if (rf !== 0 && rf !== 10) return res.status(400).json({ message: 'reschedule_fee must be 0 or 10' });
       updates.reschedule_fee = rf;
     }
+
+    // Host-facing search/Explore visibility (v3.19 column, previously admin-only).
+    // A host may hide THEIR OWN profile — e.g. a Chartered Accountant bound by ICAI
+    // solicitation rules. false → drops out of Explore, sitemap and prerendered HTML
+    // (noindex), all already keyed on is_indexable. Direct link still works. The
+    // admin SEO route is unchanged — this only lets a host set their own flag.
+    if (is_indexable !== undefined) updates.is_indexable = !!is_indexable;
 
     // A change to any field the OG share card renders marks it stale; the next
     // generateHostOgImages sweep regenerates. Safe to set on a 'none' row too:

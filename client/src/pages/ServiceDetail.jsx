@@ -465,6 +465,7 @@ const TRUST_SIGNALS = [
 ];
 
 const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown = { platformFee: 0, tax: 0 }, compact = false, motionOK = true }) => {
+  const priceOnRequest = service.price_on_request === true;
   const isFree = service.price === 0;
   const [feeTipOpen, setFeeTipOpen] = useState(false);
 
@@ -500,7 +501,9 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
       <div className="p-5">
         {/* Pricing — service price + platform fee & tax breakdown */}
         <div className="mb-1">
-          {isFree ? (
+          {priceOnRequest ? (
+            <div className="text-2xl font-black text-gray-900 leading-none">Price on request</div>
+          ) : isFree ? (
             <div className="text-3xl font-black text-gray-900 leading-none">Free</div>
           ) : (
             <>
@@ -1238,7 +1241,9 @@ export default function ServiceDetail() {
       {/* ── Mobile: sticky bottom CTA bar ── */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex items-center gap-3 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="relative flex-1 min-w-0">
-          {service.price === 0 ? (
+          {service.price_on_request === true ? (
+            <div className="text-base font-black text-gray-900 leading-none">Price on request</div>
+          ) : service.price === 0 ? (
             <div className="text-xl font-black text-gray-900 leading-none">Free</div>
           ) : (
             <>

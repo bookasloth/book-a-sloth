@@ -151,6 +151,8 @@ const updateProfileRules = [
   body('cover_image').optional({ checkFalsy: true }).trim()
     .isURL({ require_protocol: true, protocols: ['http', 'https'] }).withMessage('Invalid cover image URL')
     .isLength({ max: 2048 }).withMessage('Cover image URL too long'),
+  // Host-facing search/Explore visibility toggle (controller coerces to boolean).
+  body('is_indexable').optional().isBoolean().withMessage('is_indexable must be a boolean'),
 ];
 
 // ── Service validators ────────────────────────────────────────
@@ -184,6 +186,9 @@ const serviceWriteRules = [
   body('service_type').optional().isIn(['online', 'offline', 'hybrid']),
   body('type').optional().isIn(['one_on_one', 'group', 'paid_dm']),
   body('thumbnail_url').optional({ checkFalsy: true }).trim().isURL({ require_protocol: true, protocols: ['http', 'https'] }).withMessage('Invalid thumbnail URL'),
+  // Per-service "Price on request" — hides the fee publicly + books as a no-payment
+  // enquiry (host quotes offline). Controller coerces to boolean.
+  body('price_on_request').optional().isBoolean().withMessage('price_on_request must be a boolean'),
 ];
 
 module.exports = {

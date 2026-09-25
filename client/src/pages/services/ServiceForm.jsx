@@ -95,6 +95,7 @@ const empty = () => ({
   short_description: '',
   service_type: 'online',
   price: '',
+  price_on_request: false,
   duration: 30,
   custom_duration: '',
   grace_period: 0,
@@ -482,6 +483,7 @@ export default function ServiceForm({ initialData, serviceId }) {
         short_description: initialData.short_description || initialData.description || '',
         service_type:      initialData.meeting_mode || initialData.service_type || 'online',
         price:             initialData.price ?? '',
+        price_on_request:  initialData.price_on_request === true,
         duration:          DURATIONS.find(d => d.value === initialData.duration) ? initialData.duration : 0,
         custom_duration:   DURATIONS.find(d => d.value === initialData.duration) ? '' : String(initialData.duration || ''),
         grace_period:      initialData.grace_period_minutes ?? initialData.grace_period ?? 0,
@@ -564,10 +566,12 @@ export default function ServiceForm({ initialData, serviceId }) {
     e.preventDefault();
     if (!form.title.trim()) { toast.error('Title is required'); return; }
     if (!form.short_description.trim()) { toast.error('Short description is required'); return; }
-    if (!feeOnly && !form.price && form.price !== 0) { toast.error('Price is required'); return; }
+    // "Price on request" services quote offline, so the price field is optional
+    // and the minimum-price floor doesn't apply (they book as a no-payment enquiry).
+    if (!feeOnly && !form.price_on_request && !form.price && form.price !== 0) { toast.error('Price is required'); return; }
     // Minimum paid-service price on non-Supreme plans (₹0 free is fine; Supreme exempt).
     const priceNum = parseFloat(form.price) || 0;
-    if (!feeOnly && normalizePlan(user?.plan) !== 'supreme' && priceNum > 0 && priceNum < MIN_SERVICE_PRICE) {
+    if (!feeOnly && !form.price_on_request && normalizePlan(user?.plan) !== 'supreme' && priceNum > 0 && priceNum < MIN_SERVICE_PRICE) {
       toast.error(`Paid services must be at least ₹${MIN_SERVICE_PRICE}. Set a higher price, or make it free (₹0).`);
       return;
     }
@@ -597,6 +601,7 @@ export default function ServiceForm({ initialData, serviceId }) {
         service_type:      form.service_type,
         meeting_mode:      form.service_type,
         price:             feeOnly ? 0 : (parseFloat(form.price) || 0),
+        price_on_request:  !!form.price_on_request,
         duration:          effectiveDuration,
         grace_period:      form.grace_period,
         grace_period_minutes: form.grace_period,
@@ -767,12 +772,28 @@ export default function ServiceForm({ initialData, serviceId }) {
               ) : (
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 font-medium text-gray-500">₹</span>
-                  <Input type="number" min={0} step={1} required value={form.price} onChange={e => set('price', e.target.value)} placeholder="1999" className="pl-7" />
+                  <Input type="number" min={0} step={1} required={!form.price_on_request} disabled={form.price_on_request} value={form.price} onChange={e => set('price', e.target.value)} placeholder="1999" className="pl-7" />
                 </div>
               )}
-              {!feeOnly && (
+              {!feeOnly && !form.price_on_request && (
                 <PriceBenchmark category={form.category || undefined} onPick={(v) => set('price', String(v))} />
               )}
+
+              {/* Price on request — hide the fee publicly; guests book a no-payment
+                  enquiry and the host quotes offline. For professionals who can't
+                  advertise fees (e.g. Chartered Accountants under ICAI rules). */}
+              <label className="mt-2 flex cursor-pointer items-start gap-2">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300"
+                  checked={form.price_on_request}
+                  onChange={e => set('price_on_request', e.target.checked)}
+                />
+                <span className="text-xs text-gray-500">
+                  <span className="font-medium text-gray-700">Price on request</span> — hide the fee on your public
+                  page. Guests book without paying and you discuss the price with them directly.
+                </span>
+              </label>
             </div>
           </div>
 

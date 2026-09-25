@@ -197,6 +197,7 @@ const ProfileSetup = () => {
     theme_color: DEFAULT_THEME_COLOR,
     reschedule_fee: 0,
     date_of_birth: "",
+    is_indexable: true, // listed in Explore + search by default
     social_links: {
       instagram: "", youtube: "", linkedin: "", facebook: "",
       twitter: "", whatsapp: "", website: "", github: "", email: "",
@@ -222,6 +223,7 @@ const ProfileSetup = () => {
         theme_color:    user.theme_color || DEFAULT_THEME_COLOR,
         reschedule_fee: Number(user.reschedule_fee ?? 0),
         date_of_birth:  user.date_of_birth || "",
+        is_indexable:   user.is_indexable !== false, // default listed unless explicitly hidden
         social_links: {
           instagram: sl.instagram || "",
           youtube:   sl.youtube   || "",
@@ -641,6 +643,29 @@ const ProfileSetup = () => {
                 >
                   <option value={0}>Free (₹0)</option>
                   <option value={10}>₹10 per reschedule (from the 2nd)</option>
+                </Select>
+              </FormField>
+            </Card>
+
+            {/* Discovery & privacy — a host can hide their own profile from Explore
+                and search engines. Direct booking link still works; useful for
+                professionals bound by advertising/solicitation rules (e.g. ICAI
+                for Chartered Accountants). Defaults to Listed. */}
+            <Card padded={false} className="p-5">
+              <h3 className="mb-3 text-sm font-semibold text-gray-900">Discovery &amp; Privacy</h3>
+              <FormField
+                label="Profile visibility"
+                htmlFor="is_indexable"
+                hint="Hidden removes you from Explore, on-site search and search engines (noindex). Your booking link keeps working — anyone you share it with can still book you."
+                className="mb-0"
+              >
+                <Select
+                  id="is_indexable"
+                  value={form.is_indexable ? 'listed' : 'hidden'}
+                  onChange={(e) => { setForm({ ...form, is_indexable: e.target.value === 'listed' }); setDirty(true); }}
+                >
+                  <option value="listed">Listed — discoverable in Explore &amp; search (default)</option>
+                  <option value="hidden">Hidden — reachable only by direct link</option>
                 </Select>
               </FormField>
             </Card>
