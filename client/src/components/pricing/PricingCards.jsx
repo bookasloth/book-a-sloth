@@ -174,7 +174,7 @@ export default function PricingCards() {
           <p className="mt-1 text-xs text-neutral-400">
             {yearly
               ? `billed ₹${PREMIUM_PLAN.yearly.toLocaleString("en-IN")}/year · under ${PREMIUM_PER_DAY} a day · incl. GST`
-              : `or ₹${PREMIUM_PLAN.yearly.toLocaleString("en-IN")}/year — save ${PREMIUM_ANNUAL_SAVE_PCT}% · incl. GST`}
+              : `or ₹${PREMIUM_PLAN.yearly.toLocaleString("en-IN")}/year · incl. GST`}
           </p>
           <Link
             to={ROUTE_START}
