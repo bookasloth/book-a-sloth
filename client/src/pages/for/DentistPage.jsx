@@ -121,21 +121,16 @@ const DENTIST_TESTIMONIALS = [
   { name: 'Dr. Ananya Gupta', role: 'Bright Smile, Delhi', quote: 'The WhatsApp reminders alone save us hours every week that we used to spend chasing confirmations.' },
 ];
 
-const OLD_WAY = [
-  { icon: Phone, title: 'Front desk on the phone all day', desc: 'Patients call to book, reschedule and confirm.' },
-  { icon: Clock3, title: 'No-shows leave chairs empty', desc: 'A missed slot is time the clinic cannot recover.' },
-  { icon: Wallet, title: 'Fees collected on the day', desc: 'Payment chased at the counter, records on paper.' },
-  { icon: FileText, title: 'Details scattered', desc: 'Patient notes across registers, calls and chat.' },
-  { icon: X, title: 'Double-booked slots', desc: 'Two patients penciled into the same time by hand.' },
+// Real impact, real numbers — ditto layout, dental content.
+const IMPACT_STATS = [
+  { value: '0%', desc: 'Commission on Sloth Active — every consult fee stays with the practice.', icon: BadgePercent },
+  { value: '< 5 min', desc: 'To set up your services and put a booking page in front of patients.', icon: Sparkles },
+  { value: '24/7', desc: 'Patients book or reschedule any time — no calls, no front-desk queue.', icon: CalendarCheck },
 ];
 
-const NEW_WAY = [
-  { icon: Share2, title: 'One booking link', desc: 'Share it with your patients; they pick a slot themselves, 24/7.' },
-  { icon: BellRing, title: 'Automatic reminders', desc: 'WhatsApp and email reminders cut no-shows.' },
-  { icon: IndianRupee, title: 'Fees online, upfront', desc: 'Optionally take the consult fee at booking, over UPI or card.' },
-  { icon: LayoutDashboard, title: 'Every patient on record', desc: 'Appointments, history and notes in one diary.' },
-  { icon: CalendarCheck, title: 'Conflict-free diary', desc: 'Availability stays accurate — no double bookings.' },
-];
+// The Book A Sloth difference — with / without comparison (ditto layout).
+const WITHOUT = ['Phone ringing all day to book a slot', 'No-shows leave chairs empty', 'Fees chased at the counter', 'Reminders sent by hand, one by one'];
+const WITH_BAS = ['Patients pick a slot themselves', 'Automatic reminders cut no-shows', 'Consult fee collected upfront', 'WhatsApp reminders sent for you'];
 
 // Honest trust strip — verifiable facts only, health-data tuned.
 const TRUST_STRIP = [
@@ -638,31 +633,39 @@ export default function DentistPage() {
         </div>
       </section>
 
-      {/* ═══════════════ 6 · IMPACT (clinical stat row) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
-        <div className="mx-auto max-w-6xl">
+      {/* ═══════════════ 6 · REAL IMPACT, REAL NUMBERS (ditto layout) ═══════════════ */}
+      <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
+        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(60% 50% at 50% 0%, color-mix(in srgb, var(--ca-primary) 10%, transparent), transparent)' }} />
+        <div className="relative mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Real impact for <span style={{ color: 'var(--ca-primary)' }}>your practice.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">Fewer calls, fewer no-shows — and every rupee you earn stays yours.</Reveal>
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Real impact, <span style={{ color: 'var(--ca-primary)' }}>real numbers.</span></Reveal>
+            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">Small stats, big difference — what actually changes when your clinic goes live with Book A Sloth.</Reveal>
           </div>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { v: '24/7', l: 'Online booking', note: 'Patients reserve slots any time.' },
-              { v: '100%', l: 'Kept on Active', note: '0% commission on Sloth Active.' },
-              { v: '₹0', l: 'To get started', note: 'Free forever, no card.' },
-              { v: 'GST', l: 'Auto invoices', note: 'For every paid booking.' },
-            ].map((s, i) => (
-              <Reveal key={s.l} delay={i * 0.06}>
-                <div className="h-full rounded-[16px] border border-black/[0.06] bg-white p-7 text-center">
-                  <div className="font-heading text-5xl font-extrabold tracking-tight" style={{ color: 'var(--ca-primary)' }}>{s.v}</div>
-                  <div className="mt-3 font-heading text-sm font-bold text-[color:var(--ca-ink)]">{s.l}</div>
-                  <p className="mt-1 text-xs text-neutral-500">{s.note}</p>
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-6 lg:[grid-auto-rows:1fr]">
+            {IMPACT_STATS.map((s, i) => (
+              <Reveal key={s.value} delay={i * 0.08} className="lg:col-span-2">
+                <div className="group flex h-full flex-col overflow-hidden rounded-[16px] border border-black/[0.06] bg-white p-7 shadow-[0_2px_6px_rgba(14,116,144,0.04),0_16px_32px_rgba(14,116,144,0.07)] transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--ca-primary)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-heading text-4xl font-extrabold leading-none tracking-tight sm:text-5xl" style={{ color: 'var(--ca-ink)' }}>{s.value}</p>
+                    <span className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110" style={{ background: 'rgba(14,116,144,0.1)', color: 'var(--ca-primary)' }}><s.icon size={20} /></span>
+                  </div>
+                  <p className="mt-5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
                 </div>
               </Reveal>
             ))}
           </div>
+          <Reveal delay={0.12} className="mt-6">
+            <div className="relative overflow-hidden rounded-[20px] p-8 text-white sm:p-10" style={{ background: 'linear-gradient(140deg, var(--ca-primary), var(--ca-ink))' }}>
+              <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--ca-accent) 40%, transparent), transparent 70%)' }} />
+              <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+                <div>
+                  <h3 className="font-heading text-xl font-bold sm:text-2xl">Join the clinics that never chase a booking.</h3>
+                  <p className="mt-2 max-w-xl text-white/75">Book more, no-show less, and keep your chair full — one simple page.</p>
+                </div>
+                <Link to={START} className="inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>Create your free page <ArrowRight size={16} /></Link>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -707,45 +710,36 @@ export default function DentistPage() {
         </div>
       </section>
 
-      {/* ═══════════════ 8 · OLD WAY vs BOOK A SLOTH ═══════════════ */}
+      {/* ═══════════════ 8 · THE BOOK A SLOTH DIFFERENCE (ditto with / without) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" delay={0.05} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              The old way vs <span style={{ color: 'var(--ca-primary)' }}>a calmer front desk.</span>
-            </Reveal>
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">The <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth</span> difference.</Reveal>
+            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">See how booking an appointment changes with and without Book A Sloth.</Reveal>
           </div>
-          <div className="mt-14 grid items-stretch gap-5 lg:grid-cols-2 sm:gap-6">
-            <Reveal className="h-full">
-              <div className="flex h-full flex-col rounded-[20px] border border-black/[0.06] bg-white p-6 sm:p-8">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#DC2626' }}><X size={20} /></span>
-                  <h3 className="font-heading text-lg font-bold text-neutral-500">The old way</h3>
-                </div>
-                <div className="mt-6 flex flex-col gap-5">
-                  {OLD_WAY.map((item) => (
-                    <div key={item.title} className="flex gap-3.5">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(239,68,68,0.08)', color: '#DC2626' }}><item.icon size={18} /></span>
-                      <div><p className="font-heading text-[15px] font-semibold text-neutral-700">{item.title}</p><p className="mt-0.5 text-sm leading-relaxed text-neutral-500">{item.desc}</p></div>
-                    </div>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            <Reveal>
+              <div className="h-full rounded-[16px] border border-black/[0.06] bg-white p-7">
+                <div className="text-sm font-bold uppercase tracking-wide text-neutral-400">Without Book A Sloth</div>
+                <ul className="mt-5 space-y-3.5">
+                  {WITHOUT.map((w) => (
+                    <li key={w} className="flex items-start gap-3 text-[15px] text-neutral-500">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-400"><X size={13} /></span>{w}
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             </Reveal>
-            <Reveal delay={0.08} className="h-full">
-              <div className="flex h-full flex-col rounded-[20px] border-2 bg-white p-6 sm:p-8" style={{ borderColor: 'rgba(14,116,144,0.4)', boxShadow: '0 12px 40px -18px rgba(14,116,144,0.5)' }}>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(14,116,144,0.14)', color: 'var(--ca-primary)' }}><Check size={20} /></span>
-                  <h3 className="font-heading text-lg font-bold" style={{ color: 'var(--ca-ink)' }}>With Book A Sloth</h3>
-                </div>
-                <div className="mt-6 flex flex-col gap-5">
-                  {NEW_WAY.map((item) => (
-                    <div key={item.title} className="flex gap-3.5">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(14,116,144,0.12)', color: 'var(--ca-primary)' }}><item.icon size={18} /></span>
-                      <div><p className="font-heading text-[15px] font-semibold" style={{ color: 'var(--ca-ink)' }}>{item.title}</p><p className="mt-0.5 text-sm leading-relaxed text-neutral-600">{item.desc}</p></div>
-                    </div>
+            <Reveal delay={0.08}>
+              <div className="h-full rounded-[16px] border-2 p-7 shadow-[0_20px_45px_-24px_rgba(14,116,144,0.5)]" style={{ borderColor: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 5%, white)' }}>
+                <div className="text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--ca-primary)' }}>With Book A Sloth</div>
+                <ul className="mt-5 space-y-3.5">
+                  {WITH_BAS.map((w) => (
+                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-[color:var(--ca-ink)]">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--ca-primary)' }}><Check size={13} /></span>{w}
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             </Reveal>
           </div>
