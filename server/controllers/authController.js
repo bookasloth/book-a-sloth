@@ -254,8 +254,12 @@ const ensureGuestProfile = async (email, name = "Guest") => {
     // Fire-and-forget: NotificationEngine never throws, and this must never slow
     // or block OTP delivery / the booking. Phone-only guests (no email) never
     // reach here — ensureGuestProfile returns null before this.
+    // require() synchronously (not inside the deferred callback) so it resolves
+    // before any Jest teardown — a lazy require inside runInBackground would run
+    // after the test env is torn down and throw.
+    const notify = require("../services/notificationEngine");
     runInBackground("guest-welcome", () =>
-      require("../services/notificationEngine").send({
+      notify.send({
         event: "GUEST_WELCOME",
         data: {
           email: normalizedEmail,
@@ -372,8 +376,10 @@ const registerVendor = async (req, res) => {
     // Brand-new host (email/password path) → same VENDOR_WELCOME the Google host
     // path sends. This door is effectively unused in prod (host login is Google-only)
     // but closing the gap keeps every host-signup route consistent. Fire-and-forget.
+    // require() synchronously so it resolves before any Jest teardown.
+    const notifyHost = require("../services/notificationEngine");
     runInBackground("vendor-welcome", () =>
-      require("../services/notificationEngine").send({
+      notifyHost.send({
         event: "VENDOR_WELCOME",
         data: {
           email: profile.email,
@@ -782,8 +788,10 @@ const registerUser = async (req, res) => {
 
     // Brand-new guest (email/password path) → founder welcome. Fire-and-forget;
     // never blocks the signup response. (The OTP path is covered in ensureGuestProfile.)
+    // require() synchronously so it resolves before any Jest teardown.
+    const notifyGuest = require("../services/notificationEngine");
     runInBackground("guest-welcome", () =>
-      require("../services/notificationEngine").send({
+      notifyGuest.send({
         event: "GUEST_WELCOME",
         data: {
           email: profile.email,
