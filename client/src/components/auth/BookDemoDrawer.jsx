@@ -11,8 +11,33 @@ import { sendBeASlothOtp, submitBeASlothLead } from '../../services/api';
 const EMPTY = { name: '', phone: '', profession: '', company_hp: '' };
 
 const inputCls =
-  'w-full rounded-[8px] border border-black/10 bg-white px-3.5 py-3 text-sm text-ink ' +
+  'w-full rounded-[3px] border border-black/10 bg-white px-3.5 py-3 text-sm text-ink ' +
   'outline-none transition-colors placeholder:text-gray-400 focus:border-primary-cta focus:ring-2 focus:ring-primary-cta/20';
+
+// Short value props in the dark hero band: one small icon + one headline each.
+const HERO_POINTS = [
+  {
+    hue: '#3b82f6',
+    label: 'Live product walkthrough',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="m10 8 5 3-5 3V8Z" /><path d="M8 21h8M12 17v4" /></svg>
+    ),
+  },
+  {
+    hue: '#10b981',
+    label: 'Tailored to your work',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 9.5 8.5 4 11l5.5 2.5L12 19l2.5-5.5L20 11l-5.5-2.5L12 3Z" /></svg>
+    ),
+  },
+  {
+    hue: '#f59e0b',
+    label: 'Free · no commitment',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
+    ),
+  },
+];
 
 export default function BookDemoDrawer({ open, onClose }) {
   const [step, setStep] = useState('form');   // 'form' | 'otp' | 'done'
@@ -103,16 +128,24 @@ export default function BookDemoDrawer({ open, onClose }) {
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
 
-        <div className="relative flex items-center gap-3.5 pr-10">
-          <span
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] ring-1 ring-white/10"
-            style={{ backgroundColor: '#2563eb26', color: '#3b82f6' }}
-          >
-            <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="m10 8 5 3-5 3V8Z" /><path d="M8 21h8M12 17v4" /></svg>
-          </span>
+        <div className="relative pr-10">
           <h2 className="font-heading text-lg font-bold leading-tight tracking-tight text-white">
             See Book A Sloth in action
           </h2>
+
+          <ul className="mt-4 space-y-3">
+            {HERO_POINTS.map((p) => (
+              <li key={p.label} className="flex items-center gap-3">
+                <span
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-[8px] ring-1 ring-white/10"
+                  style={{ backgroundColor: `${p.hue}26`, color: p.hue }}
+                >
+                  {p.icon}
+                </span>
+                <span className="text-[13px] font-semibold text-white/90">{p.label}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
@@ -146,7 +179,7 @@ export default function BookDemoDrawer({ open, onClose }) {
             <button
               type="submit"
               disabled={busy}
-              className="btn mt-2 flex w-full items-center justify-center gap-2 rounded-full border-2 border-primary-cta bg-primary-cta py-3 text-sm font-semibold text-white transition-colors hover:bg-black hover:text-primary-cta disabled:opacity-50"
+              className="btn mt-2 flex w-full items-center justify-center gap-2 rounded-[3px] border-2 border-primary-cta bg-primary-cta py-3 text-sm font-semibold text-white transition-colors hover:bg-black hover:text-primary-cta disabled:opacity-50"
             >
               {busy ? 'Sending code…' : 'Get my free demo'}
             </button>
@@ -186,7 +219,7 @@ export default function BookDemoDrawer({ open, onClose }) {
             <button
               type="submit"
               disabled={busy}
-              className="btn flex w-full items-center justify-center gap-2 rounded-full border-2 border-primary-cta bg-primary-cta py-3 text-sm font-semibold text-white transition-colors hover:bg-black hover:text-primary-cta disabled:opacity-50"
+              className="btn flex w-full items-center justify-center gap-2 rounded-[3px] border-2 border-primary-cta bg-primary-cta py-3 text-sm font-semibold text-white transition-colors hover:bg-black hover:text-primary-cta disabled:opacity-50"
             >
               {busy ? 'Verifying…' : 'Verify & book demo'}
             </button>
@@ -214,7 +247,7 @@ export default function BookDemoDrawer({ open, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="btn mt-6 rounded-full border-2 border-ink bg-ink px-7 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="btn mt-6 rounded-[3px] border-2 border-ink bg-ink px-7 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
               Done
             </button>
