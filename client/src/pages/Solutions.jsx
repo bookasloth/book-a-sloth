@@ -28,6 +28,7 @@ const CATEGORIES = [
   { icon: Compass,       label: 'Architects & Designers',     sub: 'Architecture & Interior Design Studios', to: '/for/architects' },
   { icon: Scale,         label: 'Lawyers & Advocates',        sub: 'Legal & Litigation Experts',            to: '/for/lawyers' },
   { icon: Calculator,    label: 'Chartered Accountants',      sub: 'Tax, GST & Financial Experts',          to: '/for/chartered-accountants' },
+  { icon: Zap,           label: 'Sports & Turf',              sub: 'Turf, Box Cricket & Court Owners',      to: '/for/sports-turf' },
   { icon: Stethoscope,   label: 'Doctors & Clinics',          sub: 'Healthcare Professionals',              to: '/for/doctors' },
   { icon: Smile,         label: 'Dentists & Clinics',         sub: 'Dental & Orthodontic Care',             to: '/for/dentists' },
   { icon: BarChart3,     label: 'Business Consultants',       sub: 'Advisors & Growth Experts',             to: '/for/business-consultant' },

@@ -102,6 +102,7 @@ const PRERENDER_ROUTES = [
   '/for/astrologers',
   '/for/architects',
   '/for/dentists',
+  '/for/sports-turf',
   '/for/lawyers',
   '/for/chartered-accountants',
   '/for/doctors',
