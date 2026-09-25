@@ -122,6 +122,17 @@ const WHY = [
   { icon: Lock, title: 'Private & Secure', desc: 'Sessions and client details stay confidential; payments are Razorpay-secured.' },
 ];
 
+// Real Impact stat cards — honest, verifiable (no fabricated client counts).
+const IMPACT_STATS = [
+  { value: '0%', desc: 'Commission on Sloth Active — you keep every rupee you earn.', icon: BadgePercent },
+  { value: '< 5 min', desc: 'To set up your services and go live with your own page.', icon: Sparkles },
+  { value: '24/7', desc: 'Seekers book a reading any time — no phone, no waiting.', icon: CalendarCheck },
+];
+
+// The Book A Sloth difference — with / without comparison.
+const WITHOUT = ['Endless DMs just to fix a time', 'No-shows quietly waste your day', 'Chasing the fee after the reading', 'Reminders sent by hand, one by one'];
+const WITH_BAS = ['Seekers pick a slot themselves', 'Paid upfront — no more no-shows', 'Fee collected before you begin', 'Automatic WhatsApp reminders'];
+
 // Honest trust strip — verifiable facts, NOT fabricated client/reading counts.
 const TRUST_STRIP = [
   { icon: BadgePercent, value: '0%', label: 'Commission on Sloth Active — keep every rupee' },
@@ -876,6 +887,42 @@ export default function Astrologers() {
         </div>
       </section>
 
+      {/* ═══════════════ 7b · REAL IMPACT, REAL NUMBERS ═══════════════ */}
+      <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-28">
+        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(60% 50% at 50% 0%, color-mix(in srgb, var(--as-gold) 12%, transparent), transparent)' }} />
+        <div className="relative mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">Real impact, <span style={{ color: 'var(--as-secondary)' }}>real numbers.</span></Reveal>
+            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">Small stats, big difference — what actually changes when you go live with Book A Sloth.</Reveal>
+          </div>
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-6 lg:[grid-auto-rows:1fr]">
+            {IMPACT_STATS.map((s, i) => (
+              <Reveal key={s.value} delay={i * 0.08} className="lg:col-span-2">
+                <div className="group flex h-full flex-col overflow-hidden rounded-[16px] border border-[color:var(--as-line)] bg-white p-7 shadow-[0_2px_6px_rgba(47,35,115,0.04),0_16px_32px_rgba(47,35,115,0.07)] transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--as-secondary)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-4xl font-bold leading-none sm:text-5xl" style={{ color: 'var(--as-ink)' }}>{s.value}</p>
+                    <span className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110" style={{ background: 'var(--as-lavender)', color: 'var(--as-secondary)' }}><s.icon size={20} /></span>
+                  </div>
+                  <p className="mt-5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal delay={0.12} className="mt-6">
+            <div className="relative overflow-hidden rounded-[20px] p-8 text-white sm:p-10" style={{ background: 'linear-gradient(140deg, var(--as-primary), var(--as-deep))' }}>
+              <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--as-gold) 30%, transparent), transparent 70%)' }} />
+              <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+                <div>
+                  <h3 className="text-xl font-bold sm:text-2xl">Join the astrologers who never miss a reading.</h3>
+                  <p className="mt-2 max-w-xl text-white/75">Book more, no-show less, and keep your charts full — one simple page.</p>
+                </div>
+                <Link to={START} className="inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ color: 'var(--as-primary)' }}>Create your free page <ArrowRight size={16} /></Link>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ═══════════════ 8 · TESTIMONIALS (rotating columns) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
@@ -889,6 +936,42 @@ export default function Astrologers() {
             {[0, 1, 2].map((col) => (
               <TestimonialColumn key={col} items={[TESTIMONIALS[col], TESTIMONIALS[col + 3]].filter(Boolean)} className={col === 2 ? 'hidden lg:block' : col === 1 ? 'hidden sm:block' : ''} />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 8b · THE BOOK A SLOTH DIFFERENCE (with / without) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">The <span style={{ color: 'var(--as-secondary)' }}>Book A Sloth</span> difference.</Reveal>
+            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">See how booking a consultation changes with and without Book A Sloth.</Reveal>
+          </div>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            <Reveal>
+              <div className="h-full rounded-[16px] border border-[color:var(--as-line)] bg-white p-7">
+                <div className="text-sm font-bold uppercase tracking-wide text-neutral-400">Without Book A Sloth</div>
+                <ul className="mt-5 space-y-3.5">
+                  {WITHOUT.map((w) => (
+                    <li key={w} className="flex items-start gap-3 text-[15px] text-neutral-500">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-400"><X size={13} /></span>{w}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <div className="h-full rounded-[16px] border-2 p-7 shadow-[0_20px_45px_-24px_rgba(107,92,231,0.5)]" style={{ borderColor: 'var(--as-secondary)', background: 'color-mix(in srgb, var(--as-secondary) 5%, white)' }}>
+                <div className="text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--as-secondary)' }}>With Book A Sloth</div>
+                <ul className="mt-5 space-y-3.5">
+                  {WITH_BAS.map((w) => (
+                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-[color:var(--as-ink)]">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--as-secondary)' }}><Check size={13} /></span>{w}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
