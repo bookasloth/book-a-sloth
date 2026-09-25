@@ -939,17 +939,20 @@ export default function CharteredAccountants() {
         </div>
       </section>
 
-      {/* ═══════════════ 8 · WHY BOOK A SLOTH ═══════════════ */}
+      {/* ═══════════════ 8 · THE BOOK A SLOTH DIFFERENCE ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" delay={0.05} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="p" className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]" style={{ background: 'color-mix(in srgb, var(--ca-primary) 12%, white)', color: 'var(--ca-primary)' }}>The Difference</Reveal>
+            <Reveal as="h2" delay={0.05} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               The old way vs <span style={{ color: 'var(--ca-primary)' }}>a better way to run your practice.</span>
             </Reveal>
           </div>
 
-          <div className="mt-14 grid items-stretch gap-5 lg:grid-cols-2 sm:gap-6">
-            {/* The old way */}
+          <div className="relative mt-14 grid items-stretch gap-5 lg:grid-cols-2 sm:gap-6">
+            <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-10 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 font-heading text-sm font-extrabold shadow-lg lg:flex" style={{ borderColor: 'var(--ca-grey)', background: '#ffffff', color: 'var(--ca-primary)' }}>VS</div>
+
+            {/* The old way — white */}
             <Reveal className="h-full">
               <div className="flex h-full flex-col rounded-[20px] border border-black/[0.06] bg-white p-6 sm:p-8">
                 <div className="flex items-center gap-3">
@@ -974,24 +977,25 @@ export default function CharteredAccountants() {
               </div>
             </Reveal>
 
-            {/* With Book A Sloth */}
+            {/* With Book A Sloth — CA-blue gradient */}
             <Reveal delay={0.08} className="h-full">
-              <div className="flex h-full flex-col rounded-[20px] border-2 bg-white p-6 sm:p-8" style={{ borderColor: 'rgba(97,193,85,0.4)', boxShadow: '0 12px 40px -18px rgba(97,193,85,0.5)' }}>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(97,193,85,0.14)', color: 'var(--ca-accent)' }}>
+              <div className="relative flex h-full flex-col overflow-hidden rounded-[20px] p-6 text-white shadow-[0_24px_60px_-24px_rgba(18,100,143,0.6)] sm:p-8" style={{ background: 'linear-gradient(150deg, var(--ca-primary), var(--ca-ink))' }}>
+                <div aria-hidden className="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%)' }} />
+                <div className="relative flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white">
                     <Check size={20} />
                   </span>
-                  <h3 className="font-heading text-lg font-bold" style={{ color: 'var(--ca-ink)' }}>With Book A Sloth</h3>
+                  <h3 className="font-heading text-lg font-bold text-white">With Book A Sloth</h3>
                 </div>
-                <div className="mt-6 flex flex-col gap-5">
+                <div className="relative mt-6 flex flex-col gap-5">
                   {NEW_WAY.map((item) => (
                     <div key={item.title} className="flex gap-3.5">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(97,193,85,0.12)', color: 'var(--ca-accent)' }}>
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
                         <item.icon size={18} />
                       </span>
                       <div>
-                        <p className="font-heading text-[15px] font-semibold" style={{ color: 'var(--ca-ink)' }}>{item.title}</p>
-                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-600">{item.desc}</p>
+                        <p className="font-heading text-[15px] font-semibold text-white">{item.title}</p>
+                        <p className="mt-0.5 text-sm leading-relaxed text-white/80">{item.desc}</p>
                       </div>
                     </div>
                   ))}

@@ -673,6 +673,7 @@ export default function DentistPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="p" className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]" style={{ background: 'color-mix(in srgb, var(--ca-primary) 12%, white)', color: 'var(--ca-primary)' }}>The Difference</Reveal>
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">The <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth</span> difference.</Reveal>
             <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">See how booking an appointment changes with and without Book A Sloth.</Reveal>
           </div>
@@ -691,12 +692,13 @@ export default function DentistPage() {
               </div>
             </Reveal>
             <Reveal delay={0.08}>
-              <div className="h-full rounded-[16px] border-2 p-7 shadow-[0_20px_45px_-24px_rgba(14,116,144,0.5)]" style={{ borderColor: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 5%, white)' }}>
-                <div className="text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--ca-primary)' }}>With Book A Sloth</div>
-                <ul className="mt-5 space-y-3.5">
+              <div className="relative h-full overflow-hidden rounded-[16px] p-7 text-white shadow-[0_24px_60px_-24px_rgba(14,116,144,0.6)]" style={{ background: 'linear-gradient(150deg, var(--ca-primary), var(--ca-ink))' }}>
+                <div aria-hidden className="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%)' }} />
+                <div className="relative text-sm font-bold uppercase tracking-wide text-white/80">With Book A Sloth</div>
+                <ul className="relative mt-5 space-y-3.5">
                   {WITH_BAS.map((w) => (
-                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-[color:var(--ca-ink)]">
-                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--ca-primary)' }}><Check size={13} /></span>{w}
+                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-white">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/20 text-white"><Check size={13} /></span>{w}
                     </li>
                   ))}
                 </ul>
