@@ -22,6 +22,7 @@ const ROUTES = [
 
   'earnings-calculator',
   'solutions', 'compare', // SEO discovery hubs — client /solutions + /compare routes
+  'appointment-booking-software', // SEO landing — client /appointment-booking-software route
   'sitemap', 'robots', 'health', 'manifest', 'favicon', 'get-in-touch',
 ];
 

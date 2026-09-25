@@ -81,6 +81,7 @@ const PRERENDER_ROUTES = [
   // internal links land in static HTML for non-JS crawlers.
   '/solutions',
   '/compare',
+  '/appointment-booking-software',
   // Marketing/event pages with bespoke OG cards — prerender so social scrapers
   // (which don't run JS) get the card + real title, not the default og:image.
   '/how-it-works',

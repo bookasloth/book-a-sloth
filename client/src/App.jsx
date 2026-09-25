@@ -81,6 +81,7 @@ const InviteLanding  = lazy(() => import('./pages/InviteLanding'));
 const HostLogin      = lazy(() => import('./pages/HostLogin'));
 const Changelog      = lazy(() => import('./pages/Changelog'));
 const Pricing        = lazy(() => import('./pages/Pricing'));
+const AppointmentBookingSoftware = lazy(() => import('./pages/AppointmentBookingSoftware'));
 const Blog           = lazy(() => import('./pages/Blog'));
 const Search         = lazy(() => import('./pages/Search'));
 const WallOfLove     = lazy(() => import('./pages/WallOfLove'));
@@ -413,6 +414,7 @@ function App() {
           <Route path="/help/docs/:slug" element={<HelpDoc />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/appointment-booking-software" element={<AppointmentBookingSoftware />} />
           <Route path="/search" element={<Search />} />
           <Route path="/wall-of-love" element={<WallOfLove />} />
           <Route path="/opening" element={<Opening />} />

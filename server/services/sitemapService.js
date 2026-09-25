@@ -71,6 +71,7 @@ const STATIC_ROUTES = [
   { path: '/explore',                  changefreq: 'daily',   priority: '0.9' },
   { path: '/be-a-sloth',               changefreq: 'weekly',  priority: '0.8' },
   { path: '/pricing',                  changefreq: 'monthly', priority: '0.7' },
+  { path: '/appointment-booking-software', changefreq: 'monthly', priority: '0.8' },
   { path: '/enterprise',               changefreq: 'monthly', priority: '0.7' },
   { path: '/about',                    changefreq: 'monthly', priority: '0.5' },
   // SEO discovery hubs — internally link every /for/* and /lp/* landing page.

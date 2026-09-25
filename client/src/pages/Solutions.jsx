@@ -209,6 +209,9 @@ export default function Solutions() {
             </Link>, or find a{' '}
             <Link to="/for/doctors-india" className="font-semibold text-ink underline underline-offset-2 hover:text-primary">
               doctor in India
+            </Link>, or see our{' '}
+            <Link to="/appointment-booking-software" className="font-semibold text-ink underline underline-offset-2 hover:text-primary">
+              appointment booking software
             </Link>.
           </p>
         </div>
