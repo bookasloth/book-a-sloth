@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Scale, Stethoscope, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
-  Camera, CalendarDays, Building2, UserCheck, Zap, ShieldCheck, Heart,
+  Camera, CalendarDays, Building2, UserCheck, Zap, ShieldCheck, Heart, Moon,
   Search, ArrowRight, PlayCircle,
 } from 'lucide-react';
 import Seo from '../components/common/Seo';
@@ -35,6 +35,7 @@ const CATEGORIES = [
   { icon: Camera,        label: 'Photographers',              sub: 'Photography & Videography',             to: '/for/photographers' },
   { icon: CalendarDays,  label: 'Event Organisers',           sub: 'Planners & Coordinators',               to: '/for/events' },
   { icon: Building2,     label: 'Agencies & Studios',         sub: 'Creative & Professional Teams',         to: '/for/agencies' },
+  { icon: Moon,          label: 'Astrologers & Consultants',  sub: 'Vedic, Tarot & Numerology',             to: '/for/astrologers' },
 ];
 
 const CHIPS = ['Career advice', 'Business growth', 'Fitness guidance', 'Creative support'];
