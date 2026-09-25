@@ -128,20 +128,52 @@ async function coldCircuitOpen() {
   return s.open;
 }
 
-// How many cold emails may go out right now = min(ramp, remainder), but only inside
-// the 18:00 window, not on a skip day, and not while the bounce breaker is open.
-// Fail-CLOSED on the budget count: a counting outage returns 0 so we never blast a
-// cold list into an unknown budget and burn reputation.
+// Cold emails already handed to the mailer today, read from campaign_recipients —
+// NOT from email_logs. This is the fix for the ramp overshoot: campaign emails are
+// enqueued into email_logs with sent_at=NULL and only get sent_at stamped LATER by
+// the async email-queue worker, so resendUsedToday() (which counts email_logs.sent_at)
+// under-reads during that lag. With cold firing every 60s, each tick then re-read
+// "~0 cold sent today" and re-granted the full COLD_DAILY_MAX — a 20/day ramp blasted
+// 104 in six minutes on 2026-09-24. campaign_recipients.sent_at, by contrast, is
+// stamped SYNCHRONOUSLY by campaignWorker.mark() the instant a row is handed off, so
+// counting it caps cold at COLD_DAILY_MAX per UTC day with no lag. Returns null on
+// error so coldAllowanceNow fails CLOSED. Counts ALL cold campaigns (layout='cold') —
+// they share one ramp.
+async function coldSentToday() {
+  try {
+    const since = utcDayStartISO();
+    const { data: cold, error: e1 } = await supabaseAdmin
+      .from('email_campaigns').select('id').eq('layout', 'cold');
+    if (e1) return null;
+    const ids = (cold || []).map((c) => c.id);
+    if (!ids.length) return 0;
+    const { count, error: e2 } = await supabaseAdmin
+      .from('campaign_recipients').select('id', { count: 'exact', head: true })
+      .in('campaign_id', ids).eq('channel', 'email').eq('status', 'sent')
+      .gte('sent_at', since);
+    if (e2) return null;
+    return count || 0;
+  } catch (_) { return null; }
+}
+
+// How many cold emails may go out right now = min(ramp − cold-already-sent-today,
+// remainder), but only inside the 18:00 window, not on a skip day, and not while the
+// bounce breaker is open. Fail-CLOSED on either count: a counting outage returns 0 so
+// we never blast a cold list into an unknown budget and burn reputation.
+// ponytail: the SOFT_CAP − used arm still reads the lagging email_logs, so cold + CRM
+// combined can briefly overshoot the soft cap under queue lag. Left as-is: it stays
+// under the hard 100 wall, CRM is fail-open by design, and the reputation-critical
+// bug was the cold RAMP, which coldSentToday now pins exactly.
 async function coldAllowanceNow() {
   if (coldSkipToday() || !coldWindowOpen()) return 0;
   if (await coldCircuitOpen()) return 0;
-  const used = await resendUsedToday();
-  if (used == null) return 0;
-  return Math.max(0, Math.min(COLD_DAILY_MAX, SOFT_CAP - used));
+  const [used, coldSent] = await Promise.all([resendUsedToday(), coldSentToday()]);
+  if (used == null || coldSent == null) return 0;
+  return Math.max(0, Math.min(COLD_DAILY_MAX - coldSent, SOFT_CAP - used));
 }
 
 module.exports = {
   resendUsedToday, remainingToday, coldAllowanceNow, coldWindowOpen, coldSkipToday,
-  coldBounceState, coldCircuitOpen,
+  coldBounceState, coldCircuitOpen, coldSentToday,
   HARD_CAP, SOFT_CAP, COLD_DAILY_MAX, COLD_SEND_HOUR, COLD_WINDOW_END,
 };
