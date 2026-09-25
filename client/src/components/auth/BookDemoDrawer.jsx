@@ -14,35 +14,6 @@ const inputCls =
   'w-full rounded-[8px] border border-black/10 bg-white px-3.5 py-3 text-sm text-ink ' +
   'outline-none transition-colors placeholder:text-gray-400 focus:border-primary-cta focus:ring-2 focus:ring-primary-cta/20';
 
-// Value props shown in the dark hero band. Each tile gets one accent hue,
-// matching the persona-grid pattern used across /be-a-sloth.
-const BENEFITS = [
-  {
-    hue: '#2563eb',
-    title: 'Live product walkthrough',
-    body: 'See real bookings, payments and calendar sync in action.',
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="m10 8 5 3-5 3V8Z" /><path d="M8 21h8M12 17v4" /></svg>
-    ),
-  },
-  {
-    hue: '#10b981',
-    title: 'Tailored to your work',
-    body: 'Tell us what you do — we shape the demo around it.',
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 9.5 8.5 4 11l5.5 2.5L12 19l2.5-5.5L20 11l-5.5-2.5L12 3Z" /></svg>
-    ),
-  },
-  {
-    hue: '#f59e0b',
-    title: 'No card, no commitment',
-    body: 'Free 30-minute session. Set up while we talk.',
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
-    ),
-  },
-];
-
 export default function BookDemoDrawer({ open, onClose }) {
   const [step, setStep] = useState('form');   // 'form' | 'otp' | 'done'
   const [form, setForm] = useState(EMPTY);
@@ -118,7 +89,7 @@ export default function BookDemoDrawer({ open, onClose }) {
     >
       {/* Dark hero band — value props, inspired by a two-panel demo modal but
           stacked to fit the narrow signup card. */}
-      <div className="relative shrink-0 overflow-hidden bg-ink px-7 pb-7 pt-6 text-white">
+      <div className="relative shrink-0 overflow-hidden bg-ink px-7 py-5 text-white">
         {/* soft accent washes */}
         <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-primary-cta/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 left-8 h-40 w-40 rounded-full bg-c-blue/20 blur-3xl" />
@@ -132,31 +103,16 @@ export default function BookDemoDrawer({ open, onClose }) {
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
 
-        <div className="relative">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary-cta">Book a demo</p>
-          <h2 className="mt-2 font-heading text-[22px] font-bold leading-tight tracking-tight text-white">
+        <div className="relative flex items-center gap-3.5 pr-10">
+          <span
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] ring-1 ring-white/10"
+            style={{ backgroundColor: '#2563eb26', color: '#3b82f6' }}
+          >
+            <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="m10 8 5 3-5 3V8Z" /><path d="M8 21h8M12 17v4" /></svg>
+          </span>
+          <h2 className="font-heading text-lg font-bold leading-tight tracking-tight text-white">
             See Book A Sloth in action
           </h2>
-          <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-white/60">
-            Tell us what you do and our team walks you through a personalised demo.
-          </p>
-
-          <ul className={`mt-6 space-y-4 ${step === 'form' ? '' : 'hidden'}`}>
-            {BENEFITS.map((b) => (
-              <li key={b.title} className="flex items-center gap-3.5">
-                <span
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] ring-1 ring-white/10"
-                  style={{ backgroundColor: `${b.hue}26`, color: b.hue }}
-                >
-                  {b.icon}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold leading-tight">{b.title}</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-white/55">{b.body}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
 
