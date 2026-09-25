@@ -199,71 +199,12 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
   );
 }
 
-/* Hero clinic "today" card — a calm, mascot-less clinical mock (pure CSS/JSX). */
-function ClinicDayCard() {
-  const rows = [
-    { t: '10:30', name: 'Ananya S.', svc: 'Cleaning & Polishing', paid: true },
-    { t: '12:00', name: 'Rahul M.', svc: 'Root Canal Consult', paid: true },
-    { t: '4:15', name: 'Priya K.', svc: 'Routine Check-up', paid: false },
-  ];
-  return (
-    <div className="relative mx-auto w-full max-w-md">
-      <div className="overflow-hidden rounded-[16px] bg-white shadow-[0_40px_90px_-40px_rgba(14,116,144,0.45)] ring-1 ring-black/[0.06]">
-        <div className="flex items-center justify-between border-b border-black/5 px-5 py-3.5" style={{ background: 'var(--ca-cream)' }}>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>BS</span>
-            <div className="leading-tight">
-              <div className="text-[13px] font-bold text-[color:var(--ca-ink)]">Bright Smile Dental</div>
-              <div className="text-[10px] text-neutral-600">Today · Tue</div>
-            </div>
-          </div>
-          <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ background: 'rgba(13,148,136,0.12)', color: 'var(--ca-accent)' }}>3 appointments</span>
-        </div>
-        <div className="grid grid-cols-3 gap-px bg-black/5">
-          {[{ v: '3', l: 'Today' }, { v: '18', l: 'This week' }, { v: '2', l: 'Open slots' }].map((s) => (
-            <div key={s.l} className="bg-white px-3 py-3 text-center">
-              <div className="font-heading text-xl font-extrabold text-[color:var(--ca-ink)]">{s.v}</div>
-              <div className="mt-0.5 text-[10px] text-neutral-500">{s.l}</div>
-            </div>
-          ))}
-        </div>
-        <div className="px-5 py-4">
-          <div className="mb-2.5 flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Today&apos;s appointments</span>
-            <span className="text-[10px] font-semibold" style={{ color: 'var(--ca-primary)' }}>View all</span>
-          </div>
-          <div className="space-y-2.5">
-            {rows.map((m) => (
-              <div key={m.t} className="flex items-center gap-3 rounded-[10px] border border-black/[0.06] bg-white px-3 py-2.5">
-                <div className="flex flex-col items-center rounded-lg px-2 py-1" style={{ background: 'var(--ca-grey)' }}>
-                  <span className="text-[11px] font-bold text-[color:var(--ca-ink)]">{m.t}</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[12px] font-bold text-[color:var(--ca-ink)]">{m.name}</div>
-                  <div className="truncate text-[10px] text-neutral-500">{m.svc}</div>
-                </div>
-                {m.paid
-                  ? <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background: 'rgba(13,148,136,0.12)', color: 'var(--ca-accent)' }}><Check size={9} /> Paid</span>
-                  : <span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background: 'var(--ca-cream)', color: 'var(--ca-primary)' }}>Confirmed</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="absolute -right-3 bottom-8 hidden rounded-2xl bg-white px-3 py-2.5 shadow-xl ring-1 ring-black/5 sm:block">
-        <div className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-500"><MessageCircle size={12} style={{ color: 'var(--ca-accent)' }} /> WhatsApp sent</div>
-        <div className="mt-0.5 text-[11px] font-bold text-[color:var(--ca-ink)]">Reminder · 1h before</div>
-      </div>
-    </div>
-  );
-}
-
 /* Use-case soft card — clean clinical tile: teal icon circle, title, desc.
    (A new variant: rounded/soft, uniform, no checkerboard/dark/list.) */
 function UseCaseCard({ u }) {
   return (
     <div className="group flex h-full flex-col rounded-[18px] border border-black/[0.06] bg-white p-6 transition-colors hover:border-[color:var(--ca-primary)]/30">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-300 group-hover:scale-[1.03]" style={{ background: 'rgba(14,116,144,0.1)', color: 'var(--ca-primary)' }}>
+      <span className="flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:rotate-[360deg]" style={{ background: 'rgba(14,116,144,0.1)', color: 'var(--ca-primary)' }}>
         <u.icon size={22} />
       </span>
       <h3 className="mt-5 font-heading text-[15px] font-bold text-[color:var(--ca-ink)]">{u.label}</h3>
@@ -346,19 +287,31 @@ function IntegrationHub() {
   );
 }
 
-/* Animated testimonials — reviewers on a soft arc (active one enlarged), with the
-   active quote in serif on the right. Auto-advances every 3.5s; click to select.
-   These are CLINIC-OWNER reviews of the software, not patient reviews. */
+/* Testimonials — a 3-of-N window on the left (prev / active / next), active quote
+   in serif on the right. Auto-advances every 3s; a click selects and pauses, then
+   motion resumes after 5s idle. CLINIC-OWNER reviews of the software, not patients. */
 function AnimatedTestimonials({ items }) {
   const [active, setActive] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setActive((a) => (a + 1) % items.length), 3500);
-    return () => clearTimeout(t);
-  }, [active, items.length]);
-  const a = items[active];
+  const [paused, setPaused] = useState(false);
+  const resumeRef = useRef(null);
   const n = items.length;
-  // Window of exactly 3 on the arc: prev (top), active (middle), next (bottom).
-  // Everything else is hidden. Middle is enlarged + rightmost on the curve.
+
+  useEffect(() => {
+    if (paused) return undefined;
+    const t = setInterval(() => setActive((a) => (a + 1) % n), 3000);
+    return () => clearInterval(t);
+  }, [paused, n]);
+  useEffect(() => () => clearTimeout(resumeRef.current), []);
+
+  const pick = (i) => {
+    setActive(i);
+    setPaused(true);
+    clearTimeout(resumeRef.current);
+    resumeRef.current = setTimeout(() => setPaused(false), 5000); // resume motion after 5s idle
+  };
+
+  const a = items[active];
+  // Exactly 3 on screen: prev (top), active (middle, enlarged), next (bottom).
   const slots = [
     { k: (active - 1 + n) % n, pos: 'top' },
     { k: active, pos: 'mid' },
@@ -366,8 +319,7 @@ function AnimatedTestimonials({ items }) {
   ];
   return (
     <div className="mt-12 grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
-      {/* LEFT — straight rail + dots; 3 rows, middle = highlighted active card w/ tail.
-          On advance the rows shuffle up (wheel) and a new reviewer enters at the bottom. */}
+      {/* LEFT — 3-row window that shuffles up as it advances (keyed slide, not a hard swap). */}
       <div className="relative pl-7">
         <span aria-hidden className="absolute bottom-5 left-1.5 top-5 w-px bg-black/10" />
           <div key={active} className="dt-fade flex flex-col gap-3">
@@ -379,13 +331,13 @@ function AnimatedTestimonials({ items }) {
                   <span aria-hidden className="absolute -left-[22px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-2 ring-white" style={{ background: on ? 'var(--ca-primary)' : '#c3d3d3' }} />
                   <button
                     type="button"
-                    onClick={() => setActive(s.k)}
+                    onClick={() => pick(s.k)}
                     aria-current={on}
-                    className="flex w-full items-center gap-4 rounded-2xl px-3 py-3 text-left"
+                    className="flex w-full items-center gap-4 rounded-2xl px-3 py-3 text-left transition-all duration-300"
                     style={on ? { background: 'rgba(14,116,144,0.06)', boxShadow: '0 16px 36px -24px rgba(14,116,144,0.7)', outline: '1px solid rgba(14,116,144,0.15)', opacity: 1 } : { opacity: 0.72 }}
                   >
                     <span
-                      className="flex flex-shrink-0 items-center justify-center rounded-full font-heading font-bold ring-4 ring-white"
+                      className="flex flex-shrink-0 items-center justify-center rounded-full font-heading font-bold ring-4 ring-white transition-all duration-300"
                       style={on
                         ? { height: 60, width: 60, fontSize: 20, background: 'var(--ca-primary)', color: '#fff', boxShadow: '0 12px 26px -10px rgba(14,116,144,0.9)' }
                         : { height: 46, width: 46, fontSize: 15, background: 'var(--ca-grey)', color: 'var(--ca-ink)' }}
@@ -543,9 +495,6 @@ export default function DentistPage() {
       <section className="relative overflow-hidden px-5 pb-14 pt-8 sm:px-8 sm:pb-20 sm:pt-12 lg:pb-28 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
         <div className="mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(14,116,144,0.25)', color: 'var(--ca-primary)', background: 'rgba(14,116,144,0.06)' }}>
-              For dental clinics &amp; practices
-            </Reveal>
             <Reveal as="h1" instant className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-[color:var(--ca-ink)] sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
               Simple appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>dental clinics</span>{' '}
@@ -555,7 +504,7 @@ export default function DentistPage() {
               Let your patients book and reschedule online, with automatic WhatsApp reminders — so your front desk spends less time on the phone and more with patients in the chair.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-6 flex flex-col items-center gap-3 sm:mt-9 sm:flex-row sm:gap-5 lg:justify-start">
-              <Link to={START} className="btn flex w-full items-center justify-center gap-2 rounded-[5px] px-7 py-3.5 text-sm font-semibold text-white shadow-[0_10px_30px_-8px_rgba(14,116,144,0.6)] transition-opacity hover:opacity-90 hover:no-underline sm:w-auto" style={{ background: 'var(--ca-primary)' }}>
+              <Link to={START} className="btn flex w-full items-center justify-center gap-2 rounded-[5px] px-7 py-3.5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(16,24,40,0.22)] transition-opacity hover:opacity-90 hover:no-underline sm:w-auto" style={{ background: 'var(--ca-primary)' }}>
                 Create a Free Account <ArrowRight size={16} />
               </Link>
               <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline">
@@ -569,8 +518,19 @@ export default function DentistPage() {
           <Reveal instant delay={0.1} className="relative">
             <div aria-hidden className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(21,158,170,0.16), transparent 70%)' }} />
             <img src="/for/dentists/dentist-sloth.webp" alt="Book A Sloth — appointment booking for dental clinics" loading="eager" fetchpriority="high" decoding="async" width="1100" height="852" className="relative z-10 mx-auto h-auto w-full max-w-[30rem] drop-shadow-[0_28px_40px_rgba(15,48,77,0.18)]" />
-            {/* clinic-day mock floats over the illustration on desktop */}
-            <div className="absolute -bottom-4 -left-4 z-20 hidden w-64 lg:block xl:-left-10"><ClinicDayCard /></div>
+            {/* floating status pills around the mascot (replaces the full clinic-day card) */}
+            <div className="absolute left-0 top-6 z-20 hidden items-center gap-2 rounded-full bg-white px-3.5 py-2 shadow-[0_12px_30px_-12px_rgba(14,116,144,0.5)] ring-1 ring-black/5 sm:flex lg:-left-6">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: 'rgba(14,116,144,0.1)', color: 'var(--ca-primary)' }}><CalendarCheck size={13} /></span>
+              <span className="text-[12px] font-bold text-[color:var(--ca-ink)]">3 appointments today</span>
+            </div>
+            <div className="absolute right-0 top-1/3 z-20 hidden items-center gap-2 rounded-full bg-white px-3.5 py-2 shadow-[0_12px_30px_-12px_rgba(14,116,144,0.5)] ring-1 ring-black/5 sm:flex lg:-right-4">
+              <span className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'rgba(13,148,136,0.12)', color: 'var(--ca-accent)' }}><Check size={10} /> Paid</span>
+              <span className="text-[12px] font-bold text-[color:var(--ca-ink)]">Ananya S.</span>
+            </div>
+            <div className="absolute bottom-6 left-2 z-20 hidden items-center gap-2 rounded-full bg-white px-3.5 py-2 shadow-[0_12px_30px_-12px_rgba(14,116,144,0.5)] ring-1 ring-black/5 sm:flex lg:-left-4">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: 'rgba(15,118,110,0.12)', color: 'var(--ca-accent)' }}><MessageCircle size={13} /></span>
+              <span className="text-[12px] font-bold text-[color:var(--ca-ink)]">WhatsApp reminder sent</span>
+            </div>
           </Reveal>
         </div>
 
@@ -659,7 +619,7 @@ export default function DentistPage() {
               <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--ca-accent) 40%, transparent), transparent 70%)' }} />
               <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
                 <div>
-                  <h3 className="font-heading text-xl font-bold sm:text-2xl">Join the clinics that never chase a booking.</h3>
+                  <h3 className="font-heading text-xl font-bold text-white sm:text-2xl">Join the clinics that never chase a booking.</h3>
                   <p className="mt-2 max-w-xl text-white/75">Book more, no-show less, and keep your chair full — one simple page.</p>
                 </div>
                 <Link to={START} className="inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>Create your free page <ArrowRight size={16} /></Link>
@@ -698,8 +658,7 @@ export default function DentistPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--ca-primary)' }}>Customer reviews</Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               What clinics say about <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
@@ -717,7 +676,8 @@ export default function DentistPage() {
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">The <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth</span> difference.</Reveal>
             <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">See how booking an appointment changes with and without Book A Sloth.</Reveal>
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+          <div className="relative mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-10 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 font-heading text-sm font-extrabold text-[color:var(--ca-primary)] shadow-lg sm:flex" style={{ borderColor: 'var(--ca-grey)', background: '#ffffff' }}>VS</div>
             <Reveal>
               <div className="h-full rounded-[16px] border border-black/[0.06] bg-white p-7">
                 <div className="text-sm font-bold uppercase tracking-wide text-neutral-400">Without Book A Sloth</div>
@@ -848,7 +808,7 @@ export default function DentistPage() {
 
       {/* ═══════════════ 13 · FINAL CTA ═══════════════ */}
       <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-24" style={{ background: 'var(--ca-primary)' }}>
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1fr_1fr]">
           <div className="text-center lg:text-left">
             <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl lg:mx-0" style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}><Zap size={26} className="text-white" /></Reveal>
             <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">Spend less time on the phone. Spend more time with patients.</Reveal>
@@ -859,7 +819,7 @@ export default function DentistPage() {
             <Reveal as="p" delay={0.18} className="mt-4 text-xs text-white/70">No credit card required</Reveal>
           </div>
           <Reveal delay={0.1} className="hidden lg:block">
-            <img src="/for/dentists/dental-cta.webp" alt="" loading="lazy" decoding="async" width="1100" height="825" className="mx-auto h-auto w-full max-w-sm object-contain drop-shadow-[0_28px_44px_rgba(0,0,0,0.3)]" />
+            <img src="/for/dentists/dental-cta.webp" alt="" loading="lazy" decoding="async" width="1100" height="514" className="mx-auto h-auto w-full max-w-lg object-contain drop-shadow-[0_28px_44px_rgba(0,0,0,0.3)]" />
           </Reveal>
         </div>
       </section>
