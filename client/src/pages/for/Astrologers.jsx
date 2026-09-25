@@ -32,7 +32,7 @@ import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
 import { SITE_URL } from '../../utils/seo';
-import { FREE_PLAN, PREMIUM_PLAN } from '../../data/plans';
+import { FREE_PLAN, PREMIUM_PLAN, PREMIUM_ANNUAL_SAVE_PCT } from '../../data/plans';
 import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 import outlookLogo from '../enterprise-v2/assets/logo/outlook.svg';
 import meetLogo from '../enterprise-v2/assets/logo/meet.svg';
@@ -464,6 +464,7 @@ function FaqAccordion() {
 export default function Astrologers() {
   useLenis();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [yearly, setYearly] = useState(true);
 
   const canonical = `${SITE_URL}/for/astrologers`;
   const seo = {
@@ -944,14 +945,16 @@ export default function Astrologers() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="p" className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]" style={{ background: 'color-mix(in srgb, var(--as-secondary) 12%, white)', color: 'var(--as-secondary)' }}>The Difference</Reveal>
             <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">The <span style={{ color: 'var(--as-secondary)' }}>Book A Sloth</span> difference.</Reveal>
             <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">See how booking a consultation changes with and without Book A Sloth.</Reveal>
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+          <div className="relative mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-10 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 text-sm font-extrabold shadow-lg sm:flex" style={{ borderColor: 'var(--as-lavender)', background: '#ffffff', color: 'var(--as-secondary)' }}>VS</div>
             <Reveal>
-              <div className="h-full rounded-[16px] border border-[color:var(--as-line)] bg-white p-7">
+              <div className="h-full rounded-[20px] border border-[color:var(--as-line)] bg-white p-7 sm:p-8">
                 <div className="text-sm font-bold uppercase tracking-wide text-neutral-400">Without Book A Sloth</div>
-                <ul className="mt-5 space-y-3.5">
+                <ul className="mt-6 space-y-4">
                   {WITHOUT.map((w) => (
                     <li key={w} className="flex items-start gap-3 text-[15px] text-neutral-500">
                       <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-400"><X size={13} /></span>{w}
@@ -961,12 +964,13 @@ export default function Astrologers() {
               </div>
             </Reveal>
             <Reveal delay={0.08}>
-              <div className="h-full rounded-[16px] border-2 p-7 shadow-[0_20px_45px_-24px_rgba(107,92,231,0.5)]" style={{ borderColor: 'var(--as-secondary)', background: 'color-mix(in srgb, var(--as-secondary) 5%, white)' }}>
-                <div className="text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--as-secondary)' }}>With Book A Sloth</div>
-                <ul className="mt-5 space-y-3.5">
+              <div className="relative h-full overflow-hidden rounded-[20px] p-7 text-white shadow-[0_24px_60px_-24px_rgba(47,35,115,0.65)] sm:p-8" style={{ background: 'linear-gradient(150deg, var(--as-secondary), var(--as-primary))' }}>
+                <div aria-hidden className="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%)' }} />
+                <div className="relative text-sm font-bold uppercase tracking-wide text-white/80">With Book A Sloth</div>
+                <ul className="relative mt-6 space-y-4">
                   {WITH_BAS.map((w) => (
-                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-[color:var(--as-ink)]">
-                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--as-secondary)' }}><Check size={13} /></span>{w}
+                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-white">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/20 text-white"><Check size={13} /></span>{w}
                     </li>
                   ))}
                 </ul>
@@ -989,18 +993,62 @@ export default function Astrologers() {
         </div>
       </section>
 
-      {/* ═══════════════ 10 · PRICING TEASER ═══════════════ */}
+      {/* ═══════════════ 10 · PRICING ═══════════════ */}
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
-        <div className="mx-auto max-w-3xl text-center">
-          <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
-            Start free. Upgrade to <span style={{ color: 'var(--as-secondary)' }}>0% commission</span> when you are ready.
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
+              Start free. Upgrade to <span style={{ color: 'var(--as-secondary)' }}>0% commission</span> when you are ready.
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">Choose a plan that fits your practice today. Upgrade when you need more.</Reveal>
+          </div>
+          <Reveal delay={0.1} className="mt-8 flex items-center justify-center gap-3">
+            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--as-ink)]' : 'text-neutral-500'}`}>Monthly</button>
+            <button type="button" role="switch" aria-checked={yearly} aria-label="Toggle monthly or yearly billing" onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--as-secondary)' : '#d4d4d4', minHeight: 0 }}>
+              <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: yearly ? '22px' : '2px' }} />
+            </button>
+            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--as-ink)]' : 'text-neutral-500'}`}>Yearly <span className="ml-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: 'color-mix(in srgb, var(--as-secondary) 14%, white)', color: 'var(--as-secondary)' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span></span>
           </Reveal>
-          <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
-            The Sloth plan is free forever with a small 5% per-booking fee. Sloth Active removes commission entirely and adds WhatsApp automation, a client CRM and growth tools — {`₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}`}/year (+18% GST).
-          </Reveal>
-          <Reveal delay={0.14} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <CtaButton to={START}>Start free <ArrowRight size={16} /></CtaButton>
-            <Link to="/pricing" className="text-sm font-semibold text-[color:var(--as-ink)] underline-offset-4 hover:underline">See full pricing</Link>
+          <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2 sm:gap-6">
+            {/* Free — light card */}
+            <Reveal>
+              <div className="flex h-full flex-col rounded-[20px] border border-[color:var(--as-line)] bg-white p-7 sm:p-8">
+                <div className="text-lg font-bold" style={{ color: 'var(--as-ink)' }}>{FREE_PLAN.name}</div>
+                <p className="mt-1 text-sm text-neutral-500">Everything you need to get booked.</p>
+                <div className="mt-6 flex items-end gap-1"><span className="pb-1.5 text-2xl font-bold" style={{ color: 'var(--as-ink)' }}>₹</span><span className="text-5xl font-extrabold tracking-tight" style={{ color: 'var(--as-ink)' }}>0</span><span className="pb-2 text-sm text-neutral-500">/month</span></div>
+                <p className="mt-1.5 text-xs font-semibold text-neutral-500">Free forever · 5% per booking</p>
+                <ul className="mt-6 flex flex-col gap-3">
+                  {FREE_PLAN.features.slice(0, 5).map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--as-secondary)' }} /><span>{f}</span></li>)}
+                </ul>
+                <CtaButton to={START} className="mt-7 w-full">Get Started <ArrowRight size={15} /></CtaButton>
+              </div>
+            </Reveal>
+            {/* Sloth Active — purple gradient card */}
+            <Reveal delay={0.08}>
+              <div className="relative flex h-full flex-col overflow-hidden rounded-[20px] p-7 text-white shadow-[0_28px_70px_-30px_rgba(47,35,115,0.7)] sm:p-8" style={{ background: 'linear-gradient(150deg, var(--as-secondary), var(--as-primary))' }}>
+                <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)' }} />
+                <div className="relative flex items-center justify-between">
+                  <div className="text-lg font-bold">{PREMIUM_PLAN.name}</div>
+                  {yearly && <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold text-white">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
+                </div>
+                <p className="relative mt-1 text-sm text-white/75">Keep every rupee. Automate the rest.</p>
+                <div className="relative mt-6 flex items-end gap-1">
+                  <span className="pb-1.5 text-2xl font-bold">₹</span>
+                  <span className="text-5xl font-extrabold tracking-tight">{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
+                  <span className="pb-2 text-sm text-white/70">/month</span>
+                  {yearly && <span className="relative pb-2 ml-1 text-sm text-white/60 line-through">₹{PREMIUM_PLAN.monthly}</span>}
+                </div>
+                <p className="relative mt-1.5 text-xs font-semibold text-white/70">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
+                <ul className="relative mt-6 flex flex-col gap-3">
+                  <li className="flex items-start gap-2.5 text-sm font-semibold text-white"><Check size={16} className="mt-0.5 shrink-0 text-white" /><span>Everything in Free</span></li>
+                  {PREMIUM_PLAN.features.slice(0, 4).map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-white/90"><Check size={16} className="mt-0.5 shrink-0 text-white/90" /><span>{f}</span></li>)}
+                </ul>
+                <Link to={START} className="relative mt-7 inline-flex w-full items-center justify-center gap-2 rounded-[8px] bg-white px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ color: 'var(--as-primary)' }}>Get Started Now <ArrowRight size={16} /></Link>
+              </div>
+            </Reveal>
+          </div>
+          <Reveal delay={0.12} className="mt-8 text-center">
+            <Link to="/pricing" className="text-sm font-semibold text-[color:var(--as-ink)] underline-offset-4 hover:underline">Compare every feature on the full pricing page</Link>
           </Reveal>
         </div>
       </section>
