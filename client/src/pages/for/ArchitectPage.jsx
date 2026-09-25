@@ -20,6 +20,7 @@ import {
   Landmark, FileText, Lock, BadgePercent, Zap, Share2,
   Compass, Ruler, PenTool, Building2, Home, TreePine, Hammer, Box,
   ClipboardCheck, MessagesSquare, HardHat, CheckCircle2, Star, Palette,
+  Video, Users, Sparkles, ArrowUpRight,
 } from 'lucide-react';
 import Seo from '../../components/common/Seo';
 import { SITE_URL } from '../../utils/seo';
@@ -82,23 +83,31 @@ const USE_CASES = [
   { icon: Home, label: 'Discovery Call', desc: 'A quick intro before you commit.' },
 ];
 
-const STEPS = [
-  { title: 'Set up your studio & slots', icon: LayoutDashboard, desc: 'Add your consultation types and hours, then share your booking link with your clients.' },
-  { title: 'Clients book & pay', icon: CalendarCheck, desc: 'A client picks a consultation type and a time — and can pay your fee upfront.' },
-  { title: 'Everyone gets reminded', icon: BellRing, desc: 'You and your client get automatic confirmations and WhatsApp reminders before the meeting.' },
+// Project-type showcase (photo cards). Host framing: whatever you design, take the
+// booking for it online. Images ported from the zip service set.
+const SERVICES = [
+  { title: 'Interior Design', meta: 'Rooms with soul', icon: Palette, img: '/for/architects/services/interior.webp', desc: 'Book styling and material consults with clients.' },
+  { title: 'Commercial Design', meta: 'Offices & storefronts', icon: Building2, img: '/for/architects/services/commercial.webp', desc: 'Schedule walkthroughs and reviews with teams.' },
+  { title: 'Landscape Design', meta: 'Gardens & courtyards', icon: TreePine, img: '/for/architects/services/landscape.webp', desc: 'Take on-site visits and planning sessions online.' },
+  { title: 'Design Consultation', meta: 'Advice that shapes ideas', icon: Compass, img: '/for/architects/services/consultation.webp', desc: 'Offer paid one-on-one consultations to new clients.' },
 ];
 
-const TOOLS_LEFT = [
-  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
-  { name: 'WhatsApp Automation', logo: '/images/logos/whatsapp.svg', sub: 'Meeting reminders on autopilot' },
-  { name: 'Client Records', logo: '/favicon.svg', sub: 'Every client, brief and note in one place' },
+const STEPS = [
+  { step: 'Step 1', title: 'Set up your studio', icon: LayoutDashboard, desc: 'Add your consultation types, durations and hours in a few minutes.' },
+  { step: 'Step 2', title: 'Share your link', icon: Share2, desc: 'Website, Instagram, WhatsApp — one link takes bookings everywhere.' },
+  { step: 'Step 3', title: 'Get booked & paid', icon: Wallet, desc: 'Clients pick a slot, pay your fee upfront, and everyone gets reminded.' },
 ];
-const TOOLS_RIGHT = [
-  { name: 'Razorpay', logo: razorpayLogo, sub: 'Online payments, refunds and GST invoices' },
+
+const TOOLS_ALL = [
+  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
+  { name: 'Google Meet', lucide: Video, sub: 'Auto-add a video link to bookings' },
+  { name: 'Zoom', lucide: Video, sub: 'Share meeting links automatically' },
+  { name: 'Client CRM', lucide: Users, sub: 'Every client, brief and note in one place' },
+  { name: 'Razorpay', logo: razorpayLogo, sub: 'Payments, refunds and GST invoices' },
   { name: 'PhonePe', logo: '/images/logos/phonepe.svg', sub: 'Accept instant UPI payments' },
   { name: 'Gmail', logo: '/images/logos/gmail.svg', sub: 'Confirmation emails, sent automatically' },
+  { name: 'WhatsApp Automation', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
 ];
-const TOOLS_ALL = [...TOOLS_LEFT, ...TOOLS_RIGHT];
 
 // "Built for a studio" — how a design practice actually runs.
 const STUDIO_FEATURES = [
@@ -112,18 +121,20 @@ const STUDIO_FEATURES = [
 // Sloth (the software). Swap for real quotes when available. Software-focused; all
 // 5-star; no fabricated dates or project counts.
 const ARCHITECT_TESTIMONIALS = [
-  { name: 'Aarav Deshpande', role: 'Studio Verde, Pune', quote: 'Clients used to email back and forth for days to fix a consultation. Now they pick a slot and pay the fee upfront — the enquiries that book are the serious ones.' },
+  { name: 'Aarav Deshpande', role: 'Studio Verde, Pune', quote: 'Clients used to email for days to fix a time. Now they pick a slot and pay upfront — only serious enquiries book.' },
   { name: 'Meera Krishnan', role: 'Terra Interiors, Chennai', quote: 'Site visits and concept reviews all sit in one calendar now. No more double-booked afternoons or a missed measurement trip.' },
   { name: 'Rohan Kapoor', role: 'Axis Design Co., Gurugram', quote: 'Setup took an evening. The WhatsApp reminders alone cut the no-shows on our discovery calls right down.' },
   { name: 'Ananya Pillai', role: 'Form & Field, Bengaluru', quote: 'A calm, professional booking page that matches how a studio works — and 0% commission on Active means the fee is ours.' },
   { name: 'Vikram Sethi', role: 'Nirman Architects, Jaipur', quote: 'GST invoices for every paid consultation are generated automatically. It tidied up our billing completely.' },
+  { name: 'Kabir Menon', role: 'Studio Kaya, Kochi', quote: 'One link handles discovery calls, paid consults and site visits. Clients love the professional booking page, and so do we.' },
 ];
 
-// Real impact, real numbers — ditto layout, architect content.
+// Real impact, real numbers — 4-card layout, honest host stats (no fabricated counts).
 const IMPACT_STATS = [
-  { value: '0%', desc: 'Commission on Sloth Active — every consultation fee stays with your studio.', icon: BadgePercent },
-  { value: '< 5 min', desc: 'To set up your services and put a booking page in front of clients.', icon: Compass },
-  { value: '24/7', desc: 'Clients book or reschedule any time — no email tag, no phone calls.', icon: CalendarCheck },
+  { value: '0%', label: 'Commission on Active', desc: 'Every consultation fee stays with your studio.', icon: BadgePercent },
+  { value: '< 5 min', label: 'To go live', desc: 'Set up your services and share your booking page.', icon: Compass },
+  { value: '24/7', label: 'Online booking', desc: 'Clients book any time — no email tag, no calls.', icon: CalendarCheck },
+  { value: 'GST', label: 'Auto invoices', desc: 'Generated for every paid booking, automatically.', icon: FileText },
 ];
 
 // The Book A Sloth difference — with / without comparison (ditto layout).
@@ -221,69 +232,108 @@ function BlueprintPlan({ className = '' }) {
   );
 }
 
-/* Hero project card — a calm project mock floating over the mascot (pure CSS/JSX). */
-function ProjectCard() {
+/* Floating glass card in the hero — mirrors the homepage GlassCard. */
+function GlassCard({ icon: Icon, label, value, accent, className = '', float = '' }) {
   return (
-    <div className="w-full max-w-[290px] rounded-3xl border border-[color:var(--ar-line)] bg-white p-5 shadow-[0_30px_70px_-40px_rgba(35,65,47,0.5)]">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex size-9 items-center justify-center rounded-full" style={{ background: 'var(--ar-cream)', color: 'var(--ar-accent)' }}><HardHat className="size-4" /></span>
-          <div>
-            <p className="text-sm font-bold" style={{ color: 'var(--ar-ink)' }}>Sea View Villa</p>
-            <p className="text-xs text-neutral-500">Hyderabad · 3,200 sq ft</p>
-          </div>
-        </div>
-        <span className="inline-flex size-8 items-center justify-center rounded-full" style={{ background: 'var(--ar-cream)', color: 'var(--ar-accent)' }}><CheckCircle2 className="size-4" strokeWidth={2.5} /></span>
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-1.5">
-        {['Design', 'Permits', 'Build'].map((stage, i) => (
-          <span key={stage} className={i === 2 ? 'flex h-9 items-center justify-center rounded-lg text-xs font-bold text-white' : 'flex h-9 items-center justify-center rounded-lg border text-xs font-semibold text-neutral-500'} style={i === 2 ? { background: 'var(--ar-primary)' } : { borderColor: 'var(--ar-line)' }}>{stage}</span>
-        ))}
-      </div>
-      <div className="mt-4 flex h-11 w-full items-center justify-center rounded-full text-sm font-semibold text-white" style={{ background: 'var(--ar-primary)' }}>View Progress</div>
-    </div>
-  );
-}
-
-/* Use-case soft card. */
-function UseCaseCard({ u }) {
-  return (
-    <div className="group flex h-full flex-col rounded-[18px] border border-black/[0.06] bg-white p-6 transition-colors hover:border-[color:var(--ar-primary)]/30">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-[1.03]" style={{ background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' }}>
-        <u.icon size={22} />
+    <div className={`ar-glass ${float} absolute z-20 flex items-center gap-3 rounded-2xl px-4 py-3 ${className}`}>
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={accent ? { background: 'rgba(111,140,93,0.16)', color: 'var(--ar-primary)' } : { background: 'rgba(20,32,23,0.06)', color: 'var(--ar-ink)' }}>
+        <Icon size={18} />
       </span>
-      <h3 className="mt-5 text-[15px] font-bold text-[color:var(--ar-ink)]">{u.label}</h3>
-      <p className="mt-1 text-[13px] leading-snug text-neutral-500">{u.desc}</p>
+      <div>
+        <div className="text-[11px] font-medium text-neutral-400">{label}</div>
+        <div className="text-sm font-semibold" style={{ color: accent ? 'var(--ar-primary)' : 'var(--ar-ink)' }}>{value}</div>
+      </div>
     </div>
   );
 }
 
-/* How-it-works — 3-step with numbered discs + travelling beacon. */
+/* Use-case card — click the icon to cycle the card: white → olive → cream.
+   Text/icon colours adjust to the background for contrast. */
+const UC_STATES = [
+  { // white (default)
+    card: { background: '#fff', border: '1px solid rgba(0,0,0,0.06)' },
+    iconWrap: { background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' },
+    title: 'var(--ar-ink)', desc: '#737373',
+  },
+  { // olive (colour of the icon)
+    card: { background: 'var(--ar-primary)', border: '1px solid var(--ar-primary)' },
+    iconWrap: { background: 'rgba(255,255,255,0.16)', color: '#fff' },
+    title: '#fff', desc: 'rgba(255,255,255,0.75)',
+  },
+  { // cream (icing)
+    card: { background: 'var(--ar-cream)', border: '1px solid var(--ar-line)' },
+    iconWrap: { background: '#fff', color: 'var(--ar-primary)' },
+    title: 'var(--ar-ink)', desc: '#525252',
+  },
+];
+function UseCaseCard({ u }) {
+  const [st, setSt] = useState(0);
+  const s = UC_STATES[st];
+  return (
+    <div className="flex h-full flex-col rounded-[18px] p-6 transition-colors duration-300" style={s.card}>
+      <button type="button" onClick={() => setSt((v) => (v + 1) % UC_STATES.length)} aria-label={`${u.label} — change card colour`} className="flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-300" style={s.iconWrap}>
+        <u.icon size={22} />
+      </button>
+      <h3 className="mt-5 text-[15px] font-bold transition-colors duration-300" style={{ color: s.title }}>{u.label}</h3>
+      <p className="mt-1 text-[13px] leading-snug transition-colors duration-300" style={{ color: s.desc }}>{u.desc}</p>
+    </div>
+  );
+}
+
+/* How-it-works — STEP 1/2/3 with a connector rail + rounded square icon tiles.
+   One step is active at a time and cycles 1→2→3 every 3s (no uplift, just fill). */
 function HowItWorks({ steps }) {
   const [active, setActive] = useState(0);
   useEffect(() => {
-    const t = setTimeout(() => setActive((a) => (a + 1) % steps.length), 2000);
+    const t = setTimeout(() => setActive((a) => (a + 1) % steps.length), 3000);
     return () => clearTimeout(t);
   }, [active, steps.length]);
   const centers = ['16.667%', '50%', '83.333%'];
   return (
-    <div className="relative mt-14 grid gap-8 md:grid-cols-3 md:gap-6">
-      <span aria-hidden className="pointer-events-none absolute left-[16.667%] right-[16.667%] top-7 hidden h-px md:block" style={{ background: 'linear-gradient(90deg, transparent, rgba(111,140,93,0.5), transparent)' }} />
-      <span aria-hidden className="pointer-events-none absolute top-7 z-10 hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full md:block" style={{ background: 'var(--ar-sage)', boxShadow: '0 0 0 6px rgba(111,140,93,0.18)', left: centers[active], transition: 'left 0.6s cubic-bezier(0.22,1,0.36,1)' }} />
+    <div className="relative mt-16 grid gap-12 md:grid-cols-3 md:gap-6">
+      {/* connector rail behind the tiles */}
+      <span aria-hidden className="pointer-events-none absolute top-7 hidden h-px md:block" style={{ left: centers[0], right: centers[0], background: 'linear-gradient(90deg, rgba(111,140,93,0.5), rgba(111,140,93,0.5))' }} />
       {steps.map((s, i) => {
         const on = i === active;
         return (
           <Reveal key={s.title} delay={i * 0.1} className="relative text-center">
-            <button type="button" onClick={() => setActive(i)} aria-current={on} aria-label={`Step ${i + 1}: ${s.title}`} className="mx-auto block">
-              <span className="relative z-20 mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white transition-all duration-500" style={{ background: 'var(--ar-primary)', transform: on ? 'scale(1.08)' : 'scale(1)', boxShadow: on ? '0 0 0 6px rgba(111,140,93,0.18), 0 14px 30px -10px rgba(35,65,47,0.9)' : '0 10px 24px -12px rgba(35,65,47,0.55)' }}>
+            <button type="button" onClick={() => setActive(i)} aria-current={on} aria-label={`${s.step}: ${s.title}`} className="mx-auto block">
+              <span className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl transition-colors duration-500" style={on ? { background: 'var(--ar-primary)', color: '#fff', boxShadow: '0 0 0 6px #fff, 0 14px 30px -12px rgba(35,65,47,0.8)' } : { background: 'var(--ar-cream)', color: 'var(--ar-primary)', boxShadow: '0 0 0 6px #fff' }}>
                 <s.icon size={22} />
               </span>
             </button>
-            <h3 className={`mt-5 text-lg font-bold transition-colors duration-300 ${on ? 'text-[color:var(--ar-ink)]' : 'text-neutral-500'}`}>{s.title}</h3>
+            <div className="mt-5 text-xs font-bold uppercase tracking-[0.18em] transition-colors duration-300" style={{ color: on ? 'var(--ar-primary)' : 'var(--ar-accent)' }}>{s.step}</div>
+            <h3 className={`mt-2 text-lg font-bold transition-colors duration-300 ${on ? 'text-[color:var(--ar-ink)]' : 'text-neutral-500'}`}>{s.title}</h3>
             <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-neutral-500">{s.desc}</p>
           </Reveal>
         );
       })}
+    </div>
+  );
+}
+
+/* Photo project-type card — simple headline over an olive bottom-up gradient.
+   On hover the card fills full olive and the heading, subhead and button rise
+   up from the bottom. Icon stays put. */
+function ServiceCard({ s }) {
+  return (
+    <div className="group relative flex h-72 flex-col justify-end overflow-hidden rounded-[20px]">
+      <img src={s.img} alt={s.title} loading="lazy" decoding="async" width="640" height="480" className="absolute inset-0 h-full w-full object-cover" />
+      {/* olive bottom-up gradient (default) */}
+      <div aria-hidden className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--ar-ink) 4%, rgba(35,65,47,0.6) 42%, rgba(35,65,47,0) 78%)' }} />
+      {/* full olive fill on hover */}
+      <div aria-hidden className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: 'linear-gradient(160deg, var(--ar-primary), var(--ar-ink))' }} />
+      <span className="absolute left-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/85 backdrop-blur" style={{ color: 'var(--ar-primary)' }}><s.icon size={18} /></span>
+      <div className="relative z-10 p-5 text-white">
+        <h3 className="text-xl font-bold transition-transform duration-500 group-hover:-translate-y-1">{s.title}</h3>
+        {/* subhead + button rise up from the bottom on hover */}
+        <div className="grid grid-rows-[0fr] opacity-0 transition-all duration-500 group-hover:grid-rows-[1fr] group-hover:opacity-100">
+          <div className="overflow-hidden">
+            <p className="mt-2 text-sm text-white/85">{s.desc}</p>
+            <Link to={START} className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold hover:no-underline" style={{ color: 'var(--ar-primary)' }}>Set up this service <ArrowRight size={13} /></Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -295,7 +345,9 @@ function ToolCard({ t }) {
       <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[color:var(--ar-grey)]">
         {t.logo
           ? <img src={t.logo} alt="" loading="lazy" className="h-6 w-6 object-contain" />
-          : <ToolLogo name={t.icon} size={24} className="h-6 w-6" />}
+          : t.lucide
+            ? <t.lucide size={22} style={{ color: 'var(--ar-primary)' }} />
+            : <ToolLogo name={t.icon} size={24} className="h-6 w-6" />}
       </span>
       <div className="min-w-0">
         <div className="text-sm font-bold leading-tight text-[color:var(--ar-ink)]">{t.name}</div>
@@ -308,9 +360,9 @@ function IntegrationHub() {
   return (
     <div className="relative mx-auto max-w-5xl">
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-[46rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(closest-side, rgba(111,140,93,0.12), transparent)' }} />
-      <div className="relative grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+      <div className="relative grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {TOOLS_ALL.map((t, i) => (
-          <Reveal key={t.name} delay={(i % 3) * 0.06}><ToolCard t={t} /></Reveal>
+          <Reveal key={t.name} delay={(i % 4) * 0.06}><ToolCard t={t} /></Reveal>
         ))}
       </div>
     </div>
@@ -325,38 +377,38 @@ function AnimatedTestimonials({ items }) {
     return () => clearTimeout(t);
   }, [active, items.length]);
   const a = items[active];
-  const n = items.length;
-  const slots = [
-    { k: (active - 1 + n) % n, pos: 'top' },
-    { k: active, pos: 'mid' },
-    { k: (active + 1) % n, pos: 'bot' },
-  ];
+  // Brick pyramid: 1 on top, 2 in the middle, 3 on the bottom (indices 0 · 1,2 · 3,4,5).
+  // Every brick is the SAME fixed size, always — the active one only changes colour and
+  // shows the reviewer's first name; the rest show just the initial. Bricks stack tight.
+  const rows = [[0], [1, 2], [3, 4, 5]];
   return (
     <div className="mt-12 grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
-      <div className="relative pl-7">
-        <span aria-hidden className="absolute bottom-5 left-1.5 top-5 w-px bg-black/10" />
-        <div key={active} className="ar-fade flex flex-col gap-3">
-          {slots.map((s) => {
-            const t = items[s.k];
-            const on = s.pos === 'mid';
-            return (
-              <div key={s.pos} className="relative flex min-h-[80px] items-center">
-                <span aria-hidden className="absolute -left-[22px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-2 ring-white" style={{ background: on ? 'var(--ar-primary)' : '#c3cdb8' }} />
-                <button type="button" onClick={() => setActive(s.k)} aria-current={on} className="flex w-full items-center gap-4 rounded-2xl px-3 py-3 text-left" style={on ? { background: 'rgba(111,140,93,0.1)', boxShadow: '0 16px 36px -24px rgba(35,65,47,0.7)', outline: '1px solid rgba(111,140,93,0.22)', opacity: 1 } : { opacity: 0.72 }}>
-                  <span className="flex flex-shrink-0 items-center justify-center rounded-full font-bold ring-4 ring-white" style={on ? { height: 60, width: 60, fontSize: 20, background: 'var(--ar-primary)', color: '#fff', boxShadow: '0 12px 26px -10px rgba(35,65,47,0.9)' } : { height: 46, width: 46, fontSize: 15, background: 'var(--ar-grey)', color: 'var(--ar-ink)' }}>
-                    {t.name.charAt(0)}
-                  </span>
-                  <div className="min-w-0">
-                    <div className={`truncate font-bold text-[color:var(--ar-ink)] ${on ? 'text-[16px]' : 'text-[15px]'}`}>{t.name}</div>
-                    <div className="mt-1 flex gap-0.5">{[0, 1, 2, 3, 4].map((st) => <Star key={st} size={13} style={{ color: 'var(--ar-sage)', fill: 'var(--ar-sage)' }} />)}</div>
-                    <div className="mt-1 truncate text-xs text-neutral-500">{t.role}</div>
-                  </div>
-                  {on && <span aria-hidden className="absolute right-[-7px] top-1/2 hidden h-3.5 w-3.5 -translate-y-1/2 rotate-45 lg:block" style={{ background: 'rgba(111,140,93,0.1)', borderRight: '1px solid rgba(111,140,93,0.22)', borderTop: '1px solid rgba(111,140,93,0.22)' }} />}
+      <div className="flex flex-col items-center">
+        {rows.map((row, ri) => (
+          <div key={ri} className="flex justify-center" style={{ marginTop: ri === 0 ? 0 : -4 }}>
+            {row.map((k) => {
+              const t = items[k];
+              if (!t) return null;
+              const on = k === active;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setActive(k)}
+                  aria-current={on}
+                  aria-label={`Show review from ${t.name}`}
+                  className="relative flex items-center justify-center rounded-[10px] font-bold ring-2 ring-white transition-colors duration-300"
+                  style={{ height: 60, width: 104, margin: 3, zIndex: on ? 10 : 1, background: on ? 'var(--ar-primary)' : '#fff', color: on ? '#fff' : 'var(--ar-ink)', border: on ? 'none' : '1px solid var(--ar-line)', boxShadow: on ? '0 0 0 3px rgba(111,140,93,0.3), 0 14px 28px -12px rgba(35,65,47,0.85)' : '0 6px 16px -10px rgba(35,65,47,0.4)' }}
+                >
+                  {on
+                    ? <span className="ar-fade text-[14px] font-extrabold tracking-tight">{t.name.split(' ')[0]}</span>
+                    : <span className="text-[18px]">{t.name.charAt(0)}</span>}
                 </button>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ))}
+        <div className="mt-4 flex gap-0.5">{[0, 1, 2, 3, 4].map((st) => <Star key={st} size={14} style={{ color: 'var(--ar-sage)', fill: 'var(--ar-sage)' }} />)}</div>
       </div>
       <div className="relative rounded-[24px] border border-black/[0.06] bg-white p-8 shadow-[0_30px_70px_-40px_rgba(35,65,47,0.5)] sm:p-10">
         <span aria-hidden className="font-display text-6xl leading-none" style={{ color: 'var(--ar-primary)' }}>&ldquo;</span>
@@ -463,6 +515,12 @@ export default function ArchitectPage() {
         .ar-lp h1,.ar-lp h2,.ar-lp h3,.ar-lp h4{font-family:'DM Serif Display',Georgia,serif;font-weight:400;letter-spacing:-0.01em;}
         .ar-lp .font-display{font-family:'DM Serif Display',Georgia,serif;}
         .ar-lp .bg-blueprint{background-image:linear-gradient(to right, rgba(111,140,93,0.12) 1px, transparent 1px),linear-gradient(to bottom, rgba(111,140,93,0.12) 1px, transparent 1px);background-size:32px 32px;}
+        .ar-glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.6);box-shadow:0 18px 40px -24px rgba(35,65,47,0.5);}
+        .ar-float{animation:ar-float 6s ease-in-out infinite;}
+        .ar-float--mid{animation-duration:7.5s;animation-delay:-1.8s;}
+        .ar-float--slow{animation-duration:9s;animation-delay:-3.2s;}
+        @keyframes ar-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @media (prefers-reduced-motion: reduce){.ar-float,.ar-float--mid,.ar-float--slow{animation:none;}}
         .ar-rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease, transform .6s ease;}
         .ar-rv-in{opacity:1;transform:none;}
         .ar-fade{animation:ar-fade-in .4s ease both;}
@@ -511,9 +569,6 @@ export default function ArchitectPage() {
         </div>
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(111,140,93,0.35)', color: 'var(--ar-accent)', background: 'rgba(111,140,93,0.08)' }}>
-              For architects &amp; interior designers
-            </Reveal>
             <Reveal as="h1" instant className="text-[clamp(1.9rem,7vw,2.9rem)] leading-[1.08] tracking-[-0.02em] text-[color:var(--ar-ink)] sm:text-[2.9rem] sm:leading-[1.08] lg:text-[3.25rem]">
               Booking &amp; scheduling software for{' '}
               <span style={{ color: 'var(--ar-primary)' }}>architects</span>{' '}
@@ -536,19 +591,11 @@ export default function ArchitectPage() {
           </div>
           <Reveal instant delay={0.1} className="relative">
             <BlueprintPlan className="pointer-events-none absolute right-[2%] top-1/2 w-[min(520px,92%)] -translate-y-1/2 -rotate-2 opacity-40" />
-            <img src="/for/architects/architect.webp" alt="Book A Sloth — booking software for architects and interior designers" loading="eager" fetchpriority="high" decoding="async" width="1100" height="1100" className="relative z-10 mx-auto h-auto w-full max-w-[30rem] drop-shadow-[0_28px_44px_rgba(35,65,47,0.18)]" />
-            {/* floating proposal pill */}
-            <div className="absolute -top-2 right-2 z-20 hidden sm:block md:right-6">
-              <div className="flex items-center gap-2.5 rounded-full border bg-white py-2 pl-2.5 pr-4 shadow-[0_16px_36px_-24px_rgba(35,65,47,0.6)]" style={{ borderColor: 'var(--ar-line)' }}>
-                <span className="inline-flex size-9 items-center justify-center rounded-full" style={{ background: 'var(--ar-cream)', color: 'var(--ar-accent)' }}><Home className="size-4" /></span>
-                <div className="leading-tight">
-                  <p className="text-xs font-semibold" style={{ color: 'var(--ar-ink)' }}>Consultation booked</p>
-                  <p className="text-[11px] text-neutral-500">Fri 4:30 · Kitchen remodel</p>
-                </div>
-              </div>
-            </div>
-            {/* floating project card */}
-            <div className="absolute -bottom-4 -left-2 z-20 hidden w-64 lg:block xl:-left-8"><ProjectCard /></div>
+            <img src="/for/architects/architect.webp" alt="Book A Sloth — booking software for architects and interior designers" loading="eager" fetchpriority="high" decoding="async" width="760" height="760" className="relative z-10 mx-auto h-auto w-full max-w-[30rem] drop-shadow-[0_28px_44px_rgba(35,65,47,0.18)]" />
+            {/* floating glass cards — mirrors the homepage hero */}
+            <GlassCard icon={CalendarCheck} label="New booking" value="Consultation · Fri 4:30" float="ar-float" className="hidden sm:flex top-8 sm:-left-6" />
+            <GlassCard icon={Wallet} label="Payment received" value="₹1,500" accent float="ar-float ar-float--mid" className="hidden sm:flex top-1/2 sm:-right-4" />
+            <GlassCard icon={BellRing} label="Site visit" value="Tomorrow · 10:30" float="ar-float ar-float--slow" className="hidden sm:flex bottom-6 sm:left-4" />
           </Reveal>
         </div>
 
@@ -584,14 +631,29 @@ export default function ArchitectPage() {
         </div>
       </section>
 
+      {/* ═══════════════ 3b · SERVICES (photo project-type cards) ═══════════════ */}
+      <section id="services" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'linear-gradient(180deg, var(--ar-ink), var(--ar-primary))' }}>
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="h2" className="text-3xl leading-tight tracking-tight text-white sm:text-4xl">
+              Whatever you design, <span style={{ color: 'var(--ar-sage)' }}>take the booking online.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.06} className="mt-4 text-base text-white/70">From interiors to landscapes, set up a service for every kind of work you take on.</Reveal>
+          </div>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {SERVICES.map((s, i) => <Reveal key={s.title} delay={(i % 4) * 0.06}><ServiceCard s={s} /></Reveal>)}
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════ 4 · HOW IT WORKS ═══════════════ */}
-      <section id="how" className="px-5 pb-10 pt-20 sm:px-8 lg:pb-14 lg:pt-28">
+      <section id="how" className="px-5 pb-10 pt-20 sm:px-8 lg:pb-14 lg:pt-28" style={{ background: 'var(--ar-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">
-              How Book A Sloth helps <span style={{ color: 'var(--ar-primary)' }}>design studios</span>
+              From link to paid. <span style={{ color: 'var(--ar-primary)' }}>In three steps.</span>
             </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">From &ldquo;when are you free?&rdquo; to a booked, paid consultation — no email tag.</Reveal>
+            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">No app to install, no code to ship. Just three small steps.</Reveal>
           </div>
           <HowItWorks steps={STEPS} />
         </div>
@@ -602,11 +664,12 @@ export default function ArchitectPage() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">Works with the tools you already use.</Reveal>
-            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">Connect your calendar, payments and WhatsApp — Book A Sloth fits your workflow, no rewiring.</Reveal>
+            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">Connect your calendar, meetings, payments and WhatsApp — Book A Sloth fits your workflow, no rewiring.</Reveal>
           </div>
           <div className="mt-12"><IntegrationHub /></div>
-          <Reveal delay={0.1} className="mt-14 text-center">
-            <Link to="/pricing" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ar-primary)' }}>Explore All Features <ArrowRight size={16} /></Link>
+          <Reveal delay={0.1} className="mt-10 text-center text-sm text-neutral-500">
+            Plus 2,000+ more tools through our API and Zapier —{' '}
+            <Link to="/pricing" className="inline-flex items-center gap-1 font-semibold hover:no-underline" style={{ color: 'var(--ar-primary)' }}>Explore integrations <ArrowUpRight size={14} /></Link>
           </Reveal>
         </div>
       </section>
@@ -619,15 +682,19 @@ export default function ArchitectPage() {
             <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">Real impact, <span style={{ color: 'var(--ar-primary)' }}>real numbers.</span></Reveal>
             <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">Small stats, big difference — what actually changes when your studio goes live with Book A Sloth.</Reveal>
           </div>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-6 lg:[grid-auto-rows:1fr]">
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {IMPACT_STATS.map((s, i) => (
-              <Reveal key={s.value} delay={i * 0.08} className="lg:col-span-2">
-                <div className="group flex h-full flex-col overflow-hidden rounded-[16px] border border-black/[0.06] bg-white p-7 shadow-[0_2px_6px_rgba(35,65,47,0.04),0_16px_32px_rgba(35,65,47,0.07)] transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--ar-primary)]">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-display text-4xl leading-none tracking-tight sm:text-5xl" style={{ color: 'var(--ar-ink)' }}>{s.value}</p>
-                    <span className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110" style={{ background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' }}><s.icon size={20} /></span>
+              <Reveal key={s.value} delay={i * 0.08}>
+                <div className="group relative flex h-full flex-col overflow-hidden rounded-[16px] border border-black/[0.06] bg-white p-7 pt-8 shadow-[0_2px_6px_rgba(35,65,47,0.04),0_16px_32px_rgba(35,65,47,0.07)]">
+                  {/* accent top bar */}
+                  <span aria-hidden className="absolute inset-x-0 top-0 h-1.5" style={{ background: 'linear-gradient(90deg, var(--ar-primary), var(--ar-sage))' }} />
+                  <div className="flex items-start justify-between">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' }}><s.icon size={20} /></span>
+                    <Sparkles size={16} className="transition-transform duration-500 group-hover:rotate-45" style={{ color: 'var(--ar-sage)' }} />
                   </div>
-                  <p className="mt-5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
+                  <p className="mt-6 font-display text-4xl leading-none tracking-tight sm:text-5xl" style={{ color: 'var(--ar-ink)' }}>{s.value}</p>
+                  <div className="mt-3 text-sm font-bold text-[color:var(--ar-ink)]">{s.label}</div>
+                  <p className="mt-1 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -637,7 +704,8 @@ export default function ArchitectPage() {
               <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--ar-sage) 45%, transparent), transparent 70%)' }} />
               <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
                 <div>
-                  <h3 className="text-xl font-bold sm:text-2xl">Join the studios that never chase a booking.</h3>
+                  <div className="mb-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-white/70"><Sparkles size={13} /> Book A Sloth</div>
+                  <h3 className="text-xl font-bold text-white sm:text-2xl">Join the studios that never chase a booking.</h3>
                   <p className="mt-2 max-w-xl text-white/75">Book more, no-show less, and keep your diary full — one simple page.</p>
                 </div>
                 <Link to={START} className="inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ar-primary)' }}>Create your free page <ArrowRight size={16} /></Link>
@@ -661,10 +729,10 @@ export default function ArchitectPage() {
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {STUDIO_FEATURES.map((f, i) => (
               <Reveal key={f.title} delay={(i % 4) * 0.06}>
-                <div className="flex h-full flex-col rounded-[16px] border border-black/[0.06] bg-white p-6">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' }}><f.icon size={20} /></span>
-                  <h3 className="mt-4 text-[15px] font-bold text-[color:var(--ar-ink)]">{f.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{f.desc}</p>
+                <div className="flex h-full flex-col rounded-[16px] p-6 text-white" style={{ background: 'linear-gradient(155deg, var(--ar-primary), var(--ar-ink))' }}>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'rgba(255,255,255,0.16)', color: '#fff' }}><f.icon size={20} /></span>
+                  <h3 className="mt-4 text-[15px] font-bold text-white">{f.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/75">{f.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -676,8 +744,7 @@ export default function ArchitectPage() {
       <section id="testimonials" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ar-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--ar-accent)' }}>Customer reviews</Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-3 text-3xl leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">
               What studios say about <span style={{ color: 'var(--ar-primary)' }}>Book A Sloth.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
@@ -695,7 +762,9 @@ export default function ArchitectPage() {
             <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">The <span style={{ color: 'var(--ar-primary)' }}>Book A Sloth</span> difference.</Reveal>
             <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">See how booking a consultation changes with and without Book A Sloth.</Reveal>
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+          <div className="relative mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {/* VS badge between the two comparison cards */}
+            <span aria-hidden className="absolute left-1/2 top-1/2 z-10 hidden h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[13px] font-extrabold uppercase tracking-wide text-white shadow-[0_12px_28px_-10px_rgba(35,65,47,0.8)] ring-4 ring-white sm:flex" style={{ background: 'var(--ar-primary)' }}>vs</span>
             <Reveal>
               <div className="h-full rounded-[16px] border border-black/[0.06] bg-white p-7">
                 <div className="text-sm font-bold uppercase tracking-wide text-neutral-400">Without Book A Sloth</div>
@@ -709,12 +778,13 @@ export default function ArchitectPage() {
               </div>
             </Reveal>
             <Reveal delay={0.08}>
-              <div className="h-full rounded-[16px] border-2 p-7 shadow-[0_20px_45px_-24px_rgba(35,65,47,0.5)]" style={{ borderColor: 'var(--ar-primary)', background: 'color-mix(in srgb, var(--ar-primary) 5%, white)' }}>
-                <div className="text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--ar-primary)' }}>With Book A Sloth</div>
-                <ul className="mt-5 space-y-3.5">
+              <div className="relative h-full overflow-hidden rounded-[16px] p-7 text-white shadow-[0_24px_55px_-28px_rgba(35,65,47,0.75)]" style={{ background: 'linear-gradient(150deg, var(--ar-primary), var(--ar-ink))' }}>
+                <div aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--ar-sage) 40%, transparent), transparent 70%)' }} />
+                <div className="relative text-sm font-bold uppercase tracking-wide text-white/80">With Book A Sloth</div>
+                <ul className="relative mt-5 space-y-3.5">
                   {WITH_BAS.map((w) => (
-                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-[color:var(--ar-ink)]">
-                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--ar-primary)' }}><Check size={13} /></span>{w}
+                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-white">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.16)', color: '#fff' }}><Check size={13} /></span>{w}
                     </li>
                   ))}
                 </ul>
@@ -768,24 +838,23 @@ export default function ArchitectPage() {
                 </div>
               </Reveal>
               <Reveal delay={0.08}>
-                <div className="relative flex h-full flex-col rounded-[18px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(16,24,40,0.14)]" style={{ borderColor: 'var(--ar-primary)' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="text-lg font-bold">{PREMIUM_PLAN.name}</div>
-                    {yearly && <span className="rounded-full px-2.5 py-0.5 text-xs font-bold text-white" style={{ background: 'var(--ar-primary)' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
-                  </div>
-                  <p className="mt-1 text-sm text-neutral-500">Keep every rupee. Automate the rest.</p>
+                <div className="relative flex h-full flex-col overflow-hidden rounded-[18px] p-7 text-white shadow-[0_28px_65px_-30px_rgba(35,65,47,0.8)]" style={{ background: 'linear-gradient(155deg, var(--ar-primary), var(--ar-ink))' }}>
+                  {/* billing-dependent ribbon: monthly → 0% commission, yearly → save % */}
+                  <div className="absolute right-5 top-0 flex items-center gap-1 rounded-b-lg px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ background: 'var(--ar-sage)', color: '#1B3327' }}><Sparkles size={11} /> {yearly ? `Save ${PREMIUM_ANNUAL_SAVE_PCT}%` : '0% commission'}</div>
+                  <div className="text-lg font-bold">{PREMIUM_PLAN.name}</div>
+                  <p className="mt-1 text-sm text-white/70">Keep every rupee. Automate the rest.</p>
                   <div className="mt-6 flex items-end gap-1">
-                    <span className="pb-1.5 text-2xl font-bold" style={{ color: 'var(--ar-primary)' }}>₹</span>
-                    <span className="font-display text-5xl tracking-tight" style={{ color: 'var(--ar-primary)' }}>{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
-                    <span className="pb-2 text-sm text-neutral-500">/month</span>
-                    {yearly && <span className="pb-2 ml-1 text-sm text-neutral-500 line-through">₹{PREMIUM_PLAN.monthly}</span>}
+                    <span className="pb-1.5 text-2xl font-bold">₹</span>
+                    <span className="font-display text-5xl tracking-tight">{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
+                    <span className="pb-2 text-sm text-white/60">/month</span>
+                    {yearly && <span className="pb-2 ml-1 text-sm text-white/50 line-through">₹{PREMIUM_PLAN.monthly}</span>}
                   </div>
-                  <p className="mt-1.5 text-xs font-semibold text-neutral-500">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
+                  <p className="mt-1.5 text-xs font-semibold text-white/60">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
                   <ul className="mt-6 flex flex-col gap-3">
-                    <li className="flex items-start gap-2.5 text-sm font-semibold" style={{ color: 'var(--ar-ink)' }}><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ar-primary)' }} /><span>Everything in Free</span></li>
-                    {PREMIUM_PLAN.features.slice(0, 4).map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ar-primary)' }} /><span>{f}</span></li>)}
+                    <li className="flex items-start gap-2.5 text-sm font-semibold"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ar-sage)' }} /><span>Everything in Free</span></li>
+                    {PREMIUM_PLAN.features.slice(0, 4).map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-white/85"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ar-sage)' }} /><span>{f}</span></li>)}
                   </ul>
-                  <CtaButton to={START} className="mt-7 w-full">Get Started Now</CtaButton>
+                  <Link to={START} className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-[5px] px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ background: 'var(--ar-sage)', color: '#1B3327' }}>Get Started Now <ArrowRight size={15} /></Link>
                 </div>
               </Reveal>
             </div>
@@ -800,19 +869,34 @@ export default function ArchitectPage() {
       {/* ═══════════════ 11 · ABOUT ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ar-cream)' }}>
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <Reveal className="relative order-2 lg:order-1">
+          <div className="order-1 text-center lg:text-left">
+            <Reveal as="h2" delay={0.05} className="text-3xl leading-tight tracking-tight sm:text-4xl">We&apos;re on a mission to make studios <span style={{ color: 'var(--ar-primary)' }}>run calmer.</span></Reveal>
+            <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">
+              Great design work shouldn&apos;t get lost in scheduling. Book A Sloth was built so a studio can manage every client consultation, site visit and review from one calm platform — instead of stitching together calendars, WhatsApp, email threads and payment tools.
+            </Reveal>
+            <div className="mt-8 flex flex-col gap-5 text-left">
+              {[
+                { icon: Sparkles, title: 'Built for studios', desc: 'A booking page and diary shaped around how a design practice works.' },
+                { icon: BadgePercent, title: 'Honest pricing', desc: 'A free forever plan and 0% commission on Active — no hidden fees, ever.' },
+                { icon: MessageCircle, title: 'Real support', desc: 'A team in India by your side, from setup to your first booking.' },
+              ].map((f, i) => (
+                <Reveal key={f.title} delay={0.1 + i * 0.06} className="flex items-start gap-3.5">
+                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' }}><f.icon size={18} /></span>
+                  <div><p className="text-[15px] font-bold text-[color:var(--ar-ink)]">{f.title}</p><p className="mt-0.5 text-sm leading-relaxed text-neutral-500">{f.desc}</p></div>
+                </Reveal>
+              ))}
+            </div>
+            <Reveal delay={0.3} className="mt-8">
+              <Link to="/about" className="inline-flex items-center gap-2 rounded-[5px] px-6 py-3 text-sm font-semibold text-white hover:no-underline" style={{ background: 'var(--ar-primary)' }}>Learn more about Book A Sloth <ArrowRight size={16} /></Link>
+            </Reveal>
+          </div>
+          <Reveal className="relative order-2">
+            {/* framed blueprint sketch border */}
+            <div aria-hidden className="absolute inset-4 -rotate-2 rounded-[28px] border" style={{ borderColor: 'rgba(111,140,93,0.5)' }} />
+            <div aria-hidden className="absolute inset-2 rotate-1 rounded-[28px] border" style={{ borderColor: 'rgba(111,140,93,0.3)' }} />
             <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: 'rgba(111,140,93,0.2)' }} />
             <img src="/for/architects/about-archi.webp" alt="Book A Sloth for architecture and interior-design studios" loading="lazy" decoding="async" width="1100" height="1100" className="relative z-10 mx-auto h-auto w-full max-w-md object-contain drop-shadow-[0_24px_40px_rgba(35,65,47,0.16)]" />
           </Reveal>
-          <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="h2" delay={0.05} className="text-3xl leading-tight tracking-tight sm:text-4xl">Small studios deserve better tools.</Reveal>
-            <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">
-              Book A Sloth was built to make appointment-based practices easier to run. Instead of stitching together calendars, WhatsApp messages, email threads and payment tools, a studio can manage every client consultation, site visit and review from one calm platform.
-            </Reveal>
-            <Reveal delay={0.14} className="mt-8">
-              <Link to="/about" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ar-primary)' }}>Learn More About Us <ArrowRight size={16} /></Link>
-            </Reveal>
-          </div>
         </div>
       </section>
 
