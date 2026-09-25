@@ -76,6 +76,13 @@ export const ALL_PLANS = [FREE_PLAN, PREMIUM_PLAN];
 /** Headline daily figure for Sloth Active: ₹3,599 / 365 = ₹9.86. */
 export const PREMIUM_PER_DAY = "₹9.86";
 
+/**
+ * Yearly billed as a monthly-equivalent: ₹3,599 / 12 = ₹299.9 → ₹300. Same
+ * GST-inclusive basis as the yearly charge (see header note), so it reads as
+ * "cheaper per month than monthly", never as annual costing more.
+ */
+export const PREMIUM_YEARLY_PER_MONTH = Math.round(PREMIUM_PLAN.yearly / 12); // 300
+
 /** Annual saving vs 12 × monthly — kept here so no surface recomputes it wrong. */
 export const PREMIUM_ANNUAL_SAVING = PREMIUM_PLAN.monthly * 12 - PREMIUM_PLAN.yearly; // ₹1,189
 export const PREMIUM_ANNUAL_SAVE_PCT = Math.round((PREMIUM_ANNUAL_SAVING / (PREMIUM_PLAN.monthly * 12)) * 100); // 25
