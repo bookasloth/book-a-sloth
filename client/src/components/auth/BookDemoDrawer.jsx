@@ -22,7 +22,7 @@ const BENEFITS = [
     title: 'Live product walkthrough',
     body: 'See real bookings, payments and calendar sync in action.',
     icon: (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="m10 8 5 3-5 3V8Z" /><path d="M8 21h8M12 17v4" /></svg>
+      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="m10 8 5 3-5 3V8Z" /><path d="M8 21h8M12 17v4" /></svg>
     ),
   },
   {
@@ -30,7 +30,7 @@ const BENEFITS = [
     title: 'Tailored to your work',
     body: 'Tell us what you do — we shape the demo around it.',
     icon: (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 9.5 8.5 4 11l5.5 2.5L12 19l2.5-5.5L20 11l-5.5-2.5L12 3Z" /></svg>
+      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 9.5 8.5 4 11l5.5 2.5L12 19l2.5-5.5L20 11l-5.5-2.5L12 3Z" /></svg>
     ),
   },
   {
@@ -38,7 +38,7 @@ const BENEFITS = [
     title: 'No card, no commitment',
     body: 'Free 30-minute session. Set up while we talk.',
     icon: (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
+      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
     ),
   },
 ];
@@ -118,7 +118,7 @@ export default function BookDemoDrawer({ open, onClose }) {
     >
       {/* Dark hero band — value props, inspired by a two-panel demo modal but
           stacked to fit the narrow signup card. */}
-      <div className="relative shrink-0 overflow-hidden bg-ink px-6 pb-5 pt-5 text-white">
+      <div className="relative shrink-0 overflow-hidden bg-ink px-7 pb-7 pt-6 text-white">
         {/* soft accent washes */}
         <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-primary-cta/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 left-8 h-40 w-40 rounded-full bg-c-blue/20 blur-3xl" />
@@ -133,26 +133,26 @@ export default function BookDemoDrawer({ open, onClose }) {
         </button>
 
         <div className="relative">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-cta">Book a demo</p>
-          <h2 className="mt-1 font-heading text-xl font-bold tracking-tight text-white">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary-cta">Book a demo</p>
+          <h2 className="mt-2 font-heading text-[22px] font-bold leading-tight tracking-tight text-white">
             See Book A Sloth in action
           </h2>
-          <p className="mt-1.5 max-w-sm text-[13px] leading-relaxed text-white/60">
+          <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-white/60">
             Tell us what you do and our team walks you through a personalised demo.
           </p>
 
-          <ul className={`mt-4 space-y-2.5 ${step === 'form' ? '' : 'hidden'}`}>
+          <ul className={`mt-6 space-y-4 ${step === 'form' ? '' : 'hidden'}`}>
             {BENEFITS.map((b) => (
-              <li key={b.title} className="flex items-start gap-3">
+              <li key={b.title} className="flex items-center gap-3.5">
                 <span
-                  className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[7px]"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] ring-1 ring-white/10"
                   style={{ backgroundColor: `${b.hue}26`, color: b.hue }}
                 >
                   {b.icon}
                 </span>
-                <span className="min-w-0 leading-snug">
-                  <span className="block text-[13px] font-bold">{b.title}</span>
-                  <span className="block text-[11px] text-white/50">{b.body}</span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold leading-tight">{b.title}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-white/55">{b.body}</span>
                 </span>
               </li>
             ))}
