@@ -879,9 +879,18 @@ const ServiceBooking = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-        <img src="/favicon.svg" alt="" className="w-12 h-12 animate-pulse" />
-        <p className="text-sm text-gray-400">Getting things ready…</p>
+      <div className="min-h-screen flex flex-col items-center justify-center px-6"
+        style={{ background: `radial-gradient(circle at top, ${tc}0f, transparent 22rem), linear-gradient(180deg,#fffaf3,#faf7f1)` }}>
+        <style>{`@keyframes bkbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}@keyframes bkslide{0%{margin-left:-40%}100%{margin-left:160%}}`}</style>
+        <div className="flex items-center justify-center rounded-2xl"
+          style={{ width: 76, height: 76, background: `${tc}14`, boxShadow: `0 0 0 8px ${tc}0d`, animation: 'bkbreathe 2.4s ease-in-out infinite' }}>
+          <img src="/favicon.svg" alt="" className="w-9 h-9" />
+        </div>
+        <p className="mt-4 font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#111' }}>Setting up your booking</p>
+        <p className="mt-1 text-sm text-gray-400">Just a moment while we load the calendar…</p>
+        <div className="mt-5 overflow-hidden rounded-full" style={{ width: 160, height: 4, background: '#F0EBE4' }}>
+          <div style={{ width: '40%', height: '100%', borderRadius: 99, background: tc, animation: 'bkslide 1.3s ease-in-out infinite' }} />
+        </div>
       </div>
     );
   if (!service)
@@ -1020,6 +1029,24 @@ const ServiceBooking = () => {
                   </div>
                 </div>
 
+                {/* Assurances — set expectations up front, reduce abandonment.
+                    Only claims we can stand behind (no reschedule-policy promise). */}
+                <div className="px-4 py-3 border-t space-y-2">
+                  {[
+                    'Instant confirmation',
+                    'Calendar invite + reminders',
+                    ...(isPaid ? ['Secure payment via Razorpay'] : []),
+                  ].map((t) => (
+                    <div key={t} className="flex items-center gap-2 text-xs text-gray-500">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#16A34A' }} fill="none"
+                        stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                      {t}
+                    </div>
+                  ))}
+                </div>
+
                 {/* View full profile */}
                 <div className="px-4 pb-4 border-t pt-4">
                   <Link to={`/${profileSlug}`}
@@ -1040,29 +1067,39 @@ const ServiceBooking = () => {
 
         {/* ── RIGHT: Booking Engine ── */}
         <div className="flex-1 min-w-0 flex flex-col">
-          {/* Progress bar — icons only; solid brand + border when active, grey linear when not */}
-          <div className="mb-4 flex items-center w-full">
+          {/* Progress bar — labelled steps; solid brand when active, grey when not.
+              items-start + connector mt-[17px] keeps the line on the dot centre
+              while each label sits under its own dot. */}
+          <div className="mb-5 flex items-start w-full">
             {STEPS.map((s, i) => {
               const idx = STEPS.indexOf(step);
               const active = i <= idx;
               const done = i < idx;
               return (
-                <div key={s} className={`flex items-center ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-colors"
-                    style={active
-                      ? { background: tc, color: textOnTheme, borderColor: tc }
-                      : { background: '#fff', color: '#9ca3af', borderColor: '#d1d5db' }}
-                    title={LABELS[s]}
-                    aria-label={LABELS[s]}
-                  >
-                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor"
-                      strokeWidth={active ? 2.4 : 1.8}
-                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      {STEP_ICONS[s]}
-                    </svg>
+                <div key={s} className={`flex items-start ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors"
+                      style={active
+                        ? { background: tc, color: textOnTheme, borderColor: tc, boxShadow: i === idx ? `0 0 0 4px ${tc}22` : 'none' }
+                        : { background: '#fff', color: '#9ca3af', borderColor: '#d1d5db' }}
+                      aria-label={LABELS[s]}
+                    >
+                      {done ? (
+                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2.6}
+                          strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
+                      ) : (
+                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor"
+                          strokeWidth={active ? 2.4 : 1.8}
+                          strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          {STEP_ICONS[s]}
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-semibold whitespace-nowrap transition-colors"
+                      style={{ color: active ? tc : '#9ca3af' }}>{LABELS[s]}</span>
                   </div>
                   {i < STEPS.length - 1 && (
-                    <div className="flex-1 h-0.5 mx-2 transition-colors"
+                    <div className="flex-1 h-0.5 mx-2 mt-[17px] transition-colors"
                       style={{ background: done ? tc : '#e5e7eb' }} />
                   )}
                 </div>
@@ -1124,7 +1161,7 @@ const ServiceBooking = () => {
           {/* STEP: time */}
           {!finalizing && step === "time" && (
             <div className="bg-white border border-gray-100 rounded p-4 sm:p-5 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
-              <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-4">
                 <Link
                   to={`/${profileSlug}`}
                   className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-shrink-0"
@@ -1134,8 +1171,8 @@ const ServiceBooking = () => {
                   </svg>
                   Back to Services
                 </Link>
-                <div className="flex items-center gap-2 min-w-0">
-                  <h2 className="text-xl font-bold truncate">When works for you?</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg sm:text-xl font-bold">When works for you?</h2>
                   <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full flex-shrink-0">
                     {tzAbbr}
                   </span>
