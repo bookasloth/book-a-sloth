@@ -1441,9 +1441,9 @@ const ServiceBooking = () => {
                           <div className="font-semibold text-sm text-gray-900">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</div>
                         </div>
                         <button type="button" onClick={() => setStep("time")} aria-label="Edit"
-                          className="flex items-center justify-center w-7 h-7 rounded-md transition-opacity hover:opacity-80 shrink-0"
-                          style={{ background: `${tc}14`, color: tc }}>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+                          className="flex items-center justify-center p-1 transition-opacity hover:opacity-70 shrink-0"
+                          style={{ color: tc }}>
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
                         </button>
                       </div>
                       {/* Time */}
@@ -1459,9 +1459,9 @@ const ServiceBooking = () => {
                           </div>
                         </div>
                         <button type="button" onClick={() => setStep("time")} aria-label="Edit"
-                          className="flex items-center justify-center w-7 h-7 rounded-md transition-opacity hover:opacity-80 shrink-0"
-                          style={{ background: `${tc}14`, color: tc }}>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+                          className="flex items-center justify-center p-1 transition-opacity hover:opacity-70 shrink-0"
+                          style={{ color: tc }}>
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
                         </button>
                       </div>
                       {/* Platform fee */}
@@ -1582,46 +1582,43 @@ const ServiceBooking = () => {
                       State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
                     </label>
                   </div>
-
-                  {/* Optional billing address / GSTIN / notes — behind a toggle so
-                      the common path is just name, contact and state. */}
-                  <button type="button" onClick={() => setShowBilling((v) => !v)}
-                    className="w-full flex items-center gap-3 border border-dashed rounded-lg px-3 py-2.5 hover:bg-gray-50 transition-colors text-left"
-                    style={{ borderColor: "var(--color-line)" }}>
-                    <span className="relative inline-flex w-9 h-5 rounded-full transition-colors flex-shrink-0"
-                      style={{ background: showBilling ? tc : "#D1D5DB" }}>
-                      <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
-                        style={{ left: showBilling ? 18 : 2 }} />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium text-gray-700">Add billing address, GSTIN or notes</span>
-                      <span className="block text-xs text-gray-400">For invoices or business bookings</span>
-                    </span>
-                    <span className="ml-auto flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
-                      Optional
-                      <svg className={`w-4 h-4 transition-transform ${showBilling ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                    </span>
-                  </button>
-
-                  {showBilling && (
-                    <div className="space-y-3.5">
-                      <FloatingInput id="bk-address" label="Billing address" placeholder="Flat / building, street, city, PIN" value={billing.address}
-                        onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
-                      <FloatingInput id="bk-gstin" label="GSTIN" placeholder="22AAAAA0000A1Z5" value={billing.gstin}
-                        onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-                      <div className="relative">
-                        <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
-                          className="peer fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px] placeholder-transparent"
-                          value={notes} onChange={(e) => setNotes(e.target.value)} />
-                        <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
-                          peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
-                          peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
-                          Notes <span className="font-normal text-gray-400">(Optional)</span>
-                        </label>
-                      </div>
-                    </div>
-                  )}
                 </div>
+              </div>
+
+              {/* GST details — optional, opens full width under both columns */}
+              <div className="mt-4">
+                <button type="button" onClick={() => setShowBilling((v) => !v)}
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                  style={{ borderColor: "var(--color-line)" }}>
+                  <span className="relative inline-flex rounded-full transition-colors flex-shrink-0"
+                    style={{ width: 28, height: 16, background: showBilling ? tc : "#D1D5DB" }}>
+                    <span className="absolute rounded-full bg-white transition-all"
+                      style={{ top: 2, width: 12, height: 12, left: showBilling ? 14 : 2 }} />
+                  </span>
+                  Add GST Details
+                  <span className="text-xs text-gray-400">Optional</span>
+                </button>
+
+                {showBilling && (
+                  <div className="mt-3.5 space-y-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <FloatingInput id="bk-address" label="Billing address" value={billing.address}
+                        onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
+                      <FloatingInput id="bk-gstin" label="GSTIN" value={billing.gstin}
+                        onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
+                    </div>
+                    <div className="relative">
+                      <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
+                        className="peer fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px] placeholder-transparent"
+                        value={notes} onChange={(e) => setNotes(e.target.value)} />
+                      <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                        peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
+                        Notes <span className="font-normal text-gray-400">(Optional)</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Full-width Continue */}
