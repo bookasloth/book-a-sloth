@@ -964,7 +964,7 @@ const ServiceBooking = () => {
 
   return (
     <div
-      className="min-h-screen"
+      className="bk-page min-h-screen"
       style={{
         background:
           `radial-gradient(circle at top, ${tc}0f, transparent 22rem), linear-gradient(180deg, #fffaf3 0%, #faf7f1 100%)`,
@@ -972,6 +972,15 @@ const ServiceBooking = () => {
       }}
     >
       <style>{BAS_KEYFRAMES}</style>
+      {/* Focus affordance: the global fb-input focus draws a 6px green-grey ring.
+          Scope it to this page so booking inputs get a slim on-brand orange ring
+          + orange border instead. */}
+      <style>{`
+        .bk-page .fb-input:focus {
+          border-color: ${tc};
+          box-shadow: 0 0 0 3px color-mix(in srgb, ${tc} 22%, transparent);
+        }
+      `}</style>
       {host?.is_verified === false && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-sm text-amber-700">
           ⚠️ This creator is pending admin verification. Bookings may be subject to confirmation.
