@@ -805,6 +805,18 @@ const HostProfile = () => {
               </div>
             )}
 
+            {/* Digital Products */}
+            {products.length > 0 && (
+              <div className="mt-10">
+                <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Digital Products</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {products.map(p => (
+                    <ProductCard key={p.id} product={p} profileSlug={profileSlug} />
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Reviews */}
             {reviewData.count > 0 && (
               <div className="mt-10">
@@ -851,18 +863,6 @@ const HostProfile = () => {
               <div className="mt-10">
                 <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Frequently asked questions</h2>
                 <FaqAccordion faqs={faqs} colors={C} />
-              </div>
-            )}
-
-            {/* Digital Products */}
-            {products.length > 0 && (
-              <div className="mt-10">
-                <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Digital Products</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {products.map(p => (
-                    <ProductCard key={p.id} product={p} profileSlug={profileSlug} />
-                  ))}
-                </div>
               </div>
             )}
           </div>
