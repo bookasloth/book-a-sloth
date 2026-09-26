@@ -197,23 +197,28 @@ const DIAL_CODES = ["+91", "+1", "+44", "+971"];
 // Floating-label text input: label rests centered inside an empty field and
 // animates up onto the top border on focus / when filled. Uses the CSS `peer`
 // pattern — no extra JS. Focus color comes from the --tc var set on the step.
-// Static label above the field (premium form pattern) + example placeholder.
-const FloatingInput = ({ id, label, type = "text", value, onChange, required, autoComplete, placeholder, hint }) => (
-  <div>
-    <label htmlFor={id} className="block text-xs font-medium text-gray-600 mb-1.5">
-      {label}{required && <span style={{ color: "#e42527" }}> *</span>}
-    </label>
+// Floating label: label sits inside the empty field and animates up to the
+// border on focus / when filled.
+const FloatingInput = ({ id, label, type = "text", value, onChange, required, autoComplete }) => (
+  <div className="relative">
     <input
       id={id}
       type={type}
       required={required}
       autoComplete={autoComplete}
-      placeholder={placeholder || ""}
+      placeholder={label}
       value={value}
       onChange={onChange}
-      className="fb-input fb-input--sm !rounded-lg !border"
+      className="peer fb-input fb-input--sm !rounded-lg !border placeholder-transparent"
     />
-    {hint && <p className="mt-1.5 text-xs text-gray-400">{hint}</p>}
+    <label
+      htmlFor={id}
+      className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]"
+    >
+      {label}{required && <span style={{ color: "#e42527" }}> *</span>}
+    </label>
   </div>
 );
 
@@ -1506,11 +1511,8 @@ const ServiceBooking = () => {
                   </div>
                   <div className="space-y-3.5">
                     <FloatingInput id="bk-email" label="Email Address" type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-                    {/* Mobile: static label + country dial-code select + national number; sent as fullPhone. */}
-                    <div>
-                      <label htmlFor="bk-phone" className="block text-xs font-medium text-gray-600 mb-1.5">
-                        Mobile Number<span style={{ color: "#e42527" }}> *</span>
-                      </label>
+                    {/* Mobile: floating label + country dial-code select + national number; sent as fullPhone. */}
+                    <div className="relative">
                       <div className="flex items-stretch rounded-lg border overflow-hidden focus-within:border-[color:var(--tc)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
                         <select
                           aria-label="Country code"
@@ -1523,59 +1525,62 @@ const ServiceBooking = () => {
                             <option key={c} value={c}>{c}</option>
                           ))}
                         </select>
-                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="flex-1 min-w-0 px-3 py-2 bg-transparent outline-none text-sm" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-2 bg-transparent outline-none text-sm" value={phone} onChange={(e) => setPhone(e.target.value)} />
                       </div>
+                      <label htmlFor="bk-phone" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                        Mobile Number<span style={{ color: "#e42527" }}> *</span>
+                      </label>
                       <p className="mt-1.5 text-xs text-gray-400">We'll send your booking details here.</p>
                     </div>
                   </div>
                   {/* State — place of supply for the GST invoice. Required for
                       paid bookings, so it stays visible; the rest of the billing
                       detail is optional and tucked behind the toggle below. */}
-                  <div>
-                    <label htmlFor="bk-state" className="block text-xs font-medium text-gray-600 mb-1.5">
+                  <div className="relative">
+                    <input
+                      id="bk-state"
+                      placeholder="State"
+                      autoComplete="off"
+                      className="peer fb-input fb-input--sm !rounded-lg !border placeholder-transparent"
+                      value={billing.state}
+                      onFocus={() => setStateOpen(true)}
+                      onBlur={() => setTimeout(() => setStateOpen(false), 120)}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
+                        setStateOpen(true);
+                        setBilling((b) => ({ ...b, state: name, state_code: code }));
+                      }}
+                    />
+                    {stateOpen && billing.state.trim().length >= 3 && (() => {
+                      const q = billing.state.trim().toLowerCase();
+                      const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
+                      if (!matches.length) return null;
+                      return (
+                        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-100 bg-white py-1 shadow-lg">
+                          {matches.map((s) => (
+                            <li key={s.code}>
+                              <button
+                                type="button"
+                                className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
+                                  setStateOpen(false);
+                                }}
+                              >
+                                {s.name}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
+                    <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                      peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
                       State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
                     </label>
-                    <div className="relative">
-                      <input
-                        id="bk-state"
-                        placeholder="Select your state"
-                        autoComplete="off"
-                        className="fb-input fb-input--sm !rounded-lg !border"
-                        value={billing.state}
-                        onFocus={() => setStateOpen(true)}
-                        onBlur={() => setTimeout(() => setStateOpen(false), 120)}
-                        onChange={(e) => {
-                          const name = e.target.value;
-                          const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
-                          setStateOpen(true);
-                          setBilling((b) => ({ ...b, state: name, state_code: code }));
-                        }}
-                      />
-                      {stateOpen && billing.state.trim().length >= 3 && (() => {
-                        const q = billing.state.trim().toLowerCase();
-                        const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
-                        if (!matches.length) return null;
-                        return (
-                          <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-100 bg-white py-1 shadow-lg">
-                            {matches.map((s) => (
-                              <li key={s.code}>
-                                <button
-                                  type="button"
-                                  className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
-                                  onMouseDown={(e) => e.preventDefault()}
-                                  onClick={() => {
-                                    setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
-                                    setStateOpen(false);
-                                  }}
-                                >
-                                  {s.name}
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        );
-                      })()}
-                    </div>
                   </div>
 
                   {/* Optional billing address / GSTIN / notes — behind a toggle so
@@ -1604,13 +1609,15 @@ const ServiceBooking = () => {
                         onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
                       <FloatingInput id="bk-gstin" label="GSTIN" placeholder="22AAAAA0000A1Z5" value={billing.gstin}
                         onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-                      <div>
-                        <label htmlFor="bk-notes" className="block text-xs font-medium text-gray-600 mb-1.5">
-                          Notes <span className="font-normal text-gray-400">(optional)</span>
-                        </label>
-                        <textarea id="bk-notes" placeholder="Anything the host should know before the session?"
-                          className="fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px]"
+                      <div className="relative">
+                        <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
+                          className="peer fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px] placeholder-transparent"
                           value={notes} onChange={(e) => setNotes(e.target.value)} />
+                        <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                          peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                          peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
+                          Notes <span className="font-normal text-gray-400">(Optional)</span>
+                        </label>
                       </div>
                     </div>
                   )}
