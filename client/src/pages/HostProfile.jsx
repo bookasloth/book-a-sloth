@@ -240,9 +240,17 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
           {s.duration} min
         </span>
         <span className="flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.muted }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <rect x="3" y="5" width="18" height="14" rx="2" /><path strokeLinecap="round" strokeLinejoin="round" d="M3 9h18" />
-          </svg>
+          {s.meeting_mode === 'offline' ? (
+            // Map pin — in-person
+            <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.muted }} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+            </svg>
+          ) : (
+            // Video camera — online
+            <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.muted }} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+            </svg>
+          )}
           {s.meeting_mode === 'offline' ? 'In-person' : 'Online'}
         </span>
       </div>
