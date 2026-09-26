@@ -325,6 +325,7 @@ const ServiceBooking = () => {
     pan: user?.billing_details?.pan || "",
   });
   const [stateOpen, setStateOpen] = useState(false); // state combobox dropdown
+  const [showBilling, setShowBilling] = useState(false); // reveal optional billing address / GSTIN / notes
   const [invoiceRef, setInvoiceRef] = useState(null); // {id, token}
 
   const [otp, setOtp] = useState("");
@@ -1319,19 +1320,34 @@ const ServiceBooking = () => {
                               <p className="text-xs text-gray-400 mt-1">Try another date — there's bound to be a good one.</p>
                             </div>
                           ) : (
-                            <div className="grid grid-cols-3 gap-2 max-h-[276px] overflow-y-auto pr-1 bas-fade">
-                              {timeSlots.map((t) => (
-                                <button
-                                  key={t}
-                                  onClick={() => setSelectedTime(t)}
-                                  className="btn btn--outline py-2.5 text-sm transition-all"
-                                  style={selectedTime === t
-                                    ? { background: tc, color: textOnTheme, fontWeight: 600 }
-                                    : {}}
-                                >
-                                  {formatTime(t)}
-                                </button>
-                              ))}
+                            <div className="max-h-[300px] overflow-y-auto pr-1 bas-fade space-y-4">
+                              {[
+                                { label: "Morning",   test: (h) => h < 12 },
+                                { label: "Afternoon", test: (h) => h >= 12 && h < 17 },
+                                { label: "Evening",   test: (h) => h >= 17 },
+                              ].map((g) => {
+                                const items = timeSlots.filter((t) => g.test(parseInt(t.slice(0, 2), 10)));
+                                if (!items.length) return null;
+                                return (
+                                  <div key={g.label}>
+                                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">{g.label}</h4>
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {items.map((t) => (
+                                        <button
+                                          key={t}
+                                          onClick={() => setSelectedTime(t)}
+                                          className="btn btn--outline py-2.5 text-sm transition-all"
+                                          style={selectedTime === t
+                                            ? { background: tc, color: textOnTheme, fontWeight: 600 }
+                                            : {}}
+                                        >
+                                          {formatTime(t)}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </>
@@ -1346,19 +1362,29 @@ const ServiceBooking = () => {
                 </div>
               </div>
               {selectedTime && (
-                <button
-                  onClick={() => {
-                    analytics.track(EVENTS.BOOKING_STARTED, {
-                      service_id: service.id, host_id: host.id,
-                      price: Number(service.price) || 0,
-                    });
-                    setStep("details");
-                  }}
-                  className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85"
-                  style={{ background: tc, color: textOnTheme }}
-                >
-                  Continue →
-                </button>
+                <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t pt-4"
+                  style={{ borderColor: "#f0ece6" }}>
+                  <div className="text-sm text-gray-500">
+                    Selected{" "}
+                    <span className="font-bold text-gray-900">
+                      {DAYS_SHORT[selectedDate.getDay()]} {selectedDate.getDate()} {MONTHS[selectedDate.getMonth()]} · {formatTime(selectedTime)}
+                    </span>{" "}
+                    <span className="text-gray-400">({tzAbbr})</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      analytics.track(EVENTS.BOOKING_STARTED, {
+                        service_id: service.id, host_id: host.id,
+                        price: Number(service.price) || 0,
+                      });
+                      setStep("details");
+                    }}
+                    className="btn py-3 px-7 font-bold text-sm transition-opacity hover:opacity-85 flex-shrink-0"
+                    style={{ background: tc, color: textOnTheme }}
+                  >
+                    Continue →
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -1476,69 +1502,86 @@ const ServiceBooking = () => {
                       </label>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <FloatingInput id="bk-address" label="Address" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
-                    {/* Searchable state — dropdown only appears after 3 chars typed. */}
-                    <div className="relative">
-                      <input
-                        id="bk-state"
-                        placeholder="State"
-                        autoComplete="off"
-                        className="peer fb-input fb-input--sm !rounded-sm !border placeholder-transparent"
-                        value={billing.state}
-                        onFocus={() => setStateOpen(true)}
-                        onBlur={() => setTimeout(() => setStateOpen(false), 120)}
-                        onChange={(e) => {
-                          const name = e.target.value;
-                          const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
-                          setStateOpen(true);
-                          setBilling((b) => ({ ...b, state: name, state_code: code }));
-                        }}
-                      />
-                      {stateOpen && billing.state.trim().length >= 3 && (() => {
-                        const q = billing.state.trim().toLowerCase();
-                        const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
-                        if (!matches.length) return null;
-                        return (
-                          <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-sm border border-gray-100 bg-white py-1 shadow-lg">
-                            {matches.map((s) => (
-                              <li key={s.code}>
-                                <button
-                                  type="button"
-                                  className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
-                                  onMouseDown={(e) => e.preventDefault()}
-                                  onClick={() => {
-                                    setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
-                                    setStateOpen(false);
-                                  }}
-                                >
-                                  {s.name}
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        );
-                      })()}
-                      <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
-                        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
-                        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
-                        State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
-                      </label>
-                    </div>
-                  </div>
-                  {/* Optional GSTIN — full width, under Address/State */}
-                  <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
-                    onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-
-                  {/* Notes — plain optional box, full width */}
+                  {/* State — place of supply for the GST invoice. Required for
+                      paid bookings, so it stays visible; the rest of the billing
+                      detail is optional and tucked behind the toggle below. */}
                   <div className="relative">
-                    <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
-                      className="peer fb-input fb-input--sm !rounded-sm !border resize-none !min-h-0 !h-[88px]"
-                      value={notes} onChange={(e) => setNotes(e.target.value)} />
-                    <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
-                      Notes <span className="font-normal text-gray-400">(Optional)</span>
+                    <input
+                      id="bk-state"
+                      placeholder="State"
+                      autoComplete="off"
+                      className="peer fb-input fb-input--sm !rounded-sm !border placeholder-transparent"
+                      value={billing.state}
+                      onFocus={() => setStateOpen(true)}
+                      onBlur={() => setTimeout(() => setStateOpen(false), 120)}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
+                        setStateOpen(true);
+                        setBilling((b) => ({ ...b, state: name, state_code: code }));
+                      }}
+                    />
+                    {stateOpen && billing.state.trim().length >= 3 && (() => {
+                      const q = billing.state.trim().toLowerCase();
+                      const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
+                      if (!matches.length) return null;
+                      return (
+                        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-sm border border-gray-100 bg-white py-1 shadow-lg">
+                          {matches.map((s) => (
+                            <li key={s.code}>
+                              <button
+                                type="button"
+                                className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
+                                  setStateOpen(false);
+                                }}
+                              >
+                                {s.name}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
+                    <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                      peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
+                      State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
                     </label>
                   </div>
+
+                  {/* Optional billing address / GSTIN / notes — behind a toggle so
+                      the common path is just name, contact and state. */}
+                  <button type="button" onClick={() => setShowBilling((v) => !v)}
+                    className="w-full flex items-center gap-2.5 text-sm text-gray-600 border border-dashed rounded-sm px-3 py-2.5 hover:bg-gray-50 transition-colors"
+                    style={{ borderColor: "var(--color-line)" }}>
+                    <span className="relative inline-flex w-9 h-5 rounded-full transition-colors flex-shrink-0"
+                      style={{ background: showBilling ? tc : "#D1D5DB" }}>
+                      <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
+                        style={{ left: showBilling ? 18 : 2 }} />
+                    </span>
+                    Add billing address, GSTIN or notes
+                    <span className="ml-auto text-gray-400 font-normal">optional</span>
+                  </button>
+
+                  {showBilling && (
+                    <div className="space-y-3.5">
+                      <FloatingInput id="bk-address" label="Address" value={billing.address}
+                        onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
+                      <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
+                        onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
+                      <div className="relative">
+                        <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
+                          className="peer fb-input fb-input--sm !rounded-sm !border resize-none !min-h-0 !h-[88px]"
+                          value={notes} onChange={(e) => setNotes(e.target.value)} />
+                        <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                          Notes <span className="font-normal text-gray-400">(Optional)</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
