@@ -567,13 +567,12 @@ const HostProfile = () => {
                 </svg>
               </button>
 
-              {/* Cover — 3:1. Top corners use the card's exact inner radius
-                  (rounded-2xl 16px minus the 2px border = 14px). The old 16px
-                  value overshot the border and left white slivers in the corners. */}
+              {/* Cover — 3:1. NO own border-radius: any radius on the cover
+                  fights the card's rounded-2xl + overflow-hidden clip and leaves
+                  white slivers in the corners. Square corners + parent clip = flush. */}
               <div className="relative overflow-hidden"
                 style={{
                   aspectRatio: '3 / 1',
-                  borderRadius: '14px 14px 0 0',
                   background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)`,
                 }}>
                 {/* The cover is the LCP element on a profile page: 3:1 and full
