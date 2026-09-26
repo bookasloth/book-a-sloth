@@ -1111,25 +1111,25 @@ const ServiceBooking = () => {
               return (
                 <div key={s} className={`flex items-center ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
                   {active ? (
-                    <div className="flex items-center gap-2 rounded-full pl-1.5 pr-3.5 h-9 flex-shrink-0"
+                    <div className="flex items-center gap-1.5 rounded-full pl-1 pr-2.5 h-7 flex-shrink-0"
                       style={{ background: tc, color: textOnTheme }} aria-current="step" aria-label={LABELS[s]}>
-                      <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.22)" }}>
-                        <svg className="w-[15px] h-[15px]" fill="none" stroke="currentColor" strokeWidth={2.4}
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.22)" }}>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.4}
                           strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{STEP_ICONS[s]}</svg>
                       </span>
-                      <span className="text-sm font-semibold whitespace-nowrap">{LABELS[s]}</span>
+                      <span className="text-xs font-semibold whitespace-nowrap">{LABELS[s]}</span>
                     </div>
                   ) : (
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-colors"
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-colors"
                       style={done
                         ? { background: tc, color: textOnTheme, borderColor: tc }
                         : { background: "#fff", color: "#9ca3af", borderColor: "#d1d5db" }}
                       aria-label={LABELS[s]}>
                       {done ? (
-                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2.6}
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.6}
                           strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
                       ) : (
-                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8}
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8}
                           strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{STEP_ICONS[s]}</svg>
                       )}
                     </div>
@@ -1582,44 +1582,43 @@ const ServiceBooking = () => {
                       State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
                     </label>
                   </div>
+
+                  {/* GST toggle sits under State; its fields open full width below the grid. */}
+                  <button type="button" onClick={() => setShowBilling((v) => !v)}
+                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                    style={{ borderColor: "var(--color-line)" }}>
+                    <span className="relative inline-flex rounded-full transition-colors flex-shrink-0"
+                      style={{ width: 28, height: 16, background: showBilling ? tc : "#D1D5DB" }}>
+                      <span className="absolute rounded-full bg-white transition-all"
+                        style={{ top: 2, width: 12, height: 12, left: showBilling ? 14 : 2 }} />
+                    </span>
+                    Add GST Details
+                    <span className="text-xs text-gray-400">Optional</span>
+                  </button>
                 </div>
               </div>
 
-              {/* GST details — optional, opens full width under both columns */}
-              <div className="mt-4">
-                <button type="button" onClick={() => setShowBilling((v) => !v)}
-                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-                  style={{ borderColor: "var(--color-line)" }}>
-                  <span className="relative inline-flex rounded-full transition-colors flex-shrink-0"
-                    style={{ width: 28, height: 16, background: showBilling ? tc : "#D1D5DB" }}>
-                    <span className="absolute rounded-full bg-white transition-all"
-                      style={{ top: 2, width: 12, height: 12, left: showBilling ? 14 : 2 }} />
-                  </span>
-                  Add GST Details
-                  <span className="text-xs text-gray-400">Optional</span>
-                </button>
-
-                {showBilling && (
-                  <div className="mt-3.5 space-y-3.5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <FloatingInput id="bk-address" label="Billing address" value={billing.address}
-                        onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
-                      <FloatingInput id="bk-gstin" label="GSTIN" value={billing.gstin}
-                        onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-                    </div>
-                    <div className="relative">
-                      <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
-                        className="peer fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px] placeholder-transparent"
-                        value={notes} onChange={(e) => setNotes(e.target.value)} />
-                      <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
-                        peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
-                        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
-                        Notes <span className="font-normal text-gray-400">(Optional)</span>
-                      </label>
-                    </div>
+              {/* GST fields — open full width under both columns */}
+              {showBilling && (
+                <div className="mt-4 space-y-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <FloatingInput id="bk-address" label="Billing address" value={billing.address}
+                      onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
+                    <FloatingInput id="bk-gstin" label="GSTIN" value={billing.gstin}
+                      onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
                   </div>
-                )}
-              </div>
+                  <div className="relative">
+                    <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
+                      className="peer fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px] placeholder-transparent"
+                      value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                      peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                      peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
+                      Notes <span className="font-normal text-gray-400">(Optional)</span>
+                    </label>
+                  </div>
+                </div>
+              )}
 
               {/* Full-width Continue */}
               <button
