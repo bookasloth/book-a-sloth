@@ -328,6 +328,7 @@ const ServiceBooking = () => {
   });
   const [stateOpen, setStateOpen] = useState(false); // state combobox dropdown
   const [showBilling, setShowBilling] = useState(false); // reveal optional billing address / GSTIN / notes
+  const [resendIn, setResendIn] = useState(0); // OTP resend cooldown (seconds)
   const [invoiceRef, setInvoiceRef] = useState(null); // {id, token}
 
   const [otp, setOtp] = useState("");
@@ -710,6 +711,7 @@ const ServiceBooking = () => {
     try {
       await sendOtp({ email, phone: fullPhone, name: `${firstName} ${lastName}`.trim() });
       toast.success("Verification code sent to your WhatsApp!");
+      setResendIn(30);
       setStep("otp");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send code");
@@ -893,6 +895,20 @@ const ServiceBooking = () => {
   const textOnTheme = getContrastColor(tc);
   const borderColor = getPlanBorderColor(host?.plan || 'explorer');
 
+  // OTP resend cooldown tick.
+  useEffect(() => {
+    if (resendIn <= 0) return undefined;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
+
+  // Masked phone for the verify screen: dial code + last 4, middle dotted.
+  const maskedPhone = (() => {
+    const digits = String(phone || "").replace(/\D/g, "");
+    if (digits.length < 4) return fullPhone;
+    return `${dialCode} ${"•".repeat(Math.max(3, digits.length - 4))} ${digits.slice(-4)}`;
+  })();
+
   // Once the host resolves, remember its theme colour so a refresh or a repeat
   // booking paints the spinner in the host's colour from the first frame.
   useEffect(() => {
@@ -1060,6 +1076,12 @@ const ServiceBooking = () => {
                       {service.meeting_mode === "offline" ? "In-person" : "Online"}
                     </span>
                   </div>
+                  {selectedDate && selectedTime && (
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t text-sm font-semibold text-gray-900">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: tc }} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></svg>
+                      {selectedDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })} · {formatTime(selectedTime)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Assurances — set expectations up front, reduce abandonment.
@@ -1327,7 +1349,7 @@ const ServiceBooking = () => {
                           )}
                           {timeSlots.length === 0 ? (
                             <div className="py-8 text-center bas-fade">
-                              <p className="text-sm font-medium text-gray-600">No open times that day 🦥</p>
+                              <p className="text-sm font-medium text-gray-600">No open times that day</p>
                               <p className="text-xs text-gray-400 mt-1">Try another date — there's bound to be a good one.</p>
                             </div>
                           ) : (
@@ -1665,16 +1687,14 @@ const ServiceBooking = () => {
               </button>
               <div className="max-w-md mx-auto text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ background: `${tc}18` }}>
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  style={{ color: tc }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                style={{ background: "#25D3661f" }}>
+                <svg className="w-8 h-8" fill="#25D366" viewBox="0 0 24 24">
+                  <path d="M17.5 14.4c-.3-.15-1.7-.84-2-.94s-.46-.15-.65.15-.75.94-.92 1.13-.34.22-.63.07a8.2 8.2 0 0 1-2.4-1.48 9 9 0 0 1-1.67-2.06c-.17-.3 0-.46.13-.6s.3-.35.44-.53a2 2 0 0 0 .3-.5.55.55 0 0 0 0-.52c-.08-.15-.65-1.56-.9-2.14s-.47-.48-.65-.49h-.56a1.06 1.06 0 0 0-.77.36 3.25 3.25 0 0 0-1 2.4 5.66 5.66 0 0 0 1.18 3 12.9 12.9 0 0 0 4.94 4.37c.69.3 1.23.48 1.65.61a4 4 0 0 0 1.82.11 3 3 0 0 0 2-1.39 2.44 2.44 0 0 0 .17-1.39c-.07-.13-.26-.2-.55-.35zM12 2a10 10 0 0 0-8.6 15.06L2 22l5.06-1.33A10 10 0 1 0 12 2z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold mb-2">Check your messages</h2>
+              <h2 className="text-xl font-bold mb-2">Check WhatsApp</h2>
               <p className="text-sm text-gray-500 mb-6">
-                We sent a 6-digit code to <strong>{fullPhone}</strong> on WhatsApp.
+                We sent a 6-digit code to <strong>{maskedPhone}</strong> on WhatsApp.
               </p>
               <OtpBoxes value={otp} onChange={setOtp} tc={tc} />
               <button
@@ -1689,12 +1709,19 @@ const ServiceBooking = () => {
                     ? "Verify & Continue to Payment"
                     : "Verify & Confirm Booking"}
               </button>
-              <button
-                onClick={handleSendOtp}
-                className="mt-3 text-xs text-gray-400 hover:text-gray-600"
-              >
-                Didn't receive it? Resend code
-              </button>
+              {resendIn > 0 ? (
+                <p className="mt-3 text-xs text-gray-400">
+                  Resend code in 0:{String(resendIn).padStart(2, "0")}
+                </p>
+              ) : (
+                <button
+                  onClick={handleSendOtp}
+                  className="mt-3 text-xs font-medium hover:opacity-70"
+                  style={{ color: tc }}
+                >
+                  Didn't receive it? Resend code
+                </button>
+              )}
               </div>{/* end max-w-md center wrapper */}
             </div>
           )}
@@ -1723,9 +1750,9 @@ const ServiceBooking = () => {
               </div>
               <h2 className="text-xl font-bold mb-2">One last step</h2>
               <p className="text-sm text-gray-500 mb-6">
-                Your spot's saved — pay now to lock it in. ⏳
+                Your spot's saved — pay now to lock it in.
               </p>
-              <div className="bg-gray-50 rounded p-4 text-sm text-left space-y-2 mb-6">
+              <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Service</span>
                   <span className="font-medium">{service.title}</span>
@@ -1776,7 +1803,10 @@ const ServiceBooking = () => {
                   ? "Opening payment..."
                   : `Pay ₹${checkoutTotal} with Razorpay`}
               </button>
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-gray-400 mt-3 flex items-center justify-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
                 Encrypted &amp; secured by Razorpay · UPI, Card &amp; Wallet accepted
               </p>
               <p className="text-[11px] text-gray-300 mt-1">
@@ -1862,6 +1892,24 @@ const ServiceBooking = () => {
                     <div className="flex items-center gap-3 border border-gray-100 rounded-2xl p-3 bg-gray-50/40 text-left">
                       <span style={{ color: tc }}>{mailIcon}</span>
                       <span className="text-xs text-gray-500 leading-snug">Confirmation email sent to<br /><span className="text-gray-700 font-medium break-all">{email}</span></span>
+                    </div>
+                    {/* How to join / reminders */}
+                    <div className="flex items-start gap-3 border border-gray-100 rounded-2xl p-3 bg-gray-50/40 text-left mt-3">
+                      <span className="mt-0.5" style={{ color: tc }}>
+                        {confirmation.meeting_link ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                        )}
+                      </span>
+                      <span className="text-xs text-gray-500 leading-snug">
+                        {confirmation.meeting_link ? (
+                          <><span className="text-gray-700 font-medium">How to join:</span> your meeting link is in the confirmation email and calendar invite. </>
+                        ) : (
+                          <><span className="text-gray-700 font-medium">Reminders:</span> </>
+                        )}
+                        We&rsquo;ll remind you 24h and 1h before.
+                      </span>
                     </div>
                   </div>
                   {/* RIGHT: booking details */}
