@@ -147,7 +147,7 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
       <div className="max-w-md mx-auto text-center py-2">
         <div className="w-10 h-10 mx-auto mb-4 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: tc }} />
         <h2 className="text-xl font-bold mb-1">Wrapping things up…</h2>
@@ -207,7 +207,7 @@ const FloatingInput = ({ id, label, type = "text", value, onChange, required, au
       placeholder={label}
       value={value}
       onChange={onChange}
-      className="peer fb-input fb-input--sm !rounded-sm !border placeholder-transparent"
+      className="peer fb-input fb-input--sm !rounded-lg !border placeholder-transparent"
     />
     <label
       htmlFor={id}
@@ -981,7 +981,7 @@ const ServiceBooking = () => {
 
         {/* ── LEFT: Permanent Profile Sidebar (content collapsible, column stays put) ── */}
         <div className="lg:w-[300px] flex-shrink-0">
-          <div className="bg-white border border-gray-100 rounded overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
+          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
             {/* Header toggle */}
             <button
               onClick={() => setProfileOpen((o) => !o)}
@@ -1140,7 +1140,7 @@ const ServiceBooking = () => {
 
           {/* Payment verify failed after the instant move — smart by failure type */}
           {!finalizing && payError && (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ background: payError.type === "server" ? "#FEE2E2" : "#FEF3C7" }}>
@@ -1185,7 +1185,7 @@ const ServiceBooking = () => {
 
           {/* STEP: time */}
           {!finalizing && step === "time" && (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-5 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-4">
                 <Link
                   to={`/${profileSlug}`}
@@ -1391,21 +1391,19 @@ const ServiceBooking = () => {
 
           {/* STEP: details */}
           {!finalizing && step === "details" && (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]" style={{ "--tc": tc }}>
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <button
-                  onClick={() => setStep("time")}
-                  className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 flex-shrink-0 mt-1 font-medium"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Back
-                </button>
-                <div className="text-right">
-                  <h2 className="text-xl sm:text-2xl font-bold leading-tight">Tell us who's coming</h2>
-                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">We just need a few quick details to confirm your booking.</p>
-                </div>
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]" style={{ "--tc": tc }}>
+              <button
+                onClick={() => setStep("time")}
+                className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 font-medium mb-3"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
+              <div className="mb-5">
+                <h2 className="text-xl sm:text-2xl font-bold leading-tight">Tell us who's coming</h2>
+                <p className="text-sm text-gray-400 mt-1">We just need a few quick details to confirm your booking.</p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5">
@@ -1415,21 +1413,21 @@ const ServiceBooking = () => {
                     <div className="p-4 space-y-0.5">
                       {/* Service */}
                       <div className="flex items-center gap-3 py-2">
-                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                        <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
                         <span className="font-semibold text-[10px] leading-snug">{service.title}</span>
                       </div>
                       {/* Date */}
                       <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                        <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
                         <span className="font-medium text-[10px]">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
                       </div>
                       {/* Time */}
                       <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                        <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </span>
                         <span className="font-medium text-[10px]">
@@ -1440,7 +1438,7 @@ const ServiceBooking = () => {
                       {/* Platform fee */}
                       {isPaid && (
                         <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                          <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                          <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                           </span>
                           <span className="flex-1 flex items-center justify-between gap-2">
@@ -1448,7 +1446,7 @@ const ServiceBooking = () => {
                               Platform Fee (₹{fees.platformFee} + GST)
                               <span className="relative group inline-flex">
                                 <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[10px] font-bold leading-none cursor-help"
-                                  style={{ background: tc }}>i</span>
+                                  style={{ background: "#9CA3AF" }}>i</span>
                                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 rounded-2xl bg-gray-950 text-white text-xs p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 shadow-2xl shadow-black/40 border border-white/10 backdrop-blur-sm">
                                   <span className="flex items-start gap-2.5">
                                     <svg className="w-3.5 h-3.5 mt-px shrink-0 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1a9 9 0 100 18A9 9 0 0010 1zm.75 13.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V5.5h1.5V11.5z"/></svg>
@@ -1483,7 +1481,7 @@ const ServiceBooking = () => {
                     <FloatingInput id="bk-email" label="Email Address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
                     {/* Mobile: country dial-code select + national number; sent as fullPhone. */}
                     <div className="relative">
-                      <div className="flex items-stretch rounded-sm border overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
+                      <div className="flex items-stretch rounded-lg border overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
                         <select
                           aria-label="Country code"
                           className="w-[64px] shrink-0 bg-gray-50 text-sm font-medium text-gray-700 border-r pl-2 pr-0.5 outline-none cursor-pointer"
@@ -1510,7 +1508,7 @@ const ServiceBooking = () => {
                       id="bk-state"
                       placeholder="State"
                       autoComplete="off"
-                      className="peer fb-input fb-input--sm !rounded-sm !border placeholder-transparent"
+                      className="peer fb-input fb-input--sm !rounded-lg !border placeholder-transparent"
                       value={billing.state}
                       onFocus={() => setStateOpen(true)}
                       onBlur={() => setTimeout(() => setStateOpen(false), 120)}
@@ -1526,7 +1524,7 @@ const ServiceBooking = () => {
                       const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
                       if (!matches.length) return null;
                       return (
-                        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-sm border border-gray-100 bg-white py-1 shadow-lg">
+                        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-100 bg-white py-1 shadow-lg">
                           {matches.map((s) => (
                             <li key={s.code}>
                               <button
@@ -1555,7 +1553,7 @@ const ServiceBooking = () => {
                   {/* Optional billing address / GSTIN / notes — behind a toggle so
                       the common path is just name, contact and state. */}
                   <button type="button" onClick={() => setShowBilling((v) => !v)}
-                    className="w-full flex items-center gap-2.5 text-sm text-gray-600 border border-dashed rounded-sm px-3 py-2.5 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-2.5 text-sm text-gray-600 border border-dashed rounded-lg px-3 py-2.5 hover:bg-gray-50 transition-colors"
                     style={{ borderColor: "var(--color-line)" }}>
                     <span className="relative inline-flex w-9 h-5 rounded-full transition-colors flex-shrink-0"
                       style={{ background: showBilling ? tc : "#D1D5DB" }}>
@@ -1574,7 +1572,7 @@ const ServiceBooking = () => {
                         onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
                       <div className="relative">
                         <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
-                          className="peer fb-input fb-input--sm !rounded-sm !border resize-none !min-h-0 !h-[88px]"
+                          className="peer fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px]"
                           value={notes} onChange={(e) => setNotes(e.target.value)} />
                         <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
                           Notes <span className="font-normal text-gray-400">(Optional)</span>
@@ -1589,7 +1587,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handleSendOtp}
                 disabled={otpSending || verifying || !firstName || !email || (!user && !isPhoneValid) || (isPaid && !billing.state_code)}
-                className="btn mt-4 w-full py-2.5 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn mt-4 w-full py-2.5 font-bold text-sm transition-opacity hover:opacity-85 disabled:!bg-gray-200 disabled:!text-gray-500 disabled:cursor-not-allowed"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {otpSending || verifying
@@ -1608,7 +1606,7 @@ const ServiceBooking = () => {
 
           {/* STEP: otp */}
           {!finalizing && step === "otp" && (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <button
                 onClick={() => setStep("details")}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-6"
@@ -1645,7 +1643,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handleVerifyAndBook}
                 disabled={verifying || otp.length !== 6}
-                className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:!bg-gray-200 disabled:!text-gray-500 disabled:cursor-not-allowed"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {verifying
@@ -1676,7 +1674,7 @@ const ServiceBooking = () => {
               ? Number(confirmation.customer_total)
               : Math.round((service.price + _fee + _gst) * 100) / 100;
             return (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ background: `${tc}18` }}>
@@ -1734,7 +1732,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handlePayment}
                 disabled={paymentLoading}
-                className="btn w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:!bg-gray-200 disabled:!text-gray-500 disabled:cursor-not-allowed"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {paymentLoading
@@ -1811,7 +1809,7 @@ const ServiceBooking = () => {
             const docIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6" strokeLinejoin="round"/></svg>;
             const mailIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6" strokeLinecap="round" strokeLinejoin="round"/></svg>;
             return (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-3xl mx-auto">
                 {/* Top: two columns — success message | booking details. Stacks on mobile. */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center">
@@ -1824,13 +1822,13 @@ const ServiceBooking = () => {
                     <p className="text-sm text-gray-500 mb-5 bas-fade">
                       See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
                     </p>
-                    <div className="flex items-center gap-3 border border-gray-100 rounded p-3 bg-gray-50/40 text-left">
+                    <div className="flex items-center gap-3 border border-gray-100 rounded-2xl p-3 bg-gray-50/40 text-left">
                       <span style={{ color: tc }}>{mailIcon}</span>
                       <span className="text-xs text-gray-500 leading-snug">Confirmation email sent to<br /><span className="text-gray-700 font-medium break-all">{email}</span></span>
                     </div>
                   </div>
                   {/* RIGHT: booking details */}
-                  <div className="border border-gray-100 rounded px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
+                  <div className="border border-gray-100 rounded-xl px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
                     <Row icon={calIcon} label="Service">{service.title}</Row>
                     <Row icon={calIcon} label="Date">{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</Row>
                     <Row icon={clockIcon} label="Time">{formatTime(selectedTime)} ({tzAbbr})</Row>
