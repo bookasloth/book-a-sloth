@@ -73,7 +73,7 @@ const WHOFOR_MENU = [
     { label: 'Gynecologists & OB-GYNs',         href: '/explore?q=gynecologist',   desc: 'Book visits around the clock',icon: HeartPulse }, // → /for/gynecologists
     { label: 'Pediatricians & Child Care',      href: '/explore?q=pediatrician',   desc: 'Fill your clinic, skip calls',icon: Baby }, // → /for/pediatricians
     { label: 'ENT Specialists & Surgeons',      href: '/explore?q=ent+specialist', desc: 'Book consults, end phone tag',icon: Ear },  // → /for/ent-specialists
-    { label: 'Ophthalmologists & Eye Clinics',  href: '/explore?q=ophthalmologist',desc: 'Book eye exams online',       icon: Eye },  // → /for/ophthalmologists
+    { label: 'Ophthalmologists & Eye Clinics',  href: '/for/ophthalmologists',     desc: 'Book eye exams online',       icon: Eye },
   ] },
   { header: 'Health & Wellness', items: [
     { label: 'General Physicians & Clinics',     href: '/for/doctors',              desc: 'Fill your clinic, cut no-shows', icon: Stethoscope },
