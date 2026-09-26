@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CalendarClock, CheckCircle2, XCircle, CalendarDays, LayoutGrid, IndianRupee,
@@ -6,7 +6,8 @@ import {
   Check, ArrowRight, Copy, Link2, MessageCircle, Wallet, Share2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc, markLinkShared, getHostNudges, dismissHostNudge } from '../services/api';
+import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc, markLinkShared, getHostNudges, dismissHostNudge, verifyLinkedin } from '../services/api';
+import { getSupabase } from '../services/supabaseClient';
 import { analytics, EVENTS } from '../services/analytics';
 import { isFreePlan } from '../utils/themeUtils';
 import { buildNudges, pickNextStep } from '../lib/hostNudges';
@@ -93,6 +94,15 @@ const DashboardSkeleton = () => (
   </>
 );
 
+// LinkedIn "in" glyph — inline SVG (lucide-react's brand-icon exports aren't
+// guaranteed; a missing named import would crash the whole dashboard). Accepts
+// className so it drops into the checklist exactly like a lucide icon.
+const LinkedInGlyph = ({ className = '' }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+    <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 110-4.13 2.06 2.06 0 010 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
+  </svg>
+);
+
 const Dashboard = () => {
   const { user, connectGoogleCalendar, updateUser } = useAuth();
   const [searchParams] = useSearchParams();
@@ -106,6 +116,28 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
   const [whatsappEntry, setWhatsappEntry] = useState(undefined); // { country, number } preserved across close
+  const [linkedinBusy, setLinkedinBusy] = useState(false);
+  const linkedinRan = useRef(false); // StrictMode double-invoke guard for the return handler
+
+  // Start LinkedIn verification: link the LinkedIn identity to the CURRENT host's
+  // Supabase auth user (linkIdentity — never signInWithOAuth, which would mint a
+  // separate user and hijack the session). Requires "Manual linking" enabled on
+  // the Supabase project. Redirects out; the ?linkedin=done effect below finishes.
+  const startLinkedinVerify = useCallback(async () => {
+    setLinkedinBusy(true);
+    try {
+      const sb = await getSupabase();
+      const { data, error } = await sb.auth.linkIdentity({
+        provider: 'linkedin_oidc',
+        options: { redirectTo: `${window.location.origin}/dashboard?linkedin=done` },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url; // fallback for SDK builds that don't auto-redirect
+    } catch (e) {
+      setLinkedinBusy(false);
+      toast.error(e?.message || 'Could not start LinkedIn verification.');
+    }
+  }, []);
 
   // ── Dashboard "Next step" — ONE ranked, server-dismissed nudge that replaces the
   // old scattered localStorage banners (set up payouts / upgrade / legacy auto-renew
@@ -166,6 +198,37 @@ const Dashboard = () => {
       window.history.replaceState({}, '', '/dashboard');
     }
   }, [searchParams]);
+
+  // LinkedIn verify return — the host came back from linkIdentity(). Finalize the
+  // PKCE code ourselves (client has detectSessionInUrl:false), which completes the
+  // link on the current user, then have the server confirm the identity + award
+  // the badge. Idempotent server-side; the ref guards StrictMode's double mount.
+  useEffect(() => {
+    if (searchParams.get('linkedin') !== 'done' || linkedinRan.current) return;
+    linkedinRan.current = true;
+    (async () => {
+      try {
+        const sb = await getSupabase();
+        const code = new URLSearchParams(window.location.search).get('code');
+        if (code) {
+          const { error } = await sb.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+        }
+        const { data } = await verifyLinkedin(); // server checks identity + awards badge
+        updateUser({ linkedin_verified: true });
+        toast.success(
+          data?.badgeAwarded
+            ? 'LinkedIn verified — “LinkedIn Verified” badge unlocked! 🎉'
+            : 'LinkedIn verified!',
+        );
+      } catch (e) {
+        toast.error(e?.response?.data?.message || e?.message || 'LinkedIn verification failed.');
+      } finally {
+        setLinkedinBusy(false);
+        window.history.replaceState({}, '', '/dashboard');
+      }
+    })();
+  }, [searchParams, updateUser]);
 
   const [loadErr, setLoadErr] = useState(false);
   const loadData = () => {
@@ -236,7 +299,10 @@ const Dashboard = () => {
     { key: 'verify',  label: 'Verify contact details',   done: !!user?.is_verified,                    Icon: ShieldCheck,  to: '/dashboard/profile' },
     // When already verified, no onClick — item renders as a static "done" badge
     { key: 'whatsapp', label: 'Add WhatsApp for Booking Updates', done: !!user?.whatsapp_verified, Icon: MessageCircle, ...(user?.whatsapp_verified ? {} : { onClick: () => setWhatsappModalOpen(true) }) },
-  ], [user, services, connectGoogleCalendar]);
+    // Verify LinkedIn → earns the "LinkedIn Verified" badge. When already verified,
+    // no onClick — renders as a static "done" item (same pattern as WhatsApp above).
+    { key: 'linkedin', label: linkedinBusy ? 'Opening LinkedIn…' : 'Verify your LinkedIn', done: !!user?.linkedin_verified, Icon: LinkedInGlyph, ...(user?.linkedin_verified || linkedinBusy ? {} : { onClick: startLinkedinVerify }) },
+  ], [user, services, connectGoogleCalendar, linkedinBusy, startLinkedinVerify]);
 
   const completion = Math.round((checklist.filter((c) => c.done).length / checklist.length) * 100);
   const allDone = completion === 100;
