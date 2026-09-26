@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   getServiceBySlug,
@@ -872,10 +872,31 @@ const ServiceBooking = () => {
     }
   };
 
-  // Derive theme color from host profile
-  const tc = host && isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
+  // The host's theme colour is only known after the fetch resolves, but the
+  // loading spinner paints before that. Seed it from a colour the profile page
+  // stashed for this slug so the spinner matches the host immediately; fall back
+  // to brand orange only for a cold direct link (never visited the profile).
+  const seededTheme = useMemo(() => {
+    try {
+      const c = sessionStorage.getItem(`bas_theme:${profileSlug}`);
+      return isValidHex(c) ? c : null;
+    } catch { return null; }
+  }, [profileSlug]);
+
+  // Derive theme color from host profile (seed → default while host loads).
+  const tc = host && isValidHex(host.theme_color)
+    ? host.theme_color
+    : (seededTheme || DEFAULT_THEME_COLOR);
   const textOnTheme = getContrastColor(tc);
   const borderColor = getPlanBorderColor(host?.plan || 'explorer');
+
+  // Once the host resolves, remember its theme colour so a refresh or a repeat
+  // booking paints the spinner in the host's colour from the first frame.
+  useEffect(() => {
+    if (host && isValidHex(host.theme_color)) {
+      try { sessionStorage.setItem(`bas_theme:${profileSlug}`, host.theme_color); } catch { /* private mode */ }
+    }
+  }, [host, profileSlug]);
 
   if (loading)
     return (
