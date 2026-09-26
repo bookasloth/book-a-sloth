@@ -271,30 +271,54 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
 };
 
 // ─── Digital Product Card ─────────────────────────────────────────────────────
+// Responsive: image-LEFT compact row on mobile (flex-row), image-TOP storefront
+// card on desktop (sm:flex-col). Trust line uses real purchase_count — products
+// have no rating in the DB yet, so no stars here.
+const TYPE_ICONS = { pdf: '📄', template: '🗂️', ebook: '📚', prompt_pack: '✨', resource: '🔗', other: '📦' };
+
 const ProductCard = ({ product: p, profileSlug }) => {
-  const TYPE_ICONS = { pdf: '📄', template: '🗂️', ebook: '📚', prompt_pack: '✨', resource: '🔗', other: '📦' };
+  const isFree    = Number(p.price) === 0;
+  const typeLabel = String(p.type || 'other').replace(/_/g, ' ');
+  const buys      = p.purchase_count || 0;
+  const proof     = buys > 0 ? `${buys} ${isFree ? 'downloaded' : 'bought'}` : null;
+  const detailUrl = `/${profileSlug}/product/${p.slug || p.id}`;
+
   return (
-    <div className="bg-white rounded-xl p-4 flex flex-col transition-shadow hover:shadow-sm"
+    <div className="flex flex-row sm:flex-col bg-white rounded-2xl overflow-hidden transition-shadow hover:shadow-md"
       style={{ border: `1px solid ${C.border}` }}>
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-base">{TYPE_ICONS[p.type] || '📦'}</span>
-          <h3 className="font-semibold text-sm truncate" style={{ color: C.text }}>{p.title}</h3>
-        </div>
-        <span className="font-bold text-sm flex-shrink-0" style={{ color: C.text }}>
-          {p.price === 0 ? 'Free' : `₹${p.price}`}
+
+      {/* Thumbnail — left column on mobile, full-width 16:10 on desktop */}
+      <Link to={detailUrl}
+        className="relative flex-shrink-0 w-28 self-stretch sm:w-full sm:self-auto sm:aspect-[16/10] overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, var(--profile-accent-light, #FFEDE5), var(--profile-accent, #FE5100))' }}>
+        {p.thumbnail_url
+          ? <img src={p.thumbnail_url} alt={p.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          : <span className="absolute inset-0 flex items-center justify-center text-4xl opacity-50">{TYPE_ICONS[p.type] || '📦'}</span>}
+        <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize"
+          style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--profile-accent, #FE5100)' }}>
+          {typeLabel}
         </span>
-      </div>
-      {p.description && (
-        <p className="text-xs leading-relaxed line-clamp-2 mb-3" style={{ color: C.secondary }}>{p.description}</p>
-      )}
-      <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
-        <span className="text-[10px]" style={{ color: C.muted }}>{p.purchase_count} purchase{p.purchase_count !== 1 ? 's' : ''}</span>
-        <Link to={`/${profileSlug}/product/${p.slug || p.id}`}
-          className="btn text-xs font-semibold flex items-center transition-opacity hover:opacity-80"
-          style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 34, padding: '0 14px' }}>
-          {p.price === 0 ? 'Get Free' : 'Buy Now'}
+      </Link>
+
+      {/* Body */}
+      <div className="flex flex-col gap-1.5 p-4 flex-1 min-w-0">
+        <Link to={detailUrl}
+          className="font-semibold leading-snug line-clamp-2 hover:opacity-60 transition-opacity"
+          style={{ color: C.text, fontSize: 15 }}>
+          {p.title}
         </Link>
+        {proof && <div className="text-xs" style={{ color: C.muted }}>{proof}</div>}
+        {p.description && (
+          <p className="hidden sm:block text-sm leading-relaxed line-clamp-2" style={{ color: C.secondary }}>{p.description}</p>
+        )}
+        <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+          <div className="font-bold leading-none" style={{ color: C.text, fontSize: 17 }}>{isFree ? 'Free' : `₹${p.price}`}</div>
+          <Link to={detailUrl}
+            className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
+            style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 36, padding: '0 16px' }}>
+            {isFree ? 'Get Free' : 'Buy Now'}
+          </Link>
+        </div>
       </div>
     </div>
   );
