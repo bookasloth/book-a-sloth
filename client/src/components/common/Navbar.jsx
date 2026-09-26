@@ -78,7 +78,7 @@ const WHOFOR_MENU = [
   { header: 'Health & Wellness', items: [
     { label: 'General Physicians & Clinics',     href: '/for/doctors',              desc: 'Fill your clinic, cut no-shows', icon: Stethoscope },
     { label: 'Physiotherapists & Rehab Centres', href: '/explore?q=physiotherapist',desc: 'Get paid before sessions',       icon: Activity }, // → /for/physiotherapists
-    { label: 'Nutritionists & Dietitians',       href: '/explore?q=nutritionist',   desc: 'Book diet consults that pay',    icon: Apple }, // → /for/nutritionists
+    { label: 'Nutritionists & Dietitians',       href: '/for/nutritionists',        desc: 'Book diet consults that pay',    icon: Apple },
     { label: 'Spas & Wellness Centres',          href: '/for/salon',                desc: 'Fill slots, kill no-shows',      icon: Flower2 },
     { label: 'Life & Wellness Coaches',          href: '/explore?q=life+coach',     desc: 'Book paid coaching sessions',    icon: Target }, // → /for/life-coaches
     { label: 'Veterinarians & Pet Clinics',      href: '/explore?q=veterinarian',   desc: 'Book pet visits online',         icon: PawPrint }, // → /for/veterinarians
