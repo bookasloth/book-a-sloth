@@ -422,6 +422,9 @@ const HostProfile = () => {
     if (!host || !pageRef.current) return;
     const color = isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
     applyProfileTheme(pageRef.current, color);
+    // Stash the host's colour so the booking page's loading spinner can paint in
+    // it from the first frame (before its own fetch resolves). See ServiceBooking.
+    try { sessionStorage.setItem(`bas_theme:${profileSlug}`, color); } catch { /* private mode */ }
   }, [host]);
 
   // Apply a demo persona: override the header fields and show only that persona's
