@@ -71,7 +71,7 @@ const WHOFOR_MENU = [
     { label: 'Dentists & Dental Clinics',       href: '/for/dentists',             desc: 'Cut no-shows, fill chairs',   icon: Smile },
     { label: 'Dermatologists & Skin Clinics',   href: '/explore?q=dermatologist',  desc: 'Book skin consults 24/7',     icon: Sun },   // → /for/dermatologists
     { label: 'Gynecologists & OB-GYNs',         href: '/explore?q=gynecologist',   desc: 'Book visits around the clock',icon: HeartPulse }, // → /for/gynecologists
-    { label: 'Pediatricians & Child Care',      href: '/explore?q=pediatrician',   desc: 'Fill your clinic, skip calls',icon: Baby }, // → /for/pediatricians
+    { label: 'Pediatricians & Child Care',      href: '/for/pediatricians',        desc: 'Fill your clinic, skip calls',icon: Baby },
     { label: 'ENT Specialists & Surgeons',      href: '/explore?q=ent+specialist', desc: 'Book consults, end phone tag',icon: Ear },  // → /for/ent-specialists
     { label: 'Ophthalmologists & Eye Clinics',  href: '/explore?q=ophthalmologist',desc: 'Book eye exams online',       icon: Eye },  // → /for/ophthalmologists
   ] },
