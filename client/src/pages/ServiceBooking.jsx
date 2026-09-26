@@ -881,16 +881,19 @@ const ServiceBooking = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6"
         style={{ background: `radial-gradient(circle at top, ${tc}0f, transparent 22rem), linear-gradient(180deg,#fffaf3,#faf7f1)` }}>
-        <style>{`@keyframes bkbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}@keyframes bkslide{0%{margin-left:-40%}100%{margin-left:160%}}`}</style>
-        <div className="flex items-center justify-center rounded-2xl"
-          style={{ width: 76, height: 76, background: `${tc}14`, boxShadow: `0 0 0 8px ${tc}0d`, animation: 'bkbreathe 2.4s ease-in-out infinite' }}>
-          <img src="/favicon.svg" alt="" className="w-9 h-9" />
-        </div>
-        <p className="mt-4 font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#111' }}>Setting up your booking</p>
+        <style>{`@keyframes bkspin{to{transform:rotate(360deg)}}`}</style>
+        {/* Petal spinner — 8 rounded squares in one colour, stepped shades,
+            rotating as a wheel. Overlap at the centre deepens the shade. */}
+        <svg width="72" height="72" viewBox="0 0 100 100" role="img" aria-label="Loading"
+          style={{ animation: 'bkspin 1.1s linear infinite' }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <rect key={i} x="37" y="9" width="26" height="26" rx="9"
+              fill={tc} opacity={0.12 + i * 0.11}
+              transform={`rotate(${i * 45} 50 50)`} />
+          ))}
+        </svg>
+        <p className="mt-5 font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#111' }}>Setting up your booking</p>
         <p className="mt-1 text-sm text-gray-400">Just a moment while we load the calendar…</p>
-        <div className="mt-5 overflow-hidden rounded-full" style={{ width: 160, height: 4, background: '#F0EBE4' }}>
-          <div style={{ width: '40%', height: '100%', borderRadius: 99, background: tc, animation: 'bkslide 1.3s ease-in-out infinite' }} />
-        </div>
       </div>
     );
   if (!service)
