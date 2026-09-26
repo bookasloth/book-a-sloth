@@ -155,6 +155,9 @@ const serializeProfile = async (profile, session) => {
   is_verified:              !!profile.is_verified,
   whatsapp_verified:        !!profile.whatsapp_verified,
   whatsapp_number:          profile.whatsapp_number || null,
+  // LinkedIn ownership verified (Supabase linkedin_oidc identity link → v3.170).
+  // Derived from the stamp column; undefined pre-migration → false (schema-safe).
+  linkedin_verified:        !!profile.linkedin_verified_at,
   badges:                   profile.badges || [],
   // Supreme kill-switch bypass hint + the never-bypassable denylist, so the
   // client's useFeature() can mirror the server's requireFeature() decision.
@@ -1369,6 +1372,82 @@ const cancelHosting = async (req, res) => {
   }
 };
 
+// POST /api/auth/linkedin/verify — the logged-in host has just linked their
+// LinkedIn identity to their Supabase auth user via the client's
+// supabase.auth.linkIdentity({ provider: 'linkedin_oidc' }). We NEVER trust the
+// client's claim: read the auth user's identities with the service-role key and
+// confirm linkedin_oidc is actually present, then stamp the profile and award
+// the manual "LinkedIn Verified" badge. Idempotent — re-verifying is a no-op.
+const LINKEDIN_BADGE_SLUG = "linkedin-verified";
+const verifyLinkedin = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Source of truth: the identities Supabase actually holds for this auth user.
+    const { data: authData, error: auErr } =
+      await supabaseAdmin.auth.admin.getUserById(userId);
+    if (auErr || !authData?.user) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+    const li = (authData.user.identities || []).find(
+      (i) => i.provider === "linkedin_oidc",
+    );
+    if (!li) {
+      return res.status(400).json({
+        message: "LinkedIn isn't linked yet. Please try connecting again.",
+      });
+    }
+    const linkedinSub = li.identity_data?.sub || li.identity_id || li.id || null;
+
+    // Stamp verification (idempotent). Schema fallback: pre-v3.170 DBs lack the
+    // columns — skip the stamp but still award the badge (the visible outcome).
+    let { error: upErr } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        linkedin_verified_at: new Date().toISOString(),
+        linkedin_sub: linkedinSub,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+    if (upErr && !/Could not find the|column.*does not exist/i.test(upErr.message || "")) {
+      console.error("verifyLinkedin: profile stamp error (non-fatal):", upErr.message);
+    }
+
+    // Award the manual "LinkedIn Verified" badge. assigned_by is set (non-null)
+    // so the badge engine never auto-revokes it. The partial unique index makes a
+    // repeat insert a duplicate-key we swallow → idempotent.
+    let badgeAwarded = false;
+    try {
+      const { data: badge } = await supabaseAdmin
+        .from("badges")
+        .select("id, name, description, status")
+        .eq("slug", LINKEDIN_BADGE_SLUG)
+        .maybeSingle();
+      if (badge && badge.status === "active") {
+        const { error: insErr } = await supabaseAdmin.from("vendor_badges").insert({
+          vendor_id: userId,
+          badge_id: badge.id,
+          assigned_by: userId,
+          reason: "LinkedIn account verified",
+        });
+        if (!insErr || /duplicate key/i.test(insErr.message)) badgeAwarded = true;
+        else console.error("verifyLinkedin: badge insert error (non-fatal):", insErr.message);
+      } else {
+        console.error(`verifyLinkedin: badge '${LINKEDIN_BADGE_SLUG}' missing or inactive`);
+      }
+    } catch (e) {
+      console.error("verifyLinkedin: badge award threw (non-fatal):", e.message);
+    }
+
+    // Re-serialize so the client picks up linkedin_verified in one round trip.
+    const { data: profile } = await supabaseAdmin
+      .from("profiles").select("*").eq("id", userId).single();
+    res.json({ ...(await serializeProfile(profile, null)), badgeAwarded });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // ============================================
 // PASSWORD RESET (OTP-based, all user types)
 // ==========================================
@@ -1583,6 +1662,7 @@ module.exports = {
   updateMe,
   becomeHost,
   cancelHosting,
+  verifyLinkedin,
   forgotPassword,
   resetPassword,
   maybeStampInvite,
