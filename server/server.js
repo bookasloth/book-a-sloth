@@ -316,7 +316,15 @@ setInterval(async () => {
   } catch (err) { console.error('Abandoned-recovery cron error:', err.message); }
 }, 5 * 60 * 1000);
 
-// Email queue worker (every 60s).
+// Queue-poll worker cadence (seconds). Default 300s (5 min): these poll near-empty
+// queues, so a minute-fast tick just burns Supabase egress (the free-tier bandwidth
+// cliff) for no gain — a send lands within one interval either way. Tune per env.
+const EMAIL_QUEUE_INTERVAL_SEC = Number(process.env.EMAIL_QUEUE_INTERVAL_SEC) || 300;
+const CAMPAIGN_WORKER_INTERVAL_SEC = Number(process.env.CAMPAIGN_WORKER_INTERVAL_SEC) || 300;
+const CRM_SEND_INTERVAL_SEC = Number(process.env.CRM_SEND_INTERVAL_SEC) || 300;
+const CRM_SEQUENCE_INTERVAL_SEC = Number(process.env.CRM_SEQUENCE_INTERVAL_SEC) || 300;
+
+// Email queue worker.
 const communicationEngine = require('./services/email/communicationEngine');
 setInterval(async () => {
   try {
@@ -325,9 +333,9 @@ setInterval(async () => {
       if (r.sent || r.failed) console.log(`Email queue: ${r.sent} sent, ${r.retried} retried, ${r.failed} failed`);
     }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('Email queue worker error:', err.message); }
-}, 60 * 1000);
+}, EMAIL_QUEUE_INTERVAL_SEC * 1000);
 
-// Campaign worker (every 60s).
+// Campaign worker.
 const campaignWorker = require('./services/campaignWorker');
 setInterval(async () => {
   try {
@@ -336,7 +344,7 @@ setInterval(async () => {
       if (r.enqueued || r.failed) console.log(`Campaign worker: ${r.enqueued} enqueued, ${r.failed} failed`);
     }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('Campaign worker error:', err.message); }
-}, 60 * 1000);
+}, CAMPAIGN_WORKER_INTERVAL_SEC * 1000);
 
 // Host activation nudges (stage-based, every 30 min). Double-gated: feature flag
 // `activation_nudges` (default OFF) + per-event is_active/whatsapp_enabled (OFF,
@@ -362,7 +370,7 @@ setInterval(async () => {
       if (r.sent || r.failed) console.log(`CRM send worker: ${r.sent} sent, ${r.failed} failed, ${r.skipped} skipped`);
     }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('CRM send worker error:', err.message); }
-}, 60 * 1000);
+}, CRM_SEND_INTERVAL_SEC * 1000);
 setInterval(async () => {
   try {
     await runLocked('crm-sequence-worker', async () => {
@@ -370,7 +378,7 @@ setInterval(async () => {
       if (r.sent || r.stopped || r.completed) console.log(`CRM sequences: ${r.sent} stepped, ${r.stopped} stopped, ${r.completed} completed`);
     }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('CRM sequence worker error:', err.message); }
-}, 60 * 1000);
+}, CRM_SEQUENCE_INTERVAL_SEC * 1000);
 const CRM_FOLLOWUP_INTERVAL_MIN = Number(process.env.CRM_FOLLOWUP_INTERVAL_MIN) || 5;
 setInterval(async () => {
   try {
