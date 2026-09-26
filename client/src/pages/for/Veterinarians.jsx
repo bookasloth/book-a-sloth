@@ -46,7 +46,7 @@ import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
 const HERO_ART = '/images/abs/illustrations/happy-calendar.webp';
-const ABOUT_ART = '/images/abs/illustrations/woman-phone-confirmed.webp';
+const ABOUT_ART = '/images/abs/illustrations/sloth-sleeping-cat.webp';
 const CORAL = '#FBBF24'; // warm amber — used on the dark image-led final CTA
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
@@ -328,7 +328,7 @@ export default function Veterinarians() {
   const seo = {
     title: 'Appointment Booking Software for Veterinarians & Pet Clinics | Book A Sloth',
     description: 'Book A Sloth is appointment scheduling software for veterinarians and pet clinics in India. Let pet parents book consultations and vaccinations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
-    keywords: 'appointment booking software for veterinarians, pet clinic scheduling software india, book vet appointment online, pet vaccination booking, veterinary clinic booking page, animal clinic appointment system',
+    keywords: 'appointment booking software for veterinarians, pet clinic scheduling software india, book vet appointment online, pet vaccination booking, pet vaccination reminder software, veterinary appointment app india, veterinary clinic booking page, animal clinic appointment system',
     ogTitle: 'Your clinic runs on appointments. Let Book A Sloth schedule them.',
     ogDescription: 'Pet parents book consultations and vaccinations, pay upfront and get WhatsApp reminders — automatically. A friendly booking page for vets and pet clinics in India.',
   };
@@ -449,9 +449,9 @@ export default function Veterinarians() {
               For veterinarians &amp; pet clinics
             </Reveal>
             <Reveal as="h1" instant className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-[color:var(--ca-ink)] sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
-              A friendly way for pet clinics to{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>book visits</span>{' '}
-              without the phone queue.
+              Appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>veterinarians &amp; pet clinics</span>{' '}
+              of modern India.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg lg:mx-0">
               Let pet parents book consultations and vaccinations in a minute, pay upfront and get reminders — from one friendly platform built for busy pet clinics.
@@ -477,13 +477,18 @@ export default function Veterinarians() {
             </Reveal>
           </div>
 
-          {/* RIGHT — illustration + floating glass cards */}
-          <Reveal instant delay={0.1} className="relative hidden lg:block">
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-[27rem] w-[27rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[rgba(180,83,9,0.12)] to-[rgba(13,148,136,0.12)] blur-2xl" />
-            <img src={HERO_ART} alt="Book A Sloth — appointment booking for veterinarians and pet clinics" loading="eager" className="relative z-10 mx-auto w-full max-w-[26rem] drop-shadow-[0_28px_40px_rgba(42,23,6,0.18)]" />
-            <GlassCard icon={CalendarCheck} label="New booking" value="Vaccination · 11:00 AM" float="sloth-float" className="top-6 -left-4" />
-            <GlassCard icon={Wallet} label="Fee received" value="₹600" accent float="sloth-float--mid" className="top-1/2 -right-6" />
-            <GlassCard icon={BellRing} label="WhatsApp reminder" value="Sent · 1h before" float="sloth-float--slow" className="bottom-10 left-2" />
+          {/* RIGHT — framed illustration + floating glass cards (cards anchor to the
+              frame, not the column, so they float on its corners without overlap). */}
+          <Reveal instant delay={0.1} className="relative hidden lg:flex lg:justify-center">
+            <div className="relative w-full max-w-[24rem]">
+              <div aria-hidden className="absolute left-1/2 top-1/2 h-[27rem] w-[27rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[rgba(180,83,9,0.12)] to-[rgba(13,148,136,0.12)] blur-2xl" />
+              <div className="relative z-10 overflow-hidden rounded-[28px] bg-white ring-1 ring-black/[0.06] shadow-[0_30px_70px_-30px_rgba(42,23,6,0.4)]">
+                <img src={HERO_ART} alt="Book A Sloth — appointment booking software for veterinarians and pet clinics" loading="eager" className="w-full" />
+              </div>
+              <GlassCard icon={CalendarCheck} label="New booking" value="Vaccination · 11:00 AM" float="sloth-float" className="z-20 -top-5 -left-8" />
+              <GlassCard icon={Wallet} label="Fee received" value="₹600" accent float="sloth-float--mid" className="z-20 top-1/2 -right-10" />
+              <GlassCard icon={BellRing} label="WhatsApp reminder" value="Sent · 1h before" float="sloth-float--slow" className="z-20 -bottom-6 -left-6" />
+            </div>
           </Reveal>
         </div>
 
