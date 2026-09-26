@@ -197,26 +197,23 @@ const DIAL_CODES = ["+91", "+1", "+44", "+971"];
 // Floating-label text input: label rests centered inside an empty field and
 // animates up onto the top border on focus / when filled. Uses the CSS `peer`
 // pattern — no extra JS. Focus color comes from the --tc var set on the step.
-const FloatingInput = ({ id, label, type = "text", value, onChange, required, autoComplete }) => (
-  <div className="relative">
+// Static label above the field (premium form pattern) + example placeholder.
+const FloatingInput = ({ id, label, type = "text", value, onChange, required, autoComplete, placeholder, hint }) => (
+  <div>
+    <label htmlFor={id} className="block text-xs font-medium text-gray-600 mb-1.5">
+      {label}{required && <span style={{ color: "#e42527" }}> *</span>}
+    </label>
     <input
       id={id}
       type={type}
       required={required}
       autoComplete={autoComplete}
-      placeholder={label}
+      placeholder={placeholder || ""}
       value={value}
       onChange={onChange}
-      className="peer fb-input fb-input--sm !rounded-lg !border placeholder-transparent"
+      className="fb-input fb-input--sm !rounded-lg !border"
     />
-    <label
-      htmlFor={id}
-      className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
-        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
-        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]"
-    >
-      {label}{required && <span style={{ color: "#e42527" }}> *</span>}
-    </label>
+    {hint && <p className="mt-1.5 text-xs text-gray-400">{hint}</p>}
   </div>
 );
 
@@ -1032,34 +1029,31 @@ const ServiceBooking = () => {
                   )}
                 </div>
 
-                {/* Service details — name, price, duration only (icons in brand colour) */}
-                <div className="px-4 py-4 border-t text-left space-y-3">
-                  {/* Service name */}
-                  <div className="flex items-center gap-2.5">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
-                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                      <line x1="7" y1="7" x2="7.01" y2="7" />
-                    </svg>
-                    <span className="text-sm font-semibold text-gray-900 leading-snug">{service.title}</span>
-                  </div>
-                  {/* Price */}
-                  <div className="flex items-center gap-2.5">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
-                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
-                      <path d="M6 5h12M6 9h12M9 5c3 0 5 1.5 5 4s-2 4-5 4H6l6 6" />
-                    </svg>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {priceOnRequest ? "Price on request" : service.price === 0 ? "Free" : `₹${service.price}`}
+                {/* Service being booked — eyebrow, prominent title, then a clean
+                    price · duration · mode meta row. */}
+                <div className="px-4 py-4 border-t text-left">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400 mb-1.5">You're booking</div>
+                  <h3 className="text-[15px] font-bold text-gray-900 leading-snug">{service.title}</h3>
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-sm text-gray-600">
+                    <span className="font-bold" style={{ color: tc }}>
+                      {priceOnRequest ? "On request" : service.price === 0 ? "Free" : `₹${service.price}`}
                     </span>
-                  </div>
-                  {/* Duration */}
-                  <div className="flex items-center gap-2.5">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
-                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
-                      <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
-                    </svg>
-                    <span className="text-sm font-semibold text-gray-900">{service.duration} min</span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300" />
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+                      </svg>
+                      {service.duration} min
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300" />
+                    <span className="flex items-center gap-1.5">
+                      {service.meeting_mode === "offline" ? (
+                        <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
+                      )}
+                      {service.meeting_mode === "offline" ? "In-person" : "Online"}
+                    </span>
                   </div>
                 </div>
 
@@ -1101,40 +1095,43 @@ const ServiceBooking = () => {
 
         {/* ── RIGHT: Booking Engine ── */}
         <div className="flex-1 min-w-0 flex flex-col">
-          {/* Progress bar — labelled steps; solid brand when active, grey when not.
-              items-start + connector mt-[17px] keeps the line on the dot centre
-              while each label sits under its own dot. */}
-          <div className="mb-5 flex items-start w-full">
+          {/* Progress bar — only the ACTIVE step expands to a horizontal
+              icon + label pill; done steps stay a solid orange icon, upcoming
+              steps a grey icon. */}
+          <div className="mb-5 flex items-center w-full">
             {STEPS.map((s, i) => {
               const idx = STEPS.indexOf(step);
-              const active = i <= idx;
+              const active = i === idx;
               const done = i < idx;
               return (
-                <div key={s} className={`flex items-start ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
-                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors"
-                      style={active
-                        ? { background: tc, color: textOnTheme, borderColor: tc, boxShadow: i === idx ? `0 0 0 4px ${tc}22` : 'none' }
-                        : { background: '#fff', color: '#9ca3af', borderColor: '#d1d5db' }}
-                      aria-label={LABELS[s]}
-                    >
+                <div key={s} className={`flex items-center ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
+                  {active ? (
+                    <div className="flex items-center gap-2 rounded-full pl-1.5 pr-3.5 h-9 flex-shrink-0"
+                      style={{ background: tc, color: textOnTheme }} aria-current="step" aria-label={LABELS[s]}>
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.22)" }}>
+                        <svg className="w-[15px] h-[15px]" fill="none" stroke="currentColor" strokeWidth={2.4}
+                          strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{STEP_ICONS[s]}</svg>
+                      </span>
+                      <span className="text-sm font-semibold whitespace-nowrap">{LABELS[s]}</span>
+                    </div>
+                  ) : (
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-colors"
+                      style={done
+                        ? { background: tc, color: textOnTheme, borderColor: tc }
+                        : { background: "#fff", color: "#9ca3af", borderColor: "#d1d5db" }}
+                      aria-label={LABELS[s]}>
                       {done ? (
                         <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2.6}
                           strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
                       ) : (
-                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor"
-                          strokeWidth={active ? 2.4 : 1.8}
-                          strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                          {STEP_ICONS[s]}
-                        </svg>
+                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8}
+                          strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{STEP_ICONS[s]}</svg>
                       )}
                     </div>
-                    <span className="text-[11px] font-semibold whitespace-nowrap transition-colors"
-                      style={{ color: active ? tc : '#9ca3af' }}>{LABELS[s]}</span>
-                  </div>
+                  )}
                   {i < STEPS.length - 1 && (
-                    <div className="flex-1 h-0.5 mx-2 mt-[17px] transition-colors"
-                      style={{ background: done ? tc : '#e5e7eb' }} />
+                    <div className="flex-1 h-0.5 mx-2 transition-colors"
+                      style={{ background: done ? tc : "#e5e7eb" }} />
                   )}
                 </div>
               );
@@ -1418,35 +1415,53 @@ const ServiceBooking = () => {
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5">
                 {/* LEFT: Booking Summary — icon-chip card */}
                 <div className="order-2 lg:order-1">
-                  <div className="rounded border border-gray-200 bg-white">
+                  <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
                     <div className="p-4 space-y-0.5">
                       {/* Service */}
-                      <div className="flex items-center gap-3 py-2">
+                      <div className="flex items-center gap-3 py-2.5">
                         <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
-                        <span className="font-semibold text-sm leading-snug text-gray-900">{service.title}</span>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm leading-snug text-gray-900">{service.title}</div>
+                        </div>
                       </div>
                       {/* Date */}
-                      <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                      <div className="flex items-center gap-3 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
                         <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
-                        <span className="font-medium text-sm text-gray-900">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] text-gray-400 leading-none mb-0.5">Date</div>
+                          <div className="font-semibold text-sm text-gray-900">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</div>
+                        </div>
+                        <button type="button" onClick={() => setStep("time")} aria-label="Edit"
+                          className="flex items-center justify-center w-7 h-7 rounded-md transition-opacity hover:opacity-80 shrink-0"
+                          style={{ background: `${tc}14`, color: tc }}>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+                        </button>
                       </div>
                       {/* Time */}
-                      <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                      <div className="flex items-center gap-3 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
                         <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </span>
-                        <span className="font-medium text-sm text-gray-900">
-                          {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
-                          <span className="text-gray-400 text-xs font-normal">({tzAbbr})</span>
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] text-gray-400 leading-none mb-0.5">Time</div>
+                          <div className="font-semibold text-sm text-gray-900">
+                            {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
+                            <span className="text-gray-400 text-xs font-normal">({tzAbbr})</span>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => setStep("time")} aria-label="Edit"
+                          className="flex items-center justify-center w-7 h-7 rounded-md transition-opacity hover:opacity-80 shrink-0"
+                          style={{ background: `${tc}14`, color: tc }}>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+                        </button>
                       </div>
                       {/* Platform fee */}
                       {isPaid && (
-                        <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                        <div className="flex items-center gap-3 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
                           <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                           </span>
@@ -1471,8 +1486,11 @@ const ServiceBooking = () => {
                       )}
                     </div>
                     {/* Total band */}
-                    <div className="flex items-center justify-between px-4 py-3 rounded-b" style={{ background: `${tc}17` }}>
-                      <span className="font-bold text-[16px]">Total Amount</span>
+                    <div className="flex items-center justify-between px-4 py-3.5" style={{ background: `${tc}17` }}>
+                      <div>
+                        <div className="font-bold text-[16px]">Total Amount</div>
+                        {!priceOnRequest && <div className="text-[11px] text-gray-500">Inclusive of all taxes</div>}
+                      </div>
                       <span className="font-bold text-[20px]" style={{ color: tc }}>
                         {priceOnRequest ? "Price on request" : isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
                       </span>
@@ -1483,14 +1501,17 @@ const ServiceBooking = () => {
                 {/* RIGHT: Customer Information — floating-label fields */}
                 <div className="order-1 lg:order-2 space-y-3.5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <FloatingInput id="bk-first" label="First Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
-                    <FloatingInput id="bk-last" label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
+                    <FloatingInput id="bk-first" label="First Name" required placeholder="e.g. Riya" value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
+                    <FloatingInput id="bk-last" label="Last Name" placeholder="e.g. Sharma" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <FloatingInput id="bk-email" label="Email Address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-                    {/* Mobile: country dial-code select + national number; sent as fullPhone. */}
-                    <div className="relative">
-                      <div className="flex items-stretch rounded-lg border overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
+                  <div className="space-y-3.5">
+                    <FloatingInput id="bk-email" label="Email Address" type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                    {/* Mobile: static label + country dial-code select + national number; sent as fullPhone. */}
+                    <div>
+                      <label htmlFor="bk-phone" className="block text-xs font-medium text-gray-600 mb-1.5">
+                        Mobile Number<span style={{ color: "#e42527" }}> *</span>
+                      </label>
+                      <div className="flex items-stretch rounded-lg border overflow-hidden focus-within:border-[color:var(--tc)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
                         <select
                           aria-label="Country code"
                           className="w-[64px] shrink-0 bg-gray-50 text-sm font-medium text-gray-700 border-r pl-2 pr-0.5 outline-none cursor-pointer"
@@ -1502,90 +1523,94 @@ const ServiceBooking = () => {
                             <option key={c} value={c}>{c}</option>
                           ))}
                         </select>
-                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-2 bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="flex-1 min-w-0 px-3 py-2 bg-transparent outline-none text-sm" value={phone} onChange={(e) => setPhone(e.target.value)} />
                       </div>
-                      <label htmlFor="bk-phone" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
-                        Mobile Number<span style={{ color: "#e42527" }}> *</span>
-                      </label>
+                      <p className="mt-1.5 text-xs text-gray-400">We'll send your booking details here.</p>
                     </div>
                   </div>
                   {/* State — place of supply for the GST invoice. Required for
                       paid bookings, so it stays visible; the rest of the billing
                       detail is optional and tucked behind the toggle below. */}
-                  <div className="relative">
-                    <input
-                      id="bk-state"
-                      placeholder="State"
-                      autoComplete="off"
-                      className="peer fb-input fb-input--sm !rounded-lg !border placeholder-transparent"
-                      value={billing.state}
-                      onFocus={() => setStateOpen(true)}
-                      onBlur={() => setTimeout(() => setStateOpen(false), 120)}
-                      onChange={(e) => {
-                        const name = e.target.value;
-                        const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
-                        setStateOpen(true);
-                        setBilling((b) => ({ ...b, state: name, state_code: code }));
-                      }}
-                    />
-                    {stateOpen && billing.state.trim().length >= 3 && (() => {
-                      const q = billing.state.trim().toLowerCase();
-                      const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
-                      if (!matches.length) return null;
-                      return (
-                        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-100 bg-white py-1 shadow-lg">
-                          {matches.map((s) => (
-                            <li key={s.code}>
-                              <button
-                                type="button"
-                                className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => {
-                                  setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
-                                  setStateOpen(false);
-                                }}
-                              >
-                                {s.name}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      );
-                    })()}
-                    <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
-                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
-                      peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
+                  <div>
+                    <label htmlFor="bk-state" className="block text-xs font-medium text-gray-600 mb-1.5">
                       State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
                     </label>
+                    <div className="relative">
+                      <input
+                        id="bk-state"
+                        placeholder="Select your state"
+                        autoComplete="off"
+                        className="fb-input fb-input--sm !rounded-lg !border"
+                        value={billing.state}
+                        onFocus={() => setStateOpen(true)}
+                        onBlur={() => setTimeout(() => setStateOpen(false), 120)}
+                        onChange={(e) => {
+                          const name = e.target.value;
+                          const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
+                          setStateOpen(true);
+                          setBilling((b) => ({ ...b, state: name, state_code: code }));
+                        }}
+                      />
+                      {stateOpen && billing.state.trim().length >= 3 && (() => {
+                        const q = billing.state.trim().toLowerCase();
+                        const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
+                        if (!matches.length) return null;
+                        return (
+                          <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-100 bg-white py-1 shadow-lg">
+                            {matches.map((s) => (
+                              <li key={s.code}>
+                                <button
+                                  type="button"
+                                  className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() => {
+                                    setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
+                                    setStateOpen(false);
+                                  }}
+                                >
+                                  {s.name}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   {/* Optional billing address / GSTIN / notes — behind a toggle so
                       the common path is just name, contact and state. */}
                   <button type="button" onClick={() => setShowBilling((v) => !v)}
-                    className="w-full flex items-center gap-2.5 text-sm text-gray-600 border border-dashed rounded-lg px-3 py-2.5 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-3 border border-dashed rounded-lg px-3 py-2.5 hover:bg-gray-50 transition-colors text-left"
                     style={{ borderColor: "var(--color-line)" }}>
                     <span className="relative inline-flex w-9 h-5 rounded-full transition-colors flex-shrink-0"
                       style={{ background: showBilling ? tc : "#D1D5DB" }}>
                       <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
                         style={{ left: showBilling ? 18 : 2 }} />
                     </span>
-                    Add billing address, GSTIN or notes
-                    <span className="ml-auto text-gray-400 font-normal">optional</span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-gray-700">Add billing address, GSTIN or notes</span>
+                      <span className="block text-xs text-gray-400">For invoices or business bookings</span>
+                    </span>
+                    <span className="ml-auto flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
+                      Optional
+                      <svg className={`w-4 h-4 transition-transform ${showBilling ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    </span>
                   </button>
 
                   {showBilling && (
                     <div className="space-y-3.5">
-                      <FloatingInput id="bk-address" label="Address" value={billing.address}
+                      <FloatingInput id="bk-address" label="Billing address" placeholder="Flat / building, street, city, PIN" value={billing.address}
                         onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
-                      <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
+                      <FloatingInput id="bk-gstin" label="GSTIN" placeholder="22AAAAA0000A1Z5" value={billing.gstin}
                         onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-                      <div className="relative">
-                        <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
-                          className="peer fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px]"
-                          value={notes} onChange={(e) => setNotes(e.target.value)} />
-                        <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
-                          Notes <span className="font-normal text-gray-400">(Optional)</span>
+                      <div>
+                        <label htmlFor="bk-notes" className="block text-xs font-medium text-gray-600 mb-1.5">
+                          Notes <span className="font-normal text-gray-400">(optional)</span>
                         </label>
+                        <textarea id="bk-notes" placeholder="Anything the host should know before the session?"
+                          className="fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px]"
+                          value={notes} onChange={(e) => setNotes(e.target.value)} />
                       </div>
                     </div>
                   )}
