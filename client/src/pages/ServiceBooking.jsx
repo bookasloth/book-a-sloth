@@ -1413,22 +1413,22 @@ const ServiceBooking = () => {
                     <div className="p-4 space-y-0.5">
                       {/* Service */}
                       <div className="flex items-center gap-3 py-2">
-                        <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
                         <span className="font-semibold text-sm leading-snug text-gray-900">{service.title}</span>
                       </div>
                       {/* Date */}
                       <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                        <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
                         <span className="font-medium text-sm text-gray-900">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
                       </div>
                       {/* Time */}
                       <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                        <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </span>
                         <span className="font-medium text-sm text-gray-900">
                           {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
@@ -1438,8 +1438,8 @@ const ServiceBooking = () => {
                       {/* Platform fee */}
                       {isPaid && (
                         <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                          <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                          <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                           </span>
                           <span className="flex-1 flex items-center justify-between gap-2">
                             <span className="text-sm text-gray-600 flex items-center gap-1.5">
