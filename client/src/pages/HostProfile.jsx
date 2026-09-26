@@ -444,17 +444,6 @@ const HostProfile = () => {
     { val: reviewData.count > 0 ? reviewData.count : '—',                 lbl: 'Reviews'  },
   ];
 
-  // "From <price>" for the mobile sticky Book bar: cheapest bookable service.
-  // Free wins over any paid; a price-on-request-only host shows "On request".
-  const pricedSvcs = services.filter(s => !s.price_on_request);
-  const minPaid = pricedSvcs.filter(s => s.price > 0).reduce((m, s) => (m === null || s.price < m ? s.price : m), null);
-  const fromLabel = services.length === 0
-    ? null
-    : pricedSvcs.some(s => s.price === 0) ? 'Free' : minPaid != null ? `₹${minPaid}` : 'On request';
-  const scrollToServices = () => {
-    document.getElementById('profile-services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   // Admin-managed SEO → head tags + ProfilePage JSON-LD (only once host loaded).
   const seo = host ? resolveProfileSeo({ host, services, siteUrl: SEO_SITE }) : null;
   const faqs = host ? profileFaqs({ host, services }) : [];
@@ -578,12 +567,13 @@ const HostProfile = () => {
                 </svg>
               </button>
 
-              {/* Cover — 3:1. No own border-radius: the card's rounded-2xl +
-                  overflow-hidden clips the top corners. Rounding the cover here
-                  too fought the 2px border and left white slivers in the corners. */}
+              {/* Cover — 3:1. Top corners use the card's exact inner radius
+                  (rounded-2xl 16px minus the 2px border = 14px). The old 16px
+                  value overshot the border and left white slivers in the corners. */}
               <div className="relative overflow-hidden"
                 style={{
                   aspectRatio: '3 / 1',
+                  borderRadius: '14px 14px 0 0',
                   background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)`,
                 }}>
                 {/* The cover is the LCP element on a profile page: 3:1 and full
@@ -729,7 +719,7 @@ const HostProfile = () => {
           </div>
 
           {/* ── RIGHT — services, reviews, products ──────────────────────── */}
-          <div id="profile-services" className="w-full lg:flex-1 min-w-0 scroll-mt-24">
+          <div className="w-full lg:flex-1 min-w-0">
 
             {/* Header row */}
             <div className="flex items-center justify-between mb-5">
@@ -847,25 +837,6 @@ const HostProfile = () => {
           </div>
         </div>
       </div>
-
-      {/* Spacer so the fixed mobile bar never hides the last card */}
-      {fromLabel && <div className="sm:hidden" style={{ height: 76 }} />}
-
-      {/* Mobile sticky Book bar — surfaces the CTA guests otherwise had to scroll for */}
-      {fromLabel && (
-        <div className="sm:hidden fixed left-0 right-0 bottom-0 z-30 flex items-center justify-between gap-3 px-4 py-3"
-          style={{ background: C.card, borderTop: `1px solid ${C.border}`, boxShadow: '0 -4px 16px rgba(0,0,0,0.06)' }}>
-          <div className="min-w-0">
-            <div className="font-bold text-base leading-tight" style={{ color: C.text }}>From {fromLabel}</div>
-            <div className="text-[11px]" style={{ color: C.muted }}>{services.length} service{services.length !== 1 ? 's' : ''}</div>
-          </div>
-          <button onClick={scrollToServices}
-            className="btn text-sm font-semibold flex-shrink-0 flex items-center justify-center transition-opacity hover:opacity-80"
-            style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 44, padding: '0 22px' }}>
-            Book a session
-          </button>
-        </div>
-      )}
     </div>
       )}
     </>
