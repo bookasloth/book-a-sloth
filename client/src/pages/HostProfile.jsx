@@ -154,13 +154,6 @@ const Badge = ({ badge }) => {
 };
 
 // ─── Service tag derivation ───────────────────────────────────────────────────
-const TAG_STYLES = {
-  'Best Selling': { bg: '#FFFBEB', color: '#92400E' },
-  'Trending':     { bg: '#ECFDF5', color: '#065F46' },
-  'New':          { bg: '#EFF6FF', color: '#1D4ED8' },
-  'Premium':      { bg: '#F5F3FF', color: '#5B21B6' },
-};
-
 const getServiceTag = (service) => {
   if (!service.created_at) return null;
   const days = (Date.now() - new Date(service.created_at).getTime()) / 86400000;
@@ -168,26 +161,8 @@ const getServiceTag = (service) => {
   return null;
 };
 
-// ─── Meta columns helper ──────────────────────────────────────────────────────
-// Compact price label for the narrow 3-col stat cells. "Price on request" hides
-// the fee (host quotes offline); shortened to "On request" so it fits the cell.
+// Compact price label. "Price on request" hides the fee (host quotes offline).
 const cardPriceLabel = (s) => (s.price_on_request ? 'On request' : s.price === 0 ? 'Free' : `₹${s.price}`);
-
-const MetaRow = ({ service: s, duration, mode }) => (
-  <div className="grid grid-cols-3 gap-2 py-3"
-    style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-    {[
-      { val: cardPriceLabel(s), lbl: 'Price' },
-      { val: `${duration} min`,                   lbl: 'Duration' },
-      { val: mode === 'offline' ? 'In-person' : 'Online', lbl: 'Mode' },
-    ].map(({ val, lbl }) => (
-      <div key={lbl}>
-        <div className="text-sm font-semibold" style={{ color: C.text }}>{val}</div>
-        <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
-      </div>
-    ))}
-  </div>
-);
 
 // ─── Service Card ──────────────────────────────────────────────────────────────
 const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
@@ -196,7 +171,6 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
   const detailUrl = s.slug ? `/${profileSlug}/${s.slug}` : null;
   const bookUrl   = s.slug ? `/${profileSlug}/booking/${s.slug}` : null;
   const tag       = getServiceTag(s);
-  const tagStyle  = tag ? TAG_STYLES[tag] : null;
 
   if (viewMode === 'list') {
     return (
@@ -237,38 +211,57 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
   // Grid — fixed 250px height
   return (
     <div className="flex flex-col bg-white rounded-xl transition-shadow hover:shadow-sm"
-      style={{ border: `1px solid ${C.border}`, height: 270, padding: '20px 20px 18px' }}>
+      style={{ border: `1px solid ${C.border}`, padding: '18px 18px 16px' }}>
 
       {/* Title + tag */}
       <div className="flex items-start justify-between gap-2 mb-2">
         {detailUrl
           ? <Link to={detailUrl} className="font-semibold text-base leading-snug hover:opacity-60 transition-opacity line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</Link>
           : <span className="font-semibold text-base leading-snug line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</span>}
-        {tagStyle && (
+        {tag && (
           <span className="flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: tagStyle.bg, color: tagStyle.color }}>
+            style={{ background: 'var(--profile-accent-light, #FFEDE5)', color: 'var(--profile-accent, #FE5100)' }}>
             {tag}
           </span>
         )}
       </div>
 
       {/* Description */}
-      <p className="text-sm leading-relaxed line-clamp-2 flex-1 mb-1" style={{ color: C.secondary }}>
+      <p className="text-sm leading-relaxed line-clamp-2 mb-3" style={{ color: C.secondary }}>
         {desc || ' '}
       </p>
 
-      {/* Meta */}
-      <MetaRow service={s} duration={s.duration} mode={s.meeting_mode} />
+      {/* Meta — inline duration + mode (price moves to footer) */}
+      <div className="flex items-center gap-4 text-xs mb-4 mt-1" style={{ color: C.secondary }}>
+        <span className="flex items-center gap-1.5">
+          <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.muted }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2" />
+          </svg>
+          {s.duration} min
+        </span>
+        <span className="flex items-center gap-1.5">
+          {s.meeting_mode === 'offline' ? (
+            // Map pin — in-person
+            <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.muted }} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+            </svg>
+          ) : (
+            // Video camera — online
+            <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.muted }} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+            </svg>
+          )}
+          {s.meeting_mode === 'offline' ? 'In-person' : 'Online'}
+        </span>
+      </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-3">
-        {detailUrl
-          ? <Link to={detailUrl} className="text-sm font-medium transition-opacity hover:opacity-60" style={{ color: C.secondary }}>View Details →</Link>
-          : <span />}
+      {/* Footer — price promoted, stronger Book */}
+      <div className="flex items-center justify-between mt-auto pt-4" style={{ borderTop: `1px solid ${C.border}` }}>
+        <div className="font-bold text-lg leading-none" style={{ color: C.text }}>{cardPriceLabel(s)}</div>
         {bookUrl && (
           <Link to={bookUrl}
             className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
-            style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
+            style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 38, padding: '0 18px' }}>
             Book Now
           </Link>
         )}
@@ -278,30 +271,54 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
 };
 
 // ─── Digital Product Card ─────────────────────────────────────────────────────
+// Responsive: image-LEFT compact row on mobile (flex-row), image-TOP storefront
+// card on desktop (sm:flex-col). Trust line uses real purchase_count — products
+// have no rating in the DB yet, so no stars here.
+const TYPE_ICONS = { pdf: '📄', template: '🗂️', ebook: '📚', prompt_pack: '✨', resource: '🔗', other: '📦' };
+
 const ProductCard = ({ product: p, profileSlug }) => {
-  const TYPE_ICONS = { pdf: '📄', template: '🗂️', ebook: '📚', prompt_pack: '✨', resource: '🔗', other: '📦' };
+  const isFree    = Number(p.price) === 0;
+  const typeLabel = String(p.type || 'other').replace(/_/g, ' ');
+  const buys      = p.purchase_count || 0;
+  const proof     = buys > 0 ? `${buys} ${isFree ? 'downloaded' : 'bought'}` : null;
+  const detailUrl = `/${profileSlug}/product/${p.slug || p.id}`;
+
   return (
-    <div className="bg-white rounded-xl p-4 flex flex-col transition-shadow hover:shadow-sm"
+    <div className="flex flex-row sm:flex-col bg-white rounded-2xl overflow-hidden transition-shadow hover:shadow-md"
       style={{ border: `1px solid ${C.border}` }}>
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-base">{TYPE_ICONS[p.type] || '📦'}</span>
-          <h3 className="font-semibold text-sm truncate" style={{ color: C.text }}>{p.title}</h3>
-        </div>
-        <span className="font-bold text-sm flex-shrink-0" style={{ color: C.text }}>
-          {p.price === 0 ? 'Free' : `₹${p.price}`}
+
+      {/* Thumbnail — left column on mobile, full-width 16:10 on desktop */}
+      <Link to={detailUrl}
+        className="relative flex-shrink-0 w-28 self-stretch sm:w-full sm:self-auto sm:aspect-[16/10] overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, var(--profile-accent-light, #FFEDE5), var(--profile-accent, #FE5100))' }}>
+        {p.thumbnail_url
+          ? <img src={p.thumbnail_url} alt={p.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          : <span className="absolute inset-0 flex items-center justify-center text-4xl opacity-50">{TYPE_ICONS[p.type] || '📦'}</span>}
+        <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize"
+          style={{ background: 'rgba(255,255,255,0.92)', color: 'var(--profile-accent, #FE5100)' }}>
+          {typeLabel}
         </span>
-      </div>
-      {p.description && (
-        <p className="text-xs leading-relaxed line-clamp-2 mb-3" style={{ color: C.secondary }}>{p.description}</p>
-      )}
-      <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
-        <span className="text-[10px]" style={{ color: C.muted }}>{p.purchase_count} purchase{p.purchase_count !== 1 ? 's' : ''}</span>
-        <Link to={`/${profileSlug}/product/${p.slug || p.id}`}
-          className="btn text-xs font-semibold flex items-center transition-opacity hover:opacity-80"
-          style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 34, padding: '0 14px' }}>
-          {p.price === 0 ? 'Get Free' : 'Buy Now'}
+      </Link>
+
+      {/* Body */}
+      <div className="flex flex-col gap-1.5 p-4 flex-1 min-w-0">
+        <Link to={detailUrl}
+          className="font-semibold leading-snug line-clamp-2 hover:opacity-60 transition-opacity"
+          style={{ color: C.text, fontSize: 15 }}>
+          {p.title}
         </Link>
+        {proof && <div className="text-xs" style={{ color: C.muted }}>{proof}</div>}
+        {p.description && (
+          <p className="hidden sm:block text-sm leading-relaxed line-clamp-2" style={{ color: C.secondary }}>{p.description}</p>
+        )}
+        <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+          <div className="font-bold leading-none" style={{ color: C.text, fontSize: 17 }}>{isFree ? 'Free' : `₹${p.price}`}</div>
+          <Link to={detailUrl}
+            className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
+            style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 36, padding: '0 16px' }}>
+            {isFree ? 'Get Free' : 'Buy Now'}
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -405,6 +422,9 @@ const HostProfile = () => {
     if (!host || !pageRef.current) return;
     const color = isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
     applyProfileTheme(pageRef.current, color);
+    // Stash the host's colour so the booking page's loading spinner can paint in
+    // it from the first frame (before its own fetch resolves). See ServiceBooking.
+    try { sessionStorage.setItem(`bas_theme:${profileSlug}`, color); } catch { /* private mode */ }
   }, [host]);
 
   // Apply a demo persona: override the header fields and show only that persona's
@@ -582,11 +602,12 @@ const HostProfile = () => {
                 </svg>
               </button>
 
-              {/* Cover — 3:1, rounded top only (same ratio as ProfileSetup + ServiceBooking) */}
+              {/* Cover — 3:1. NO own border-radius: any radius on the cover
+                  fights the card's rounded-2xl + overflow-hidden clip and leaves
+                  white slivers in the corners. Square corners + parent clip = flush. */}
               <div className="relative overflow-hidden"
                 style={{
                   aspectRatio: '3 / 1',
-                  borderRadius: '16px 16px 0 0',
                   background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)`,
                 }}>
                 {/* The cover is the LCP element on a profile page: 3:1 and full
@@ -640,6 +661,22 @@ const HostProfile = () => {
                   <p className="text-sm font-medium mt-0.5" style={{ color: tc }}>
                     {host.profession || host.tagline}
                   </p>
+                )}
+
+                {/* Trust row — real rating + review count (only when reviews exist,
+                    so a brand-new host never shows an empty ★—). Surfaces social
+                    proof near the top; replaces the old hidden stats strip. */}
+                {reviewData.count > 0 && (
+                  <div className="flex items-center justify-center gap-2.5 mt-2.5 text-sm" style={{ color: C.secondary }}>
+                    <span className="font-semibold flex items-center gap-1" style={{ color: C.text }}>
+                      <svg className="w-3.5 h-3.5" style={{ color: '#FBBF24' }} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      {reviewData.avg.toFixed(1)}
+                    </span>
+                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: C.muted, display: 'inline-block' }} />
+                    <span>{reviewData.count} review{reviewData.count !== 1 ? 's' : ''}</span>
+                  </div>
                 )}
 
 
@@ -720,7 +757,12 @@ const HostProfile = () => {
 
             {/* Header row */}
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold" style={{ color: C.text }}>Services</h2>
+              <h2 className="text-lg font-bold" style={{ color: C.text }}>
+                Services
+                {services.length > 0 && (
+                  <span className="ml-2 text-sm font-semibold" style={{ color: C.muted }}>{services.length}</span>
+                )}
+              </h2>
 
               {/* Grid / List toggle — hidden on mobile (no real value) */}
               <div className="hidden sm:flex rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}`, background: C.card }}>
@@ -763,6 +805,18 @@ const HostProfile = () => {
                 {services.map(s => (
                   <ServiceCard key={s.id} service={s} profileSlug={profileSlug} viewMode={viewMode} />
                 ))}
+              </div>
+            )}
+
+            {/* Digital Products */}
+            {products.length > 0 && (
+              <div className="mt-10">
+                <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Digital Products</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {products.map(p => (
+                    <ProductCard key={p.id} product={p} profileSlug={profileSlug} />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -812,18 +866,6 @@ const HostProfile = () => {
               <div className="mt-10">
                 <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Frequently asked questions</h2>
                 <FaqAccordion faqs={faqs} colors={C} />
-              </div>
-            )}
-
-            {/* Digital Products */}
-            {products.length > 0 && (
-              <div className="mt-10">
-                <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Digital Products</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {products.map(p => (
-                    <ProductCard key={p.id} product={p} profileSlug={profileSlug} />
-                  ))}
-                </div>
               </div>
             )}
           </div>
