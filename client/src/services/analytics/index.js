@@ -25,6 +25,21 @@ import gtm from './adapters/gtm';
 
 const ADAPTERS = [posthog, ga4, pixel, clarity, gtm];
 
+// Only the real production site may send analytics. Vite's import.meta.env.PROD is
+// ALSO true on Vercel preview builds, so it can't tell preview from prod — gate on
+// the hostname instead. Without this gate every developer localhost session and
+// every *.vercel.app preview deploy lands in the ONE production PostHog project:
+// measured over 90 days that was ~78 phantom "users" / ~4k events from localhost
+// plus a swarm of preview domains, polluting the activation + booking funnels and
+// inflating the crash stats (RouteErrorBoundary reports through here too). Set
+// VITE_ANALYTICS_DEBUG=true to force-enable while testing analytics off-prod.
+const PROD_ANALYTICS_HOSTS = new Set(['bookasloth.com', 'www.bookasloth.com']);
+export function analyticsEnabled() {
+  if (import.meta.env.VITE_ANALYTICS_DEBUG === 'true') return true;
+  if (typeof window === 'undefined' || !window.location) return false;
+  return PROD_ANALYTICS_HOSTS.has(window.location.hostname);
+}
+
 const ready = new Set();   // adapters that have run init()
 let lastIdentify = null;   // re-apply identity to adapters that init after login
 
@@ -44,6 +59,7 @@ function activeAdapters() {
 // Boot (call on first idle): always-on adapters now; gated adapters when (and if)
 // consent is granted.
 export function initAnalytics() {
+  if (!analyticsEnabled()) return;
   ADAPTERS.filter((a) => !a.needsConsent).forEach(initAdapter);
   if (isGranted()) ADAPTERS.filter((a) => a.needsConsent).forEach(initAdapter);
   onConsentChange((v) => {
@@ -57,7 +73,7 @@ export const analytics = {
   // Link events to a known user, fanning to every active adapter (incl. PostHog).
   // AuthContext's central watcher is the only caller — see its useEffect.
   identify(id, props = {}) {
-    if (!id) return;
+    if (!id || !analyticsEnabled()) return;
     lastIdentify = { id, props };
     activeAdapters().forEach((a) => { try { a.identify?.(id, props); } catch (_) {} });
   },
@@ -65,15 +81,18 @@ export const analytics = {
   // Unlink on logout. Fires the reset hook on adapters that support it (PostHog).
   reset() {
     lastIdentify = null;
+    if (!analyticsEnabled()) return;
     activeAdapters().forEach((a) => { try { a.reset?.(); } catch (_) {} });
   },
 
   track(event, props = {}) {
     const name = assertKnownEvent(event);
+    if (!analyticsEnabled()) return;
     activeAdapters().forEach((a) => { try { a.track?.(name, props); } catch (_) {} });
   },
 
   page(props = {}) {
+    if (!analyticsEnabled()) return;
     activeAdapters().forEach((a) => { try { a.page?.(props); } catch (_) {} });
   },
 
