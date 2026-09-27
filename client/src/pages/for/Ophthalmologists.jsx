@@ -348,15 +348,15 @@ export default function Ophthalmologists() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
           <Link to="/" className="flex items-center gap-2 hover:no-underline" aria-label="Book A Sloth — home">
             <img src="/favicon.svg" alt="" className="h-7 w-7 rounded-md" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            <span className="font-heading text-[15px] font-extrabold tracking-tight text-[color:var(--ca-ink)]">Book A Sloth</span>
+            <span className="font-heading text-[15px] font-extrabold tracking-tight text-[color:var(--ca-primary)]">Book A Sloth</span>
           </Link>
           <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
             {NAV.map((item) => (
-              <NavLink key={item.label} item={item} className="text-sm font-medium text-slate-600 transition-colors hover:text-[color:var(--ca-ink)] hover:no-underline" />
+              <NavLink key={item.label} item={item} className="text-sm font-medium text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline" />
             ))}
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
-            <Link to={LOGIN} className="text-sm font-semibold text-slate-700 hover:text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
+            <Link to={LOGIN} className="text-sm font-semibold text-[color:var(--ca-ink)] hover:text-[color:var(--ca-primary)] hover:no-underline">Login</Link>
             <CtaButton to={START} className="!px-5 !py-2.5">Start Free <ArrowRight size={15} /></CtaButton>
           </div>
           <button type="button" className="lg:hidden" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
@@ -368,7 +368,7 @@ export default function Ophthalmologists() {
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-black/5 bg-white lg:hidden">
               <div className="flex flex-col gap-1 px-5 py-4">
                 {NAV.map((item) => (
-                  <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-slate-700 hover:bg-[color:var(--ca-cream)] hover:no-underline" />
+                  <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-[color:var(--ca-ink)] hover:bg-[color:var(--ca-cream)] hover:no-underline" />
                 ))}
                 <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-3">
                   <Link to={LOGIN} className="flex-1 rounded-full border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
