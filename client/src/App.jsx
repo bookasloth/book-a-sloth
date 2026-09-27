@@ -216,6 +216,7 @@ const CharteredAccountants = lazy(() => import('./pages/for/CharteredAccountants
 const SportsTurf         = lazy(() => import('./pages/for/SportsTurf'));
 const LawyersPage        = lazy(() => import('./pages/for/LawyersPage'));
 const Pediatricians      = lazy(() => import('./pages/for/Pediatricians'));
+const Gynecologists      = lazy(() => import('./pages/for/Gynecologists'));
 const Dermatologists     = lazy(() => import('./pages/for/Dermatologists'));
 const GeneralPhysicians  = lazy(() => import('./pages/for/GeneralPhysicians'));
 const Physiotherapists   = lazy(() => import('./pages/for/Physiotherapists'));
@@ -667,6 +668,7 @@ function App() {
           <Route path="/for/sports-turf" element={<SportsTurf />} />
           <Route path="/for/lawyers" element={<LawyersPage />} />
           <Route path="/for/pediatricians" element={<Pediatricians />} />
+          <Route path="/for/gynecologists" element={<Gynecologists />} />
           <Route path="/for/dermatologists" element={<Dermatologists />} />
           <Route path="/for/doctors" element={<GeneralPhysicians />} />
           <Route path="/for/physiotherapists" element={<Physiotherapists />} />

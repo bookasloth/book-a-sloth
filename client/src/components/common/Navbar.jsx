@@ -70,7 +70,7 @@ const WHOFOR_MENU = [
   { header: 'Medical Specialists', items: [
     { label: 'Dentists & Dental Clinics',       href: '/for/dentists',             desc: 'Cut no-shows, fill chairs',   icon: Smile },
     { label: 'Dermatologists & Skin Clinics',   href: '/for/dermatologists',       desc: 'Book skin consults 24/7',     icon: Sun },
-    { label: 'Gynecologists & OB-GYNs',         href: '/explore?q=gynecologist',   desc: 'Book visits around the clock',icon: HeartPulse }, // → /for/gynecologists
+    { label: 'Gynecologists & OB-GYNs',         href: '/for/gynecologists',        desc: 'Book visits around the clock',icon: HeartPulse },
     { label: 'Pediatricians & Child Care',      href: '/for/pediatricians',        desc: 'Fill your clinic, skip calls',icon: Baby },
     { label: 'ENT Specialists & Surgeons',      href: '/for/ent-specialists',      desc: 'Book consults, end phone tag',icon: Ear },
     { label: 'Ophthalmologists & Eye Clinics',  href: '/for/ophthalmologists',     desc: 'Book eye exams online',       icon: Eye },
