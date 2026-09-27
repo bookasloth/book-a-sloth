@@ -9,6 +9,7 @@ import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 import loadRazorpay from '../../utils/loadRazorpay';
 import { INDIAN_STATES } from '../../lib/indianStates';
+import PetalSpinner from '../../components/common/PetalSpinner';
 
 const GST_RATE = 0.18; // display only — server is authoritative
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -186,7 +187,7 @@ const PlansStep = () => {
       <>
         <ProgressBar current={4} total={4} />
         <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <PetalSpinner size={48} />
         </div>
       </>
     );

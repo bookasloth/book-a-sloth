@@ -20,6 +20,7 @@ import Stone from './Stone';
 import RibbonCut from './RibbonCut';
 import ConfettiStorm from './ConfettiStorm';
 import { getOpeningStatus, startVerify, confirmVerify } from '../../services/opening';
+import PetalSpinner from '../common/PetalSpinner';
 
 const REDUCED = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const pad = (n) => String(n).padStart(2, '0');
@@ -120,7 +121,7 @@ export default function OpeningCeremony({ status: statusProp, embedded = false, 
     </button>
   ) : null;
 
-  if (!status) return <div className="op-stage">{CloseBtn}<Loader2 className="animate-spin text-white/70" /></div>;
+  if (!status) return <div className="op-stage">{CloseBtn}<PetalSpinner size={40} /></div>;
 
   const isLight = phase === 'reward';
   const stageCls = `op-stage${isLight ? ' op-stage--light' : ''}`;

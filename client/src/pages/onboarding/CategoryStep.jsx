@@ -5,6 +5,7 @@ import { Search, Check, X, Plus, Loader2 } from 'lucide-react';
 import { getCategories, suggestCategory, saveOnboardingPersona } from '../../services/api';
 import useOnboardingGuard from './useOnboardingGuard';
 import OnboardingStepper from './OnboardingStepper';
+import PetalSpinner from '../../components/common/PetalSpinner';
 
 // Fallback if the API is unreachable — keeps onboarding usable offline.
 const FALLBACK = [
@@ -119,7 +120,7 @@ const CategoryStep = () => {
       <div className="min-h-screen bg-gray-50">
         <OnboardingStepper current={2} />
         <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <PetalSpinner size={48} />
         </div>
       </div>
     );
@@ -181,7 +182,7 @@ const CategoryStep = () => {
         <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200 bg-white">
           {fetching ? (
             <div className="flex items-center justify-center py-10 text-gray-400">
-              <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+              <PetalSpinner size={40} />
             </div>
           ) : (
             <>

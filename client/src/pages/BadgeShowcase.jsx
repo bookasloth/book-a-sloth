@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getVendorBadges, getVendorBadgeDetail } from '../services/api';
 import Seo from '../components/common/Seo';
 import { SITE_URL } from '../utils/seo';
+import PetalSpinner from '../components/common/PetalSpinner';
 
 /**
  * Public badge showcase — domain.com/:username/badges
@@ -67,7 +68,7 @@ const BadgeShowcase = () => {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#FFFBF7]">
-      <div className="w-8 h-8 border-4 border-[#FE5100] border-t-transparent rounded-full animate-spin" />
+      <PetalSpinner size={48} />
     </div>
   );
 

@@ -12,6 +12,7 @@ import RescheduleModal from "../components/booking/RescheduleModal";
 import ReviewModal from "../components/booking/ReviewModal";
 import StatusChip from "../components/common/StatusChip";
 import toast from "react-hot-toast";
+import PetalSpinner from "../components/common/PetalSpinner";
 
 // Customer-facing "My Bookings" — list of bookings a guest has made, with a
 // status filter, per-row Booking ID + Amount Paid, and a details drawer that
@@ -316,7 +317,7 @@ const CustomerBookings = () => {
 
         {loading ? (
           <div className="text-center py-16 text-gray-400">
-            <div className="w-7 h-7 border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin mx-auto" />
+            <PetalSpinner size={40} />
           </div>
         ) : bookings.length === 0 ? (
           <div className="bg-white border rounded-2xl p-10 text-center">

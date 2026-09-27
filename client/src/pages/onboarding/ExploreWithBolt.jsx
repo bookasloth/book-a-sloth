@@ -19,6 +19,7 @@ import useOnboardingGuard from './useOnboardingGuard';
 import OnboardingStepper from './OnboardingStepper';
 import LivePreviewCard from './LivePreviewCard';
 import { personaLabelForSlug, personaTagForSlug } from './personas';
+import PetalSpinner from '../../components/common/PetalSpinner';
 
 // First-service durations — the common set; host refines everything else in the
 // dashboard. Kept tiny on purpose: this screen exists to get ONE bookable
@@ -188,7 +189,7 @@ const ExploreWithBolt = () => {
       <div className="min-h-screen bg-gray-50">
         <OnboardingStepper current={4} />
         <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <PetalSpinner size={48} />
         </div>
       </div>
     );

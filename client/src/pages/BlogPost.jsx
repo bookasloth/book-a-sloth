@@ -10,6 +10,7 @@ import Seo from '../components/common/Seo';
 import { SITE_URL, resolveBlogSeo, articleGraphJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 import RelatedPosts from '../components/blog/RelatedPosts';
+import PetalSpinner from '../components/common/PetalSpinner';
 
 // /blog/:slug — immersive post page. A split hero (left = category colour +
 // text, right = image, hidden on mobile) over a dark reading body, finished
@@ -336,7 +337,7 @@ const BlogPost = () => {
   if (status === 'loading' || !post) {
     return (
       <div className="blog-page grid min-h-[60vh] place-items-center" style={{ backgroundColor: BODY_BG }}>
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+        <PetalSpinner size={48} />
       </div>
     );
   }

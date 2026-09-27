@@ -4,6 +4,7 @@ import { Loader2, Calendar, Clock, Video, MapPin, CheckCircle2, XCircle, AlertTr
 import toast from "react-hot-toast";
 import { getManageBooking, cancelManageBooking, payManageBooking, verifyPayment } from "../services/api";
 import loadRazorpay from "../utils/loadRazorpay";
+import PetalSpinner from "../components/common/PetalSpinner";
 
 // /manage-booking/:token — public, token-authorized self-service for anonymous
 // (no-session) guests (MF3 #516). View + cancel exactly one booking. Reschedule
@@ -125,7 +126,7 @@ export default function ManageBooking() {
 
       {loading ? (
         <div className="py-16 text-center">
-          <Loader2 className="mx-auto h-7 w-7 animate-spin text-gray-400" />
+          <PetalSpinner size={40} />
         </div>
       ) : error ? (
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
