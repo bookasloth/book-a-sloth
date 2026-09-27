@@ -69,7 +69,7 @@ const WHOFOR_MENU = [
   ] },
   { header: 'Medical Specialists', items: [
     { label: 'Dentists & Dental Clinics',       href: '/for/dentists',             desc: 'Cut no-shows, fill chairs',   icon: Smile },
-    { label: 'Dermatologists & Skin Clinics',   href: '/explore?q=dermatologist',  desc: 'Book skin consults 24/7',     icon: Sun },   // → /for/dermatologists
+    { label: 'Dermatologists & Skin Clinics',   href: '/for/dermatologists',       desc: 'Book skin consults 24/7',     icon: Sun },
     { label: 'Gynecologists & OB-GYNs',         href: '/explore?q=gynecologist',   desc: 'Book visits around the clock',icon: HeartPulse }, // → /for/gynecologists
     { label: 'Pediatricians & Child Care',      href: '/for/pediatricians',        desc: 'Fill your clinic, skip calls',icon: Baby },
     { label: 'ENT Specialists & Surgeons',      href: '/explore?q=ent+specialist', desc: 'Book consults, end phone tag',icon: Ear },  // → /for/ent-specialists
@@ -77,7 +77,7 @@ const WHOFOR_MENU = [
   ] },
   { header: 'Health & Wellness', items: [
     { label: 'General Physicians & Clinics',     href: '/for/doctors',              desc: 'Fill your clinic, cut no-shows', icon: Stethoscope },
-    { label: 'Physiotherapists & Rehab Centres', href: '/explore?q=physiotherapist',desc: 'Get paid before sessions',       icon: Activity }, // → /for/physiotherapists
+    { label: 'Physiotherapists & Rehab Centres', href: '/for/physiotherapists',     desc: 'Get paid before sessions',       icon: Activity },
     { label: 'Nutritionists & Dietitians',       href: '/explore?q=nutritionist',   desc: 'Book diet consults that pay',    icon: Apple }, // → /for/nutritionists
     { label: 'Spas & Wellness Centres',          href: '/for/salon',                desc: 'Fill slots, kill no-shows',      icon: Flower2 },
     { label: 'Life & Wellness Coaches',          href: '/explore?q=life+coach',     desc: 'Book paid coaching sessions',    icon: Target }, // → /for/life-coaches

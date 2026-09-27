@@ -110,6 +110,8 @@ const PRERENDER_ROUTES = [
   '/for/doctors-india',
   '/for/business-consultant',
   '/for/pediatricians',
+  '/for/dermatologists',
+  '/for/physiotherapists',
   '/for/salon',
   '/for/freelancers',
   '/for/fitness',
