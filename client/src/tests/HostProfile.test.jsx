@@ -149,10 +149,13 @@ describe('HostProfile — services listing', () => {
     });
   });
 
-  test('"View details" links use /:profileSlug/:serviceSlug', async () => {
+  test('service detail links use /:profileSlug/:serviceSlug', async () => {
+    // Redesign: the card no longer has a "View details" label — the service
+    // title itself is the link to the service detail page.
     renderProfile();
     await waitFor(() => {
-      const detailLinks = screen.getAllByRole('link', { name: /view details/i });
+      const detailLinks = screen.getAllByRole('link', { name: /consultation|workshop/i });
+      expect(detailLinks.length).toBeGreaterThan(0);
       detailLinks.forEach((link) => {
         expect(link.getAttribute('href')).toMatch(/\/jane-vendor\/(consultation|workshop)/);
       });

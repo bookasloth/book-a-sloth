@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import { themeFor, AUTHOR_URL, AUTHOR } from '../data/blogPosts';
 import { getBlogBySlug } from '../services/api';
 import { isNotFoundError } from '../utils/fetchError';
@@ -9,6 +10,7 @@ import Seo from '../components/common/Seo';
 import { SITE_URL, resolveBlogSeo, articleGraphJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 import RelatedPosts from '../components/blog/RelatedPosts';
+import PetalSpinner from '../components/common/PetalSpinner';
 
 // /blog/:slug — immersive post page. A split hero (left = category colour +
 // text, right = image, hidden on mobile) over a dark reading body, finished
@@ -234,6 +236,48 @@ const AuthorLink = ({ name, className, style }) => (
   </a>
 );
 
+// ── Sticky promo rail (cal.com-style) ───────────────────────────────
+// Sits beside the article on lg+ and stays in view while reading (position:
+// sticky, offset clears the top-0 navbar). Hidden on mobile — the bottom CTA
+// band already covers small screens. "Create free account" reuses the vendor
+// Google OAuth flow (same as /be-a-sloth); "Book a demo" points at the live
+// /demo host page. Primary button takes the post's page (band) colour; text
+// flips dark/light off the theme so it stays readable on any category.
+const SidebarCta = ({ theme }) => {
+  const { startVendorGoogleAuth } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const signup = async () => {
+    setLoading(true);
+    try {
+      await startVendorGoogleAuth('signup');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not start Google sign-up');
+      setLoading(false);
+    }
+  };
+  return (
+    <div className="sticky top-24 rounded-xl border p-6"
+      style={{ borderColor: 'rgba(255,255,255,0.10)', backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <h3 className="font-heading text-lg font-bold leading-snug" style={{ color: HEAD_TX }}>
+        Get appointments booked &amp; paid — start free today
+      </h3>
+      <p className="mt-2 text-sm leading-relaxed" style={{ color: BODY_DIM }}>
+        Publish your services, share one link and get paid at 0% commission.
+      </p>
+      <button type="button" onClick={signup} disabled={loading}
+        className="btn mt-5 flex w-full items-center justify-center rounded-[8px] py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+        style={{ backgroundColor: theme.band, color: theme.light ? '#141416' : '#FFFFFF' }}>
+        {loading ? 'Opening Google…' : 'Create free account'}
+      </button>
+      <Link to="/demo"
+        className="btn mt-2.5 flex w-full items-center justify-center rounded-[8px] py-3 text-sm font-semibold transition-colors hover:no-underline"
+        style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: HEAD_TX }}>
+        Book a demo
+      </Link>
+    </div>
+  );
+};
+
 const BlogPost = () => {
   const { slug } = useParams();
   const [post, setPost] = useState(null);
@@ -293,7 +337,7 @@ const BlogPost = () => {
   if (status === 'loading' || !post) {
     return (
       <div className="blog-page grid min-h-[60vh] place-items-center" style={{ backgroundColor: BODY_BG }}>
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+        <PetalSpinner size={48} />
       </div>
     );
   }
@@ -402,22 +446,28 @@ const BlogPost = () => {
         <HeroVisual post={post} t={t} />
       </header>
 
-      {/* ── Reading body ── */}
+      {/* ── Reading body + sticky promo rail (cal.com-style, lg+ only) ── */}
       <div className="app-container py-14 sm:py-20">
-        <div className="mx-auto max-w-2xl">
-          {post.body.map((block, i) => <Block key={i} block={block} accent={t.accent} />)}
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] xl:gap-14">
+          <div className="mx-auto min-w-0 max-w-2xl lg:mx-0">
+            {post.body.map((block, i) => <Block key={i} block={block} accent={t.accent} />)}
 
-          {/* Byline + share */}
-          <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t pt-6"
-            style={{ borderColor: 'rgba(255,255,255,0.10)' }}>
-            <p className="text-sm" style={{ color: BODY_DIM }}>
-              by <AuthorLink name={post.author} className="font-semibold underline decoration-from-font underline-offset-2 transition-colors hover:text-white" style={{ color: BODY_TX }} />
-            </p>
-            <ShareRow title={post.title} />
+            {/* Byline + share */}
+            <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t pt-6"
+              style={{ borderColor: 'rgba(255,255,255,0.10)' }}>
+              <p className="text-sm" style={{ color: BODY_DIM }}>
+                by <AuthorLink name={post.author} className="font-semibold underline decoration-from-font underline-offset-2 transition-colors hover:text-white" style={{ color: BODY_TX }} />
+              </p>
+              <ShareRow title={post.title} />
+            </div>
+
+            {/* Related reading — cluster-aware internal links (static, prerendered) */}
+            <RelatedPosts slug={post.slug} />
           </div>
 
-          {/* Related reading — cluster-aware internal links (static, prerendered) */}
-          <RelatedPosts slug={post.slug} />
+          <aside className="hidden lg:block">
+            <SidebarCta theme={t} />
+          </aside>
         </div>
       </div>
       </article>

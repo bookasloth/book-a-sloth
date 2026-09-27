@@ -19,6 +19,143 @@ const TAG_STYLES = {
 // misplaced entry can't show out of order (see SORTED_RELEASES).
 const RELEASES = [
   {
+    date: 'Sep 27, 2026',
+    title: 'Booking pages built for your profession — 18 and counting',
+    tags: ['New'],
+    points: [
+      'Bespoke landing pages for the work you actually do — consultants, dentists, doctors, physiotherapists, dermatologists, ENT and eye specialists, nutritionists, life coaches, salons, spas, vets, pediatricians, astrologers, architects, chartered accountants, lawyers and sports turfs.',
+      'A new “Who it’s for” menu lays them all out, so the right guests land on a page that speaks their language.',
+    ],
+  },
+  {
+    date: 'Sep 27, 2026',
+    title: 'Two plans, plainly priced',
+    tags: ['Improved', 'New'],
+    points: [
+      'Rebuilt the pricing page as a simple journey — Operate to Grow — so it’s obvious which plan fits where you are.',
+      'Clearer, more honest pricing on the homepage too: no surprises, just what you pay and what you keep.',
+    ],
+  },
+  {
+    date: 'Sep 26, 2026',
+    title: 'Show you’re the real deal with LinkedIn',
+    tags: ['New'],
+    points: [
+      'Link your LinkedIn and earn a verified badge on your profile — an easy, extra signal of trust for the guests deciding to book you.',
+    ],
+  },
+  {
+    date: 'Sep 25, 2026',
+    title: 'You decide who sees your page',
+    tags: ['New'],
+    points: [
+      'New visibility controls let you keep your page public, unlisted, or share-by-link only — your call.',
+      'Rather quote per job? Set any service to “price on request” and talk numbers with the guest directly.',
+    ],
+  },
+  {
+    date: 'Sep 25, 2026',
+    title: 'A warm welcome for new guests',
+    tags: ['Improved'],
+    points: [
+      'New guests now get a friendly welcome email from our founder — a small hello that sets the tone from the first booking.',
+    ],
+  },
+  {
+    date: 'Sep 24, 2026',
+    title: 'Your next step, always in view',
+    tags: ['New'],
+    points: [
+      'Your dashboard now nudges you toward the one thing that moves you forward — finish setup, add a service, share your link, get verified — so getting booked never stalls on “what now?”.',
+    ],
+  },
+  {
+    date: 'Sep 15, 2026',
+    title: 'A faster, sharper, more accessible site',
+    tags: ['Improved'],
+    points: [
+      'Images now reserve their space before they load, so pages stop jumping around as you reach for a button.',
+      'Stronger colour contrast and a tightened security policy across the site — quicker to read, safer to use.',
+    ],
+  },
+  {
+    date: 'Sep 11, 2026',
+    title: 'See your take-home, redesigned',
+    tags: ['Improved'],
+    points: [
+      'The earnings calculator got a cleaner rebuild — set your price and plan and see exactly what lands in your account, before you commit to anything.',
+    ],
+  },
+  {
+    date: 'Sep 10, 2026',
+    title: 'Easier to find on Google and AI answers',
+    tags: ['Improved'],
+    points: [
+      'Richer, machine-readable details on every profile and service page, so search engines — and the new AI assistants people ask — can understand and surface what you offer.',
+      'Cleaner titles, descriptions and internal links across the site to help the right guests discover you.',
+    ],
+  },
+  {
+    date: 'Sep 7, 2026',
+    title: 'A calmer homepage — and a mobile crash squashed',
+    tags: ['Improved', 'Fixed'],
+    points: [
+      'A tighter, calmer homepage with a gentler hero and a clearer path to getting started.',
+      'Fixed a rare white-screen on phones when the browser’s auto-translate was on — the page now survives translation instead of blanking out.',
+    ],
+  },
+  {
+    date: 'Sep 5, 2026',
+    title: 'GST reports, ready for your accountant',
+    tags: ['New'],
+    points: [
+      'Studio hosts can now pull GST-ready reports and exports straight from the dashboard — your month’s paperwork in a couple of taps.',
+    ],
+  },
+  {
+    date: 'Sep 2, 2026',
+    title: 'Payments and refunds you can count on',
+    tags: ['Fixed', 'Improved'],
+    points: [
+      'An interrupted payment now picks up cleanly where it left off, instead of stranding a half-finished booking.',
+      'Eligible refunds process automatically, and a batch of guards makes sure a booking can never get stuck in a wrong state.',
+    ],
+  },
+  {
+    date: 'Aug 31, 2026',
+    title: 'One number, both sides of the table',
+    tags: ['New'],
+    points: [
+      'Host and want to book someone yourself? Sign into your guest space with the same phone number — one identity, both experiences, no second account.',
+    ],
+  },
+  {
+    date: 'Aug 31, 2026',
+    title: 'The calm way to sell your time',
+    tags: ['Improved'],
+    points: [
+      'Refreshed how we describe Book A Sloth across the site and profession pages — clearer, calmer, and honest about what we do: the booking, payments and reminders around your work, handled.',
+    ],
+  },
+  {
+    date: 'Aug 30, 2026',
+    title: 'All your invoices, one tab',
+    tags: ['New'],
+    points: [
+      'A dedicated Invoices tab in your dashboard gathers every GST invoice in one place — find and download any of them in seconds.',
+    ],
+  },
+  {
+    date: 'Aug 29, 2026',
+    title: 'Notifications that keep up — and stay signed in',
+    tags: ['New', 'Improved'],
+    points: [
+      'A real-time bell brings new bookings, reviews and alerts to you the moment they happen — no refresh needed.',
+      'Notices now clear themselves once you’ve fixed the thing they were about, and you’ll hear about a failed renewal or a released referral reward right away.',
+      'And you stay signed in across tabs and after a while away, instead of being bounced back to login.',
+    ],
+  },
+  {
     date: 'Aug 25, 2026',
     title: 'Chat with us, right inside your dashboard',
     tags: ['New', 'Improved'],

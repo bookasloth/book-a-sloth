@@ -124,7 +124,8 @@ function hostBody(payload) {
     for (const s of bookable) {
       const url = s.slug ? `${site}/${esc(host.username)}/${esc(s.slug)}` : null;
       const label = url ? `<a href="${url}">${esc(s.title)}</a>` : esc(s.title);
-      const price = Number(s.price) > 0 ? ` — ${inr(s.price)}` : (s.price === 0 ? ' — Free' : '');
+      const price = s.price_on_request ? ' — Price on request'
+        : Number(s.price) > 0 ? ` — ${inr(s.price)}` : (s.price === 0 ? ' — Free' : '');
       const desc = s.short_description ? `: ${esc(s.short_description)}` : '';
       out.push(`<li>${label}${price}${desc}</li>`);
     }
@@ -148,7 +149,8 @@ function serviceBody(payload) {
   }
 
   const meta = [];
-  if (Number(service.price) > 0) meta.push(inr(service.price));
+  if (service.price_on_request) meta.push('Price on request');
+  else if (Number(service.price) > 0) meta.push(inr(service.price));
   else if (service.price === 0) meta.push('Free');
   if (service.duration) meta.push(`${service.duration} min`);
   meta.push(service.meeting_mode === 'offline' ? 'In person' : 'Online');
@@ -383,7 +385,14 @@ async function resolveServiceMeta(username, serviceSlug) {
     provider: vendor.name
       ? { '@type': 'Person', name: vendor.name, url: vendor.username ? `${site}/${vendor.username}` : undefined }
       : undefined,
-    offers: {
+    // Price-on-request: omit the numeric price so the fee never leaks to crawlers
+    // (Offer stays valid via availByRequest). Otherwise expose the real price.
+    offers: service.price_on_request ? {
+      '@type': 'Offer',
+      priceCurrency: service.currency || 'INR',
+      availability: 'https://schema.org/InStock',
+      url: canonical,
+    } : {
       '@type': 'Offer',
       price: String(service.price ?? 0),
       priceCurrency: service.currency || 'INR',

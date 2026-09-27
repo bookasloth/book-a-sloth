@@ -4,6 +4,7 @@ import { getMe, updateMe, uploadImage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import AccountModeToggle from "../components/common/AccountModeToggle";
 import toast from "react-hot-toast";
+import PetalSpinner from "../components/common/PetalSpinner";
 
 // /profile — end-user (guest) profile: view + edit.
 // Editable today: name, phone, profile photo (columns exist on `profiles`).
@@ -105,7 +106,7 @@ const CustomerProfile = () => {
 
         {loading ? (
           <div className="text-center py-16">
-            <Loader2 className="w-7 h-7 animate-spin mx-auto text-gray-400" />
+            <PetalSpinner size={40} />
           </div>
         ) : (
           <div className="bg-white border rounded-2xl p-5 sm:p-6 space-y-5">

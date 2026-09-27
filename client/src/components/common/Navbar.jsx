@@ -13,12 +13,15 @@ import {
   Tag,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
   Briefcase, Bell, X, Menu, ChevronDown, ChevronRight,
-  Search, User, Settings, LogOut, TrendingUp,
+  Search, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
   Gift, Star, Info, Cpu, HeartPulse,
   Sparkles, Mail, Award, Layers, Headset,
-  BookOpen, Building2,
-  Users, Scale, Scissors, Camera, Ticket, Heart, HelpCircle,
+  BookOpen,
+  Users, Scale, Scissors, Heart, HelpCircle,
+  // "Who it's for" profession-menu icons
+  Calculator, Compass, Smile, Sun, Baby, Ear, Eye,
+  Stethoscope, Activity, Apple, Flower2, Target, PawPrint,
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
@@ -48,24 +51,39 @@ const PRODUCT_MENU = [
   ] },
 ];
 
-// Profession landing pages. Only slugs with real professionLandingData — dead
-// links would be soft-404s. `tone` pins each tile to that landing page's own
-// theme accent (professionLandingData theme.accent → nearest TILE_MAP tone).
+// "Who it's for" — profession mega-menu, 3 columns. A link points at a real
+// /for/<slug> ONLY when that page exists on this branch (professionLandingData
+// or a bespoke route) — an unknown /for/<slug> hard-404s (ProfessionLanding).
+// Every profession without its own page yet points at a filtered /explore?q=
+// (a real, no-404 page; noindex, so interim only). When a /for/ page ships,
+// swap that one href to /for/<slug> — see the `// →` note on each interim link.
+// tone omitted on purpose: MegaMenu auto-rotates the tile colour by index.
 const WHOFOR_MENU = [
-  { header: 'By profession', items: [
-    { label: 'Doctors',    href: '/for/doctors',             desc: 'Clinics & consults', icon: HeartPulse, tone: 'emerald' },
-    { label: 'Consultant', href: '/for/business-consultant', desc: 'Advisory calls',     icon: Briefcase,  tone: 'amber' },
-    { label: 'Lawyers',    href: '/for/lawyers',             desc: 'Legal consults',     icon: Scale,      tone: 'amber' },
-    { label: 'Salons',     href: '/for/salon',               desc: 'Beauty & grooming',  icon: Scissors,   tone: 'pink' },
+  { header: 'Professional Services', items: [
+    { label: 'Chartered Accountants & CA Firms', href: '/for/chartered-accountants', desc: 'Book paid consults instantly', icon: Calculator },
+    { label: 'Architects & Interior Designers',  href: '/for/architects',          desc: 'Win design clients faster',    icon: Compass },
+    { label: 'Astrologers & Vedic Consultants',  href: '/for/astrologers',         desc: 'Fill your reading calendar',   icon: Sparkles },
+    { label: 'Business & Management Consultants',href: '/for/business-consultant', desc: 'Book advisory calls that pay', icon: Briefcase },
+    { label: 'Lawyers & Legal Advisors',         href: '/for/lawyers',             desc: 'Book paid legal consults',     icon: Scale },
+    { label: 'Beauticians & Salons',             href: '/for/salon',               desc: 'Fill your chair all week',     icon: Scissors },
   ] },
-  { header: 'By type', items: [
-    { label: 'Freelancers',   href: '/for/freelancers',   desc: 'Solo & independent',  icon: User,      tone: 'teal' },
-    { label: 'Agencies',      href: '/for/agencies',      desc: 'Teams & studios',     icon: Building2, tone: 'cyan' },
-    { label: 'Events',        href: '/for/events',        desc: 'Workshops & meetups', icon: Ticket,    tone: 'violet' },
-    { label: 'Photographers', href: '/for/photographers', desc: 'Shoots & sessions',   icon: Camera,    tone: 'fuchsia' },
+  { header: 'Medical Specialists', items: [
+    { label: 'Dentists & Dental Clinics',       href: '/for/dentists',             desc: 'Cut no-shows, fill chairs',   icon: Smile },
+    { label: 'Dermatologists & Skin Clinics',   href: '/for/dermatologists',       desc: 'Book skin consults 24/7',     icon: Sun },
+    { label: 'Gynecologists & OB-GYNs',         href: '/for/gynecologists',        desc: 'Book visits around the clock',icon: HeartPulse },
+    { label: 'Pediatricians & Child Care',      href: '/for/pediatricians',        desc: 'Fill your clinic, skip calls',icon: Baby },
+    { label: 'ENT Specialists & Surgeons',      href: '/for/ent-specialists',      desc: 'Book consults, end phone tag',icon: Ear },
+    { label: 'Ophthalmologists & Eye Clinics',  href: '/for/ophthalmologists',     desc: 'Book eye exams online',       icon: Eye },
+  ] },
+  { header: 'Health & Wellness', items: [
+    { label: 'General Physicians & Clinics',     href: '/for/doctors',              desc: 'Fill your clinic, cut no-shows', icon: Stethoscope },
+    { label: 'Physiotherapists & Rehab Centres', href: '/for/physiotherapists',     desc: 'Get paid before sessions',       icon: Activity },
+    { label: 'Nutritionists & Dietitians',       href: '/for/nutritionists',        desc: 'Book diet consults that pay',    icon: Apple },
+    { label: 'Spas & Wellness Centres',          href: '/for/spa',                  desc: 'Fill slots, kill no-shows',      icon: Flower2 },
+    { label: 'Life & Wellness Coaches',          href: '/for/life-coaches',         desc: 'Book paid coaching sessions',    icon: Target },
+    { label: 'Veterinarians & Pet Clinics',      href: '/for/veterinarians',        desc: 'Book pet visits online',         icon: PawPrint },
   ] },
 ];
-const WHOFOR_PROMO = { title: 'For teams & enterprise', desc: 'Scale scheduling across your org.', href: '/enterprise', cta: 'Talk to sales' };
 
 const RESOURCES_MENU = [
   { header: 'Get started', items: [
@@ -265,7 +283,7 @@ const TagPill = ({ text }) =>
 // — switching between adjacent triggers is an instant handoff (no two panels
 // overlapping mid-switch). The panel is always mounted and animated via classes
 // so it fades/slides on BOTH enter and exit.
-const NavDropdown = ({ id, label, icon: Icon, align = 'left', activeKey, onOpen, onClose, children }) => {
+const NavDropdown = ({ id, label, icon: Icon, align = 'left', wide = false, activeKey, onOpen, onClose, children }) => {
   const open = activeKey === id;
   const centered = align === 'center';
   // Panel contents render ALWAYS (not lazy-mounted on first open) so every nav link
@@ -302,10 +320,15 @@ const NavDropdown = ({ id, label, icon: Icon, align = 'left', activeKey, onOpen,
         aria-hidden={!open}
         onClick={() => onClose(true)}
         className={[
-          'absolute top-full mt-1.5 w-max max-w-[calc(100vw-2rem)] origin-top rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden',
-          centered ? 'left-1/2' : 'left-0',
+          'origin-top rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden',
+          // `wide` breaks out to span the whole bar (logo → CTA): fixed + centered
+          // in the viewport at the container's own width (app-container = 72rem,
+          // margin-auto), so its edges line up with the container. Otherwise the
+          // panel auto-sizes and anchors under its trigger.
+          wide
+            ? 'fixed left-1/2 top-[3.75rem] -translate-x-1/2 w-[min(72rem,calc(100vw-2rem))]'
+            : `absolute top-full mt-1.5 w-max max-w-[calc(100vw-2rem)] ${centered ? 'left-1/2 -translate-x-1/2' : 'left-0'}`,
           'transition duration-200 ease-out motion-reduce:transition-none',
-          centered ? '-translate-x-1/2' : '',
           open ? 'translate-y-0 scale-100 opacity-100' : '-translate-y-1 scale-[0.98] opacity-0 pointer-events-none',
         ].join(' ')}
       >
@@ -493,8 +516,8 @@ export const PublicCenterNav = () => {
         <MegaMenu sections={PRODUCT_MENU} colClass="w-[23rem]" />
       </NavDropdown>
 
-      <NavDropdown id="whofor" label="Who it's for" {...menuProps}>
-        <MegaMenu sections={WHOFOR_MENU} promo={WHOFOR_PROMO} />
+      <NavDropdown id="whofor" label="Who it's for" wide {...menuProps}>
+        <MegaMenu sections={WHOFOR_MENU} colClass="flex-1" />
       </NavDropdown>
 
       <NavDropdown id="resources" label="Resources" {...menuProps}>

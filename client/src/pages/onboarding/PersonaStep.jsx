@@ -8,6 +8,7 @@ import useOnboardingGuard from './useOnboardingGuard';
 import OnboardingStepper from './OnboardingStepper';
 import LivePreviewCard from './LivePreviewCard';
 import { PERSONAS } from './personas';
+import PetalSpinner from '../../components/common/PetalSpinner';
 
 // One hue per persona (multicolour picker). Static class strings so Tailwind's
 // JIT keeps them — do NOT build these class names dynamically.
@@ -64,7 +65,7 @@ const PersonaStep = () => {
       <div className="min-h-screen bg-gray-50">
         <OnboardingStepper current={2} />
         <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <PetalSpinner size={48} />
         </div>
       </div>
     );

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Star, Sparkles, Loader2 } from "lucide-react";
+import { Star, Sparkles } from "lucide-react";
 import { getReceivedReviews } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { isHost } from "../utils/roleRoutes";
+import PetalSpinner from "../components/common/PetalSpinner";
 
 // /reviews — reviews the current user has RECEIVED.
 // Guests see only host→guest reviews (as traveler).
@@ -70,7 +71,7 @@ const CustomerReviews = () => {
         )}
 
         {loading ? (
-          <div className="text-center py-16"><Loader2 className="w-7 h-7 animate-spin mx-auto text-gray-400" /></div>
+          <div className="text-center py-16"><PetalSpinner size={40} /></div>
         ) : count === 0 ? (
           <div className="bg-white border rounded-2xl p-10 text-center">
             <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#FE5100]/10 mb-4">

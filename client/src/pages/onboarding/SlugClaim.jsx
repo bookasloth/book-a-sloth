@@ -6,6 +6,7 @@ import { checkOnboardingSlug, claimOnboardingSlug } from '../../services/api';
 import { analytics, EVENTS } from '../../services/analytics';
 import OnboardingStepper from './OnboardingStepper';
 import useOnboardingGuard from './useOnboardingGuard';
+import PetalSpinner from '../../components/common/PetalSpinner';
 
 const URL_TIPS = [
   'Keep it short and easy to remember',
@@ -132,7 +133,7 @@ const SlugClaim = () => {
       <div className="min-h-screen bg-gray-50">
         <OnboardingStepper current={1} />
         <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <PetalSpinner size={48} />
         </div>
       </div>
     );

@@ -2,17 +2,17 @@
 //
 // Doubles as the SEO discovery hub it replaced: the category grid links every
 // /for/:profession page in static HTML, so those pages aren't orphaned in the
-// SEO audit (its original job). CATEGORIES is hand-mapped 1:1 to the eleven
-// /for/* professions — keep the two in sync when a profession page is added.
+// SEO audit (its original job). CATEGORIES is hand-mapped to the /for/* profession
+// pages — keep it in sync with scripts/prerender.mjs when a profession is added.
 //
 // Styling follows the homepage house style (pages/Home.jsx): canvas/ink/primary
 // tokens, soft rounded cards, orange uppercase eyebrows, Reveal scroll-ins.
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Scale, Stethoscope, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
-  Camera, CalendarDays, Building2, UserCheck, Zap, ShieldCheck, Heart,
-  Search, ArrowRight, PlayCircle,
+  Scale, Calculator, Stethoscope, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
+  Camera, CalendarDays, Building2, UserCheck, Zap, ShieldCheck, Heart, Moon, Smile,
+  Search, ArrowRight, PlayCircle, Compass,
 } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import Reveal from '../components/home/Reveal';
@@ -25,8 +25,12 @@ const DESCRIPTION =
 
 // label/sublabel from the design; `to` is the crawlable /for/* link.
 const CATEGORIES = [
-  { icon: Scale,         label: 'Lawyers & CAs',              sub: 'Legal, Tax & Financial Experts',        to: '/for/lawyers' },
+  { icon: Compass,       label: 'Architects & Designers',     sub: 'Architecture & Interior Design Studios', to: '/for/architects' },
+  { icon: Scale,         label: 'Lawyers & Advocates',        sub: 'Legal & Litigation Experts',            to: '/for/lawyers' },
+  { icon: Calculator,    label: 'Chartered Accountants',      sub: 'Tax, GST & Financial Experts',          to: '/for/chartered-accountants' },
+  { icon: Zap,           label: 'Sports & Turf',              sub: 'Turf, Box Cricket & Court Owners',      to: '/for/sports-turf' },
   { icon: Stethoscope,   label: 'Doctors & Clinics',          sub: 'Healthcare Professionals',              to: '/for/doctors' },
+  { icon: Smile,         label: 'Dentists & Clinics',         sub: 'Dental & Orthodontic Care',             to: '/for/dentists' },
   { icon: BarChart3,     label: 'Business Consultants',       sub: 'Advisors & Growth Experts',             to: '/for/business-consultant' },
   { icon: Flower2,       label: 'Salons & Spas',              sub: 'Beauty & Wellness',                     to: '/for/salon' },
   { icon: Laptop,        label: 'Freelancers',                sub: 'Designers, Developers, Writers & More', to: '/for/freelancers' },
@@ -35,6 +39,7 @@ const CATEGORIES = [
   { icon: Camera,        label: 'Photographers',              sub: 'Photography & Videography',             to: '/for/photographers' },
   { icon: CalendarDays,  label: 'Event Organisers',           sub: 'Planners & Coordinators',               to: '/for/events' },
   { icon: Building2,     label: 'Agencies & Studios',         sub: 'Creative & Professional Teams',         to: '/for/agencies' },
+  { icon: Moon,          label: 'Astrologers & Consultants',  sub: 'Vedic, Tarot & Numerology',             to: '/for/astrologers' },
 ];
 
 const CHIPS = ['Career advice', 'Business growth', 'Fitness guidance', 'Creative support'];
@@ -209,6 +214,9 @@ export default function Solutions() {
             </Link>, or find a{' '}
             <Link to="/for/doctors-india" className="font-semibold text-ink underline underline-offset-2 hover:text-primary">
               doctor in India
+            </Link>, or see our{' '}
+            <Link to="/appointment-booking-software" className="font-semibold text-ink underline underline-offset-2 hover:text-primary">
+              appointment booking software
             </Link>.
           </p>
         </div>

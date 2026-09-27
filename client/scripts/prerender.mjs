@@ -81,6 +81,7 @@ const PRERENDER_ROUTES = [
   // internal links land in static HTML for non-JS crawlers.
   '/solutions',
   '/compare',
+  '/appointment-booking-software',
   // Marketing/event pages with bespoke OG cards — prerender so social scrapers
   // (which don't run JS) get the card + real title, not the default og:image.
   '/how-it-works',
@@ -99,10 +100,25 @@ const PRERENDER_ROUTES = [
   // no lucide) so this list never drifts as moments are added.
   '/moments',
   ...MOMENTS.map((m) => `/moments/${m.slug}`),
+  '/for/astrologers',
+  '/for/architects',
+  '/for/dentists',
+  '/for/sports-turf',
   '/for/lawyers',
+  '/for/chartered-accountants',
   '/for/doctors',
   '/for/doctors-india',
   '/for/business-consultant',
+  '/for/pediatricians',
+  '/for/gynecologists',
+  '/for/dermatologists',
+  '/for/physiotherapists',
+  '/for/ent-specialists',
+  '/for/ophthalmologists',
+  '/for/nutritionists',
+  '/for/life-coaches',
+  '/for/spa',
+  '/for/veterinarians',
   '/for/salon',
   '/for/freelancers',
   '/for/fitness',

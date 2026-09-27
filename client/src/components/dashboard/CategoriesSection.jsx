@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { Check, Loader2, Lock } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 import { getCategories, hostGetCategories, hostUpdateCategories } from '../../services/api';
 import { getCategoryRules, groupCategories } from '../../utils/categoryUtils';
+import PetalSpinner from '../common/PetalSpinner';
 
 // Plan-gated category management. Free = locked. Creator = swap 1. Pro = up to 3.
 const CategoriesSection = ({ plan, onSaved }) => {
@@ -66,7 +67,7 @@ const CategoriesSection = ({ plan, onSaved }) => {
     }
   };
 
-  if (loading) return <div className="py-10 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin inline" /></div>;
+  if (loading) return <div className="py-10 text-center text-gray-400"><PetalSpinner size={36} /></div>;
 
   return (
     <div className="space-y-5">

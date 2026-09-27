@@ -14,6 +14,7 @@ import AnalyticsBridge from './components/common/AnalyticsBridge';
 import ConsentBanner from './components/common/ConsentBanner';
 import ScrollToTop from './components/common/ScrollToTop';
 import RouteErrorBoundary from './components/common/RouteErrorBoundary';
+import PetalSpinner from './components/common/PetalSpinner';
 import { useAuth } from './context/AuthContext';
 import { KycProvider } from './context/KycContext';
 import { captureReferral } from './services/api';
@@ -81,6 +82,7 @@ const InviteLanding  = lazy(() => import('./pages/InviteLanding'));
 const HostLogin      = lazy(() => import('./pages/HostLogin'));
 const Changelog      = lazy(() => import('./pages/Changelog'));
 const Pricing        = lazy(() => import('./pages/Pricing'));
+const AppointmentBookingSoftware = lazy(() => import('./pages/AppointmentBookingSoftware'));
 const Blog           = lazy(() => import('./pages/Blog'));
 const Search         = lazy(() => import('./pages/Search'));
 const WallOfLove     = lazy(() => import('./pages/WallOfLove'));
@@ -207,6 +209,25 @@ const Explore         = lazy(() => import('./pages/Explore'));
 const ServicesDirectory  = lazy(() => import('./pages/services/ServicesDirectory'));
 const ProfessionServices = lazy(() => import('./pages/services/ProfessionServices'));
 const ProfessionLanding  = lazy(() => import('./pages/for/ProfessionLanding'));
+const Astrologers        = lazy(() => import('./pages/for/Astrologers'));
+const ArchitectPage      = lazy(() => import('./pages/for/ArchitectPage'));
+const DentistPage        = lazy(() => import('./pages/for/DentistPage'));
+const CharteredAccountants = lazy(() => import('./pages/for/CharteredAccountants'));
+const SportsTurf         = lazy(() => import('./pages/for/SportsTurf'));
+const LawyersPage        = lazy(() => import('./pages/for/LawyersPage'));
+const Pediatricians      = lazy(() => import('./pages/for/Pediatricians'));
+const Gynecologists      = lazy(() => import('./pages/for/Gynecologists'));
+const Dermatologists     = lazy(() => import('./pages/for/Dermatologists'));
+const GeneralPhysicians  = lazy(() => import('./pages/for/GeneralPhysicians'));
+const Physiotherapists   = lazy(() => import('./pages/for/Physiotherapists'));
+const BusinessConsultants = lazy(() => import('./pages/for/BusinessConsultants'));
+const EntSpecialists     = lazy(() => import('./pages/for/EntSpecialists'));
+const Ophthalmologists   = lazy(() => import('./pages/for/Ophthalmologists'));
+const Nutritionists      = lazy(() => import('./pages/for/Nutritionists'));
+const LifeCoaches        = lazy(() => import('./pages/for/LifeCoaches'));
+const Spas               = lazy(() => import('./pages/for/Spas'));
+const SalonPage          = lazy(() => import('./pages/for/SalonPage'));
+const Veterinarians      = lazy(() => import('./pages/for/Veterinarians'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 
 // Admin — Operations
@@ -263,7 +284,7 @@ const PitchDeck = lazy(() => import('./pages/pitch-deck/PitchDeck'));
 // ── Fallback shown while a route chunk downloads ──────────────────────────────
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-white">
-    <div className="w-8 h-8 border-4 border-[#FE5100] border-t-transparent rounded-full animate-spin" />
+    <PetalSpinner size={48} />
   </div>
 );
 
@@ -413,6 +434,7 @@ function App() {
           <Route path="/help/docs/:slug" element={<HelpDoc />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/appointment-booking-software" element={<AppointmentBookingSoftware />} />
           <Route path="/search" element={<Search />} />
           <Route path="/wall-of-love" element={<WallOfLove />} />
           <Route path="/opening" element={<Opening />} />
@@ -637,7 +659,27 @@ function App() {
           <Route path="/services" element={<ServicesDirectory />} />
           <Route path="/services/:profession" element={<ProfessionServices />} />
 
-          {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession */}
+          {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession. */}
+          {/* Bespoke standalone /for pages must precede the :profession catch-all. */}
+          <Route path="/for/astrologers" element={<Astrologers />} />
+          <Route path="/for/architects" element={<ArchitectPage />} />
+          <Route path="/for/dentists" element={<DentistPage />} />
+          <Route path="/for/chartered-accountants" element={<CharteredAccountants />} />
+          <Route path="/for/sports-turf" element={<SportsTurf />} />
+          <Route path="/for/lawyers" element={<LawyersPage />} />
+          <Route path="/for/pediatricians" element={<Pediatricians />} />
+          <Route path="/for/gynecologists" element={<Gynecologists />} />
+          <Route path="/for/dermatologists" element={<Dermatologists />} />
+          <Route path="/for/doctors" element={<GeneralPhysicians />} />
+          <Route path="/for/physiotherapists" element={<Physiotherapists />} />
+          <Route path="/for/business-consultant" element={<BusinessConsultants />} />
+          <Route path="/for/ent-specialists" element={<EntSpecialists />} />
+          <Route path="/for/ophthalmologists" element={<Ophthalmologists />} />
+          <Route path="/for/nutritionists" element={<Nutritionists />} />
+          <Route path="/for/life-coaches" element={<LifeCoaches />} />
+          <Route path="/for/spa" element={<Spas />} />
+          <Route path="/for/salon" element={<SalonPage />} />
+          <Route path="/for/veterinarians" element={<Veterinarians />} />
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}

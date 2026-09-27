@@ -91,6 +91,7 @@ const buildPayload = (body) => {
     excluded_items,
     faqs,
     important_note,
+    price_on_request,
     // legacy compat
     description,
     meeting_mode,
@@ -116,6 +117,7 @@ const buildPayload = (body) => {
   if (excluded_items !== undefined)     p.excluded_items = Array.isArray(excluded_items) ? excluded_items : [];
   if (faqs !== undefined)               p.faqs = Array.isArray(faqs) ? faqs : [];
   if (important_note !== undefined)     p.important_note = important_note || '';
+  if (price_on_request !== undefined)   p.price_on_request = !!price_on_request;
   return p;
 };
 
@@ -137,7 +139,9 @@ const LEGACY_SELECT_COLS =
 // og_image (v3.154) is the generated per-service share card — surfaced here so
 // the resolver can prefer it over seo_image/thumbnail. schemaMissing() degrades
 // to V2 cols if the migration isn't applied yet.
-const SEO_COLS = 'seo_title,seo_description,og_title,og_description,seo_image,og_image,is_indexable';
+// price_on_request (v3.169) rides with the SEO group so a pre-migration DB
+// degrades to V2 cols (price shown, current behaviour) instead of 500ing.
+const SEO_COLS = 'seo_title,seo_description,og_title,og_description,seo_image,og_image,is_indexable,price_on_request';
 
 // Fetch a public service trying richest columns first, degrading gracefully if
 // the SEO migration (or v2 columns) aren't applied yet: V2+SEO -> V2 -> LEGACY.
