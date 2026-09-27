@@ -188,10 +188,7 @@ export default function Pricing() {
 
       {/* ── Closing CTA ────────────────────────────────────── */}
       <section className="px-5 pb-24 pt-4 sm:px-8">
-        <div
-          className="mx-auto max-w-3xl rounded-[6px] border-[3px] border-ink bg-ink px-8 py-12 text-center text-white"
-          style={{ boxShadow: "8px 8px 0 rgba(254,81,0,0.9)" }}
-        >
+        <div className="mx-auto max-w-3xl rounded-[10px] bg-ink px-8 py-12 text-center text-white shadow-[0_24px_60px_-30px_rgba(26,26,26,0.6)]">
           <h2 className="font-heading text-3xl font-extrabold text-primary sm:text-4xl">
             {feeOnly ? "Ready when you are." : "Start slow. Grow when it counts."}
           </h2>
@@ -200,7 +197,7 @@ export default function Pricing() {
           </p>
           <Link
             to={ROUTE_START}
-            className="mt-7 inline-flex items-center justify-center gap-1.5 rounded-[4px] border-2 border-primary-cta bg-primary-cta px-7 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
+            className="mt-7 inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-primary-cta px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-dark hover:no-underline"
           >
             Start for free <ArrowRight size={16} />
           </Link>
@@ -252,8 +249,7 @@ function OperateVsGrow() {
           />
           <div className="flex items-center justify-center py-2 md:py-0">
             <span
-              className="grid h-11 w-11 place-items-center rounded-full border-[3px] border-ink bg-white text-ink"
-              style={{ boxShadow: "3px 3px 0 rgba(26,26,26,0.9)" }}
+              className="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-white text-ink/50 shadow-[0_8px_24px_-12px_rgba(26,26,26,0.4)]"
               aria-hidden="true"
             >
               <ArrowRight size={20} className="md:block hidden" />
@@ -277,10 +273,10 @@ function OperateVsGrow() {
 function StatePanel({ accent, icon, kicker, title, line, emphasised }) {
   return (
     <div
-      className="group flex flex-col rounded-[6px] border-[3px] bg-white p-6 transition-transform hover:-translate-y-1 sm:p-8"
+      className="group flex h-full flex-col rounded-[10px] border bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.05)] transition-shadow duration-300 hover:shadow-[0_24px_60px_-28px_var(--glow)] sm:p-8"
       style={{
-        borderColor: emphasised ? accent : "#1a1a1a",
-        boxShadow: emphasised ? `7px 7px 0 ${accent}` : "7px 7px 0 rgba(26,26,26,0.9)",
+        borderColor: emphasised ? `${accent}4d` : "rgba(0,0,0,0.06)",
+        "--glow": emphasised ? `${accent}80` : "rgba(26,26,26,0.16)",
       }}
     >
       <span
@@ -488,10 +484,7 @@ function PayForItself() {
           Drag to your rough monthly bookings revenue. We'll compare Sloth's 5% against Sloth Active's flat price.
         </p>
 
-        <div
-          className="mx-auto mt-10 max-w-[720px] rounded-[6px] border-[3px] border-ink bg-white p-6 sm:p-8"
-          style={{ boxShadow: "7px 7px 0 rgba(26,26,26,0.9)" }}
-        >
+        <div className="mx-auto mt-10 max-w-[720px] rounded-[10px] border border-ink/10 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8">
           <label htmlFor="earn" className="flex items-baseline justify-between">
             <span className="text-sm font-semibold text-ink">Your monthly bookings revenue</span>
             <span className="font-heading text-2xl font-extrabold text-ink">{inr(earn)}</span>
