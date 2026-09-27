@@ -14,6 +14,7 @@ import AnalyticsBridge from './components/common/AnalyticsBridge';
 import ConsentBanner from './components/common/ConsentBanner';
 import ScrollToTop from './components/common/ScrollToTop';
 import RouteErrorBoundary from './components/common/RouteErrorBoundary';
+import PetalSpinner from './components/common/PetalSpinner';
 import { useAuth } from './context/AuthContext';
 import { KycProvider } from './context/KycContext';
 import { captureReferral } from './services/api';
@@ -273,7 +274,7 @@ const PitchDeck = lazy(() => import('./pages/pitch-deck/PitchDeck'));
 // ── Fallback shown while a route chunk downloads ──────────────────────────────
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-white">
-    <div className="w-8 h-8 border-4 border-[#FE5100] border-t-transparent rounded-full animate-spin" />
+    <PetalSpinner size={48} />
   </div>
 );
 

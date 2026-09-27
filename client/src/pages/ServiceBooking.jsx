@@ -26,6 +26,7 @@ import {
 } from "../utils/themeUtils";
 import { downloadReceipt } from "../utils/receipt";
 import loadRazorpay from "../utils/loadRazorpay";
+import PetalSpinner from "../components/common/PetalSpinner";
 import { INDIAN_STATES } from "../lib/indianStates";
 
 const MONTHS = [
@@ -149,7 +150,7 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
   return (
     <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
       <div className="max-w-md mx-auto text-center py-2">
-        <div className="w-10 h-10 mx-auto mb-4 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: tc }} />
+        <div className="mb-4 flex justify-center"><PetalSpinner size={40} color={tc} /></div>
         <h2 className="text-xl font-bold mb-1">Wrapping things up…</h2>
         <p className="text-sm text-gray-500 mb-6">Hang tight — almost there.</p>
         <ul className="text-left max-w-xs mx-auto space-y-3">

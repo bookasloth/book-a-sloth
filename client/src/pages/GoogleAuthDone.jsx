@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import Seo from '../components/common/Seo';
+import PetalSpinner from '../components/common/PetalSpinner';
 
 // /auth/google/done — landing page for the vendor Google OAuth callback.
 // Session tokens arrive in the URL FRAGMENT (never sent to any server/logs):
@@ -54,7 +55,7 @@ const GoogleAuthDone = () => {
     <div className="min-h-screen flex items-center justify-center bg-white">
       <Seo title="Signing you in — Book A Sloth" robots="noindex,nofollow" />
       <div className="text-center">
-        <div className="w-8 h-8 border-4 border-[#FE5100] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <div className="mb-4 flex justify-center"><PetalSpinner size={48} /></div>
         <p className="text-sm text-gray-500">Setting up your account…</p>
       </div>
     </div>

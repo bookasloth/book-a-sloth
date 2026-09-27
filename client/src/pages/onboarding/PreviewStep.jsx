@@ -9,6 +9,7 @@ import OnboardingStepper from './OnboardingStepper';
 import WhatsAppVerify from '../../components/whatsapp/WhatsAppVerify';
 import LivePreviewCard from './LivePreviewCard';
 import { personaLabelForSlug, personaTagForSlug } from './personas';
+import PetalSpinner from '../../components/common/PetalSpinner';
 
 const BOOKING_TYPES = [
   { id: 'online_only',  label: 'Online',      Icon: Video },
@@ -104,7 +105,7 @@ const PreviewStep = () => {
       <div className="min-h-screen bg-gray-50">
         <OnboardingStepper current={3} />
         <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <PetalSpinner size={48} />
         </div>
       </div>
     );
