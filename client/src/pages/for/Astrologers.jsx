@@ -1,32 +1,45 @@
 // /for/astrologers — bespoke, conversion-focused landing page for astrologers,
-// Vedic astrologers, tarot readers & numerologists in India.
+// Vedic astrologers, tarot readers & numerologists in India. (Sept-release rebuild.)
 //
-// STANDALONE page (not the data-driven ProfessionLanding template): ported from
-// the "AstroSathi" design in the Profession-Pages brief, re-skinned to Book A
-// Sloth and rewritten from guest-facing ("book your reading") to HOST-facing
-// ("run your practice on Book A Sloth"). Every CTA hands off to the real host
-// signup funnel (/be-a-sloth); nothing here books an end-customer.
+// STANDALONE page (not the data-driven ProfessionLanding template). Bespoke route
+// PRECEDES /for/:profession in App.jsx. Keep in sync: App.jsx, prerender.mjs,
+// sitemapService.js, Navbar "Who it's for" menu — the main thread wires those.
 //
-// Design is self-contained: the astro palette + Playfair/Inter fonts are scoped
-// to `.astro-lp` so they never leak into the global theme (Plus Jakarta/Poppins).
-// Imagery (astro-hero/about.webp) lives in /public/for/astrologers.
+// Section ORDER follows CharteredAccountants; each section is its OWN design in a
+// CELESTIAL cosmic-violet + gold system — mystical but clean, never gaudy. Distinct
+// from every sibling page. Signature mechanics unique to this page: a circular
+// "celestial" hero image in a thin gold ring with a violet mix-blend-multiply blob
+// and an SVG constellation · a ZODIAC-RING radial service layout orbiting a gold
+// emblem · a deep night-sky impact band with gold numerals joined by a constellation
+// line. Other sections fresh: lunar-phase step path · constellation-of-tools panel ·
+// interactive avatar-picker testimonials · night→dawn "sunrise" comparison · two
+// starlit pricing cards · editorial about with a real image. Only nav/hero-shell/
+// footer (shared shell) resemble sibling pages.
 //
-// Honesty rules held (see docs): pricing mirrors the REAL two-plan model from
-// data/plans.js; NO fabricated client/booking counts — the numbers strip is a
-// verifiable trust strip; testimonials are clearly-structured placeholders to be
-// swapped for real quotes; JSON-LD carries NO self-serving aggregateRating.
+// IMAGES: real, mined from the previous /for/astrologers page — hero-sloth.webp
+// (hero), astro-about.webp (about), the six real integration logos, and the two
+// astrologer avatar SVGs (initial-disc fallback for the rest). Descriptive alt on
+// each; no empty placeholders.
 //
-// New URL — keep in sync: App.jsx route (before /for/:profession), prerender.mjs
-// list, and Solutions.jsx.
+// HONESTY: Book A Sloth is a scheduling + payment tool. NO prediction-accuracy or
+// outcome claims. Testimonials are labelled PLACEHOLDER quotes from astrologers /
+// consultants about ADMIN relief (bookings, no-shows, upfront fees). Trust facts are
+// verifiable only. JSON-LD carries NO aggregateRating / review.
+//
+// A11Y: single <h1>, ordered headings, real <button>/<a>, aria-labels on icon-only
+// controls + the testimonial picker (tablist), accordion aria-expanded, AA-contrast
+// palette (violet #4C1D95 ≈ 10:1 on white; gold used as fill / on-dark only), visible
+// focus, NO hover uplift, all motion guarded by prefers-reduced-motion, Reveal guards
+// its own.
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus, Star, Moon, Sun, Sparkles,
   CalendarCheck, LayoutDashboard, MessageCircle, TrendingUp,
   Wallet, BellRing, MapPin, Users, Lock, Receipt, BadgePercent,
-  Heart, Briefcase, Compass, Hash, Flame, HandHeart, Video,
+  Heart, Briefcase, Compass, Hash, Flame, HandHeart,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
@@ -49,15 +62,16 @@ const ABOUT_IMG = '/for/astrologers/astro-about.webp';
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
 const NAV = [
-  { label: 'Services', href: '#services' },
+  { label: 'Services', href: '#usecases' },
   { label: 'How It Works', href: '#how' },
-  { label: 'Why Book A Sloth', href: '#why' },
+  { label: 'Features', href: '#features' },
   { label: 'Pricing', href: '#pricing' },
-  { label: 'Resources', to: '/blog' },
+  { label: 'FAQ', href: '#faq' },
 ];
 
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian astrologers'];
 
+// Hero benefit strip.
 const BENEFITS = [
   { icon: CalendarCheck, title: 'Get Booked', desc: 'Seekers book and pay for a reading, without the DM back-and-forth.' },
   { icon: LayoutDashboard, title: 'Stay Organised', desc: 'Calendar, availability and every consultation in one place.' },
@@ -65,19 +79,19 @@ const BENEFITS = [
   { icon: TrendingUp, title: 'Grow Your Practice', desc: 'See bookings, revenue and repeat seekers with clear insights.' },
 ];
 
-// Astro service types — the consultations an astrologer sells on Book A Sloth.
-// `ring` = 3 heading-related icons that orbit the corner ring motif.
+// Zodiac-ring services — the consultations an astrologer sells on Book A Sloth.
 const SERVICES = [
-  { icon: Moon, label: 'Horoscope Reading', desc: 'Birth-chart readings, booked by slot.', ring: [Moon, Star, Sparkles] },
-  { icon: Heart, label: 'Love & Relationship', desc: 'Compatibility and guidance sessions.', ring: [Heart, Users, Sparkles] },
-  { icon: Briefcase, label: 'Career & Finance', desc: 'Timing and direction consultations.', ring: [Briefcase, TrendingUp, Wallet] },
-  { icon: HandHeart, label: 'Health & Wellness', desc: 'Remedial and well-being guidance.', ring: [HandHeart, Heart, Sparkles] },
-  { icon: Compass, label: 'Vastu Consultation', desc: 'Home and workplace alignment.', ring: [Compass, MapPin, Star] },
-  { icon: Hash, label: 'Numerology', desc: 'Name and number analysis calls.', ring: [Hash, Star, Sparkles] },
-  { icon: Flame, label: 'Puja & Remedies', desc: 'Ritual guidance and remedies.', ring: [Flame, Sparkles, Sun] },
-  { icon: Sparkles, label: 'Life Guidance', desc: 'Open sessions for life’s big questions.', ring: [Sparkles, Sun, Compass] },
+  { icon: Moon, label: 'Horoscope Reading', desc: 'Birth-chart readings, by slot.' },
+  { icon: Heart, label: 'Love & Relationship', desc: 'Compatibility and guidance.' },
+  { icon: Briefcase, label: 'Career & Finance', desc: 'Timing and direction calls.' },
+  { icon: HandHeart, label: 'Health & Wellness', desc: 'Remedial well-being guidance.' },
+  { icon: Compass, label: 'Vastu Consultation', desc: 'Home and workplace alignment.' },
+  { icon: Hash, label: 'Numerology', desc: 'Name and number analysis.' },
+  { icon: Flame, label: 'Puja & Remedies', desc: 'Ritual guidance and remedies.' },
+  { icon: Sparkles, label: 'Life Guidance', desc: "Open sessions for life's questions." },
 ];
 
+// Lunar-phase step path (3-step).
 const STEPS = [
   { title: 'Create & share your page', icon: LayoutDashboard, desc: 'Set up your practice, your services and your available hours, then share your booking link anywhere.' },
   { title: 'Seekers book & pay', icon: CalendarCheck, desc: 'Clients pick a reading and a time, and pay your fee upfront — no DMs, no back-and-forth.' },
@@ -94,27 +108,29 @@ const TOOLS = [
   { name: 'Razorpay', logo: razorpayLogo, sub: 'Payments, refunds and GST invoices' },
 ];
 
-const JOURNEY = [
-  { icon: CalendarCheck, label: 'Seeker books reading', sub: 'A slot picked from your live availability.' },
-  { icon: Check, label: 'Instant confirmation', sub: 'Booking confirmed the moment they pay.' },
-  { icon: MessageCircle, label: 'WhatsApp reminder', sub: 'A nudge before the session — no no-shows.' },
-  { icon: Video, label: 'The session', sub: 'Meet online or in person, your choice.' },
-  { icon: Wallet, label: 'Paid upfront', sub: 'Fee collected before you begin.' },
-  { icon: BellRing, label: 'Gentle follow-up', sub: 'A thank-you and an easy rebook.' },
+// Night-sky impact band — honest, verifiable (no fabricated client counts).
+const IMPACT_STATS = [
+  { value: '0%', desc: 'Commission on Sloth Active — you keep every rupee you earn.', icon: BadgePercent },
+  { value: '< 5 min', desc: 'To set up your services and go live with your own page.', icon: Sparkles },
+  { value: '24/7', desc: 'Seekers book a reading any time — no phone, no waiting.', icon: CalendarCheck },
 ];
 
-// Structured for easy swap when real customer quotes are approved.
-// Placeholder testimonials — swap for real, approved quotes. Pool of 6 feeds the
-// 3 rotating columns (2 each), so no duplicate shows at once.
+// Placeholder testimonials — astrologers / consultants about ADMIN relief. Swap for
+// real, approved quotes. NO claims about prediction accuracy or outcomes.
 const TESTIMONIALS = [
   { quote: 'The DM chaos is gone. Seekers pick a slot, pay for the reading, and my day is planned before I wake up.', name: 'Priya Sharma', role: 'Vedic Astrologer, Jaipur', avatar: '/for/astrologers/astro-priya.svg' },
   { quote: 'Upfront payment ended the no-shows. People who book a session actually show up for it now.', name: 'Rohit Verma', role: 'Numerologist, Pune', avatar: '/for/astrologers/astro-rohit.svg' },
   { quote: 'One link in my Instagram bio does everything — bookings, reminders, invoices. I just read the charts.', name: 'Anjali Nair', role: 'Tarot Reader, Kochi', avatar: '' },
   { quote: 'Clients love the WhatsApp reminders. My repeat bookings have gone up without me chasing anyone.', name: 'Deepak Rao', role: 'Vedic Astrologer, Hyderabad', avatar: '' },
-  { quote: 'Setting up my services took ten minutes. Now every consultation is booked and paid before it starts.', name: 'Meera Iyer', role: 'Vastu Expert, Chennai', avatar: '' },
+  { quote: 'Setting up my services took ten minutes. Now every consultation is booked and paid before it starts.', name: 'Meera Iyer', role: 'Vastu Consultant, Chennai', avatar: '' },
   { quote: 'GST invoices are generated automatically — my accountant is happier and so am I.', name: 'Kabir Singh', role: 'Astrologer, Delhi', avatar: '' },
 ];
 
+// Sunrise comparison — night (without) → dawn (with).
+const WITHOUT = ['Endless DMs just to fix a time', 'No-shows quietly waste your day', 'Chasing the fee after the reading', 'Reminders sent by hand, one by one'];
+const WITH_BAS = ['Seekers pick a slot themselves', 'Paid upfront — no more no-shows', 'Fee collected before you begin', 'Automatic WhatsApp reminders'];
+
+// Why choose — supporting points in the About section.
 const WHY = [
   { icon: MapPin, title: 'Built for India', desc: 'Designed around Indian astrologers, UPI payments, GST and the way seekers already reach you.' },
   { icon: Users, title: 'Easy for Your Seekers', desc: 'No signup or app to install — clients open your link, pick a slot and pay in seconds.' },
@@ -122,27 +138,16 @@ const WHY = [
   { icon: Lock, title: 'Private & Secure', desc: 'Sessions and client details stay confidential; payments are Razorpay-secured.' },
 ];
 
-// Real Impact stat cards — honest, verifiable (no fabricated client counts).
-const IMPACT_STATS = [
-  { value: '0%', desc: 'Commission on Sloth Active — you keep every rupee you earn.', icon: BadgePercent },
-  { value: '< 5 min', desc: 'To set up your services and go live with your own page.', icon: Sparkles },
-  { value: '24/7', desc: 'Seekers book a reading any time — no phone, no waiting.', icon: CalendarCheck },
-];
-
-// The Book A Sloth difference — with / without comparison.
-const WITHOUT = ['Endless DMs just to fix a time', 'No-shows quietly waste your day', 'Chasing the fee after the reading', 'Reminders sent by hand, one by one'];
-const WITH_BAS = ['Seekers pick a slot themselves', 'Paid upfront — no more no-shows', 'Fee collected before you begin', 'Automatic WhatsApp reminders'];
-
-// Honest trust strip — verifiable facts, NOT fabricated client/reading counts.
+// Honest trust strip — verifiable facts only, NOT fabricated reading counts.
 const TRUST_STRIP = [
-  { icon: BadgePercent, value: '0%', label: 'Commission on Sloth Active — keep every rupee' },
-  { icon: Receipt, value: 'GST', label: 'Tax invoices generated automatically' },
-  { icon: Lock, value: 'UPI + Cards', label: 'Razorpay-secured payments' },
-  { icon: MapPin, value: 'Made in India', label: 'For Indian astrologers & practices' },
+  { icon: BadgePercent, value: '0% commission', label: 'On Sloth Active — keep every rupee' },
+  { icon: Receipt, value: 'GST invoices', label: 'Tax invoices generated automatically' },
+  { icon: Lock, value: 'UPI + Cards', label: 'Razorpay signature-verified payments' },
+  { icon: MapPin, value: 'Made in India', label: 'Hosted in Mumbai · DPDP Act 2023 aligned' },
 ];
 
 const FAQ = [
-  { q: 'Is Book A Sloth suitable for astrologers and tarot readers?', a: 'Yes. Whether you read birth charts, tarot or numbers, Book A Sloth manages your services, availability, client bookings, payments and reminders from one place — so solo astrologers and larger practices can run sessions without the manual coordination.' },
+  { q: 'Is Book A Sloth suitable for astrologers and tarot readers?', a: 'Yes. Whether you read birth charts, tarot or numbers, Book A Sloth manages your services, availability, client bookings, payments and reminders from one place — so solo astrologers and larger practices can run sessions without the manual coordination. It is a scheduling and payment tool.' },
   { q: 'Can seekers book a reading online?', a: 'Yes. Clients open your booking link, choose a service such as a horoscope reading or a Vastu consultation, pick a convenient slot and confirm — no DMs or waiting for a reply.' },
   { q: 'Can I share my booking link on Instagram and WhatsApp?', a: 'Yes. Your booking link works anywhere — put it in your Instagram bio, share it on WhatsApp status, in your email signature or on your website. One link handles every booking request.' },
   { q: 'Can I send WhatsApp reminders?', a: 'Yes. Book A Sloth sends automatic booking confirmations and reminders over WhatsApp and email before each session, which cuts no-shows. WhatsApp reminders are included on the Sloth Active plan (and free for your first two months on the Sloth plan).' },
@@ -155,16 +160,15 @@ const FAQ = [
 
 const FOOTER_COLS = [
   { title: 'Product', links: [
-    { label: 'Features', href: '#why' },
+    { label: 'Features', href: '#features' },
     { label: 'Pricing', to: '/pricing' },
-    { label: 'Integrations', href: '#integrations' },
+    { label: 'Integrations', href: '#features' },
     { label: "What's New", to: '/changelog' },
   ] },
   { title: 'For Professionals', links: [
-    { label: 'Astrologers', to: '/for/astrologers' },
-    { label: 'Doctors', to: '/for/doctors' },
-    { label: 'Salons', to: '/for/salon' },
-    { label: 'Tutors', to: '/for/tutors' },
+    { label: 'Astrologers & Vedic Consultants', to: '/for/astrologers' },
+    { label: 'Dermatologists & Skin Clinics', to: '/for/dermatologists' },
+    { label: 'General Physicians & Clinics', to: '/for/doctors' },
     { label: 'More professions', to: '/solutions' },
   ] },
   { title: 'Resources', links: [
@@ -188,273 +192,165 @@ function NavLink({ item, className, onClick }) {
   return <a href={item.href} className={className} onClick={onClick}>{item.label}</a>;
 }
 
-// Plain pill; on mouse-LEAVE it flicks a one-shot sparkle trail (magic wand).
-// `cast` bumps a key so the overlay remounts and replays its CSS animation
-// each time, then clears itself when the ring animation ends. No hover state.
-const CAST_SPARKS = [
-  { dx: '34px', dy: '-20px' }, { dx: '-30px', dy: '-16px' }, { dx: '22px', dy: '18px' },
-  { dx: '-26px', dy: '14px' }, { dx: '4px', dy: '-26px' }, { dx: '40px', dy: '4px' },
-];
-// Golden sparkle positions around the ACTIVE how-it-works step icon box.
-const STEP_SPARKS = [
-  { top: '-6px', left: '-6px', width: '7px', height: '7px', animationDelay: '0ms' },
-  { top: '-8px', right: '4px', width: '5px', height: '5px', animationDelay: '280ms' },
-  { bottom: '-6px', right: '-6px', width: '7px', height: '7px', animationDelay: '150ms' },
-  { bottom: '-4px', left: '6px', width: '4px', height: '4px', animationDelay: '440ms' },
-  { top: '42%', right: '-9px', width: '5px', height: '5px', animationDelay: '600ms' },
-];
-function CtaButton({ to, children, className = '' }) {
-  const [cast, setCast] = useState(0);
+function CtaButton({ to, children, variant = 'solid', className = '' }) {
+  const base = 'inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold transition-all hover:no-underline';
+  const styles = {
+    solid: 'text-white shadow-[0_6px_20px_-6px_rgba(76,29,149,0.55)] hover:brightness-110',
+    ghost: 'border-2 border-[color:var(--ca-ink)]/12 bg-white text-[color:var(--ca-ink)] hover:border-[color:var(--ca-primary)]/40',
+  };
   return (
     <Link
       to={to}
-      onMouseLeave={() => setCast((c) => c + 1)}
-      className={`relative inline-flex items-center justify-center gap-2 overflow-visible rounded-full px-6 py-3.5 text-sm font-semibold text-white transition-transform hover:no-underline active:scale-[0.98] ${className}`}
-      style={{ background: 'linear-gradient(120deg, var(--as-secondary), var(--as-primary))' }}
+      className={`${base} ${styles[variant]} ${className}`}
+      style={variant === 'solid' ? { background: 'linear-gradient(120deg, #6D28D9, var(--ca-primary))' } : undefined}
     >
       {children}
-      {cast > 0 && (
-        <span key={cast} className="as-cast" aria-hidden onAnimationEnd={(e) => { if (e.animationName.includes('as-cast-ring')) setCast(0); }}>
-          <i className="as-ring" />
-          {CAST_SPARKS.map((s, i) => (
-            <i key={i} className="as-spark" style={{ '--dx': s.dx, '--dy': s.dy, animationDelay: `${i * 18}ms` }} />
-          ))}
-        </span>
-      )}
     </Link>
   );
 }
 
-/* Corner ring motif for a service card — 2 concentric circles + 3 heading icons
-   orbiting the middle ring. Positioned so only the inner quarter shows (card clips). */
-function CardRings({ icons }) {
+// A small, decorative SVG constellation — dots joined by faint gold lines.
+function Constellation({ className = '', stroke = 'rgba(234,179,8,0.55)', dot = '#EAB308' }) {
   return (
-    <div className="as-rings" aria-hidden>
-      <span className="as-ring as-ring-outer" />
-      <span className="as-ring as-ring-mid" />
-      <span className="as-ring as-ring-inner" />
-      <div className="as-ring-orbit">
-        {icons.map((Ic, i) => (
-          <span key={i} className="as-orbit-icon" style={{ '--a': `${i * 120}deg` }}>
-            <span><Ic size={13} /></span>
-          </span>
-        ))}
-      </div>
-    </div>
+    <svg aria-hidden viewBox="0 0 200 140" className={`pointer-events-none ${className}`}>
+      <polyline points="16,120 54,64 96,88 132,34 184,60" fill="none" stroke={stroke} strokeWidth="1" />
+      {[[16, 120], [54, 64], [96, 88], [132, 34], [184, 60]].map(([cx, cy], i) => (
+        <circle key={i} cx={cx} cy={cy} r={i === 3 ? 3.4 : 2.2} fill={dot} />
+      ))}
+    </svg>
   );
 }
 
-/* A distinct COSMIC background per bento card (6 variants) — starfields, nebulae,
-   a shooting star, a galaxy. `c(a)` yields the star/ink colour at alpha `a` (white
-   on purple cards, deep-indigo on gold cards). All original CSS, no imagery. */
-function BentoSpace({ i, c }) {
-  const cover = { position: 'absolute', inset: 0 };
-  // reusable scattered-star field
-  const stars = (a) => [
-    `radial-gradient(1.4px 1.4px at 14% 22%, ${c(a)}, transparent)`,
-    `radial-gradient(1px 1px at 68% 16%, ${c(a)}, transparent)`,
-    `radial-gradient(1.6px 1.6px at 38% 66%, ${c(a)}, transparent)`,
-    `radial-gradient(1px 1px at 84% 60%, ${c(a)}, transparent)`,
-    `radial-gradient(1.2px 1.2px at 26% 86%, ${c(a)}, transparent)`,
-    `radial-gradient(1px 1px at 58% 44%, ${c(a)}, transparent)`,
-    `radial-gradient(1.3px 1.3px at 90% 30%, ${c(a)}, transparent)`,
-    `radial-gradient(1px 1px at 48% 12%, ${c(a)}, transparent)`,
-  ].join(', ');
-  switch (i % 6) {
-    case 0: // dense starfield
-      return <span aria-hidden style={{ ...cover, backgroundImage: stars(0.8) }} />;
-    case 1: // nebula clouds + a few stars
-      return <span aria-hidden style={{ ...cover, backgroundImage: `radial-gradient(circle at 82% 18%, ${c(0.22)}, transparent 46%), radial-gradient(circle at 16% 78%, ${c(0.16)}, transparent 42%), ${stars(0.7)}` }} />;
-    case 2: // twinkling stars
-      return <span aria-hidden className="as-bento-twinkle" style={{ ...cover, backgroundImage: stars(0.85) }} />;
-    case 3: // shooting star + stars
-      return (<>
-        <span aria-hidden style={{ ...cover, backgroundImage: stars(0.6) }} />
-        <span aria-hidden style={{ position: 'absolute', top: '26%', right: '14%', height: '2px', width: '96px', transform: 'rotate(38deg)', transformOrigin: 'right center', background: `linear-gradient(90deg, transparent, ${c(0.85)})`, borderRadius: '9999px' }} />
-        <span aria-hidden style={{ position: 'absolute', top: 'calc(26% - 2px)', right: '13%', height: '6px', width: '6px', borderRadius: '9999px', background: c(0.95), boxShadow: `0 0 8px 2px ${c(0.6)}` }} />
-      </>);
-    case 4: // milky-way band + stars
-      return (<>
-        <span aria-hidden style={{ position: 'absolute', inset: '-20%', transform: 'rotate(-24deg)', background: `linear-gradient(90deg, transparent, ${c(0.16)} 45%, ${c(0.16)} 55%, transparent)`, filter: 'blur(6px)' }} />
-        <span aria-hidden style={{ ...cover, backgroundImage: stars(0.7) }} />
-      </>);
-    default: // galaxy — faint concentric glow + stars
-      return (<>
-        <span aria-hidden style={{ position: 'absolute', right: '-30px', top: '-30px', height: '150px', width: '150px', borderRadius: '9999px', background: `repeating-radial-gradient(circle, ${c(0.14)} 0 1px, transparent 1px 12px)` }} />
-        <span aria-hidden style={{ position: 'absolute', right: '8px', top: '8px', height: '10px', width: '10px', borderRadius: '9999px', background: c(0.9), boxShadow: `0 0 12px 3px ${c(0.5)}` }} />
-        <span aria-hidden style={{ ...cover, backgroundImage: stars(0.6) }} />
-      </>);
-  }
+// Lunar-phase glyph for the step path (crescent → half → full).
+function MoonPhase({ i }) {
+  const bg = [
+    'radial-gradient(circle at 68% 50%, var(--ca-accent) 0 42%, rgba(76,29,149,0.22) 44%)',
+    'linear-gradient(90deg, var(--ca-accent) 50%, rgba(76,29,149,0.22) 50%)',
+    'var(--ca-accent)',
+  ][i] || 'var(--ca-accent)';
+  return <span aria-hidden className="h-4 w-4 rounded-full ring-2 ring-white shadow-sm" style={{ background: bg }} />;
 }
 
-/* Prominent bento card — solid alternating purple/gold, a unique background shape
-   per card, a title-related icon and a big ghosted step number. */
-function BentoCard({ step, icon: Icon, title, sub, gold, shape }) {
-  const c = (a) => gold ? `rgba(36,28,78,${a})` : `rgba(255,255,255,${a})`;
+// One zodiac-ring / grid service card (shared by the desktop ring + mobile grid).
+function ServiceCard({ s, compact = false }) {
+  const Icon = s.icon;
   return (
-    <div
-      className="relative flex h-full min-h-[178px] flex-col justify-between overflow-hidden rounded-[20px] p-6 shadow-[0_20px_45px_-24px_rgba(47,35,115,0.5)]"
-      style={{ background: gold ? 'var(--as-gold)' : 'var(--as-secondary)', color: gold ? 'var(--as-deep)' : '#ffffff' }}
+    <Link
+      to={START}
+      className={`group relative flex h-full flex-col rounded-[16px] border border-black/[0.07] bg-white transition-colors hover:border-[color:var(--ca-primary)]/40 hover:shadow-[0_18px_40px_-24px_rgba(76,29,149,0.45)] hover:no-underline ${compact ? 'items-center p-4 text-center' : 'p-5'}`}
     >
-      <div className="pointer-events-none absolute inset-0" aria-hidden><BentoSpace i={shape} c={c} /></div>
-
-      <div className="relative z-10 flex items-center justify-between">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: c(gold ? 0.14 : 0.18), color: gold ? 'var(--as-primary)' : 'var(--as-gold)' }}>
-          <Icon size={24} />
-        </span>
-        <span className="text-[2.6rem] font-bold leading-none" style={{ color: c(0.28) }}>{step}</span>
-      </div>
-      <div className="relative z-10 mt-6">
-        <h3 className="text-lg font-bold leading-tight" style={{ color: 'inherit' }}>{title}</h3>
-        <p className="mt-1.5 text-sm leading-snug" style={{ opacity: 0.82 }}>{sub}</p>
-      </div>
-    </div>
-  );
-}
-
-/* Testimonial avatar — real photo, else an initial disc. */
-function TAvatar({ t }) {
-  return t.avatar
-    ? <img src={t.avatar} alt={t.name} loading="lazy" width={64} height={64} className="h-16 w-16 rounded-full object-cover shadow-[0_8px_20px_-8px_rgba(47,35,115,0.5)] ring-4 ring-white" />
-    : <span className="flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white shadow-[0_8px_20px_-8px_rgba(47,35,115,0.5)] ring-4 ring-white" style={{ background: 'var(--as-secondary)' }}>{t.name.charAt(0)}</span>;
-}
-
-/* Testimonial card — avatar overlapping the top, quote badge, name/role/quote/stars. */
-function TCard({ t }) {
-  return (
-    <div className="relative mt-9 rounded-[18px] border border-[color:var(--as-line)] bg-white px-6 pb-7 pt-11 text-center shadow-[0_18px_45px_-28px_rgba(47,35,115,0.5)]">
-      <div className="absolute -top-8 left-1/2 -translate-x-1/2"><TAvatar t={t} /></div>
-      <span aria-hidden className="absolute left-5 top-7 flex h-9 w-9 items-center justify-center rounded-full text-xl font-bold leading-none" style={{ background: 'color-mix(in srgb, var(--as-gold) 28%, white)', color: 'var(--as-gold)' }}>&ldquo;</span>
-      <h3 className="text-lg font-bold text-[color:var(--as-ink)]">{t.name}</h3>
-      <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-neutral-500">{t.role}</p>
-      <p className="mt-3 text-sm leading-relaxed text-neutral-500">{t.quote}</p>
-      <div className="mt-4 flex justify-center gap-0.5">
-        {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={15} style={{ color: 'var(--as-gold)', fill: 'var(--as-gold)' }} />)}
-      </div>
-    </div>
-  );
-}
-
-/* One rotating column — swaps its card up-and-out for the next, at a random
-   3–5s interval so the three columns cycle out of sync. */
-function TestimonialColumn({ items, className = '' }) {
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    if (items.length < 2) return undefined;
-    let timer;
-    const tick = () => { timer = setTimeout(() => { setIdx((i) => (i + 1) % items.length); tick(); }, 3000 + Math.random() * 2000); };
-    tick();
-    return () => clearTimeout(timer);
-  }, [items.length]);
-  const item = items[idx] || items[0];
-  if (!item) return null;
-  return (
-    <div className={`relative h-[360px] ${className}`}>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={item.name}
-          className="absolute inset-x-0 top-0"
-          initial={{ y: 48, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -48, opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <TCard t={item} />
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/* Floating glass chip over the hero image — mirrors the CA / homepage hero. */
-function GlassCard({ icon: Icon, label, value, accent, className = '' }) {
-  return (
-    <div className={`absolute flex items-center gap-3 rounded-2xl border border-white/60 bg-white/80 px-4 py-3 shadow-[0_18px_40px_-20px_rgba(47,35,115,0.4)] backdrop-blur-md ${className}`}>
+      <Star aria-hidden size={13} className="absolute right-3 top-3" style={{ color: 'var(--ca-accent)', fill: 'var(--ca-accent)' }} />
       <span
-        className="flex h-10 w-10 items-center justify-center rounded-xl"
-        style={accent
-          ? { backgroundColor: 'color-mix(in srgb, var(--as-secondary) 16%, transparent)', color: 'var(--as-secondary)' }
-          : { backgroundColor: 'rgba(31,27,58,0.06)', color: '#4a4560' }}
+        className="flex h-11 w-11 items-center justify-center rounded-xl"
+        style={{ background: 'color-mix(in srgb, var(--ca-primary) 9%, transparent)', color: 'var(--ca-primary)' }}
       >
-        <Icon size={18} />
+        <Icon size={20} />
       </span>
-      <div>
-        <div className="text-[11px] font-medium text-neutral-400">{label}</div>
-        <div className="text-sm font-semibold" style={{ color: accent ? 'var(--as-secondary)' : 'var(--as-ink)' }}>{value}</div>
-      </div>
-    </div>
+      <h3 className={`font-heading font-bold text-[color:var(--ca-ink)] ${compact ? 'mt-3 text-[13px] leading-tight' : 'mt-4 text-[15px]'}`}>{s.label}</h3>
+      <p className={`text-slate-500 ${compact ? 'mt-1 text-[11px] leading-snug' : 'mt-1.5 text-[13px] leading-relaxed'}`}>{s.desc}</p>
+    </Link>
   );
 }
 
-/* How-it-works: auto-advancing, clickable step timeline. */
-function HowItWorks({ steps }) {
+// Interactive testimonial "avatar picker" — a constellation of astrologers; click a
+// face to reveal that quote. Real avatar image, else an initial disc.
+function TestimonialPicker() {
   const [active, setActive] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setActive((a) => (a + 1) % steps.length), 3000);
-    return () => clearTimeout(t);
-  }, [active, steps.length]);
+  const t = TESTIMONIALS[active];
   return (
-    <div className="mt-14 grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
-      <div className="relative mx-auto w-full max-w-[39rem] lg:mx-0">
-        <div aria-hidden className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: 'color-mix(in srgb, var(--as-secondary) 22%, transparent)' }} />
-        <div className="relative z-10 aspect-square">
-          <img src={ABOUT_IMG} alt="Book A Sloth for astrologers" loading="lazy" decoding="async" width="1100" height="619" className="absolute inset-0 mx-auto h-full w-full object-contain drop-shadow-[0_24px_32px_rgba(47,35,115,0.16)]" />
-        </div>
-      </div>
-      <div className="relative">
-        <span aria-hidden className="absolute bottom-5 left-6 top-5 w-px bg-black/10" />
-        <div className="space-y-8">
-          {steps.map((s, i) => {
-            const on = i === active;
-            return (
-              <button key={s.title} type="button" onClick={() => setActive(i)} aria-current={on} className="relative flex w-full gap-5 text-left">
-                <span className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${on ? 'text-white shadow-[0_8px_20px_-8px_rgba(107,92,231,0.7)]' : 'border-2 border-black/10 bg-white'}`} style={on ? { background: 'var(--as-secondary)' } : { color: 'var(--as-primary)' }}>
-                  <s.icon size={20} />
-                  {on && STEP_SPARKS.map((sp, k) => <i key={k} className="as-step-spark" style={sp} aria-hidden />)}
+    <div className="mt-12 grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+      <AnimatePresence mode="wait">
+        <motion.figure
+          key={active}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="relative rounded-[22px] border border-black/[0.07] bg-white p-8 shadow-[0_24px_60px_-34px_rgba(76,29,149,0.4)] sm:p-10"
+        >
+          <span aria-hidden className="font-heading text-5xl leading-none" style={{ color: 'color-mix(in srgb, var(--ca-accent) 60%, white)' }}>&ldquo;</span>
+          <blockquote className="mt-2 text-lg leading-relaxed text-[color:var(--ca-ink)] sm:text-xl">{t.quote}</blockquote>
+          <div className="mt-6 flex items-center gap-1">
+            {[0, 1, 2, 3, 4].map((s) => <Star key={s} size={16} style={{ color: 'var(--ca-accent)', fill: 'var(--ca-accent)' }} />)}
+          </div>
+          <figcaption className="mt-4 border-t border-black/[0.06] pt-4">
+            <div className="font-heading text-[15px] font-bold text-[color:var(--ca-ink)]">{t.name}</div>
+            <div className="text-[13px] text-slate-500">{t.role}</div>
+          </figcaption>
+        </motion.figure>
+      </AnimatePresence>
+
+      <div role="tablist" aria-label="Choose an astrologer to read their words" className="grid grid-cols-3 gap-4 sm:grid-cols-6 lg:grid-cols-3">
+        {TESTIMONIALS.map((p, i) => {
+          const on = i === active;
+          return (
+            <button
+              key={p.name}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              aria-label={`${p.name}, ${p.role}`}
+              onClick={() => setActive(i)}
+              className="group flex flex-col items-center gap-2 rounded-2xl p-2 transition-colors hover:bg-[color:var(--ca-cream)]"
+            >
+              {p.avatar ? (
+                <img
+                  src={p.avatar}
+                  alt={p.name}
+                  loading="lazy"
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 rounded-full object-cover ring-2 transition-all"
+                  style={{ boxShadow: on ? '0 0 0 3px var(--ca-accent)' : 'none', outlineColor: 'transparent' }}
+                />
+              ) : (
+                <span
+                  className="flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold text-white transition-all"
+                  style={{ background: 'var(--ca-primary)', boxShadow: on ? '0 0 0 3px var(--ca-accent)' : 'none' }}
+                >
+                  {p.name.charAt(0)}
                 </span>
-                <div className={`pt-1.5 transition-opacity duration-300 ${on ? 'opacity-100' : 'opacity-90'}`}>
-                  <h3 className="text-lg font-bold text-[color:var(--as-ink)]">{s.title}</h3>
-                  <p className="mt-1 max-w-sm text-sm leading-relaxed text-neutral-600">{s.desc}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+              )}
+              <span className={`text-[11px] font-semibold leading-tight ${on ? 'text-[color:var(--ca-primary)]' : 'text-slate-500'}`}>{p.name.split(' ')[0]}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-/* Smoothly-animated single-open FAQ accordion. */
 function FaqAccordion() {
   const [open, setOpen] = useState(0);
+  const renderItem = (f, i) => {
+    const isOpen = open === i;
+    return (
+      <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'var(--ca-primary)' : 'rgba(17,17,17,0.08)' }}>
+        <button
+          type="button"
+          onClick={() => setOpen(isOpen ? -1 : i)}
+          aria-expanded={isOpen}
+          className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-[15px] font-semibold text-[color:var(--ca-ink)]"
+        >
+          {f.q}
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'color-mix(in srgb, var(--ca-primary) 12%, transparent)', color: 'var(--ca-primary)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
+            <Plus size={15} />
+          </span>
+        </button>
+        <AnimatePresence initial={false}>
+          {isOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
+              <p className="px-5 pb-4 text-[14.5px] leading-relaxed text-slate-500">{f.a}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
   return (
-    <div className="space-y-3">
-      {FAQ.map((f, i) => {
-        const isOpen = open === i;
-        return (
-          <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'var(--as-secondary)' : 'var(--as-line)' }}>
-            <button
-              type="button"
-              onClick={() => setOpen(isOpen ? -1 : i)}
-              aria-expanded={isOpen}
-              className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-[15px] font-semibold text-[color:var(--as-ink)]"
-            >
-              {f.q}
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
-                <Plus size={15} />
-              </span>
-            </button>
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
-                  <p className="px-5 pb-4 text-[14.5px] leading-relaxed text-neutral-500">{f.a}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
+    <div className="grid items-start gap-3 sm:grid-cols-2 sm:gap-4">
+      <div className="space-y-3">{FAQ.map((f, i) => (i % 2 === 0 ? renderItem(f, i) : null))}</div>
+      <div className="space-y-3">{FAQ.map((f, i) => (i % 2 === 1 ? renderItem(f, i) : null))}</div>
     </div>
   );
 }
@@ -495,7 +391,7 @@ export default function Astrologers() {
     {
       '@context': 'https://schema.org',
       '@type': 'Service',
-      serviceType: 'Appointment booking software for astrologers',
+      serviceType: 'Appointment booking software for astrologers and Vedic consultants',
       provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
       areaServed: 'IN',
       description: seo.description,
@@ -511,121 +407,51 @@ export default function Astrologers() {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Astrologers', item: canonical },
+        { '@type': 'ListItem', position: 2, name: 'For Astrologers & Vedic Consultants', item: canonical },
       ],
     },
   ];
 
+  // Celestial cosmic-violet + gold. Legacy --ca-* names kept (shared classNames depend on them).
   const styleVars = {
-    '--as-bg': '#FFFEFC',
-    '--as-primary': '#2F2373',
-    '--as-secondary': '#6B5CE7',
-    '--as-gold': '#E8A93C',
-    '--as-lavender': '#F3EEFF',
-    '--as-line': '#E7DDFB',
-    '--as-ink': '#1F1B3A',
-    '--as-deep': '#241C4E',
+    '--ca-primary': '#4C1D95', // cosmic violet — text/links/fills, ~10:1 on white
+    '--ca-accent': '#EAB308',  // gold / star — fills & on-dark accents (not body text on white)
+    '--ca-ink': '#1E1633',     // deep indigo-slate text
+    '--ca-cream': '#F5F3FF',   // violet-50 section bg
+    '--ca-grey': '#F3F1F8',    // light section bg
+    '--ca-deep': '#170F33',    // night-sky base
   };
 
   return (
-    <main className="astro-lp overflow-x-clip text-[color:var(--as-ink)]" style={{ ...styleVars, background: 'var(--as-bg)' }}>
-      {/* Scoped fonts — headings serif + Poppins body, confined to .astro-lp so the
-          global theme is untouched.
-          NOTE: the brief asked for Tiempos Headline Semibold (Klim Type Foundry — a
-          PAID, licensed font). It is NOT bundled here because it can't be redistributed
-          without a licence. Fraunces (open, Google Fonts) stands in as a close
-          high-contrast serif. To use real Tiempos: drop the licensed .woff2 into
-          /public/for/astrologers/, add an @font-face for it below, and change the
-          heading font-family to 'Tiempos Headline'. */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+    <main className="astro-cosmic overflow-x-clip bg-white text-[color:var(--ca-ink)]" style={styleVars}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
-        .astro-lp{font-family:'Poppins',system-ui,-apple-system,sans-serif;}
-        .astro-lp h1,.astro-lp h2,.astro-lp h3,.astro-lp h4{font-family:'Fraunces','Tiempos Headline',Georgia,serif;font-weight:600;letter-spacing:-0.01em;}
-
-        /* ── Magic-wand cast — plain button; a one-shot sparkle trail fires only
-              when the cursor LEAVES the button (JS toggles .as-cast, remounted per
-              leave so it plays once and fades). No hover state, no idle glow. ── */
-        .astro-lp .as-cast { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 5; }
-        .astro-lp .as-cast .as-ring {
-          position: absolute; inset: -3px; border-radius: inherit;
-          box-shadow: 0 0 0 1.5px color-mix(in srgb, #c4b5fd 90%, transparent), 0 0 22px 2px color-mix(in srgb, var(--as-secondary) 70%, transparent);
-          animation: as-cast-ring 620ms cubic-bezier(0.22,1,0.36,1) forwards;
-        }
-        .astro-lp .as-cast .as-spark {
-          position: absolute; top: 50%; left: 50%; height: 6px; width: 6px; border-radius: 9999px;
-          background: radial-gradient(circle, #fff 0%, #c4b5fd 55%, transparent 70%);
-          animation: as-cast-spark 640ms cubic-bezier(0.22,1,0.36,1) forwards;
-        }
-        @keyframes as-cast-ring {
-          0%   { opacity: .9; transform: scale(.86); }
-          100% { opacity: 0; transform: scale(1.18); }
-        }
-        @keyframes as-cast-spark {
-          0%   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-          100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.2); }
-        }
-
-        /* ── Sparkle starfield (hero) — layered twinkling dots, pure CSS ── */
-        @keyframes as-twinkle { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
-        @keyframes as-drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
-        .astro-lp .as-stars { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-        .astro-lp .as-stars::before, .astro-lp .as-stars::after {
-          content: ''; position: absolute; inset: -10%;
-          background-repeat: no-repeat;
-        }
-        .astro-lp .as-stars::before {
+        .astro-cosmic .cosmic-stars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+        .astro-cosmic .cosmic-stars::before,.astro-cosmic .cosmic-stars::after{content:'';position:absolute;inset:-12%;background-repeat:no-repeat}
+        .astro-cosmic .cosmic-stars::before{
           background-image:
-            radial-gradient(1.5px 1.5px at 12% 22%, #fff, transparent),
-            radial-gradient(1.5px 1.5px at 78% 14%, #d8ccff, transparent),
+            radial-gradient(1.6px 1.6px at 12% 22%, #fff, transparent),
+            radial-gradient(1.4px 1.4px at 78% 14%, #EAB308, transparent),
             radial-gradient(2px 2px at 32% 68%, #fff, transparent),
-            radial-gradient(1px 1px at 60% 40%, #c4b5fd, transparent),
-            radial-gradient(1.5px 1.5px at 88% 60%, #fff, transparent),
-            radial-gradient(1px 1px at 46% 12%, #fff, transparent);
-          animation: as-twinkle 4s ease-in-out infinite, as-drift 9s ease-in-out infinite alternate;
+            radial-gradient(1.2px 1.2px at 60% 40%, #C4B5FD, transparent),
+            radial-gradient(1.6px 1.6px at 88% 60%, #fff, transparent),
+            radial-gradient(1.2px 1.2px at 46% 86%, #EAB308, transparent);
+          animation: cosmic-twinkle 4s ease-in-out infinite, cosmic-drift 9s ease-in-out infinite alternate;
         }
-        .astro-lp .as-stars::after {
+        .astro-cosmic .cosmic-stars::after{
           background-image:
-            radial-gradient(1px 1px at 22% 48%, #c4b5fd, transparent),
-            radial-gradient(1.5px 1.5px at 68% 76%, #fff, transparent),
-            radial-gradient(1px 1px at 92% 30%, #d8ccff, transparent),
-            radial-gradient(2px 2px at 8% 80%, #fff, transparent),
-            radial-gradient(1px 1px at 54% 88%, #c4b5fd, transparent);
-          animation: as-twinkle 5.5s ease-in-out infinite 1s, as-drift 11s ease-in-out infinite alternate-reverse;
+            radial-gradient(1.2px 1.2px at 22% 48%, #C4B5FD, transparent),
+            radial-gradient(1.6px 1.6px at 68% 78%, #fff, transparent),
+            radial-gradient(1.2px 1.2px at 92% 30%, #fff, transparent),
+            radial-gradient(2px 2px at 8% 80%, #EAB308, transparent),
+            radial-gradient(1.2px 1.2px at 54% 12%, #fff, transparent);
+          animation: cosmic-twinkle 5.5s ease-in-out infinite 1s, cosmic-drift 11s ease-in-out infinite alternate-reverse;
         }
-        /* ── Corner ring motif (service cards) — 2 concentric circles bleeding out
-              of the top-right corner (card clips ~3/4), 3 heading icons orbiting the
-              middle ring. ── */
-        @keyframes as-ring-spin { to { transform: rotate(360deg); } }
-        @keyframes as-ring-spin-rev { to { transform: rotate(-360deg); } }
-        .astro-lp .as-rings { position: absolute; top: 0; right: 0; width: 178px; height: 178px; transform: translate(42%, -42%); pointer-events: none; z-index: 0; --rmid: 59px; opacity: 0; transition: opacity .35s ease; }
-        .astro-lp .group:hover .as-rings { opacity: 1; }
-        .astro-lp .as-ring { position: absolute; border-radius: 9999px; border: 1.5px solid rgba(255,255,255,.4); }
-        .astro-lp .as-ring-outer { inset: 0; }
-        .astro-lp .as-ring-mid { inset: 30px; }
-        .astro-lp .as-ring-inner { inset: 60px; }
-        .astro-lp .as-ring-orbit { position: absolute; inset: 30px; animation: as-ring-spin 18s linear infinite; }
-        .astro-lp .as-orbit-icon { position: absolute; top: 50%; left: 50%; height: 26px; width: 26px; margin: -13px; transform: rotate(var(--a)) translateY(calc(-1 * var(--rmid))); }
-        .astro-lp .as-orbit-icon > span { display: flex; height: 100%; width: 100%; align-items: center; justify-content: center; border-radius: 9999px; background: var(--as-lavender); color: var(--as-secondary); box-shadow: 0 2px 8px -3px rgba(47,35,115,.3); transition: background .3s, color .3s; animation: as-ring-spin-rev 18s linear infinite; }
-        .astro-lp .group:hover .as-ring { border-color: rgba(255,255,255,.4); }
-        .astro-lp .group:hover .as-orbit-icon > span { background: rgba(255,255,255,.18); color: var(--as-gold); }
-
-        /* twinkling bento background (variant 2) */
-        .astro-lp .as-bento-twinkle { animation: as-twinkle 3s ease-in-out infinite; }
-
-        /* golden sparkle around the active how-it-works step */
-        @keyframes as-sparkle { 0%,100% { opacity: .15; transform: scale(.5); } 50% { opacity: 1; transform: scale(1); } }
-        .astro-lp .as-step-spark { position: absolute; border-radius: 9999px; pointer-events: none;
-          background: radial-gradient(circle, #fff 0%, var(--as-gold) 55%, transparent 72%);
-          box-shadow: 0 0 6px 1px color-mix(in srgb, var(--as-gold) 75%, transparent);
-          animation: as-sparkle 1.5s ease-in-out infinite; }
-
-        @media (prefers-reduced-motion: reduce) {
-          .astro-lp .as-stars::before, .astro-lp .as-stars::after,
-          .astro-lp .as-cast .as-ring, .astro-lp .as-cast .as-spark,
-          .astro-lp .as-ring-orbit, .astro-lp .as-orbit-icon > span, .astro-lp .as-step-spark { animation: none; }
-          .astro-lp .as-cast { display: none; }
+        @keyframes cosmic-twinkle{0%,100%{opacity:.35}50%{opacity:1}}
+        @keyframes cosmic-drift{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+        .astro-cosmic .zodiac-spin{animation: zodiac-rot 100s linear infinite}
+        @keyframes zodiac-rot{to{transform:rotate(360deg)}}
+        @media (prefers-reduced-motion: reduce){
+          .astro-cosmic .cosmic-stars::before,.astro-cosmic .cosmic-stars::after,.astro-cosmic .zodiac-spin{animation:none!important}
         }
       `}</style>
 
@@ -637,29 +463,29 @@ export default function Astrologers() {
         robots="index, follow, max-image-preview:large, max-snippet:-1"
         siteName="Book A Sloth"
         locale="en_IN"
-        themeColor="#6B5CE7"
+        themeColor="#4C1D95"
         ogTitle={seo.ogTitle}
         ogDescription={seo.ogDescription}
         jsonLd={jsonLd}
       />
 
-      {/* ═══════════════ 1 · NAV ═══════════════ */}
+      {/* ═══════════════ 1 · NAV (shared shell) ═══════════════ */}
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
           <Link to="/" className="flex items-center gap-2 hover:no-underline" aria-label="Book A Sloth — home">
             <img src="/favicon.svg" alt="" width={28} height={28} className="h-7 w-7 rounded-md" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            <span className="text-[15px] font-extrabold tracking-tight text-[color:var(--as-ink)]">Book A Sloth</span>
+            <span className="font-heading text-[15px] font-extrabold tracking-tight text-[color:var(--ca-ink)]">Book A Sloth</span>
           </Link>
-          <nav className="hidden items-center gap-7 lg:flex">
+          <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
             {NAV.map((item) => (
-              <NavLink key={item.label} item={item} className="text-sm font-medium text-neutral-600 transition-colors hover:text-[color:var(--as-ink)] hover:no-underline" />
+              <NavLink key={item.label} item={item} className="text-sm font-medium text-slate-600 transition-colors hover:text-[color:var(--ca-ink)] hover:no-underline" />
             ))}
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
-            <Link to={LOGIN} className="text-sm font-semibold text-neutral-700 hover:text-[color:var(--as-ink)] hover:no-underline">Login</Link>
-            <CtaButton to={START} className="!px-5 !py-2.5">Start for Free <ArrowRight size={15} /></CtaButton>
+            <Link to={LOGIN} className="text-sm font-semibold text-slate-700 hover:text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
+            <CtaButton to={START} className="!px-5 !py-2.5">Start Free <ArrowRight size={15} /></CtaButton>
           </div>
-          <button type="button" className="lg:hidden" aria-label="Menu" onClick={() => setMenuOpen((v) => !v)}>
+          <button type="button" className="lg:hidden" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
@@ -668,10 +494,10 @@ export default function Astrologers() {
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-black/5 bg-white lg:hidden">
               <div className="flex flex-col gap-1 px-5 py-4">
                 {NAV.map((item) => (
-                  <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-neutral-700 hover:bg-[color:var(--as-lavender)] hover:no-underline" />
+                  <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-slate-700 hover:bg-[color:var(--ca-cream)] hover:no-underline" />
                 ))}
                 <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-3">
-                  <Link to={LOGIN} className="flex-1 rounded-full border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--as-ink)] hover:no-underline">Login</Link>
+                  <Link to={LOGIN} className="flex-1 rounded-full border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
                   <CtaButton to={START} className="flex-1">Start Free <ArrowRight size={15} /></CtaButton>
                 </div>
               </div>
@@ -680,414 +506,437 @@ export default function Astrologers() {
         </AnimatePresence>
       </header>
 
-      {/* ═══════════════ 2 · HERO (dark, starfield) ═══════════════ */}
-      <section id="top" className="relative overflow-hidden px-5 pb-14 pt-10 text-white sm:px-8 sm:pb-20 sm:pt-14 lg:pb-24" style={{ background: 'radial-gradient(120% 100% at 70% 0%, #2c2166 0%, var(--as-deep) 45%, #150f36 100%)' }}>
-        {/* twinkling sparkle layer */}
-        <div className="as-stars" aria-hidden />
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[3fr_2fr] lg:gap-12">
+      {/* ═══════════════ 2 · HERO (celestial circular image + constellation) ═══════════════ */}
+      <section id="top" className="relative overflow-hidden px-5 pb-16 pt-10 sm:px-8 lg:pb-24 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
+        {/* violet blob — mix-blend-multiply so it sits INTO the light hero */}
+        <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(76,29,149,0.20), transparent)' }} />
+        <Constellation aria-hidden className="absolute right-6 top-10 hidden w-52 opacity-70 lg:block" />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="h1" instant className="text-[clamp(1.8rem,7vw,2.9rem)] font-bold leading-[1.08] text-white lg:text-[3rem]">
-              Powerful booking software for{' '}
-              <span style={{ color: '#c4b5fd' }}>astrologers</span>,{' '}
-              without the complicated setup.
+            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(76,29,149,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
+              <Moon size={13} /> For astrologers &amp; Vedic consultants
             </Reveal>
-            <Reveal as="p" instant delay={0.08} className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg lg:mx-0">
+            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Read the charts.{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>Let Book A Sloth run the bookings.</span>
+            </Reveal>
+            <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
               Let seekers book and pay for readings online. Manage your services, availability, payments, reminders and follow-ups from one calm platform built for astrologers.
             </Reveal>
-            <Reveal instant delay={0.12} className="mt-7 flex flex-col items-center gap-3 lg:flex-row lg:gap-5 lg:justify-start">
-              <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
-              <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-white/90 transition-colors hover:text-white hover:no-underline">
-                Book A Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+            <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
+              <CtaButton to={START} className="w-full sm:w-auto">Create Your Free Page <ArrowRight size={16} /></CtaButton>
+              <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline">
+                See a 2-min Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Reveal>
-            <Reveal instant delay={0.16} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
+            <Reveal instant delay={0.14} className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
               {HERO_TRUST.map((t) => (
-                <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-white/65">
-                  <Check size={14} style={{ color: '#c4b5fd' }} /> {t}
+                <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-slate-500">
+                  <Check size={14} style={{ color: 'var(--ca-primary)' }} /> {t}
                 </span>
               ))}
             </Reveal>
           </div>
 
-          {/* RIGHT — big hero illustration + floating glass chips (CA hero structure) */}
-          <Reveal instant delay={0.1} className="relative hidden lg:block">
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-[56rem] w-[56rem] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--as-secondary) 18%, transparent), transparent 70%)' }} />
-            <img src={HERO_IMG} alt="Book A Sloth — booking software for astrologers" loading="eager" fetchpriority="high" decoding="async" width="1100" height="852" className="relative z-10 mx-auto h-auto w-full max-w-none drop-shadow-[0_28px_36px_rgba(47,35,115,0.2)] lg:translate-x-6 lg:scale-[1.2]" />
-            <GlassCard icon={CalendarCheck} label="New booking" value="Kundli Reading · 5:30 PM" className="top-0 -left-12 z-20" />
-            <GlassCard icon={Wallet} label="Fee received" value="₹1,499" accent className="top-1/2 right-0 z-20" />
-            <GlassCard icon={BellRing} label="WhatsApp reminder" value="Sent · 1h before" className="bottom-2 -left-10 z-30" />
-          </Reveal>
-
-          {/* Mobile/tablet — image only (no floating chips) */}
-          <Reveal instant delay={0.1} className="relative lg:hidden">
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-[32rem] w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--as-secondary) 18%, transparent), transparent 70%)' }} />
-            <img src={HERO_IMG} alt="" loading="eager" decoding="async" width="1100" height="852" className="relative z-10 mx-auto h-auto w-full max-w-[30rem] drop-shadow-[0_28px_36px_rgba(47,35,115,0.2)]" />
+          {/* RIGHT — hero image in a circular "celestial" frame with a thin gold ring */}
+          <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-[380px] sm:max-w-[440px] lg:mx-0">
+            <div className="relative aspect-square">
+              <div aria-hidden className="pointer-events-none absolute -inset-3 rounded-full" style={{ background: 'linear-gradient(135deg, var(--ca-accent), rgba(234,179,8,0.15))' }} />
+              <div className="relative h-full w-full rounded-full border-[6px] border-white shadow-[0_30px_70px_-30px_rgba(76,29,149,0.55)]">
+                <div className="h-full w-full overflow-hidden rounded-full" style={{ background: 'radial-gradient(120% 100% at 70% 0%, #2c2166 0%, var(--ca-deep) 70%)' }}>
+                  <img src={HERO_IMG} alt="Book A Sloth booking dashboard for an astrology practice" loading="eager" fetchpriority="high" decoding="async" width="1100" height="852" className="h-full w-full object-cover" />
+                </div>
+              </div>
+              {/* floating chips */}
+              <div className="absolute -left-3 top-6 z-20 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_18px_40px_-20px_rgba(76,29,149,0.5)] sm:-left-8">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}><CalendarCheck size={17} /></span>
+                <div><div className="text-[11px] text-slate-500">Reading booked</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">Kundli Reading · 5:30 PM</div></div>
+              </div>
+              <div className="absolute -right-2 bottom-8 z-20 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_18px_40px_-20px_rgba(76,29,149,0.5)] sm:-right-6">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'color-mix(in srgb, var(--ca-accent) 22%, white)', color: '#92610a' }}><Wallet size={17} /></span>
+                <div><div className="text-[11px] text-slate-500">Fee received</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">₹1,499 · paid</div></div>
+              </div>
+            </div>
           </Reveal>
         </div>
 
-        {/* Four benefits strip */}
-        <div className="relative z-10 mx-auto mt-16 grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+        {/* benefit strip */}
+        <div className="relative mx-auto mt-16 grid max-w-6xl gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {BENEFITS.map((b, i) => (
             <Reveal key={b.title} delay={(i % 4) * 0.06}>
-              <div className="group flex h-full flex-col rounded-[12px] border border-[color:var(--as-line)] bg-white p-4 transition-colors hover:border-[color:var(--as-secondary)]">
+              <div className="flex h-full flex-col rounded-[14px] border border-black/[0.07] bg-white p-4 transition-colors hover:border-[color:var(--ca-primary)]/30">
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-300 group-hover:text-white" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
-                    <b.icon size={18} />
-                  </span>
-                  <p className="text-sm font-bold">{b.title}</p>
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'color-mix(in srgb, var(--ca-primary) 9%, transparent)', color: 'var(--ca-primary)' }}><b.icon size={18} /></span>
+                  <p className="text-sm font-bold text-[color:var(--ca-ink)]">{b.title}</p>
                 </div>
-                <p className="mt-2 text-xs leading-snug text-neutral-600">{b.desc}</p>
+                <p className="mt-2 text-xs leading-snug text-slate-500">{b.desc}</p>
               </div>
             </Reveal>
           ))}
         </div>
       </section>
 
-      {/* ═══════════════ 3 · SERVICES ═══════════════ */}
-      <section id="services" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
+      {/* ═══════════════ 3 · SERVICES (zodiac ring) ═══════════════ */}
+      <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--as-secondary)' }}>astrologers work.</span>
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Every reading you offer, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
             </Reveal>
-            <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
-              From birth-chart readings to Vastu, numerology and remedies — set up every service you offer, each with its own price, duration and availability.
+            <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
+              From birth-chart readings to Vastu, numerology and remedies — set up every service, each with its own price, duration and availability.
             </Reveal>
           </div>
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {SERVICES.map((s, i) => (
-              <Reveal key={s.label} delay={(i % 4) * 0.05}>
-                <Link to={START} className="group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-[color:var(--as-line)] bg-white p-5 transition-colors duration-300 hover:border-[color:var(--as-secondary)] hover:bg-[color:var(--as-secondary)] hover:shadow-[0_18px_40px_-20px_rgba(47,35,115,0.4)] hover:no-underline">
-                  <CardRings icons={s.ring} />
-                  <div className="relative z-10 flex h-full flex-col">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full ring-2 ring-transparent transition-all duration-300 group-hover:bg-white group-hover:ring-[color:var(--as-gold)]" style={{ backgroundColor: 'var(--as-secondary)', color: 'var(--as-gold)' }}>
-                      <s.icon size={29} />
-                    </span>
-                    <h3 className="mt-4 text-[19.5px] font-bold leading-tight text-[color:var(--as-ink)] group-hover:text-white">{s.label}</h3>
-                    <p className="mt-1 text-[13px] leading-snug text-neutral-500 group-hover:text-white/80">{s.desc}</p>
+
+          {/* Desktop — 8 services orbit a gold emblem on a zodiac ring */}
+          <div className="relative mx-auto mt-8 hidden lg:block" style={{ width: 720, height: 720 }}>
+            <div aria-hidden className="zodiac-spin pointer-events-none absolute left-1/2 top-1/2 rounded-full" style={{ width: 560, height: 560, marginLeft: -280, marginTop: -280, border: '1px dashed color-mix(in srgb, var(--ca-primary) 30%, transparent)' }} />
+            <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 rounded-full" style={{ width: 440, height: 440, marginLeft: -220, marginTop: -220, border: '1px dotted color-mix(in srgb, var(--ca-accent) 45%, transparent)' }} />
+            {/* center emblem */}
+            <div className="absolute left-1/2 top-1/2 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full text-center text-white shadow-[0_24px_60px_-24px_rgba(76,29,149,0.6)]" style={{ background: 'radial-gradient(120% 100% at 50% 0%, #6D28D9, var(--ca-deep))' }}>
+              <Sun size={26} style={{ color: 'var(--ca-accent)' }} />
+              <div className="mt-1.5 font-heading text-2xl font-extrabold leading-none">8</div>
+              <div className="px-4 text-[11px] font-medium leading-tight text-white/75">ways to guide your seekers</div>
+            </div>
+            {SERVICES.map((s, i) => {
+              const angle = (360 / SERVICES.length) * i;
+              return (
+                <div key={s.label} className="absolute left-1/2 top-1/2" style={{ transform: `rotate(${angle}deg) translateY(-280px) rotate(${-angle}deg)` }}>
+                  <div className="w-40" style={{ transform: 'translate(-50%, -50%)' }}>
+                    <ServiceCard s={s} compact />
                   </div>
-                </Link>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mobile / tablet — grid fallback of the same cards */}
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:hidden">
+            {SERVICES.map((s) => <ServiceCard key={s.label} s={s} />)}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 4 · HOW IT WORKS (lunar-phase path) ═══════════════ */}
+      <section id="how" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              From &ldquo;when are you free?&rdquo; to <span style={{ color: 'var(--ca-primary)' }}>booked in minutes.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.06} className="mt-3 text-base text-slate-500">No DMs, no back-and-forth. Your seekers book themselves.</Reveal>
+          </div>
+          <div className="relative mt-16 grid gap-8 lg:grid-cols-3 lg:gap-6">
+            {/* connecting gold path (desktop) */}
+            <div aria-hidden className="pointer-events-none absolute left-0 right-0 top-[26px] hidden h-px lg:block" style={{ background: 'linear-gradient(90deg, transparent, color-mix(in srgb, var(--ca-accent) 60%, transparent), transparent)' }} />
+            {STEPS.map((s, i) => (
+              <Reveal key={s.title} delay={i * 0.08} className="relative">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative z-10 flex flex-col items-center">
+                    <MoonPhase i={i} />
+                    <span className="mt-4 flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-[0_12px_28px_-12px_rgba(76,29,149,0.7)]" style={{ background: 'linear-gradient(135deg, #6D28D9, var(--ca-primary))' }}>
+                      <s.icon size={22} />
+                    </span>
+                  </div>
+                  <div className="mt-5 rounded-[16px] border border-black/[0.07] bg-white p-6">
+                    <div className="font-heading text-xs font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-accent)' }}>Step {i + 1}</div>
+                    <h3 className="mt-2 font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500">{s.desc}</p>
+                  </div>
+                </div>
               </Reveal>
             ))}
           </div>
+          <Reveal delay={0.1} className="mt-12 text-center">
+            <CtaButton to={START}>Claim Your Booking Link <ArrowRight size={16} /></CtaButton>
+          </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 4 · HOW IT WORKS ═══════════════ */}
-      <section id="how" className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
-              From &ldquo;when are you free?&rdquo; to <span style={{ color: 'var(--as-secondary)' }}>booked in minutes.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">
-              No DMs, no back-and-forth. Your seekers book themselves.
-            </Reveal>
-          </div>
-          <HowItWorks steps={STEPS} />
-        </div>
-      </section>
-
-      {/* ═══════════════ 5 · INTEGRATIONS ═══════════════ */}
-      <section id="integrations" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
+      {/* ═══════════════ 5 · INTEGRATIONS (constellation of tools) ═══════════════ */}
+      <section id="features" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
-              Works with the tools you already use.
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Works with the tools you <span style={{ color: 'var(--ca-primary)' }}>already use.</span>
             </Reveal>
-            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
+            <Reveal as="p" delay={0.06} className="mt-3 text-base text-slate-500">
               Connect your calendar, video meetings, payments and WhatsApp — Book A Sloth fits your workflow, no rewiring.
             </Reveal>
           </div>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {TOOLS.map((t, i) => (
-              <Reveal key={t.name} delay={(i % 3) * 0.06}>
-                <div className="flex items-center gap-3.5 rounded-2xl border border-[color:var(--as-line)] bg-white px-4 py-3.5 shadow-[0_14px_34px_-24px_rgba(47,35,115,0.4)]">
-                  <img src={t.logo} alt={t.name} loading="lazy" width={36} height={36} className="h-9 w-9 flex-shrink-0 object-contain" />
-                  <div className="min-w-0">
-                    <div className="text-sm font-bold leading-tight text-[color:var(--as-ink)]">{t.name}</div>
-                    <div className="mt-0.5 text-xs leading-snug text-neutral-500">{t.sub}</div>
+          <Reveal delay={0.08} className="relative mt-12 overflow-hidden rounded-[24px] p-6 sm:p-8" style={{ background: 'linear-gradient(160deg, var(--ca-cream), #ffffff)', border: '1px solid rgba(76,29,149,0.08)' }}>
+            <Constellation aria-hidden className="absolute -right-4 -top-2 w-44 opacity-50" stroke="rgba(76,29,149,0.35)" dot="#4C1D95" />
+            <div className="relative grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {TOOLS.map((t, i) => (
+                <Reveal key={t.name} delay={(i % 3) * 0.06}>
+                  <div className="flex items-center gap-3.5 rounded-2xl border border-black/[0.07] bg-white px-4 py-3.5 transition-colors hover:border-[color:var(--ca-primary)]/30">
+                    <img src={t.logo} alt={`${t.name} logo`} loading="lazy" width={36} height={36} className="h-9 w-9 flex-shrink-0 object-contain" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold leading-tight text-[color:var(--ca-ink)]">{t.name}</div>
+                      <div className="mt-0.5 text-xs leading-snug text-slate-500">{t.sub}</div>
+                    </div>
                   </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ 6 · CLIENT JOURNEY (bento) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
-              Give every seeker a <span style={{ color: 'var(--as-secondary)' }}>calmer experience.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-2xl text-base text-neutral-500">
-              From the first booking to the final follow-up, Book A Sloth keeps your sessions organised.
-            </Reveal>
-          </div>
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5">
-            {JOURNEY.map((j, i) => (
-              <Reveal key={j.label} delay={(i % 3) * 0.07}>
-                <BentoCard step={i + 1} icon={j.icon} title={j.label} sub={j.sub} gold={i % 2 === 1} shape={i} />
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ 7 · ABOUT / WHY (image) ═══════════════ */}
-      <section id="why" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
-        <div className="mx-auto max-w-2xl text-center">
-          <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
-            More than a booking link. <span style={{ color: 'var(--as-secondary)' }}>A calmer way to practise.</span>
-          </Reveal>
-        </div>
-
-        {/* Desktop — image centred, 4 cards fanned to NW / NE / SW / SE behind it */}
-        <div className="relative mx-auto mt-14 hidden h-[480px] max-w-5xl lg:block">
-          <div aria-hidden className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: 'color-mix(in srgb, var(--as-secondary) 24%, transparent)' }} />
-          {WHY.map((w, i) => {
-            // NW, NE, SW, SE — wide 2:1 bars; inner corners tuck under the image
-            const pos = [
-              'left-0 top-6', 'right-0 top-6', 'left-0 bottom-6', 'right-0 bottom-6',
-            ][i];
-            return (
-              <Reveal key={w.title} delay={i * 0.08} className={`absolute z-10 w-[24rem] ${pos}`}>
-                <div className="flex items-start gap-4 rounded-[18px] border border-[color:var(--as-line)] bg-white p-5 shadow-[0_20px_45px_-24px_rgba(47,35,115,0.45)]">
-                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
-                    <w.icon size={20} />
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="text-base font-bold">{w.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-neutral-500">{w.desc}</p>
-                  </div>
-                </div>
-              </Reveal>
-            );
-          })}
-          <img src={ABOUT_IMG} alt="Book A Sloth for astrology practices" loading="lazy" decoding="async" width="1100" height="619" className="absolute left-1/2 top-1/2 z-20 w-[34rem] object-contain drop-shadow-[0_28px_50px_rgba(47,35,115,0.28)]" style={{ transform: 'translate(-50%, calc(-50% - 40px))' }} />
-        </div>
-
-        {/* Mobile / tablet — image then a simple card grid */}
-        <div className="mt-12 lg:hidden">
-          <img src={ABOUT_IMG} alt="" loading="lazy" decoding="async" width="1100" height="619" className="mx-auto w-full max-w-xs object-contain drop-shadow-[0_24px_40px_rgba(47,35,115,0.18)]" />
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            {WHY.map((w, i) => (
-              <Reveal key={w.title} delay={(i % 2) * 0.08}>
-                <div className="h-full rounded-[16px] border border-[color:var(--as-line)] bg-white p-5">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: 'var(--as-lavender)', color: 'var(--as-secondary)' }}>
-                    <w.icon size={20} />
-                  </span>
-                  <h3 className="mt-4 text-base font-bold">{w.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{w.desc}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ 7b · REAL IMPACT, REAL NUMBERS ═══════════════ */}
-      <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-28">
-        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(60% 50% at 50% 0%, color-mix(in srgb, var(--as-gold) 12%, transparent), transparent)' }} />
-        <div className="relative mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">Real impact, <span style={{ color: 'var(--as-secondary)' }}>real numbers.</span></Reveal>
-            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">Small stats, big difference — what actually changes when you go live with Book A Sloth.</Reveal>
-          </div>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-6 lg:[grid-auto-rows:1fr]">
-            {IMPACT_STATS.map((s, i) => (
-              <Reveal key={s.value} delay={i * 0.08} className="lg:col-span-2">
-                <div className="group flex h-full flex-col overflow-hidden rounded-[16px] border border-[color:var(--as-line)] bg-white p-7 shadow-[0_2px_6px_rgba(47,35,115,0.04),0_16px_32px_rgba(47,35,115,0.07)] transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--as-secondary)]">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-4xl font-bold leading-none sm:text-5xl" style={{ color: 'var(--as-ink)' }}>{s.value}</p>
-                    <span className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110" style={{ background: 'var(--as-lavender)', color: 'var(--as-secondary)' }}><s.icon size={20} /></span>
-                  </div>
-                  <p className="mt-5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal delay={0.12} className="mt-6">
-            <div className="relative overflow-hidden rounded-[20px] p-8 text-white sm:p-10" style={{ background: 'linear-gradient(140deg, var(--as-primary), var(--as-deep))' }}>
-              <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--as-gold) 30%, transparent), transparent 70%)' }} />
-              <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-                <div>
-                  <h3 className="text-xl font-bold sm:text-2xl">Join the astrologers who never miss a reading.</h3>
-                  <p className="mt-2 max-w-xl text-white/75">Book more, no-show less, and keep your charts full — one simple page.</p>
-                </div>
-                <Link to={START} className="inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ color: 'var(--as-primary)' }}>Create your free page <ArrowRight size={16} /></Link>
-              </div>
+                </Reveal>
+              ))}
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 8 · TESTIMONIALS (rotating columns) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
+      {/* ═══════════════ 6 · IMPACT (night-sky constellation band) ═══════════════ */}
+      <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-24" style={{ background: 'radial-gradient(120% 120% at 50% 0%, #2c2166 0%, var(--ca-deep) 60%)' }}>
+        <div className="cosmic-stars" aria-hidden />
+        <div className="relative mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-sm font-bold uppercase tracking-[0.22em]" style={{ color: 'var(--as-secondary)' }}>Testimonials</Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">
-              Loved by astrologers across India.
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+              Real impact, <span style={{ color: 'var(--ca-accent)' }}>real numbers.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-white/70">
+              Small stats, big difference — what actually changes when you go live with Book A Sloth.
             </Reveal>
           </div>
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((col) => (
-              <TestimonialColumn key={col} items={[TESTIMONIALS[col], TESTIMONIALS[col + 3]].filter(Boolean)} className={col === 2 ? 'hidden lg:block' : col === 1 ? 'hidden sm:block' : ''} />
+          <div className="relative mt-16 grid gap-10 sm:grid-cols-3">
+            {/* constellation line joining the nodes (desktop) */}
+            <div aria-hidden className="pointer-events-none absolute left-[16%] right-[16%] top-[6px] hidden h-px sm:block" style={{ background: 'linear-gradient(90deg, transparent, rgba(234,179,8,0.5), transparent)' }} />
+            {IMPACT_STATS.map((s, i) => (
+              <Reveal key={s.value} delay={i * 0.08} className="relative text-center">
+                <span aria-hidden className="mx-auto block h-3 w-3 rounded-full" style={{ background: 'var(--ca-accent)', boxShadow: '0 0 12px 2px rgba(234,179,8,0.6), 0 0 0 6px rgba(234,179,8,0.15)' }} />
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <s.icon size={20} style={{ color: 'var(--ca-accent)' }} />
+                  <Star size={11} aria-hidden style={{ color: 'var(--ca-accent)', fill: 'var(--ca-accent)' }} />
+                </div>
+                <div className="mt-3 font-heading text-5xl font-extrabold tracking-tight sm:text-6xl" style={{ color: 'var(--ca-accent)' }}>{s.value}</div>
+                <p className="mx-auto mt-3 max-w-[15rem] text-sm leading-relaxed text-white/75">{s.desc}</p>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ 8b · THE BOOK A SLOTH DIFFERENCE (with / without) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
-        <div className="mx-auto max-w-5xl">
+      {/* ═══════════════ 7 · TESTIMONIALS (avatar picker) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]" style={{ background: 'color-mix(in srgb, var(--as-secondary) 12%, white)', color: 'var(--as-secondary)' }}>The Difference</Reveal>
-            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">The <span style={{ color: 'var(--as-secondary)' }}>Book A Sloth</span> difference.</Reveal>
-            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">See how booking a consultation changes with and without Book A Sloth.</Reveal>
+            <Reveal as="p" className="text-sm font-bold uppercase tracking-[0.22em]" style={{ color: 'var(--ca-primary)' }}>Testimonials</Reveal>
+            <Reveal as="h2" delay={0.05} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Astrologers who swapped the <span style={{ color: 'var(--ca-primary)' }}>DMs for a link.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-3 text-sm text-slate-400">Placeholder quotes about the admin, not the charts — swapped for real, approved words soon.</Reveal>
           </div>
-          <div className="relative mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
-            <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-10 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 text-sm font-extrabold shadow-lg sm:flex" style={{ borderColor: 'var(--as-lavender)', background: '#ffffff', color: 'var(--as-secondary)' }}>VS</div>
-            <Reveal>
-              <div className="h-full rounded-[20px] border border-[color:var(--as-line)] bg-white p-7 sm:p-8">
-                <div className="text-sm font-bold uppercase tracking-wide text-neutral-400">Without Book A Sloth</div>
-                <ul className="mt-6 space-y-4">
+          <Reveal delay={0.1}><TestimonialPicker /></Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════ 8 · COMPARISON (night → dawn) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
+        <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              The <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth</span> difference.
+            </Reveal>
+            <Reveal as="p" delay={0.06} className="mt-3 text-base text-slate-500">See how a consultation changes from the manual night to a booked dawn.</Reveal>
+          </div>
+          <Reveal delay={0.08} className="mt-12 overflow-hidden rounded-[22px] border border-black/[0.07] shadow-[0_28px_70px_-40px_rgba(76,29,149,0.4)]">
+            {/* night band — without */}
+            <div className="relative overflow-hidden px-7 py-8 sm:px-10" style={{ background: 'radial-gradient(120% 140% at 50% 0%, #2c2166, var(--ca-deep))' }}>
+              <div className="cosmic-stars" aria-hidden />
+              <div className="relative">
+                <div className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">Without Book A Sloth · the long night</div>
+                <ul className="mt-5 grid gap-3 sm:grid-cols-2">
                   {WITHOUT.map((w) => (
-                    <li key={w} className="flex items-start gap-3 text-[15px] text-neutral-500">
-                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-400"><X size={13} /></span>{w}
+                    <li key={w} className="flex items-start gap-3 text-sm text-white/70">
+                      <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white/60"><X size={12} /></span>{w}
                     </li>
                   ))}
                 </ul>
               </div>
-            </Reveal>
-            <Reveal delay={0.08}>
-              <div className="relative h-full overflow-hidden rounded-[20px] p-7 text-white shadow-[0_24px_60px_-24px_rgba(47,35,115,0.65)] sm:p-8" style={{ background: 'linear-gradient(150deg, var(--as-secondary), var(--as-primary))' }}>
-                <div aria-hidden className="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%)' }} />
-                <div className="relative text-sm font-bold uppercase tracking-wide text-white/80">With Book A Sloth</div>
-                <ul className="relative mt-6 space-y-4">
-                  {WITH_BAS.map((w) => (
-                    <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-white">
-                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/20 text-white"><Check size={13} /></span>{w}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-          </div>
+            </div>
+            {/* horizon — the dawn line */}
+            <div aria-hidden className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #6D28D9, var(--ca-accent), #6D28D9)' }} />
+            {/* dawn band — with */}
+            <div className="bg-white px-7 py-8 sm:px-10">
+              <div className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>With Book A Sloth · a booked dawn</div>
+              <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                {WITH_BAS.map((w) => (
+                  <li key={w} className="flex items-start gap-3 text-sm font-medium text-[color:var(--ca-ink)]">
+                    <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--ca-primary)' }}><Check size={12} /></span>{w}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 9 · TRUST STRIP (honest) ═══════════════ */}
-      <section className="border-y border-black/5 px-5 py-12 sm:px-8" style={{ background: 'var(--as-deep)' }}>
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 lg:grid-cols-4">
-          {TRUST_STRIP.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.06} className="text-center">
-              <s.icon size={20} className="mx-auto" style={{ color: 'var(--as-gold)' }} />
-              <div className="mt-2 text-2xl font-bold text-white sm:text-3xl">{s.value}</div>
-              <p className="mx-auto mt-1.5 max-w-[13rem] text-xs leading-snug text-white/60">{s.label}</p>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════ 10 · PRICING ═══════════════ */}
-      <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--as-lavender)' }}>
-        <div className="mx-auto max-w-5xl">
+      {/* ═══════════════ 9 · PRICING (two starlit cards + toggle) ═══════════════ */}
+      <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-4xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl font-bold leading-tight sm:text-4xl">
-              Start free. Upgrade to <span style={{ color: 'var(--as-secondary)' }}>0% commission</span> when you are ready.
+            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Start free. Upgrade to <span style={{ color: 'var(--ca-primary)' }}>0% commission</span> when you are ready.
             </Reveal>
-            <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">Choose a plan that fits your practice today. Upgrade when you need more.</Reveal>
+            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-slate-500">Choose a plan that fits your practice today. Upgrade when you need more.</Reveal>
           </div>
-          <Reveal delay={0.1} className="mt-8 flex items-center justify-center gap-3">
-            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--as-ink)]' : 'text-neutral-500'}`}>Monthly</button>
-            <button type="button" role="switch" aria-checked={yearly} aria-label="Toggle monthly or yearly billing" onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--as-secondary)' : '#d4d4d4', minHeight: 0 }}>
+          <Reveal delay={0.08} className="mt-8 flex items-center justify-center gap-3">
+            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--ca-ink)]' : 'text-slate-500'}`}>Monthly</button>
+            <button type="button" role="switch" aria-checked={yearly} aria-label="Toggle monthly or yearly billing" onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ca-primary)' : '#cbd5e1', minHeight: 0 }}>
               <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: yearly ? '22px' : '2px' }} />
             </button>
-            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--as-ink)]' : 'text-neutral-500'}`}>Yearly <span className="ml-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: 'color-mix(in srgb, var(--as-secondary) 14%, white)', color: 'var(--as-secondary)' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span></span>
+            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ca-ink)]' : 'text-slate-500'}`}>
+              Yearly <span className="ml-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: 'color-mix(in srgb, var(--ca-primary) 12%, transparent)', color: 'var(--ca-primary)' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
+            </span>
           </Reveal>
           <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2 sm:gap-6">
             {/* Free — light card */}
             <Reveal>
-              <div className="flex h-full flex-col rounded-[20px] border border-[color:var(--as-line)] bg-white p-7 sm:p-8">
-                <div className="text-lg font-bold" style={{ color: 'var(--as-ink)' }}>{FREE_PLAN.name}</div>
-                <p className="mt-1 text-sm text-neutral-500">Everything you need to get booked.</p>
-                <div className="mt-6 flex items-end gap-1"><span className="pb-1.5 text-2xl font-bold" style={{ color: 'var(--as-ink)' }}>₹</span><span className="text-5xl font-extrabold tracking-tight" style={{ color: 'var(--as-ink)' }}>0</span><span className="pb-2 text-sm text-neutral-500">/month</span></div>
-                <p className="mt-1.5 text-xs font-semibold text-neutral-500">Free forever · 5% per booking</p>
+              <div className="flex h-full flex-col rounded-[20px] border border-black/[0.08] bg-white p-7 sm:p-8">
+                <div className="font-heading text-lg font-bold text-[color:var(--ca-ink)]">{FREE_PLAN.name}</div>
+                <p className="mt-1 text-sm text-slate-500">Everything you need to get booked.</p>
+                <div className="mt-6 flex items-end gap-1">
+                  <span className="pb-1.5 text-2xl font-bold">₹</span>
+                  <span className="font-heading text-5xl font-extrabold tracking-tight">0</span>
+                  <span className="pb-2 text-sm text-slate-500">/month</span>
+                </div>
+                <p className="mt-1.5 text-xs font-semibold text-slate-500">Free forever · 5% per booking</p>
                 <ul className="mt-6 flex flex-col gap-3">
-                  {FREE_PLAN.features.slice(0, 5).map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--as-secondary)' }} /><span>{f}</span></li>)}
+                  {FREE_PLAN.features.slice(0, 5).map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} /><span>{f}</span></li>
+                  ))}
                 </ul>
-                <CtaButton to={START} className="mt-7 w-full">Get Started <ArrowRight size={15} /></CtaButton>
+                <CtaButton to={START} variant="ghost" className="mt-7 w-full">Start on the Free Plan</CtaButton>
               </div>
             </Reveal>
-            {/* Sloth Active — purple gradient card */}
+            {/* Sloth Active — starlit night card */}
             <Reveal delay={0.08}>
-              <div className="relative flex h-full flex-col overflow-hidden rounded-[20px] p-7 text-white shadow-[0_28px_70px_-30px_rgba(47,35,115,0.7)] sm:p-8" style={{ background: 'linear-gradient(150deg, var(--as-secondary), var(--as-primary))' }}>
-                <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)' }} />
+              <div className="relative flex h-full flex-col overflow-hidden rounded-[20px] p-7 text-white shadow-[0_28px_70px_-30px_rgba(76,29,149,0.7)] sm:p-8" style={{ background: 'radial-gradient(120% 120% at 80% 0%, #6D28D9 0%, var(--ca-deep) 70%)' }}>
+                <div className="cosmic-stars" aria-hidden />
                 <div className="relative flex items-center justify-between">
-                  <div className="text-lg font-bold">{PREMIUM_PLAN.name}</div>
-                  {yearly && <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold text-white">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
+                  <div className="font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide" style={{ background: 'var(--ca-accent)', color: '#3d2a00' }}><Star size={10} style={{ fill: '#3d2a00' }} /> Recommended</span>
                 </div>
                 <p className="relative mt-1 text-sm text-white/75">Keep every rupee. Automate the rest.</p>
                 <div className="relative mt-6 flex items-end gap-1">
-                  <span className="pb-1.5 text-2xl font-bold">₹</span>
-                  <span className="text-5xl font-extrabold tracking-tight">{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
+                  <span className="pb-1.5 text-2xl font-bold" style={{ color: 'var(--ca-accent)' }}>₹</span>
+                  <span className="font-heading text-5xl font-extrabold tracking-tight" style={{ color: 'var(--ca-accent)' }}>{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
                   <span className="pb-2 text-sm text-white/70">/month</span>
-                  {yearly && <span className="relative pb-2 ml-1 text-sm text-white/60 line-through">₹{PREMIUM_PLAN.monthly}</span>}
+                  {yearly && <span className="pb-2 ml-1 text-sm text-white/50 line-through">₹{PREMIUM_PLAN.monthly}</span>}
                 </div>
                 <p className="relative mt-1.5 text-xs font-semibold text-white/70">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
                 <ul className="relative mt-6 flex flex-col gap-3">
-                  <li className="flex items-start gap-2.5 text-sm font-semibold text-white"><Check size={16} className="mt-0.5 shrink-0 text-white" /><span>Everything in Free</span></li>
-                  {PREMIUM_PLAN.features.slice(0, 4).map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-white/90"><Check size={16} className="mt-0.5 shrink-0 text-white/90" /><span>{f}</span></li>)}
+                  <li className="flex items-start gap-2.5 text-sm font-semibold text-white"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-accent)' }} /><span>Everything in Free</span></li>
+                  {PREMIUM_PLAN.features.slice(0, 4).map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-white/90"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-accent)' }} /><span>{f}</span></li>
+                  ))}
                 </ul>
-                <Link to={START} className="relative mt-7 inline-flex w-full items-center justify-center gap-2 rounded-[8px] bg-white px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ color: 'var(--as-primary)' }}>Get Started Now <ArrowRight size={16} /></Link>
+                <Link to={START} className="relative mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold transition-shadow hover:shadow-[0_18px_44px_-10px_rgba(0,0,0,0.5)] hover:no-underline" style={{ color: 'var(--ca-primary)' }}>Go Sloth Active <ArrowRight size={16} /></Link>
               </div>
             </Reveal>
           </div>
           <Reveal delay={0.12} className="mt-8 text-center">
-            <Link to="/pricing" className="text-sm font-semibold text-[color:var(--as-ink)] underline-offset-4 hover:underline">Compare every feature on the full pricing page</Link>
+            <Link to="/pricing" className="text-sm font-semibold text-slate-500 underline-offset-4 hover:text-[color:var(--ca-ink)] hover:underline">Compare every feature on the full pricing page</Link>
           </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 11 · FAQ ═══════════════ */}
+      {/* ═══════════════ 10 · ABOUT (editorial + trust facts + real image) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
+        <div className="mx-auto max-w-6xl">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            {/* real image */}
+            <Reveal className="relative mx-auto w-full max-w-md lg:mx-0">
+              <div aria-hidden className="pointer-events-none absolute -inset-6 rounded-[32px] blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(76,29,149,0.18), transparent)' }} />
+              <div className="relative overflow-hidden rounded-[24px] border border-white bg-white p-4 shadow-[0_30px_70px_-34px_rgba(76,29,149,0.5)]">
+                <img src={ABOUT_IMG} alt="An astrologer running their practice on Book A Sloth" loading="lazy" decoding="async" width="1100" height="619" className="w-full rounded-[16px] object-contain" />
+              </div>
+            </Reveal>
+            {/* editorial + facts */}
+            <div>
+              <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
+              </Reveal>
+              <Reveal as="h2" delay={0.04} className="mt-5 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+                More than a booking link. Book A Sloth turns endless DMs, missed calls and chased fees into <span style={{ color: 'var(--ca-primary)' }}>one calm way to practise</span> — built for the way Indian astrologers actually work.
+              </Reveal>
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {WHY.map((w, i) => (
+                  <Reveal key={w.title} delay={0.06 + (i % 2) * 0.05}>
+                    <div className="flex items-start gap-3 rounded-[14px] border border-black/[0.06] bg-white p-4">
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'color-mix(in srgb, var(--ca-primary) 9%, transparent)', color: 'var(--ca-primary)' }}><w.icon size={17} /></span>
+                      <div>
+                        <h3 className="text-sm font-bold text-[color:var(--ca-ink)]">{w.title}</h3>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-500">{w.desc}</p>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+              <Reveal delay={0.12} className="mt-6 flex flex-wrap gap-2.5">
+                {TRUST_STRIP.map((it) => (
+                  <span key={it.value} className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white px-3.5 py-2 text-xs font-semibold text-[color:var(--ca-ink)]">
+                    <it.icon size={14} style={{ color: 'var(--ca-primary)' }} /> {it.value}
+                  </span>
+                ))}
+              </Reveal>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 11 · FAQ (two-column) ═══════════════ */}
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-3xl">
-          <Reveal as="h2" className="text-center text-3xl font-bold leading-tight sm:text-4xl">Questions, answered.</Reveal>
+        <div className="mx-auto max-w-5xl">
+          <Reveal as="h2" className="text-center font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            Questions? <span style={{ color: 'var(--ca-primary)' }}>Answered.</span>
+          </Reveal>
           <div className="mt-12"><FaqAccordion /></div>
         </div>
       </section>
 
-      {/* ═══════════════ 12 · FINAL CTA ═══════════════ */}
-      <section className="px-5 py-24 text-center text-white sm:px-8" style={{ background: 'linear-gradient(160deg, var(--as-primary), var(--as-deep))' }}>
-        <div className="mx-auto max-w-2xl">
-          <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: 'color-mix(in srgb, var(--as-secondary) 30%, transparent)' }}>
-            <Sun size={26} style={{ color: 'var(--as-gold)' }} />
-          </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 text-3xl font-bold leading-tight text-white sm:text-4xl">
-            Your next seeker is ready to book.
-          </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base text-white/70">
-            Set up your page in minutes and start taking paid bookings today — no credit card required.
-          </Reveal>
-          <Reveal delay={0.16} className="mt-8">
-            <CtaButton to={START} className="!px-8 !py-4">Create your free page <ArrowRight size={16} /></CtaButton>
-          </Reveal>
+      {/* ═══════════════ 12 · FINAL CTA (violet night + gold glow) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px]">
+          <div className="relative overflow-hidden px-8 py-16 text-center sm:px-12 sm:py-20" style={{ background: 'radial-gradient(120% 120% at 50% 0%, #2c2166 0%, var(--ca-deep) 65%)' }}>
+            <div className="cosmic-stars" aria-hidden />
+            {/* gold glow — mix-blend-screen so it lifts off the night sky */}
+            <div aria-hidden className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 -translate-y-1/3 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(234,179,8,0.5), transparent)' }} />
+            <div className="relative mx-auto max-w-2xl">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'color-mix(in srgb, var(--ca-accent) 22%, transparent)' }}>
+                <Sun size={26} style={{ color: 'var(--ca-accent)' }} />
+              </span>
+              <Reveal as="h2" className="mt-6 font-heading text-[clamp(1.8rem,4.5vw,2.6rem)] font-extrabold leading-[1.1] tracking-tight text-white">
+                Your next seeker is ready to book.
+              </Reveal>
+              <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/75">
+                Set up your page in minutes and start taking paid bookings today — no credit card required.
+              </Reveal>
+              <Reveal delay={0.1} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+                <Link to={START} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold transition-shadow hover:shadow-[0_18px_44px_-10px_rgba(0,0,0,0.5)] hover:no-underline sm:w-auto" style={{ color: 'var(--ca-primary)' }}>
+                  Launch My Page — Free <ArrowRight size={16} />
+                </Link>
+                <Link to="/demo" className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-white/30 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline sm:w-auto">
+                  Book A Demo
+                </Link>
+              </Reveal>
+              <Reveal delay={0.14} className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2">
+                {['No credit card', 'Free forever', '0% on Sloth Active'].map((t) => (
+                  <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-white/70"><Check size={14} style={{ color: 'var(--ca-accent)' }} /> {t}</span>
+                ))}
+              </Reveal>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ═══════════════ 13 · FOOTER ═══════════════ */}
-      <footer className="border-t border-black/10 px-5 py-14 sm:px-8" style={{ background: 'var(--as-deep)' }}>
+      {/* ═══════════════ 13 · FOOTER (shared shell) ═══════════════ */}
+      <footer className="border-t border-white/10 px-5 py-14 sm:px-8" style={{ background: 'var(--ca-deep)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-1">
-              <div className="text-lg font-extrabold text-white">Book A Sloth</div>
+              <div className="font-heading text-lg font-extrabold text-white">Book A Sloth</div>
               <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/55">
                 The calm way for astrologers in India to get booked, paid and reminded.
               </p>
+              <CtaButton to={START} className="mt-5">Create Your Page — Free <ArrowRight size={15} /></CtaButton>
             </div>
             {FOOTER_COLS.map((col) => (
               <div key={col.title}>
@@ -1095,18 +944,16 @@ export default function Astrologers() {
                 <ul className="mt-4 space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.label}>
-                      {l.to
-                        ? <Link to={l.to} className="text-sm text-white/70 transition-colors hover:text-white hover:no-underline">{l.label}</Link>
-                        : <a href={l.href} className="text-sm text-white/70 transition-colors hover:text-white hover:no-underline">{l.label}</a>}
+                      <NavLink item={l} className="text-sm text-white/70 transition-colors hover:text-white hover:no-underline" />
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row">
+          <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-center sm:flex-row sm:text-left">
             <p className="text-xs text-white/50">© {new Date().getFullYear()} Book A Sloth · Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
-            <p className="text-xs uppercase tracking-[0.18em] text-white/60">Made for India&apos;s astrologers</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-white/60">Made for India&apos;s astrologers &amp; Vedic consultants</p>
           </div>
         </div>
       </footer>
