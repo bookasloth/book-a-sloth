@@ -1,38 +1,41 @@
-// /for/doctors — bespoke, conversion-focused landing page for general
-// physicians & clinics in India. (Design brief #10 "General Physicians &
-// Clinics". Served at the pre-existing /for/doctors slug, which Navbar, footer
-// links, prerender.mjs and sitemapService.js already point at — so the only
-// wiring change is the App.jsx bespoke route, which replaces the generic
-// ProfessionLanding template that previously served /for/doctors.)
+// /for/doctors — bespoke, conversion-focused landing page for general physicians
+// & clinics in India. (Design brief #10.) Served at the pre-existing /for/doctors
+// slug (Navbar, footer, prerender.mjs, sitemapService.js already point at it).
 //
-// STANDALONE page (not the data-driven ProfessionLanding template). Bespoke
-// route PRECEDES /for/:profession in App.jsx.
+// STANDALONE page (not the data-driven ProfessionLanding template). Bespoke route
+// PRECEDES /for/:profession in App.jsx.
 //
-// Section design (per the profession design brief, #10 General Physicians &
-// Clinics): split clinical hero · compact feature cards · editorial service
-// list · 4-step timeline · logo rail · metric cards · floating booking panel ·
-// alternating sections · quote + mini testimonials · two-column comparison ·
-// horizontal trust bar · standard SaaS pricing · doctor/clinic editorial ·
-// accordion FAQ · full-width clean CTA.
+// Section ORDER follows CharteredAccountants; each section is its OWN design in the
+// Trust-Blue system (clinical, squared corners, real-photo placeholders) — distinct
+// from the physiotherapists page (rounded + lime marquees) and consultants
+// (charcoal). Mechanics unique to this page: dotted-motif split hero · left-stripe
+// service cards · vertical step timeline · static logo grid · stat-card impact row
+// (one dark-highlighted) · featured-quote + mini testimonials · old→new
+// transformation rows · static trust bar · vertical pricing cards · overlapping-card
+// about. Only nav/hero/footer (shared shell) may resemble sibling pages.
+//
+// IMAGES: every photo slot is an intentional EMPTY placeholder (ImgSlot) with a
+// descriptive aria-label — drop real photography in later without touching layout.
 //
 // HONESTY (medical): scheduling + payment tool, not a medical-records or advice
-// product. No treatment/outcome claims; testimonials are labelled placeholders
-// from clinic staff about ADMIN; trust bar emphasises payment security + India
-// data residency + DPDP; JSON-LD has NO self-serving aggregateRating.
+// product. No treatment/outcome claims; testimonials are labelled placeholders from
+// clinic STAFF about admin, never patients about treatment; trust facts emphasise
+// payment security + India data residency + DPDP; JSON-LD has NO aggregateRating.
 //
-// Legacy --ca-* CSS var names are kept (cosmetic) so shared classNames stay
-// valid; values are retuned to a warm health-red + teal palette.
+// A11Y: single <h1>, ordered headings, real <button>/<a>, aria-labels on the
+// accordion/toggle, AA-contrast palette, visible focus, prefers-reduced-motion is
+// respected (no marquees on this page; Reveal already guards motion).
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus, Star,
-  CalendarCheck, LayoutDashboard, MessageCircle,
+  CalendarCheck, LayoutDashboard,
   Wallet, BellRing, HeartPulse,
-  Users, Clock3, Landmark, Folder,
-  FileText, Stethoscope, Thermometer, ClipboardCheck, Syringe, Video, Activity,
-  BadgePercent, Lock, ShieldCheck, Share2, IndianRupee, Zap,
+  Landmark, Image as ImageIcon,
+  Stethoscope, Thermometer, ClipboardCheck, Syringe, Video, Activity,
+  BadgePercent, Lock, ShieldCheck, Share2, Zap,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
@@ -47,30 +50,20 @@ import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const HERO_ART = '/images/abs/illustrations/man-calendar-clock.webp';
-const ABOUT_ART = '/images/abs/illustrations/laptop-book-time.webp';
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
 const NAV = [
-  { label: 'Features', href: '#features' },
-  { label: 'For Clinics', href: '#usecases' },
+  { label: 'Services', href: '#usecases' },
   { label: 'How It Works', href: '#how' },
+  { label: 'Features', href: '#features' },
   { label: 'Pricing', href: '#pricing' },
-  { label: 'Resources', to: '/blog' },
+  { label: 'FAQ', href: '#faq' },
 ];
 
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian clinics'];
 
-// Compact feature cards.
-const BENEFITS = [
-  { icon: CalendarCheck, title: 'Online Appointments', desc: 'Patients book a consultation slot, confirmed instantly.' },
-  { icon: Wallet, title: 'Consult Fee Upfront', desc: 'Collect the consultation fee online before the visit.' },
-  { icon: BellRing, title: 'Fewer No-Shows', desc: 'Automatic WhatsApp reminders before every appointment.' },
-  { icon: LayoutDashboard, title: 'One Clinic Calendar', desc: 'Every appointment and doctor in a single view.' },
-];
-
-// Editorial service list.
+// Service cards.
 const SERVICES = [
   { icon: Stethoscope, label: 'General Consultation', desc: 'Everyday consultations and health advice.' },
   { icon: Thermometer, label: 'Fever & Common Illness', desc: 'Same-day slots for fever, cough and colds.' },
@@ -80,7 +73,7 @@ const SERVICES = [
   { icon: Video, label: 'Online Consultation', desc: 'Video consults for quick follow-ups from home.' },
 ];
 
-// 4-step timeline.
+// Vertical step timeline.
 const STEPS = [
   { title: 'Set up your consultations', icon: LayoutDashboard, desc: 'Add your services, fees and clinic hours in minutes.' },
   { title: 'Share your booking link', icon: Share2, desc: 'Put it on Google, your website or WhatsApp — one link.' },
@@ -88,54 +81,46 @@ const STEPS = [
   { title: 'Everyone gets reminded', icon: BellRing, desc: 'Confirmations and reminders before every consultation.' },
 ];
 
-// Logo rail — REAL BAS integrations only.
+// Logo grid — REAL BAS integrations only.
 const TOOLS = [
-  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
-  { name: 'Google Meet', logo: '/images/logos/google-meet.svg', sub: 'Auto-add a video link to every tele-consult' },
-  { name: 'WhatsApp Automation', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
-  { name: 'Razorpay', logo: razorpayLogo, sub: 'Secure payments, refunds and GST invoices' },
-  { name: 'PhonePe', logo: '/images/logos/phonepe.svg', sub: 'Accept instant UPI payments' },
-  { name: 'Gmail', logo: '/images/logos/gmail.svg', sub: 'Booking confirmation emails, automatic' },
+  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way availability sync' },
+  { name: 'Google Meet', logo: '/images/logos/google-meet.svg', sub: 'Video link on every tele-consult' },
+  { name: 'WhatsApp', logo: '/images/logos/whatsapp.svg', sub: 'Reminders on autopilot' },
+  { name: 'Razorpay', logo: razorpayLogo, sub: 'Payments, refunds & GST invoices' },
+  { name: 'PhonePe', logo: '/images/logos/phonepe.svg', sub: 'Instant UPI payments' },
+  { name: 'Gmail', logo: '/images/logos/gmail.svg', sub: 'Automatic confirmation emails' },
 ];
 
-// Metric cards.
+// Impact stat cards (middle one dark-highlighted).
 const METRICS = [
   { v: '24/7', l: 'Bookings, day or night', note: 'Your booking page never sleeps — patients reserve slots any time.' },
-  { v: '100%', l: 'Kept on Sloth Active', note: '0% commission — every rupee you earn stays yours.' },
+  { v: '0%', l: 'Commission on Sloth Active', note: 'Keep every rupee you earn — no cut on your consult fees.' },
   { v: '₹0', l: 'To get started', note: 'Free forever plan — no card, no lock-in.' },
   { v: 'GST', l: 'Invoices, automatic', note: 'A tax invoice generated for every paid booking.' },
 ];
 
-// Placeholder testimonials — swap for real clinic quotes when available.
-// From clinic staff about ADMIN, never patients about treatment. First = featured.
+// Placeholder testimonials — clinic STAFF about admin, never patients about treatment.
 const TESTIMONIALS = [
-  { quote: 'Our reception was buried in calls all day. Patients now book consultations on our link and it is confirmed — the desk is calm, and our no-shows have dropped noticeably across the week.', name: 'Dr. Ramesh Gupta', role: 'General Physician', company: 'CityCare Clinic, Jaipur', featured: true },
+  { quote: 'Our reception was buried in calls all day. Patients now book consultations on our link and it is confirmed — the desk is calm, and our no-shows have dropped noticeably across the week.', name: 'Dr. Ramesh Gupta', role: 'General Physician', company: 'CityCare Clinic, Jaipur' },
   { quote: 'Automatic reminders cut our missed appointments sharply. Fewer empty slots for the doctors.', name: 'Sneha Patil', role: 'Clinic Manager', company: 'Wellness Clinic, Nagpur' },
   { quote: 'Collecting the consultation fee upfront, with a GST invoice each time, cleaned up our billing.', name: 'Dr. Kavita Rao', role: 'General Physician', company: 'FamilyCare, Bengaluru' },
 ];
 
-// Two-column comparison.
-const OLD_WAY = [
-  { title: 'Phone tag for every appointment', desc: 'The desk calls patients back to fix consultation times.' },
-  { title: 'No-shows waste clinic hours', desc: 'A missed appointment is a slot the doctor cannot bill.' },
-  { title: 'Chasing consultation fees', desc: 'Payment is collected at the desk, or not at all.' },
-  { title: 'A paper appointment register', desc: 'Visits scattered across a book and phone notes.' },
-  { title: 'Double-booked slots', desc: 'Two patients booked into the same slot by hand.' },
-];
-const NEW_WAY = [
-  { title: 'One booking link', desc: 'Patients pick a slot themselves, 24/7 — no calls needed.' },
-  { title: 'Automatic reminders', desc: 'WhatsApp and email reminders cut no-shows.' },
-  { title: 'Fees collected upfront', desc: 'Consultation fee taken at booking, over UPI or card.' },
-  { title: 'One clean clinic calendar', desc: 'Every appointment and doctor in a single view.' },
-  { title: 'Conflict-free slots', desc: 'Availability stays accurate — no double bookings.' },
+// Old → new transformation rows.
+const TRANSFORM = [
+  { old: 'Phone tag for every appointment', now: 'One booking link — patients self-serve 24/7' },
+  { old: 'No-shows waste clinic hours', now: 'Automatic WhatsApp reminders cut no-shows' },
+  { old: 'Chasing consultation fees at the desk', now: 'Fees collected upfront over UPI or card' },
+  { old: 'A paper appointment register', now: 'One clean, calendar-synced clinic view' },
+  { old: 'Two patients in one slot', now: 'Conflict-free slots — no double bookings' },
 ];
 
-// Horizontal trust bar — verifiable facts only.
+// Trust bar — verifiable facts only.
 const TRUST_STRIP = [
   { icon: Lock, value: 'Razorpay', label: 'Every payment signature-verified on our servers' },
   { icon: Landmark, value: 'Hosted in India', label: 'Your clinic data runs on servers in Mumbai' },
-  { icon: ShieldCheck, value: 'DPDP 2023', label: 'Operated under India’s data protection law' },
-  { icon: BadgePercent, value: '0%', label: 'Commission on Sloth Active — keep every rupee' },
+  { icon: ShieldCheck, value: 'DPDP 2023', label: "Operated under India's data protection law" },
+  { icon: BadgePercent, value: '0% commission', label: 'On Sloth Active — keep every rupee' },
 ];
 
 const FAQ = [
@@ -159,8 +144,7 @@ const FOOTER_COLS = [
   { title: 'For Professionals', links: [
     { label: 'General Physicians & Clinics', to: '/for/doctors' },
     { label: 'Dermatologists & Skin Clinics', to: '/for/dermatologists' },
-    { label: 'ENT Specialists & Surgeons', to: '/for/ent-specialists' },
-    { label: 'Ophthalmologists & Eye Clinics', to: '/for/ophthalmologists' },
+    { label: 'Physiotherapists & Rehab', to: '/for/physiotherapists' },
     { label: 'More professions', to: '/solutions' },
   ] },
   { title: 'Resources', links: [
@@ -187,7 +171,7 @@ function NavLink({ item, className, onClick }) {
 function CtaButton({ to, children, variant = 'solid', className = '' }) {
   const base = 'inline-flex items-center justify-center gap-2 rounded-[8px] px-6 py-3.5 text-sm font-semibold transition-all hover:no-underline';
   const styles = {
-    solid: 'text-white shadow-[0_4px_14px_rgba(185,28,28,0.22)] hover:brightness-110',
+    solid: 'text-white shadow-[0_4px_14px_rgba(29,78,216,0.22)] hover:brightness-110',
     ghost: 'border-2 border-[color:var(--ca-ink)]/12 bg-white text-[color:var(--ca-ink)] hover:border-[color:var(--ca-ink)]/25',
   };
   return (
@@ -197,90 +181,30 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
   );
 }
 
-/* Floating glass card over the hero. */
-function GlassCard({ icon: Icon, label, value, accent, className = '', float = '' }) {
+/* Intentional EMPTY image placeholder. Empty alt = decorative (aria-hidden). */
+function ImgSlot({ alt, className = '', rounded = 'rounded-[14px]' }) {
+  const decorative = !alt;
   return (
-    <div className={`sloth-glass ${float} absolute flex items-center gap-3 rounded-2xl px-4 py-3 ${className}`}>
-      <span
-        className="flex h-10 w-10 items-center justify-center rounded-xl"
-        style={accent
-          ? { backgroundColor: 'color-mix(in srgb, var(--ca-accent) 16%, transparent)', color: 'var(--ca-accent)' }
-          : { backgroundColor: 'rgba(17,17,17,0.05)', color: '#404040' }}
-      >
-        <Icon size={18} />
+    <div
+      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
+      className={`relative flex items-center justify-center overflow-hidden border border-black/[0.06] ${rounded} ${className}`}
+      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, #e3ebf7 100%)' }}
+    >
+      <span aria-hidden className="flex flex-col items-center gap-1.5 text-slate-400">
+        <ImageIcon size={26} strokeWidth={1.5} />
+        <span className="text-[11px] font-medium tracking-wide">Image</span>
       </span>
-      <div>
-        <div className="text-[11px] font-medium text-neutral-500">{label}</div>
-        <div className="text-sm font-semibold" style={{ color: accent ? 'var(--ca-accent)' : 'var(--ca-ink)' }}>{value}</div>
-      </div>
     </div>
   );
 }
 
-/* Editorial service list row — number, icon, title, rule-separated. */
-function ServiceRow({ s, n }) {
-  return (
-    <Link to={START} className="group flex items-start gap-5 border-b border-black/[0.08] py-6 hover:no-underline">
-      <span className="font-heading text-2xl font-extrabold leading-none tabular-nums" style={{ color: 'rgba(185,28,28,0.24)' }}>{String(n).padStart(2, '0')}</span>
-      <div className="flex-1">
-        <div className="flex items-center gap-2.5">
-          <s.icon size={18} style={{ color: 'var(--ca-accent)' }} />
-          <h3 className="font-heading text-[16px] font-bold text-[color:var(--ca-ink)] transition-colors group-hover:text-[color:var(--ca-primary)]">{s.label}</h3>
-        </div>
-        <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-      </div>
-      <ArrowRight size={16} className="mt-1 shrink-0 text-neutral-300 transition-all group-hover:translate-x-0.5 group-hover:text-[color:var(--ca-primary)]" />
-    </Link>
-  );
-}
-
-/* 4-step timeline — numbered cards with a connecting rail. */
-function HowItWorks({ steps }) {
-  return (
-    <div className="relative mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      <span aria-hidden className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-7 hidden h-px lg:block" style={{ background: 'linear-gradient(90deg, transparent, rgba(185,28,28,0.4), transparent)' }} />
-      {steps.map((s, i) => (
-        <Reveal key={s.title} delay={i * 0.08} className="relative">
-          <div className="flex h-full flex-col rounded-[14px] border border-black/[0.08] bg-white p-6">
-            <div className="flex items-center gap-3">
-              <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-2 bg-white font-heading text-lg font-extrabold" style={{ borderColor: 'rgba(185,28,28,0.35)', color: 'var(--ca-primary)' }}>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <s.icon size={20} style={{ color: 'var(--ca-accent)' }} />
-            </div>
-            <h3 className="mt-4 font-heading text-base font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
-            <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-          </div>
-        </Reveal>
-      ))}
-    </div>
-  );
-}
-
-/* One logo-rail integration item. */
-function ToolItem({ t }) {
-  return (
-    <div className="flex items-center gap-3 rounded-[12px] border border-black/[0.08] bg-white px-4 py-3.5">
-      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[color:var(--ca-grey)]">
-        {t.logo
-          ? <img src={t.logo} alt="" loading="lazy" className="h-5 w-5 object-contain" />
-          : <ToolLogo name={t.icon} size={20} className="h-5 w-5" />}
-      </span>
-      <div className="min-w-0">
-        <div className="text-sm font-bold leading-tight text-[color:var(--ca-ink)]">{t.name}</div>
-        <div className="mt-0.5 truncate text-xs leading-snug text-neutral-500">{t.sub}</div>
-      </div>
-    </div>
-  );
-}
-
-/* Single-open accordion FAQ, two columns. */
+/* Two-column single-open FAQ accordion. */
 function FaqAccordion() {
   const [open, setOpen] = useState(0);
   const renderItem = (f, i) => {
     const isOpen = open === i;
     return (
-      <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'rgba(185,28,28,0.35)' : 'rgba(17,17,17,0.08)' }}>
+      <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'var(--ca-primary)' : 'rgba(17,17,17,0.08)' }}>
         <button
           type="button"
           onClick={() => setOpen(isOpen ? -1 : i)}
@@ -288,14 +212,14 @@ function FaqAccordion() {
           className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-[15px] font-semibold text-[color:var(--ca-ink)]"
         >
           {f.q}
-          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'rgba(185,28,28,0.1)', color: 'var(--ca-primary)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'color-mix(in srgb, var(--ca-primary) 12%, transparent)', color: 'var(--ca-primary)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
             <Plus size={15} />
           </span>
         </button>
         <AnimatePresence initial={false}>
           {isOpen && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
-              <p className="px-5 pb-4 text-[14.5px] leading-relaxed text-neutral-500">{f.a}</p>
+              <p className="px-5 pb-4 text-[14.5px] leading-relaxed text-slate-500">{f.a}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -322,8 +246,8 @@ export default function GeneralPhysicians() {
     title: 'Appointment Booking Software for Doctors & Clinics | Book A Sloth',
     description: 'Book A Sloth is appointment scheduling software for general physicians, doctors and clinics in India. Let patients book consultations online — fees collected upfront, WhatsApp reminders, GST invoices, tele-medicine, 0% commission. Start free.',
     keywords: 'appointment booking software for doctors, clinic scheduling software india, book doctor appointment online, general physician booking page, tele-medicine appointment booking, clinic appointment system india',
-    ogTitle: 'Your clinic runs on appointments. Let Book A Sloth schedule them.',
-    ogDescription: 'Patients book consultations, pay upfront and get WhatsApp reminders — automatically. A clean booking page for doctors and clinics in India.',
+    ogTitle: 'Book More Consultations — Appointment Software for Clinics',
+    ogDescription: 'Patients book consultations, pay upfront over UPI and get WhatsApp reminders — automatically. A clean booking page for doctors and clinics in India. Free forever, no card required.',
   };
 
   const jsonLd = [
@@ -365,13 +289,13 @@ export default function GeneralPhysicians() {
     },
   ];
 
-  // Warm health-red + teal palette — legacy --ca-* var names kept.
+  // Trust-Blue system — clinical medical blue + cyan. Legacy --ca-* names kept.
   const styleVars = {
-    '--ca-primary': '#B91C1C', // red-700 (AA-safe: white text/links ~5.9:1)
-    '--ca-accent': '#0F766E',  // teal-700 (AA on white ~4.8:1)
-    '--ca-ink': '#2A0E0E',     // deep maroon text
-    '--ca-cream': '#FEF2F2',   // red-50 section bg
-    '--ca-grey': '#FBF0F0',    // light red-grey section bg
+    '--ca-primary': '#1D4ED8', // blue-700 — text/links/fills, AA on white (~7:1)
+    '--ca-accent': '#0E7490',  // cyan-700 — secondary accent, AA on white
+    '--ca-ink': '#0F1E3D',     // deep navy text
+    '--ca-cream': '#EFF4FF',   // blue-50 section bg
+    '--ca-grey': '#F1F5F9',    // slate-50 section bg
   };
 
   return (
@@ -384,47 +308,42 @@ export default function GeneralPhysicians() {
         robots="index, follow, max-image-preview:large, max-snippet:-1"
         siteName="Book A Sloth"
         locale="en_IN"
-        themeColor="#B91C1C"
+        themeColor="#1D4ED8"
         ogTitle={seo.ogTitle}
         ogDescription={seo.ogDescription}
         jsonLd={jsonLd}
       />
 
-      {/* ═══════════════ 1 · NAV ═══════════════ */}
+      {/* ═══════════════ 1 · NAV (shared shell) ═══════════════ */}
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
           <Link to="/" className="flex items-center gap-2 hover:no-underline" aria-label="Book A Sloth — home">
             <img src="/favicon.svg" alt="" className="h-7 w-7 rounded-md" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="font-heading text-[15px] font-extrabold tracking-tight text-[color:var(--ca-ink)]">Book A Sloth</span>
           </Link>
-
-          <nav className="hidden items-center gap-7 lg:flex">
+          <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
             {NAV.map((item) => (
-              <NavLink key={item.label} item={item} className="text-sm font-medium text-neutral-600 transition-colors hover:text-[color:var(--ca-ink)] hover:no-underline" />
+              <NavLink key={item.label} item={item} className="text-sm font-medium text-slate-600 transition-colors hover:text-[color:var(--ca-ink)] hover:no-underline" />
             ))}
           </nav>
-
           <div className="hidden items-center gap-4 lg:flex">
-            <Link to={LOGIN} className="text-sm font-semibold text-neutral-700 hover:text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
-            <CtaButton to={START} className="!px-5 !py-2.5">Start for Free <ArrowRight size={15} /></CtaButton>
+            <Link to={LOGIN} className="text-sm font-semibold text-slate-700 hover:text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
+            <CtaButton to={START} className="!px-5 !py-2.5">Start Free <ArrowRight size={15} /></CtaButton>
           </div>
-
-          <button type="button" className="lg:hidden" aria-label="Menu" onClick={() => setMenuOpen((v) => !v)}>
+          <button type="button" className="lg:hidden" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
-
-        {/* mobile menu */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-black/5 bg-white lg:hidden">
               <div className="flex flex-col gap-1 px-5 py-4">
                 {NAV.map((item) => (
-                  <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-neutral-700 hover:bg-[color:var(--ca-cream)] hover:no-underline" />
+                  <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-slate-700 hover:bg-[color:var(--ca-cream)] hover:no-underline" />
                 ))}
                 <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-3">
                   <Link to={LOGIN} className="flex-1 rounded-[8px] border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
-                  <CtaButton to={START} className="flex-1">Start for Free <ArrowRight size={15} /></CtaButton>
+                  <CtaButton to={START} className="flex-1">Start Free <ArrowRight size={15} /></CtaButton>
                 </div>
               </div>
             </motion.div>
@@ -432,264 +351,196 @@ export default function GeneralPhysicians() {
         </AnimatePresence>
       </header>
 
-      {/* ═══════════════ 2 · HERO (split clinical) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-14 pt-8 sm:px-8 sm:pb-20 sm:pt-12 lg:pb-28 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
-        <div aria-hidden className="pointer-events-none absolute -top-24 right-0 h-72 w-[40rem] rounded-full" style={{ background: 'radial-gradient(closest-side, rgba(185,28,28,0.1), transparent)' }} />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
-          {/* LEFT */}
+      {/* ═══════════════ 2 · HERO (clinical split, dotted motif, verified card) ═══════════════ */}
+      <section className="relative overflow-hidden px-5 pb-16 pt-10 sm:px-8 lg:pb-24 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.5]" style={{ backgroundImage: 'radial-gradient(rgba(29,78,216,0.10) 1px, transparent 1px)', backgroundSize: '24px 24px', maskImage: 'radial-gradient(120% 70% at 80% 20%, #000 20%, transparent 70%)', WebkitMaskImage: 'radial-gradient(120% 70% at 80% 20%, #000 20%, transparent 70%)' }} />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(185,28,28,0.3)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 8%, transparent)' }}>
-              For general physicians &amp; clinics
+            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(29,78,216,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
+              <Stethoscope size={13} /> For doctors &amp; clinics
             </Reveal>
-            <Reveal as="h1" instant className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-[color:var(--ca-ink)] sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
-              Simple appointment booking software for{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>doctors &amp; clinics</span>{' '}
-              of modern India.
+            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Book more consultations,{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>answer fewer calls.</span>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg lg:mx-0">
-              Stop the endless phone calls at reception. Let patients book consultations, pay upfront and get reminded on their own — from one clean platform built for modern clinics.
+            <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
+              Let patients book consultations, pay upfront and get reminded — from one clean platform built for Indian clinics. Your reception runs without the constant ringing phone.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-6 flex flex-col items-center gap-3 sm:mt-9 sm:flex-row sm:gap-5 lg:justify-start">
-              <Link
-                to={START}
-                className="btn flex w-full items-center justify-center gap-2 rounded-[8px] px-7 py-3.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(185,28,28,0.25)] transition-opacity hover:opacity-90 hover:no-underline sm:w-auto"
-                style={{ background: 'var(--ca-primary)' }}
-              >
-                Create a Free Account <ArrowRight size={16} />
-              </Link>
+            <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
+              <CtaButton to={START} className="w-full sm:w-auto">Set Up My Clinic Page <ArrowRight size={16} /></CtaButton>
               <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline">
                 Book A Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:mt-9 lg:justify-start">
+            <Reveal instant delay={0.14} className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
               {HERO_TRUST.map((t) => (
-                <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-500">
-                  <Check size={14} style={{ color: 'var(--ca-accent)' }} /> {t}
+                <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-slate-500">
+                  <Check size={14} style={{ color: 'var(--ca-primary)' }} /> {t}
                 </span>
               ))}
             </Reveal>
           </div>
 
-          {/* RIGHT — illustration + floating glass cards */}
-          <Reveal instant delay={0.1} className="relative hidden lg:block">
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-[27rem] w-[27rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[rgba(185,28,28,0.1)] to-[rgba(15,118,110,0.12)] blur-2xl" />
-            <img src={HERO_ART} alt="Book A Sloth — appointment booking for general physicians and clinics" loading="eager" className="relative z-10 mx-auto w-full max-w-[26rem] drop-shadow-[0_28px_40px_rgba(42,14,14,0.18)]" />
-            <GlassCard icon={CalendarCheck} label="New appointment" value="Consultation · 4:30 PM" float="sloth-float" className="top-6 -left-4" />
-            <GlassCard icon={Wallet} label="Fee received" value="₹500" accent float="sloth-float--mid" className="top-1/2 -right-6" />
-            <GlassCard icon={BellRing} label="WhatsApp reminder" value="Sent · 1h before" float="sloth-float--slow" className="bottom-10 left-2" />
+          {/* RIGHT — rectangular clinical image + verified appointment card */}
+          <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
+            <ImgSlot alt="A general physician consulting a patient in a modern clinic" rounded="rounded-[20px]" className="aspect-[5/4] w-full shadow-[0_28px_60px_-30px_rgba(15,30,61,0.4)]" />
+            <div className="absolute -left-3 bottom-6 z-20 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_16px_36px_-18px_rgba(15,30,61,0.5)]">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}><CalendarCheck size={17} /></span>
+              <div><div className="text-[11px] text-slate-500">Appointment confirmed</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">Consultation · 11:30 AM</div></div>
+            </div>
+            <div className="absolute -right-2 top-6 z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(15,30,61,0.5)]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: 'color-mix(in srgb, var(--ca-accent) 14%, transparent)', color: 'var(--ca-accent)' }}><ShieldCheck size={16} /></span>
+              <div className="text-[12px] font-bold text-[color:var(--ca-ink)]">Fee paid upfront</div>
+            </div>
           </Reveal>
-        </div>
-
-        {/* Compact feature cards — part of the hero */}
-        <div className="relative mx-auto mt-12 grid max-w-7xl gap-3 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
-          {BENEFITS.map((b, i) => (
-            <Reveal key={b.title} delay={(i % 4) * 0.06}>
-              <div className="group flex h-full flex-col rounded-[12px] border border-black/[0.07] bg-white p-5 transition-colors hover:border-[color:var(--ca-primary)]/25">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'color-mix(in srgb, var(--ca-primary) 10%, transparent)', color: 'var(--ca-primary)' }}>
-                    <b.icon size={18} />
-                  </span>
-                  <div className="font-heading text-sm font-bold text-[color:var(--ca-ink)]">{b.title}</div>
-                </div>
-                <p className="mt-2 text-xs leading-snug text-neutral-500">{b.desc}</p>
-              </div>
-            </Reveal>
-          ))}
         </div>
       </section>
 
-      {/* ═══════════════ 3 · SERVICES (editorial list) ═══════════════ */}
-      <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
-        <div className="mx-auto max-w-5xl">
+      {/* ═══════════════ 3 · SERVICES (left-stripe cards) ═══════════════ */}
+      <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Every consultation your clinic offers, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
             </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">
-              From general consultations to health check-ups, chronic care and vaccinations, let patients book any service in seconds.
+            <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
+              From everyday consults to check-ups, chronic care and tele-medicine — patients book any service in seconds.
             </Reveal>
           </div>
-          <div className="mt-10 grid gap-x-14 sm:grid-cols-2">
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {SERVICES.map((s, i) => (
-              <Reveal key={s.label} delay={(i % 2) * 0.05}>
-                <ServiceRow s={s} n={i + 1} />
+              <Reveal key={s.label} delay={(i % 3) * 0.05}>
+                <Link to={START} className="group flex h-full items-start gap-4 rounded-[12px] border border-black/[0.08] bg-white p-5 pl-4 transition-colors hover:border-[color:var(--ca-primary)]/30 hover:no-underline" style={{ borderLeft: '4px solid var(--ca-primary)' }}>
+                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'color-mix(in srgb, var(--ca-primary) 8%, transparent)', color: 'var(--ca-primary)' }}>
+                    <s.icon size={20} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-heading text-[15px] font-bold text-[color:var(--ca-ink)]">{s.label}</span>
+                    <span className="mt-1 block text-[13px] leading-relaxed text-slate-500">{s.desc}</span>
+                  </span>
+                </Link>
               </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ 4 · HOW IT WORKS (4-step timeline) ═══════════════ */}
-      <section id="how" className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-3xl text-center">
+      {/* ═══════════════ 4 · HOW IT WORKS (vertical timeline) ═══════════════ */}
+      <section id="how" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
+        <div className="mx-auto max-w-3xl">
+          <div className="text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              How Book A Sloth helps <span style={{ color: 'var(--ca-primary)' }}>clinics</span>
+              Live in minutes, <span style={{ color: 'var(--ca-primary)' }}>booked in seconds.</span>
             </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">
-              From a ringing reception to a confirmed, paid consultation — in four steps.
-            </Reveal>
+            <Reveal as="p" delay={0.06} className="mt-3 text-base text-slate-500">From setup to a confirmed, paid consultation — four simple steps.</Reveal>
           </div>
-          <HowItWorks steps={STEPS} />
+          <ol className="relative mt-14 ml-3 space-y-8 border-l-2" style={{ borderColor: 'rgba(29,78,216,0.2)' }}>
+            {STEPS.map((s, i) => (
+              <Reveal as="li" key={s.title} delay={i * 0.08} className="relative pl-8">
+                <span className="absolute -left-[19px] flex h-9 w-9 items-center justify-center rounded-full border-4 border-[color:var(--ca-grey)] text-white" style={{ background: 'var(--ca-primary)' }}>
+                  <s.icon size={16} />
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-heading text-xs font-extrabold" style={{ color: 'var(--ca-accent)' }}>STEP {i + 1}</span>
+                </div>
+                <h3 className="mt-1 font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-500">{s.desc}</p>
+              </Reveal>
+            ))}
+          </ol>
         </div>
       </section>
 
-      {/* ═══════════════ 5 · INTEGRATIONS (logo rail) ═══════════════ */}
-      <section id="features" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
-        <div className="mx-auto max-w-6xl">
+      {/* ═══════════════ 5 · INTEGRATIONS (static logo grid) ═══════════════ */}
+      <section id="features" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Works with the tools you already use.
+              Works with the tools your clinic <span style={{ color: 'var(--ca-primary)' }}>already uses.</span>
             </Reveal>
-            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
-              Connect your calendar, payments and WhatsApp — Book A Sloth fits your clinic, no rewiring.
+            <Reveal as="p" delay={0.06} className="mt-3 text-base text-slate-500">
+              Calendar, payments and WhatsApp — Book A Sloth fits your workflow, no rewiring.
             </Reveal>
           </div>
-          <div className="mx-auto mt-12 grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {TOOLS.map((t, i) => (
               <Reveal key={t.name} delay={(i % 3) * 0.05}>
-                <ToolItem t={t} />
+                <div className="flex items-center gap-3 rounded-[12px] border border-black/[0.08] bg-white px-4 py-4">
+                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-[color:var(--ca-grey)]">
+                    {t.logo ? <img src={t.logo} alt={t.name} loading="lazy" className="h-6 w-6 object-contain" /> : <ToolLogo name={t.icon} size={24} className="h-6 w-6" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold leading-tight text-[color:var(--ca-ink)]">{t.name}</span>
+                    <span className="mt-0.5 block text-xs text-slate-500">{t.sub}</span>
+                  </span>
+                </div>
               </Reveal>
             ))}
           </div>
-          <Reveal delay={0.1} className="mt-12 text-center">
-            <Link to="/pricing" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
-              Explore All Features <ArrowRight size={16} />
+          <Reveal delay={0.1} className="mt-10 text-center">
+            <Link to={START} className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
+              See how it fits your clinic <ArrowRight size={16} />
             </Link>
           </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 6 · IMPACT (metric cards) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ═══════════════ 6 · IMPACT (stat cards, one dark-highlighted) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Real impact for <span style={{ color: 'var(--ca-primary)' }}>a modern clinic.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">
-              Fewer no-shows, a calmer reception — and every rupee you earn stays yours.
+              Less admin at the desk. <span style={{ color: 'var(--ca-primary)' }}>More time for patients.</span>
             </Reveal>
           </div>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {METRICS.map((m, i) => (
-              <Reveal key={m.l} delay={i * 0.06}>
-                <div className="relative h-full overflow-hidden rounded-[18px] border border-black/[0.08] bg-white p-7 text-center">
-                  <span aria-hidden className="absolute inset-x-0 top-0 h-[3px]" style={{ background: 'linear-gradient(90deg, var(--ca-primary), #0F766E)' }} />
-                  <div className="font-heading text-5xl font-extrabold tracking-tight" style={{ color: 'var(--ca-primary)' }}>{m.v}</div>
-                  <div className="mt-3 font-heading text-sm font-bold text-[color:var(--ca-ink)]">{m.l}</div>
-                  <p className="mt-1.5 text-xs leading-relaxed text-neutral-500">{m.note}</p>
-                </div>
-              </Reveal>
-            ))}
+            {METRICS.map((m, i) => {
+              const dark = i === 1;
+              return (
+                <Reveal key={m.l} delay={(i % 4) * 0.06}>
+                  <div className={`flex h-full flex-col rounded-[16px] border p-6 ${dark ? 'border-transparent text-white' : 'border-black/[0.08] bg-white'}`} style={dark ? { background: 'var(--ca-ink)' } : undefined}>
+                    <div className="font-heading text-4xl font-extrabold tracking-tight" style={{ color: dark ? '#fff' : 'var(--ca-primary)' }}>{m.v}</div>
+                    <div className={`mt-2 font-heading text-sm font-bold ${dark ? 'text-white' : 'text-[color:var(--ca-ink)]'}`}>{m.l}</div>
+                    <p className={`mt-1.5 text-xs leading-relaxed ${dark ? 'text-white/70' : 'text-slate-500'}`}>{m.note}</p>
+                  </div>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ 7 · MID CTA (floating booking panel) ═══════════════ */}
-      <section className="px-5 py-12 sm:px-8">
-        <Reveal className="mx-auto max-w-5xl">
-          <div className="flex flex-col items-center justify-between gap-5 rounded-[18px] px-7 py-8 text-white sm:flex-row sm:px-9" style={{ background: 'var(--ca-primary)' }}>
-            <div className="flex items-center gap-4 text-center sm:text-left">
-              <span className="hidden h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl sm:flex" style={{ background: 'rgba(255,255,255,0.15)' }}><HeartPulse size={24} /></span>
-              <div>
-                <div className="font-heading text-lg font-extrabold sm:text-xl">Give your patients an easier way to book.</div>
-                <p className="mt-1 text-sm text-white/75">Set up your clinic booking page today — free forever, no card required.</p>
-              </div>
-            </div>
-            <Link to={START} className="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-[8px] bg-white px-6 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
-              Start for Free <ArrowRight size={16} />
-            </Link>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ═══════════════ 8 · WHY BOOK A SLOTH (alternating sections) ═══════════════ */}
+      {/* ═══════════════ 7 · TESTIMONIALS (featured quote + mini cards) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl space-y-20 lg:space-y-28">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="text-center lg:text-left">
-              <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-                A booking page as professional as your clinic.
-              </Reveal>
-              <Reveal as="p" delay={0.06} className="mt-5 text-base leading-relaxed text-neutral-600">
-                A clean, branded page tells a patient your clinic is organised and trustworthy. They pick a slot, pay the consultation fee upfront and receive an automatic confirmation — no phone calls, no payment at the desk.
-              </Reveal>
-              <ul className="mx-auto mt-6 flex max-w-sm flex-col gap-3 lg:mx-0">
-                {['Branded page with your services & fees', 'Consultation fee collected upfront', 'Automatic GST invoices'].map((t) => (
-                  <li key={t} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                    <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-accent)' }} /> <span>{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <Reveal delay={0.08} className="relative mx-auto w-full max-w-md">
-              <div aria-hidden className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#B91C1C]/10 blur-3xl" />
-              <img src={ABOUT_ART} alt="" loading="lazy" className="relative z-10 mx-auto w-full max-w-sm object-contain drop-shadow-[0_24px_40px_rgba(42,14,14,0.16)]" />
-            </Reveal>
-          </div>
-
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            <Reveal delay={0.08} className="relative order-2 mx-auto w-full max-w-md lg:order-1">
-              <div aria-hidden className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0F766E]/12 blur-3xl" />
-              <img src={HERO_ART} alt="" loading="lazy" className="relative z-10 mx-auto w-full max-w-sm object-contain drop-shadow-[0_24px_40px_rgba(42,14,14,0.16)]" />
-            </Reveal>
-            <div className="order-1 text-center lg:order-2 lg:text-left">
-              <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-                Spend your time on patients, not the phone.
-              </Reveal>
-              <Reveal as="p" delay={0.06} className="mt-5 text-base leading-relaxed text-neutral-600">
-                Reminders go out on their own, your calendar stays conflict-free, and every appointment sits in one dashboard. The admin that used to tie up your reception simply disappears.
-              </Reveal>
-              <ul className="mx-auto mt-6 flex max-w-sm flex-col gap-3 lg:mx-0">
-                {['Automatic WhatsApp & email reminders', 'Conflict-free, calendar-synced availability', 'Every appointment in one clinic calendar'].map((t) => (
-                  <li key={t} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                    <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-accent)' }} /> <span>{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ 9 · TESTIMONIALS (quote + mini) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Trusted by <span style={{ color: 'var(--ca-primary)' }}>clinics</span> across India.
+              Clinics that swapped the <span style={{ color: 'var(--ca-primary)' }}>ringing phone for a link.</span>
             </Reveal>
           </div>
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {TESTIMONIALS.filter((t) => t.featured).map((t) => (
-              <Reveal key={t.name} className="lg:col-span-1 lg:row-span-2">
-                <figure className="flex h-full flex-col rounded-[20px] p-8 text-white" style={{ background: 'radial-gradient(120% 120% at 0% 0%, #D42B2B 0%, #B91C1C 65%)' }}>
-                  <span aria-hidden className="font-heading text-5xl leading-none" style={{ color: 'rgba(255,255,255,0.5)' }}>&ldquo;</span>
-                  <blockquote className="-mt-2 text-[17px] font-medium leading-relaxed">{t.quote}</blockquote>
-                  <figcaption className="mt-auto flex items-center gap-3 border-t border-white/15 pt-5">
-                    <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: 'rgba(255,255,255,0.9)', color: 'var(--ca-primary)' }}>{t.name.replace('Dr. ', '').charAt(0)}</span>
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-bold text-white">{t.name}</div>
-                      <div className="truncate text-xs text-white/70">{t.role} · {t.company}</div>
-                    </div>
-                  </figcaption>
-                </figure>
-              </Reveal>
-            ))}
-            <div className="grid gap-5 sm:grid-cols-2 lg:col-span-2">
-              {TESTIMONIALS.filter((t) => !t.featured).map((t, i) => (
-                <Reveal key={t.name} delay={(i % 2) * 0.06}>
-                  <figure className="flex h-full flex-col rounded-[18px] border border-black/[0.08] bg-white p-6">
-                    <span aria-hidden className="font-heading text-4xl leading-none" style={{ color: 'rgba(185,28,28,0.4)' }}>&ldquo;</span>
-                    <blockquote className="-mt-2 text-[14px] leading-relaxed text-neutral-700">{t.quote}</blockquote>
-                    <figcaption className="mt-auto flex items-center gap-3 border-t border-black/[0.06] pt-4">
-                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.replace('Dr. ', '').charAt(0)}</span>
-                      <div className="min-w-0">
-                        <div className="truncate text-[13px] font-bold text-[color:var(--ca-ink)]">{t.name}</div>
-                        <div className="truncate text-[12px] text-neutral-500">{t.role} · {t.company}</div>
-                      </div>
-                      <span className="ml-auto flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={11} style={{ color: 'var(--ca-accent)', fill: 'var(--ca-accent)' }} />)}</span>
+          <div className="mt-12 grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+            {/* featured */}
+            <Reveal>
+              <figure className="flex h-full flex-col justify-between rounded-[18px] p-8 text-white" style={{ background: 'var(--ca-primary)' }}>
+                <div>
+                  <div className="flex gap-0.5">{[0, 1, 2, 3, 4].map((s) => <Star key={s} size={18} className="fill-white text-white" />)}</div>
+                  <blockquote className="mt-5 font-heading text-xl font-semibold leading-snug sm:text-2xl">&ldquo;{TESTIMONIALS[0].quote}&rdquo;</blockquote>
+                </div>
+                <figcaption className="mt-8 flex items-center gap-3 border-t border-white/20 pt-5">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 font-heading text-base font-bold">{TESTIMONIALS[0].name.replace('Dr. ', '').charAt(0)}</span>
+                  <div><div className="text-sm font-bold">{TESTIMONIALS[0].name}</div><div className="text-xs text-white/70">{TESTIMONIALS[0].role} · {TESTIMONIALS[0].company}</div></div>
+                </figcaption>
+              </figure>
+            </Reveal>
+            {/* mini stack */}
+            <div className="flex flex-col gap-5">
+              {TESTIMONIALS.slice(1).map((t, i) => (
+                <Reveal key={t.name} delay={0.06 + i * 0.06}>
+                  <figure className="rounded-[16px] border border-black/[0.08] bg-white p-6">
+                    <blockquote className="text-sm leading-relaxed text-slate-700">&ldquo;{t.quote}&rdquo;</blockquote>
+                    <figcaption className="mt-4 flex items-center gap-3 border-t border-black/5 pt-4">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--ca-accent)' }}>{t.name.replace('Dr. ', '').charAt(0)}</span>
+                      <div><div className="text-[13px] font-bold text-[color:var(--ca-ink)]">{t.name}</div><div className="text-[11px] text-slate-500">{t.role} · {t.company}</div></div>
                     </figcaption>
                   </figure>
                 </Reveal>
@@ -699,28 +550,25 @@ export default function GeneralPhysicians() {
         </div>
       </section>
 
-      {/* ═══════════════ 10 · DIFFERENCE (two-column comparison) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
+      {/* ═══════════════ 8 · DIFFERENCE (old → new transformation rows) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
+        <div className="mx-auto max-w-4xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Manual reception vs <span style={{ color: 'var(--ca-primary)' }}>an automated clinic workflow.</span>
+              From busy desk to <span style={{ color: 'var(--ca-primary)' }}>calm clinic.</span>
             </Reveal>
           </div>
-          <div className="mx-auto mt-12 max-w-4xl overflow-hidden rounded-[16px] border border-black/[0.08] bg-white shadow-[0_14px_40px_-24px_rgba(42,14,14,0.25)]">
-            <div className="grid grid-cols-2 border-b-2" style={{ borderColor: 'var(--ca-primary)' }}>
-              <div className="flex items-center gap-2 px-5 py-4 sm:px-6"><X size={16} className="text-[#DC2626]" /><span className="font-heading text-sm font-bold text-neutral-500">Manual reception</span></div>
-              <div className="flex items-center gap-2 border-l border-black/[0.06] px-5 py-4 sm:px-6" style={{ background: 'rgba(185,28,28,0.04)' }}><Check size={16} style={{ color: 'var(--ca-primary)' }} /><span className="font-heading text-sm font-bold" style={{ color: 'var(--ca-ink)' }}>With Book A Sloth</span></div>
-            </div>
-            {OLD_WAY.map((o, i) => (
-              <Reveal key={o.title} className={`grid grid-cols-2 ${i % 2 ? '' : 'bg-black/[0.015]'}`}>
-                <div className="border-t border-black/[0.06] px-5 py-4 sm:px-6">
-                  <p className="text-[14px] font-semibold text-neutral-700">{o.title}</p>
-                  <p className="mt-0.5 text-[13px] leading-snug text-neutral-500">{o.desc}</p>
-                </div>
-                <div className="border-l border-t border-black/[0.06] px-5 py-4 sm:px-6" style={{ background: 'rgba(185,28,28,0.03)' }}>
-                  <p className="text-[14px] font-semibold" style={{ color: 'var(--ca-ink)' }}>{NEW_WAY[i]?.title}</p>
-                  <p className="mt-0.5 text-[13px] leading-snug text-neutral-600">{NEW_WAY[i]?.desc}</p>
+          <div className="mt-12 overflow-hidden rounded-[16px] border border-black/[0.08] bg-white">
+            {TRANSFORM.map((r, i) => (
+              <Reveal key={r.old} delay={(i % 5) * 0.05}>
+                <div className={`grid items-center gap-3 px-5 py-5 sm:grid-cols-[1fr_auto_1fr] sm:px-7 ${i > 0 ? 'border-t border-black/[0.06]' : ''}`}>
+                  <div className="flex items-center gap-2.5 text-sm text-slate-400">
+                    <X size={16} className="flex-shrink-0 text-slate-300" /> <span className="line-through decoration-slate-300">{r.old}</span>
+                  </div>
+                  <ArrowRight size={18} className="mx-auto hidden flex-shrink-0 sm:block" style={{ color: 'var(--ca-primary)' }} />
+                  <div className="flex items-center gap-2.5 text-sm font-semibold text-[color:var(--ca-ink)]">
+                    <Check size={16} className="flex-shrink-0" style={{ color: 'var(--ca-primary)' }} /> <span>{r.now}</span>
+                  </div>
                 </div>
               </Reveal>
             ))}
@@ -728,140 +576,138 @@ export default function GeneralPhysicians() {
         </div>
       </section>
 
-      {/* ═══════════════ 11 · TRUST BAR (horizontal) ═══════════════ */}
-      <section className="border-y border-black/5 px-5 py-12 sm:px-8" style={{ background: 'var(--ca-ink)' }}>
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 lg:grid-cols-4">
+      {/* ═══════════════ 9 · TRUST (static badge bar) ═══════════════ */}
+      <section className="px-5 py-14 sm:px-8" aria-label="Security & trust">
+        <div className="mx-auto grid max-w-6xl gap-6 rounded-[18px] border border-black/[0.08] bg-white p-8 sm:grid-cols-2 lg:grid-cols-4 lg:p-10">
           {TRUST_STRIP.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.06} className="text-center">
-              <s.icon size={20} className="mx-auto" style={{ color: '#FCA5A5' }} />
-              <div className="mt-2 font-heading text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{s.value}</div>
-              <p className="mx-auto mt-1.5 max-w-[14rem] text-xs leading-snug text-white/50">{s.label}</p>
+            <Reveal key={s.value} delay={i * 0.06} className="flex items-start gap-3">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'color-mix(in srgb, var(--ca-primary) 8%, transparent)', color: 'var(--ca-primary)' }}>
+                <s.icon size={19} />
+              </span>
+              <div>
+                <div className="font-heading text-sm font-bold text-[color:var(--ca-ink)]">{s.value}</div>
+                <p className="mt-0.5 text-xs leading-snug text-slate-500">{s.label}</p>
+              </div>
             </Reveal>
           ))}
         </div>
       </section>
 
-      {/* ═══════════════ 12 · PRICING (standard SaaS) ═══════════════ */}
-      <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
+      {/* ═══════════════ 10 · PRICING (vertical two-card) ═══════════════ */}
+      <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Start small. <span style={{ color: 'var(--ca-primary)' }}>Grow as your clinic does.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
-              Choose a plan that fits your clinic today. Upgrade when you need more.
+              Start free. <span style={{ color: 'var(--ca-primary)' }}>Upgrade as your clinic grows.</span>
             </Reveal>
           </div>
-
-          <Reveal delay={0.1} className="mt-8 flex items-center justify-center gap-3">
-            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>Monthly</button>
-            <button type="button" role="switch" aria-checked={yearly} aria-label="Toggle monthly or yearly billing" onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ca-primary)' : '#d4d4d4', minHeight: 0 }}>
+          <Reveal delay={0.08} className="mt-8 flex items-center justify-center gap-3">
+            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--ca-ink)]' : 'text-slate-500'}`}>Monthly</button>
+            <button type="button" role="switch" aria-checked={yearly} aria-label="Toggle monthly or yearly billing" onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ca-primary)' : '#cbd5e1', minHeight: 0 }}>
               <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: yearly ? '22px' : '2px' }} />
             </button>
-            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ca-ink)]' : 'text-neutral-500'}`}>
-              Yearly <span className="ml-1 rounded-full bg-[#B91C1C]/12 px-2 py-0.5 text-xs font-bold text-[#B91C1C]">Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
+            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ca-ink)]' : 'text-slate-500'}`}>
+              Yearly <span className="ml-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: 'color-mix(in srgb, var(--ca-primary) 12%, transparent)', color: 'var(--ca-primary)' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
             </span>
           </Reveal>
-
-          <div className="relative mx-auto mt-10 max-w-3xl">
-            <div className="relative grid gap-5 sm:grid-cols-2 sm:gap-6">
-              {/* Sloth (free) */}
-              <Reveal>
-                <div className="flex h-full flex-col rounded-[18px] border border-black/[0.08] bg-white p-7">
-                  <div className="font-heading text-lg font-bold">{FREE_PLAN.name}</div>
-                  <p className="mt-1 text-sm text-neutral-500">Everything you need to get booked.</p>
-                  <div className="mt-6 flex items-end gap-1">
-                    <span className="pb-1.5 text-2xl font-bold">₹</span>
-                    <span className="font-heading text-5xl font-extrabold tracking-tight">0</span>
-                    <span className="pb-2 text-sm text-neutral-500">/month</span>
-                  </div>
-                  <p className="mt-1.5 text-xs font-semibold text-neutral-500">Free forever · 5% per booking</p>
-                  <ul className="mt-6 flex flex-col gap-3">
-                    {FREE_PLAN.features.slice(0, 5).map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                        <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-accent)' }} />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <CtaButton to={START} variant="ghost" className="mt-7 w-full">Get Started</CtaButton>
+          <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2 sm:gap-6">
+            <Reveal>
+              <div className="flex h-full flex-col rounded-[16px] border border-black/[0.08] bg-white p-7">
+                <div className="font-heading text-lg font-bold">{FREE_PLAN.name}</div>
+                <p className="mt-1 text-sm text-slate-500">Everything you need to get booked.</p>
+                <div className="mt-6 flex items-end gap-1">
+                  <span className="pb-1.5 text-2xl font-bold">₹</span>
+                  <span className="font-heading text-5xl font-extrabold tracking-tight">0</span>
+                  <span className="pb-2 text-sm text-slate-500">/month</span>
                 </div>
-              </Reveal>
-
-              {/* Sloth Active (premium) — recommended */}
-              <Reveal delay={0.08}>
-                <div className="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(16,24,40,0.14)]" style={{ borderColor: 'var(--ca-primary)' }}>
-                  <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: 'linear-gradient(90deg, var(--ca-primary), #0F766E)' }} />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[color:var(--ca-ink)]" style={{ background: 'color-mix(in srgb, var(--ca-accent) 20%, transparent)' }}>Recommended</span>
-                    </div>
-                    {yearly && <span className="rounded-full px-2.5 py-0.5 text-xs font-bold text-white" style={{ background: 'var(--ca-accent)' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>}
-                  </div>
-                  <p className="mt-1 text-sm text-neutral-500">Keep every rupee. Automate the rest.</p>
-                  <div className="mt-6 flex items-end gap-1">
-                    <span className="pb-1.5 text-2xl font-bold" style={{ color: 'var(--ca-primary)' }}>₹</span>
-                    <span className="font-heading text-5xl font-extrabold tracking-tight" style={{ color: 'var(--ca-primary)' }}>{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
-                    <span className="pb-2 text-sm text-neutral-500">/month</span>
-                    {yearly && <span className="pb-2 ml-1 text-sm text-neutral-500 line-through">₹{PREMIUM_PLAN.monthly}</span>}
-                  </div>
-                  <p className="mt-1.5 text-xs font-semibold text-neutral-500">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
-                  <ul className="mt-6 flex flex-col gap-3">
-                    <li className="flex items-start gap-2.5 text-sm font-semibold" style={{ color: 'var(--ca-ink)' }}>
-                      <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} />
-                      <span>Everything in Free</span>
+                <p className="mt-1.5 text-xs font-semibold text-slate-500">Free forever · 5% per booking</p>
+                <ul className="mt-6 flex flex-col gap-3">
+                  {FREE_PLAN.features.slice(0, 5).map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
+                      <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} /> <span>{f}</span>
                     </li>
-                    {PREMIUM_PLAN.features.slice(0, 4).map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                        <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <CtaButton to={START} className="mt-7 w-full">Get Started Now</CtaButton>
+                  ))}
+                </ul>
+                <CtaButton to={START} variant="ghost" className="mt-7 w-full">Start on the Free Plan</CtaButton>
+              </div>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <div className="relative flex h-full flex-col overflow-hidden rounded-[16px] border-2 bg-white p-7 shadow-[0_24px_60px_-30px_rgba(16,24,40,0.14)]" style={{ borderColor: 'var(--ca-primary)' }}>
+                <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: 'linear-gradient(90deg, var(--ca-primary), var(--ca-accent))' }} />
+                <div className="flex items-center gap-2">
+                  <div className="font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
+                  <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white" style={{ background: 'var(--ca-primary)' }}>Recommended</span>
                 </div>
-              </Reveal>
-            </div>
+                <p className="mt-1 text-sm text-slate-500">Keep every rupee. Automate the rest.</p>
+                <div className="mt-6 flex items-end gap-1">
+                  <span className="pb-1.5 text-2xl font-bold" style={{ color: 'var(--ca-primary)' }}>₹</span>
+                  <span className="font-heading text-5xl font-extrabold tracking-tight" style={{ color: 'var(--ca-primary)' }}>{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
+                  <span className="pb-2 text-sm text-slate-500">/month</span>
+                  {yearly && <span className="pb-2 ml-1 text-sm text-slate-400 line-through">₹{PREMIUM_PLAN.monthly}</span>}
+                </div>
+                <p className="mt-1.5 text-xs font-semibold text-slate-500">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
+                <ul className="mt-6 flex flex-col gap-3">
+                  <li className="flex items-start gap-2.5 text-sm font-semibold text-[color:var(--ca-ink)]">
+                    <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} /> <span>Everything in Free</span>
+                  </li>
+                  {PREMIUM_PLAN.features.slice(0, 4).map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
+                      <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-primary)' }} /> <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <CtaButton to={START} className="mt-7 w-full">Go Sloth Active</CtaButton>
+              </div>
+            </Reveal>
           </div>
-
           <Reveal delay={0.12} className="mt-8 flex flex-col items-center gap-2 text-center">
-            <span className="flex items-center gap-1.5 text-sm text-neutral-500"><Lock size={14} style={{ color: 'var(--ca-accent)' }} /> Access to all features with no hidden fees</span>
-            <Link to="/pricing" className="text-sm font-semibold text-neutral-500 underline-offset-4 hover:text-[color:var(--ca-ink)] hover:underline">
+            <span className="flex items-center gap-1.5 text-sm text-slate-500"><Lock size={14} style={{ color: 'var(--ca-primary)' }} /> Access to all features with no hidden fees</span>
+            <Link to="/pricing" className="text-sm font-semibold text-slate-500 underline-offset-4 hover:text-[color:var(--ca-ink)] hover:underline">
               Compare every feature on the full pricing page
             </Link>
           </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 13 · ABOUT (doctor/clinic editorial) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ═══════════════ 11 · ABOUT (image + overlapping card) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <Reveal className="relative order-2 mx-auto w-full max-w-md lg:order-1 lg:mx-0">
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#B91C1C]/10 blur-3xl" />
-            <img src={ABOUT_ART} alt="Book A Sloth for doctors and clinics" loading="lazy" className="relative z-10 mx-auto w-full max-w-[22rem] drop-shadow-[0_24px_32px_rgba(42,14,14,0.16)]" />
+          <Reveal className="relative order-2 mx-auto w-full max-w-md lg:order-1 lg:mx-0 lg:max-w-none">
+            <ImgSlot alt="A calm clinic reception managing bookings on Book A Sloth" rounded="rounded-[20px]" className="aspect-[5/4] w-full shadow-[0_28px_60px_-30px_rgba(15,30,61,0.4)]" />
+            <div className="absolute -bottom-5 left-5 z-20 max-w-[16rem] rounded-2xl px-5 py-4 text-white shadow-[0_20px_44px_-20px_rgba(15,30,61,0.8)]" style={{ background: 'var(--ca-ink)' }}>
+              <div className="font-heading text-base font-extrabold leading-tight">Built for Indian clinics</div>
+              <p className="mt-1.5 text-xs leading-relaxed text-white/70">Your data is hosted in Mumbai, under India&apos;s DPDP Act 2023.</p>
+            </div>
           </Reveal>
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Modern clinics deserve better tools.
+            <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
             </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-5 text-base leading-relaxed text-neutral-600">
-              Book A Sloth was built to make appointment-based practices easier to run. Instead of a ringing phone, a paper register and payments at the desk, clinics can manage their appointments, patients and money from one clean platform.
+            <Reveal as="h2" delay={0.04} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Modern clinics deserve <span style={{ color: 'var(--ca-primary)' }}>better tools.</span>
             </Reveal>
-            <Reveal as="p" delay={0.1} className="mt-4 text-[15px] font-medium text-neutral-500">
-              Built for Indian professionals. Designed for the way modern clinics actually work.
+            <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">
+              Instead of a ringing phone, a paper register and payments at the desk, clinics manage appointments, patients and money from one platform — built for the way modern Indian practices actually work.
             </Reveal>
-            <Reveal delay={0.14} className="mt-8">
-              <Link to="/about" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
-                Learn More About Us <ArrowRight size={16} />
-              </Link>
+            <Reveal delay={0.12} className="mt-8 grid gap-x-6 gap-y-5 text-left sm:grid-cols-2">
+              {TRUST_STRIP.map((it) => (
+                <div key={it.value} className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}>
+                    <it.icon size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-heading text-sm font-bold text-[color:var(--ca-ink)]">{it.value}</div>
+                    <p className="mt-0.5 text-xs leading-snug text-slate-500">{it.label}</p>
+                  </div>
+                </div>
+              ))}
             </Reveal>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ 14 · FAQ (accordion) ═══════════════ */}
-      <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
+      {/* ═══════════════ 12 · FAQ (two-column) ═══════════════ */}
+      <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <Reveal as="h2" className="text-center font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
             Questions? <span style={{ color: 'var(--ca-primary)' }}>We&apos;ve got answers.</span>
@@ -870,44 +716,53 @@ export default function GeneralPhysicians() {
         </div>
       </section>
 
-      {/* ═══════════════ 15 · FINAL CTA (full-width clean) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 py-24 text-center text-white sm:px-8" style={{ background: 'radial-gradient(120% 120% at 50% 0%, #D42B2B 0%, #7A1010 60%)' }}>
-        <div aria-hidden className="pointer-events-none absolute -top-16 left-1/2 h-56 w-[42rem] -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(closest-side, rgba(255,255,255,0.14), transparent)' }} />
+      {/* ═══════════════ 13 · FINAL CTA (clean blue band, dotted motif) ═══════════════ */}
+      <section className="relative overflow-hidden px-5 py-24 text-center sm:px-8" style={{ background: 'linear-gradient(160deg, #0F1E3D 0%, #1D4ED8 100%)' }}>
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.14]" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)', backgroundSize: '24px 24px', maskImage: 'radial-gradient(120% 80% at 50% 50%, #000 30%, transparent 75%)', WebkitMaskImage: 'radial-gradient(120% 80% at 50% 50%, #000 30%, transparent 75%)' }} />
         <div className="relative mx-auto max-w-2xl">
-          <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}>
-            <Zap size={26} className="text-white" />
+          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
+            <Zap size={13} style={{ color: '#93C5FD' }} /> Ready when you are
           </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
-            Spend less time scheduling. Spend more time with patients.
+          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
+            Give patients an easier way<br className="hidden sm:block" /> <span style={{ color: '#93C5FD' }}>to book your clinic.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base text-white/75">
-            Set up your clinic booking page today and give your patients a cleaner way to book with you.
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/70">
+            Set up your clinic&apos;s booking page today — free forever, and ready to share in minutes.
           </Reveal>
-          <Reveal delay={0.14} className="mt-8">
-            <Link to={START} className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-white px-8 py-4 text-sm font-semibold shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] transition-opacity hover:opacity-90 hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
-              Start for Free <ArrowRight size={16} />
+          <Reveal delay={0.14} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <Link to={START} className="inline-flex w-full items-center justify-center gap-2 rounded-[8px] bg-white px-8 py-4 text-sm font-bold shadow-[0_12px_34px_-10px_rgba(0,0,0,0.5)] transition-shadow hover:shadow-[0_18px_44px_-10px_rgba(0,0,0,0.65)] hover:no-underline sm:w-auto" style={{ color: 'var(--ca-primary)' }}>
+              Launch My Clinic Page <ArrowRight size={16} />
+            </Link>
+            <Link to="/demo" className="inline-flex w-full items-center justify-center gap-2 rounded-[8px] border-2 border-white/30 px-7 py-4 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline sm:w-auto">
+              See a 2-min Demo
             </Link>
           </Reveal>
-          <Reveal as="p" delay={0.18} className="mt-4 text-xs text-white/60">No credit card required</Reveal>
+          <Reveal delay={0.18} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {['No credit card required', 'Free forever plan', '0% commission on Sloth Active'].map((t) => (
+              <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-white/70">
+                <Check size={14} style={{ color: '#93C5FD' }} /> {t}
+              </span>
+            ))}
+          </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 16 · FOOTER ═══════════════ */}
+      {/* ═══════════════ 14 · FOOTER (shared shell) ═══════════════ */}
       <footer className="border-t border-black/5 px-5 py-16 sm:px-8" style={{ background: '#ffffff' }}>
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
             <div>
               <div className="font-heading text-lg font-extrabold text-[color:var(--ca-ink)]">Book A Sloth</div>
-              <p className="mt-2 max-w-xs text-sm text-neutral-500">The cleaner way to manage clinic appointments.</p>
-              <CtaButton to={START} className="mt-5">Start for Free <ArrowRight size={15} /></CtaButton>
+              <p className="mt-2 max-w-xs text-sm text-slate-500">The easier way to run your clinic&apos;s appointments.</p>
+              <CtaButton to={START} className="mt-5">Create Your Page — Free <ArrowRight size={15} /></CtaButton>
             </div>
             {FOOTER_COLS.map((col) => (
               <div key={col.title}>
-                <div className="text-xs font-bold uppercase tracking-wide text-neutral-600">{col.title}</div>
+                <div className="text-xs font-bold uppercase tracking-wide text-slate-600">{col.title}</div>
                 <ul className="mt-4 space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.label}>
-                      <NavLink item={l} className="text-sm text-neutral-600 transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline" />
+                      <NavLink item={l} className="text-sm text-slate-600 transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline" />
                     </li>
                   ))}
                 </ul>
@@ -915,8 +770,8 @@ export default function GeneralPhysicians() {
             ))}
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-black/5 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-neutral-500">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
-            <p className="text-xs text-neutral-500">Made for India&apos;s doctors &amp; clinics</p>
+            <p className="text-xs text-slate-500">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+            <p className="text-xs text-slate-500">Made for India&apos;s doctors &amp; clinics</p>
           </div>
         </div>
       </footer>
