@@ -356,7 +356,7 @@ export default function Physiotherapists() {
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
             <Link to={LOGIN} className="text-sm font-semibold text-neutral-700 hover:text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
-            <CtaButton to={START} className="!px-5 !py-2.5">Start for Free <ArrowRight size={15} /></CtaButton>
+            <CtaButton to={START} className="!px-5 !py-2.5">Start Free <ArrowRight size={15} /></CtaButton>
           </div>
           <button type="button" className="lg:hidden" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -371,7 +371,7 @@ export default function Physiotherapists() {
                 ))}
                 <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-3">
                   <Link to={LOGIN} className="flex-1 rounded-full border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
-                  <CtaButton to={START} className="flex-1">Start for Free <ArrowRight size={15} /></CtaButton>
+                  <CtaButton to={START} className="flex-1">Start Free <ArrowRight size={15} /></CtaButton>
                 </div>
               </div>
             </motion.div>
@@ -395,7 +395,7 @@ export default function Physiotherapists() {
               Let patients book physiotherapy and rehab sessions, pay upfront and get reminded — from one clean platform built for modern centres. No phone tag, no chasing.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
-              <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
+              <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
               <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline">
                 Book A Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
@@ -719,7 +719,7 @@ export default function Physiotherapists() {
                     </li>
                   ))}
                 </ul>
-                <CtaButton to={START} variant="ghost" className="w-full lg:w-auto">Get Started</CtaButton>
+                <CtaButton to={START} variant="ghost" className="w-full lg:w-auto">Start on the Free Plan</CtaButton>
               </div>
             </Reveal>
             {/* Premium — horizontal bar, highlighted */}
@@ -750,7 +750,7 @@ export default function Physiotherapists() {
                     </li>
                   ))}
                 </ul>
-                <CtaButton to={START} className="w-full lg:w-auto">Get Started Now</CtaButton>
+                <CtaButton to={START} className="w-full lg:w-auto">Go Sloth Active</CtaButton>
               </div>
             </Reveal>
           </div>
@@ -835,10 +835,10 @@ export default function Physiotherapists() {
           </Reveal>
           <Reveal delay={0.14} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link to={START} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold shadow-[0_12px_34px_-10px_rgba(0,0,0,0.5)] transition-shadow hover:shadow-[0_18px_44px_-10px_rgba(0,0,0,0.65)] hover:no-underline sm:w-auto" style={{ color: 'var(--ca-primary)' }}>
-              Start for Free <ArrowRight size={16} />
+              Launch My Clinic Page <ArrowRight size={16} />
             </Link>
             <Link to="/demo" className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-white/30 px-7 py-4 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline sm:w-auto">
-              Book a Demo
+              See a 2-min Demo
             </Link>
           </Reveal>
           <Reveal delay={0.18} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
@@ -858,7 +858,7 @@ export default function Physiotherapists() {
             <div>
               <div className="font-heading text-lg font-extrabold text-[color:var(--ca-ink)]">Book A Sloth</div>
               <p className="mt-2 max-w-xs text-sm text-neutral-500">The easier way to manage rehab sessions.</p>
-              <CtaButton to={START} className="mt-5">Start for Free <ArrowRight size={15} /></CtaButton>
+              <CtaButton to={START} className="mt-5">Create Your Page — Free <ArrowRight size={15} /></CtaButton>
             </div>
             {FOOTER_COLS.map((col) => (
               <div key={col.title}>
