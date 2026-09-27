@@ -136,6 +136,7 @@ export const setUserPassword  = (data)         => API.post('/auth/set-password',
 // Unified identity: add hosting capability to the current account.
 export const becomeHost       = ()             => API.post('/auth/become-host');
 export const cancelHosting    = ()             => API.post('/auth/cancel-hosting');
+export const verifyLinkedin   = ()             => API.post('/auth/linkedin/verify');
 export const forgotPassword   = (data)         => API.post('/auth/forgot-password', data);
 export const resetPassword    = (data)         => API.post('/auth/reset-password', data);
 

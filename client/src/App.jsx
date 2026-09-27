@@ -215,6 +215,8 @@ const CharteredAccountants = lazy(() => import('./pages/for/CharteredAccountants
 const SportsTurf         = lazy(() => import('./pages/for/SportsTurf'));
 const LawyersPage        = lazy(() => import('./pages/for/LawyersPage'));
 const GeneralPhysicians  = lazy(() => import('./pages/for/GeneralPhysicians'));
+const Physiotherapists   = lazy(() => import('./pages/for/Physiotherapists'));
+const BusinessConsultants = lazy(() => import('./pages/for/BusinessConsultants'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 
 // Admin — Operations
@@ -655,6 +657,8 @@ function App() {
           <Route path="/for/sports-turf" element={<SportsTurf />} />
           <Route path="/for/lawyers" element={<LawyersPage />} />
           <Route path="/for/doctors" element={<GeneralPhysicians />} />
+          <Route path="/for/physiotherapists" element={<Physiotherapists />} />
+          <Route path="/for/business-consultant" element={<BusinessConsultants />} />
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
