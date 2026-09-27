@@ -816,25 +816,38 @@ export default function Physiotherapists() {
         </div>
       </section>
 
-      {/* ═══════════════ 13 · FINAL CTA (full-bleed lime-to-teal, ghost image mix-blend) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 py-24 text-center sm:px-8" style={{ background: 'linear-gradient(120% 120% at 50% 0%, #14532D 0%, #0F766E 60%)' }}>
-        <ImgSlot alt="" aria-hidden className="pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay" rounded="rounded-none" />
+      {/* ═══════════════ 13 · FINAL CTA (full-bleed teal, lime glow + dot grid) ═══════════════ */}
+      <section className="relative overflow-hidden px-5 py-24 text-center sm:px-8" style={{ background: 'linear-gradient(160deg, #0B3B33 0%, #0F766E 100%)' }}>
+        {/* decorative: faint dot grid + two soft lime glows (mix-blend for lift) */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.12]" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)', backgroundSize: '22px 22px', maskImage: 'radial-gradient(120% 80% at 50% 50%, #000 30%, transparent 75%)', WebkitMaskImage: 'radial-gradient(120% 80% at 50% 50%, #000 30%, transparent 75%)' }} />
+        <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-80 w-[42rem] -translate-x-1/2 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(190,242,100,0.5), transparent)' }} />
+        <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-16 h-72 w-72 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(45,212,191,0.5), transparent)' }} />
+
         <div className="relative mx-auto max-w-2xl">
-          <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: 'rgba(190,242,100,0.2)' }}>
-            <Zap size={26} style={{ color: 'var(--ca-lime)' }} />
+          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
+            <Zap size={13} style={{ color: 'var(--ca-lime)' }} /> Ready when you are
           </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
-            Spend less time scheduling. <span style={{ color: 'var(--ca-lime)' }}>Spend more time on recovery.</span>
+          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
+            Spend less time scheduling.<br className="hidden sm:block" /> <span style={{ color: 'var(--ca-lime)' }}>Spend more time on recovery.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base text-white/75">
-            Set up your centre booking page today and give patients an easier way to book with you.
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/70">
+            Set up your centre&apos;s booking page today — free forever, and ready to share in minutes.
           </Reveal>
-          <Reveal delay={0.14} className="mt-8">
-            <Link to={START} className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-semibold shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] transition-opacity hover:opacity-90 hover:no-underline" style={{ color: 'var(--ca-primary)' }}>
+          <Reveal delay={0.14} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <Link to={START} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold shadow-[0_12px_34px_-10px_rgba(0,0,0,0.5)] transition-shadow hover:shadow-[0_18px_44px_-10px_rgba(0,0,0,0.65)] hover:no-underline sm:w-auto" style={{ color: 'var(--ca-primary)' }}>
               Start for Free <ArrowRight size={16} />
             </Link>
+            <Link to="/demo" className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-white/30 px-7 py-4 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline sm:w-auto">
+              Book a Demo
+            </Link>
           </Reveal>
-          <Reveal as="p" delay={0.18} className="mt-4 text-xs text-white/60">No credit card required</Reveal>
+          <Reveal delay={0.18} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {['No credit card required', 'Free forever plan', '0% commission on Sloth Active'].map((t) => (
+              <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-white/70">
+                <Check size={14} style={{ color: 'var(--ca-lime)' }} /> {t}
+              </span>
+            ))}
+          </Reveal>
         </div>
       </section>
 
