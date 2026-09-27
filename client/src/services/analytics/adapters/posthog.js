@@ -12,6 +12,20 @@ let ph = null;        // posthog-js singleton, once loaded
 let loading = null;   // in-flight import promise — makes init() idempotent
 const queue = [];     // calls made before the SDK is ready
 
+// Conversion events the SERVER emits authoritatively into PostHog (server/utils/
+// trackServer → posthog-node). The client fires its own copy of these ONLY for the
+// browser retargeting pixels (Meta/GA4 de-dupe against the server on event_id), but
+// the analytics bus fans every track() to PostHog too — so PostHog counted each of
+// these twice (measured: booking_paid = 15 web + 22 server hits). PostHog has no
+// event_id de-dup, so drop the client copy here and let the server own the count.
+const SERVER_OWNED_EVENTS = new Set([
+  'booking_created',
+  'booking_paid',
+  'product_purchased',
+  'subscription_started',
+  'user_registered',
+]);
+
 function flush() {
   while (queue.length) {
     const { fn, args } = queue.shift();
@@ -54,6 +68,13 @@ export default {
           disable_surveys: true,
           capture_dead_clicks: false,
           capture_performance: { web_vitals: false },
+          // Autocapture fires its OWN $pageview on load AND on every SPA history
+          // change, and AnalyticsBridge ALSO fires a deliberate $pageview via
+          // analytics.page() on each route change — so every navigation was logged
+          // as two $pageview events (measured: 33k $pageview vs 18k route changes).
+          // Keep the deliberate, prop-carrying page() call as the single source and
+          // turn off the autocapture duplicate.
+          capture_pageview: false,
         });
         ph = posthog;
         flush();
@@ -63,7 +84,12 @@ export default {
   },
 
   identify(id, props) { call('identify', [String(id), props]); },
-  track(event, props) { call('capture', [event, props]); },
+  track(event, props) {
+    // Server owns these in PostHog (see SERVER_OWNED_EVENTS) — skip the client copy
+    // so paid bookings / registrations aren't double-counted.
+    if (SERVER_OWNED_EVENTS.has(event)) return;
+    call('capture', [event, props]);
+  },
   page(props) { call('capture', ['$pageview', props]); },
   reset() { call('reset', []); },
 };
