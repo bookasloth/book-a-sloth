@@ -220,6 +220,13 @@ const Dermatologists     = lazy(() => import('./pages/for/Dermatologists'));
 const GeneralPhysicians  = lazy(() => import('./pages/for/GeneralPhysicians'));
 const Physiotherapists   = lazy(() => import('./pages/for/Physiotherapists'));
 const BusinessConsultants = lazy(() => import('./pages/for/BusinessConsultants'));
+const EntSpecialists     = lazy(() => import('./pages/for/EntSpecialists'));
+const Ophthalmologists   = lazy(() => import('./pages/for/Ophthalmologists'));
+const Nutritionists      = lazy(() => import('./pages/for/Nutritionists'));
+const LifeCoaches        = lazy(() => import('./pages/for/LifeCoaches'));
+const Spas               = lazy(() => import('./pages/for/Spas'));
+const SalonPage          = lazy(() => import('./pages/for/SalonPage'));
+const Veterinarians      = lazy(() => import('./pages/for/Veterinarians'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 
 // Admin — Operations
@@ -664,6 +671,13 @@ function App() {
           <Route path="/for/doctors" element={<GeneralPhysicians />} />
           <Route path="/for/physiotherapists" element={<Physiotherapists />} />
           <Route path="/for/business-consultant" element={<BusinessConsultants />} />
+          <Route path="/for/ent-specialists" element={<EntSpecialists />} />
+          <Route path="/for/ophthalmologists" element={<Ophthalmologists />} />
+          <Route path="/for/nutritionists" element={<Nutritionists />} />
+          <Route path="/for/life-coaches" element={<LifeCoaches />} />
+          <Route path="/for/spa" element={<Spas />} />
+          <Route path="/for/salon" element={<SalonPage />} />
+          <Route path="/for/veterinarians" element={<Veterinarians />} />
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
