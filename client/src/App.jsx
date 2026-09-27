@@ -214,7 +214,13 @@ const DentistPage        = lazy(() => import('./pages/for/DentistPage'));
 const CharteredAccountants = lazy(() => import('./pages/for/CharteredAccountants'));
 const SportsTurf         = lazy(() => import('./pages/for/SportsTurf'));
 const LawyersPage        = lazy(() => import('./pages/for/LawyersPage'));
+<<<<<<< HEAD
 const Dermatologists     = lazy(() => import('./pages/for/Dermatologists'));
+=======
+const GeneralPhysicians  = lazy(() => import('./pages/for/GeneralPhysicians'));
+const Physiotherapists   = lazy(() => import('./pages/for/Physiotherapists'));
+const BusinessConsultants = lazy(() => import('./pages/for/BusinessConsultants'));
+>>>>>>> origin/release/2026-09
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 
 // Admin — Operations
@@ -654,7 +660,13 @@ function App() {
           <Route path="/for/chartered-accountants" element={<CharteredAccountants />} />
           <Route path="/for/sports-turf" element={<SportsTurf />} />
           <Route path="/for/lawyers" element={<LawyersPage />} />
+<<<<<<< HEAD
           <Route path="/for/dermatologists" element={<Dermatologists />} />
+=======
+          <Route path="/for/doctors" element={<GeneralPhysicians />} />
+          <Route path="/for/physiotherapists" element={<Physiotherapists />} />
+          <Route path="/for/business-consultant" element={<BusinessConsultants />} />
+>>>>>>> origin/release/2026-09
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}

@@ -16,6 +16,7 @@ const {
   updateMe,
   becomeHost,
   cancelHosting,
+  verifyLinkedin,
   forgotPassword,
   resetPassword,
 } = require('../controllers/authController');
@@ -62,5 +63,9 @@ router.post('/become-host', protect, becomeHost);
 // Reverse an in-progress hosting upgrade (un-become-host) — frees a guest who
 // backed out of onboarding from being forced into /vendor-register on login.
 router.post('/cancel-hosting', protect, cancelHosting);
+// LinkedIn verification: host has linked their LinkedIn identity client-side
+// (supabase linkIdentity); server confirms it and awards the "LinkedIn Verified"
+// badge. Auth-gated — the identity is read for the calling user only.
+router.post('/linkedin/verify', protect, authLimiter, verifyLinkedin);
 
 module.exports = router;
