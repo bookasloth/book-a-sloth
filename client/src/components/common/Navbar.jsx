@@ -72,16 +72,16 @@ const WHOFOR_MENU = [
     { label: 'Dermatologists & Skin Clinics',   href: '/for/dermatologists',       desc: 'Book skin consults 24/7',     icon: Sun },
     { label: 'Gynecologists & OB-GYNs',         href: '/explore?q=gynecologist',   desc: 'Book visits around the clock',icon: HeartPulse }, // → /for/gynecologists
     { label: 'Pediatricians & Child Care',      href: '/for/pediatricians',        desc: 'Fill your clinic, skip calls',icon: Baby },
-    { label: 'ENT Specialists & Surgeons',      href: '/explore?q=ent+specialist', desc: 'Book consults, end phone tag',icon: Ear },  // → /for/ent-specialists
-    { label: 'Ophthalmologists & Eye Clinics',  href: '/explore?q=ophthalmologist',desc: 'Book eye exams online',       icon: Eye },  // → /for/ophthalmologists
+    { label: 'ENT Specialists & Surgeons',      href: '/for/ent-specialists',      desc: 'Book consults, end phone tag',icon: Ear },
+    { label: 'Ophthalmologists & Eye Clinics',  href: '/for/ophthalmologists',     desc: 'Book eye exams online',       icon: Eye },
   ] },
   { header: 'Health & Wellness', items: [
     { label: 'General Physicians & Clinics',     href: '/for/doctors',              desc: 'Fill your clinic, cut no-shows', icon: Stethoscope },
     { label: 'Physiotherapists & Rehab Centres', href: '/for/physiotherapists',     desc: 'Get paid before sessions',       icon: Activity },
-    { label: 'Nutritionists & Dietitians',       href: '/explore?q=nutritionist',   desc: 'Book diet consults that pay',    icon: Apple }, // → /for/nutritionists
-    { label: 'Spas & Wellness Centres',          href: '/for/salon',                desc: 'Fill slots, kill no-shows',      icon: Flower2 },
-    { label: 'Life & Wellness Coaches',          href: '/explore?q=life+coach',     desc: 'Book paid coaching sessions',    icon: Target }, // → /for/life-coaches
-    { label: 'Veterinarians & Pet Clinics',      href: '/explore?q=veterinarian',   desc: 'Book pet visits online',         icon: PawPrint }, // → /for/veterinarians
+    { label: 'Nutritionists & Dietitians',       href: '/for/nutritionists',        desc: 'Book diet consults that pay',    icon: Apple },
+    { label: 'Spas & Wellness Centres',          href: '/for/spa',                  desc: 'Fill slots, kill no-shows',      icon: Flower2 },
+    { label: 'Life & Wellness Coaches',          href: '/for/life-coaches',         desc: 'Book paid coaching sessions',    icon: Target },
+    { label: 'Veterinarians & Pet Clinics',      href: '/for/veterinarians',        desc: 'Book pet visits online',         icon: PawPrint },
   ] },
 ];
 
