@@ -107,6 +107,7 @@ const STATIC_ROUTES = [
   { path: '/for/doctors',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors-india',        changefreq: 'monthly', priority: '0.8' },
   { path: '/for/business-consultant',  changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/physiotherapists',     changefreq: 'monthly', priority: '0.8' },
   { path: '/for/salon',                changefreq: 'monthly', priority: '0.8' },
   { path: '/for/freelancers',          changefreq: 'monthly', priority: '0.8' },
   { path: '/for/fitness',              changefreq: 'monthly', priority: '0.8' },
