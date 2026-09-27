@@ -1,28 +1,47 @@
-// /for/architects — bespoke landing page for architects & interior designers in India.
+// /for/architects — bespoke, conversion-focused landing page for architects &
+// interior designers in India. (Design brief — Sept release rebuild.)
 //
-// 5th palette (sage/forest) + a blueprint-drafting motif, ported from the zip
-// "index" design. Host-facing: onboards studios/designers onto Book A Sloth as
-// their consultation-booking + scheduling tool (CTA → /be-a-sloth), NOT a
+// STANDALONE page (not the data-driven ProfessionLanding template). Bespoke route
+// PRECEDES /for/:profession in App.jsx. Keep in sync: App.jsx, prerender.mjs,
+// sitemapService.js, Navbar "Who it's for" menu.
+//
+// Section ORDER follows CharteredAccountants; each section is its OWN design in a
+// GRAPHITE + BRONZE drafting system (architectural precision — blueprints, grids,
+// drawing title-blocks, dimension lines). Mechanics unique to this page:
+//   · blueprint-grid hero with a real hero image framed like a drafting sheet
+//   · "spec-sheet" service cards (mono ref, drafting corner-mark, bronze underline)
+//   · numbered "project phases" track along a ruled dimension baseline
+//   · integration logo grid · drawing title-block impact readout · revision-log
+//     testimonials · ruled spec-comparison sheet · spec-sheet pricing · framed
+//     editorial about.
+// Only nav/hero-shell/footer (shared shell) may resemble sibling pages.
+//
+// IMAGES: REAL images ported from the old ArchitectPage, reused as framed <img>
+// tags (hero, project gallery, about, final CTA) + real tool logos in the
+// integrations row. No empty placeholders. Every image has a descriptive alt.
+//
+// HONESTY: Book A Sloth is a scheduling + payment tool for a studio — NOT a
 // client-acquisition/advertising channel. No fabricated project/rating counts.
+// Testimonials are labelled quotes from studio staff about ADMIN relief. Trust
+// facts are verifiable only. JSON-LD has NO aggregateRating / review.
 //
-// Scoped fonts (DM Serif Display headings + Inter body) confined to .ar-lp so they
-// never leak into the global theme. Scoped --ar-* palette. CSS-animation-first
-// (IntersectionObserver + CSS transitions, no framer) to keep the page light.
-//
-// New URL — keep in sync: App.jsx route (before /for/:profession), prerender.mjs,
-// Solutions.jsx.
+// A11Y: single <h1>, ordered headings, real <button>/<a>, aria-labels on the
+// accordion/toggle, AA-contrast palette, visible focus, NO hover uplift, Reveal
+// guards its own motion.
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight, Check, Menu, X, Plus, Play,
-  CalendarCheck, LayoutDashboard, MessageCircle, BellRing, Wallet,
-  Landmark, FileText, Lock, BadgePercent, Zap, Share2,
-  Compass, Ruler, PenTool, Building2, Home, TreePine, Hammer, Box,
-  ClipboardCheck, MessagesSquare, HardHat, CheckCircle2, Star, Palette,
-  Video, Users, Sparkles, ArrowUpRight,
+  ArrowRight, Check, Menu, X, Plus, Star, ArrowUpRight,
+  CalendarCheck, LayoutDashboard, MessagesSquare, MessageCircle, BellRing, Wallet,
+  Landmark, FileText, Lock, BadgePercent, Zap, Share2, ShieldCheck,
+  Compass, PenTool, Building2, Home, TreePine, Hammer, Box,
+  ClipboardCheck, HardHat, Palette, Video, Sparkles,
 } from 'lucide-react';
+import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
+import useLenis from '../../hooks/useLenis';
 import { SITE_URL } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
@@ -33,46 +52,38 @@ import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 
 const START = '/be-a-sloth';
 const LOGIN = '/login-as-vendor';
-
-/* Local CSS scroll-reveal — IntersectionObserver + CSS transition (no framer). */
-function Reveal({ as: Tag = 'div', delay = 0, instant = false, className = '', children, ...rest }) {
-  const ref = useRef(null);
-  const [shown, setShown] = useState(instant);
-  useEffect(() => {
-    if (instant || shown) return undefined;
-    const el = ref.current;
-    if (!el) return undefined;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [instant, shown]);
-  return (
-    <Tag ref={ref} className={`ar-rv${shown ? ' ar-rv-in' : ''} ${className}`} style={{ transitionDelay: delay ? `${delay}s` : undefined }} {...rest}>
-      {children}
-    </Tag>
-  );
-}
+const DEMO = '/demo';
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
 const NAV = [
-  { label: 'Features', href: '#features' },
-  { label: 'For Studios', href: '#usecases' },
+  { label: 'Services', href: '#usecases' },
   { label: 'How It Works', href: '#how' },
+  { label: 'Integrations', href: '#features' },
   { label: 'Pricing', href: '#pricing' },
-  { label: 'Resources', to: '/blog' },
+  { label: 'FAQ', href: '#faq' },
 ];
 
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian studios'];
 
+// Hero benefit strip.
 const BENEFITS = [
-  { icon: MessagesSquare, title: 'Fewer Back-and-Forths', desc: 'Clients pick a slot themselves — no email ping-pong to fix a time.' },
-  { icon: Wallet, title: 'Paid Consultations', desc: 'Optionally collect your consultation fee online before the meeting.' },
-  { icon: LayoutDashboard, title: 'One Project Diary', desc: 'Every consult, site visit and review for your studio in one view.' },
-  { icon: BellRing, title: 'Fewer No-Shows', desc: 'Automatic WhatsApp reminders before every client meeting.' },
+  { icon: MessagesSquare, title: 'Fewer back-and-forths', desc: 'Clients pick a slot themselves — no email ping-pong to fix a time.' },
+  { icon: Wallet, title: 'Paid consultations', desc: 'Optionally collect your consultation fee online before the meeting.' },
+  { icon: LayoutDashboard, title: 'One project diary', desc: 'Every consult, site visit and review for your studio in one view.' },
+  { icon: BellRing, title: 'Fewer no-shows', desc: 'Automatic WhatsApp reminders before every client meeting.' },
 ];
 
-const USE_CASES = [
+// Project-type gallery — REAL images ported from the old page, framed as drawings.
+const PROJECT_TYPES = [
+  { label: 'Interior Design', meta: 'Rooms with soul', img: '/for/architects/services/interior.webp', desc: 'Book styling and material consults with clients.' },
+  { label: 'Commercial Design', meta: 'Offices & storefronts', img: '/for/architects/services/commercial.webp', desc: 'Schedule walkthroughs and reviews with teams.' },
+  { label: 'Landscape Design', meta: 'Gardens & courtyards', img: '/for/architects/services/landscape.webp', desc: 'Take on-site visits and planning sessions online.' },
+  { label: 'Design Consultation', meta: 'Advice that shapes ideas', img: '/for/architects/services/consultation.webp', desc: 'Offer paid one-on-one consultations to new clients.' },
+];
+
+// Spec-sheet service cards — every client meeting a studio runs.
+const SERVICES = [
   { icon: Compass, label: 'Design Consultation', desc: 'First-visit brief and scope.' },
   { icon: HardHat, label: 'Site Visit', desc: 'On-site measurement and survey.' },
   { icon: PenTool, label: 'Concept Review', desc: 'Walk clients through concepts.' },
@@ -83,53 +94,24 @@ const USE_CASES = [
   { icon: Home, label: 'Discovery Call', desc: 'A quick intro before you commit.' },
 ];
 
-// Project-type showcase (photo cards). Host framing: whatever you design, take the
-// booking for it online. Images ported from the zip service set.
-const SERVICES = [
-  { title: 'Interior Design', meta: 'Rooms with soul', icon: Palette, img: '/for/architects/services/interior.webp', desc: 'Book styling and material consults with clients.' },
-  { title: 'Commercial Design', meta: 'Offices & storefronts', icon: Building2, img: '/for/architects/services/commercial.webp', desc: 'Schedule walkthroughs and reviews with teams.' },
-  { title: 'Landscape Design', meta: 'Gardens & courtyards', icon: TreePine, img: '/for/architects/services/landscape.webp', desc: 'Take on-site visits and planning sessions online.' },
-  { title: 'Design Consultation', meta: 'Advice that shapes ideas', icon: Compass, img: '/for/architects/services/consultation.webp', desc: 'Offer paid one-on-one consultations to new clients.' },
-];
-
+// Project-phases track (dimension line).
 const STEPS = [
-  { step: 'Step 1', title: 'Set up your studio', icon: LayoutDashboard, desc: 'Add your consultation types, durations and hours in a few minutes.' },
-  { step: 'Step 2', title: 'Share your link', icon: Share2, desc: 'Website, Instagram, WhatsApp — one link takes bookings everywhere.' },
-  { step: 'Step 3', title: 'Get booked & paid', icon: Wallet, desc: 'Clients pick a slot, pay your fee upfront, and everyone gets reminded.' },
+  { step: '01', title: 'Set up your studio', icon: LayoutDashboard, desc: 'Add your consultation types, durations and hours in a few minutes.' },
+  { step: '02', title: 'Share your link', icon: Share2, desc: 'Website, Instagram, WhatsApp — one link takes bookings everywhere.' },
+  { step: '03', title: 'Get booked & paid', icon: Wallet, desc: 'Clients pick a slot, pay your fee upfront, and everyone gets reminded.' },
 ];
 
-const TOOLS_ALL = [
+// Integration logos — REAL BAS integrations only (real logo files + ToolLogo).
+const TOOLS = [
   { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
-  { name: 'Google Meet', lucide: Video, sub: 'Auto-add a video link to bookings' },
-  { name: 'Zoom', lucide: Video, sub: 'Share meeting links automatically' },
-  { name: 'Client CRM', lucide: Users, sub: 'Every client, brief and note in one place' },
   { name: 'Razorpay', logo: razorpayLogo, sub: 'Payments, refunds and GST invoices' },
+  { name: 'WhatsApp', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
   { name: 'PhonePe', logo: '/images/logos/phonepe.svg', sub: 'Accept instant UPI payments' },
   { name: 'Gmail', logo: '/images/logos/gmail.svg', sub: 'Confirmation emails, sent automatically' },
-  { name: 'WhatsApp Automation', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
+  { name: 'Google Meet', lucide: Video, sub: 'Auto-add a video link to bookings' },
 ];
 
-// "Built for a studio" — how a design practice actually runs.
-const STUDIO_FEATURES = [
-  { icon: MessagesSquare, title: 'No more email tag', desc: 'Clients self-book and reschedule online, so you stop trading emails to fix a time.' },
-  { icon: Wallet, title: 'Value your time', desc: 'Charge for consultations and collect the fee upfront — the serious enquiries book.' },
-  { icon: LayoutDashboard, title: 'One diary, always current', desc: 'Consults, site visits and reviews in a single live view — no clashes.' },
-  { icon: BellRing, title: 'Fewer wasted trips', desc: 'Automatic reminders before each meeting mean fewer no-shows and cancelled site visits.' },
-];
-
-// Placeholder testimonials — architecture/interior STUDIO OWNERS reviewing Book A
-// Sloth (the software). Swap for real quotes when available. Software-focused; all
-// 5-star; no fabricated dates or project counts.
-const ARCHITECT_TESTIMONIALS = [
-  { name: 'Aarav Deshpande', role: 'Studio Verde, Pune', quote: 'Clients used to email for days to fix a time. Now they pick a slot and pay upfront — only serious enquiries book.' },
-  { name: 'Meera Krishnan', role: 'Terra Interiors, Chennai', quote: 'Site visits and concept reviews all sit in one calendar now. No more double-booked afternoons or a missed measurement trip.' },
-  { name: 'Rohan Kapoor', role: 'Axis Design Co., Gurugram', quote: 'Setup took an evening. The WhatsApp reminders alone cut the no-shows on our discovery calls right down.' },
-  { name: 'Ananya Pillai', role: 'Form & Field, Bengaluru', quote: 'A calm, professional booking page that matches how a studio works — and 0% commission on Active means the fee is ours.' },
-  { name: 'Vikram Sethi', role: 'Nirman Architects, Jaipur', quote: 'GST invoices for every paid consultation are generated automatically. It tidied up our billing completely.' },
-  { name: 'Kabir Menon', role: 'Studio Kaya, Kochi', quote: 'One link handles discovery calls, paid consults and site visits. Clients love the professional booking page, and so do we.' },
-];
-
-// Real impact, real numbers — 4-card layout, honest host stats (no fabricated counts).
+// Drawing title-block impact readout — honest host stats (no fabricated counts).
 const IMPACT_STATS = [
   { value: '0%', label: 'Commission on Active', desc: 'Every consultation fee stays with your studio.', icon: BadgePercent },
   { value: '< 5 min', label: 'To go live', desc: 'Set up your services and share your booking page.', icon: Compass },
@@ -137,7 +119,18 @@ const IMPACT_STATS = [
   { value: 'GST', label: 'Auto invoices', desc: 'Generated for every paid booking, automatically.', icon: FileText },
 ];
 
-// The Book A Sloth difference — with / without comparison (ditto layout).
+// Placeholder testimonials — architecture/interior STUDIO owners & staff reviewing
+// Book A Sloth (the software), about admin relief. All 5-star; no fabricated dates.
+const TESTIMONIALS = [
+  { name: 'Aarav Deshpande', role: 'Studio Verde, Pune', quote: 'Clients used to email for days to fix a time. Now they pick a slot and pay upfront — only serious enquiries book.' },
+  { name: 'Meera Krishnan', role: 'Terra Interiors, Chennai', quote: 'Site visits and concept reviews all sit in one calendar now. No more double-booked afternoons or a missed measurement trip.' },
+  { name: 'Rohan Kapoor', role: 'Axis Design Co., Gurugram', quote: 'Setup took an evening. The WhatsApp reminders alone cut the no-shows on our discovery calls right down.' },
+  { name: 'Ananya Pillai', role: 'Form & Field, Bengaluru', quote: 'A calm, professional booking page that matches how a studio works — and 0% commission on Active means the fee is ours.' },
+  { name: 'Vikram Sethi', role: 'Nirman Architects, Jaipur', quote: 'GST invoices for every paid consultation are generated automatically. It tidied up our billing completely.' },
+  { name: 'Kabir Menon', role: 'Studio Kaya, Kochi', quote: 'One link handles discovery calls, paid consults and site visits. The front desk stopped living on the phone.' },
+];
+
+// Ruled spec-comparison sheet.
 const WITHOUT = ['Days of email tag to fix a time', 'No-shows waste a whole site trip', 'Consultation fee chased afterwards', 'Reminders sent by hand, one by one'];
 const WITH_BAS = ['Clients pick a slot themselves', 'Automatic reminders cut no-shows', 'Fee collected before the meeting', 'WhatsApp reminders sent for you'];
 
@@ -145,8 +138,14 @@ const WITH_BAS = ['Clients pick a slot themselves', 'Automatic reminders cut no-
 const TRUST_STRIP = [
   { icon: Lock, value: 'Razorpay', label: 'Every payment signature-verified on our servers' },
   { icon: Landmark, value: 'Hosted in India', label: 'Your studio data runs on servers in Mumbai' },
-  { icon: FileText, value: 'DPDP 2023', label: 'Operated under India’s data protection law' },
-  { icon: BadgePercent, value: '0%', label: 'Commission on Sloth Active — keep every rupee' },
+  { icon: ShieldCheck, value: 'DPDP 2023', label: "Operated under India's data protection law" },
+  { icon: BadgePercent, value: '0% commission', label: 'On Sloth Active — keep every rupee' },
+];
+
+const ABOUT_FEATURES = [
+  { icon: Sparkles, title: 'Built for studios', desc: 'A booking page and diary shaped around how a design practice works.' },
+  { icon: BadgePercent, title: 'Honest pricing', desc: 'A free forever plan and 0% commission on Active — no hidden fees, ever.' },
+  { icon: MessageCircle, title: 'Real support', desc: 'A team in India by your side, from setup to your first booking.' },
 ];
 
 const FAQ = [
@@ -196,252 +195,102 @@ function NavLink({ item, className, onClick }) {
 }
 
 function CtaButton({ to, children, variant = 'solid', className = '' }) {
-  const base = 'inline-flex items-center justify-center gap-2 rounded-[5px] px-6 py-3.5 text-sm font-semibold transition-all hover:no-underline';
+  const base = 'inline-flex items-center justify-center gap-2 rounded-[6px] px-6 py-3.5 text-sm font-semibold transition-all hover:no-underline';
   const styles = {
-    solid: 'text-white shadow-[0_4px_14px_rgba(35,65,47,0.2)] hover:brightness-110',
-    ghost: 'border-2 border-[color:var(--ar-ink)]/12 bg-white text-[color:var(--ar-ink)] hover:border-[color:var(--ar-ink)]/25',
+    solid: 'text-white shadow-[0_4px_14px_rgba(51,65,85,0.24)] hover:brightness-110',
+    ghost: 'border-2 border-[color:var(--ca-ink)]/12 bg-white text-[color:var(--ca-ink)] hover:border-[color:var(--ca-ink)]/30',
   };
   return (
-    <Link to={to} className={`${base} ${styles[variant]} ${className}`} style={variant === 'solid' ? { background: 'var(--ar-primary)' } : undefined}>
+    <Link to={to} className={`${base} ${styles[variant]} ${className}`} style={variant === 'solid' ? { background: 'var(--ca-primary)' } : undefined}>
       {children}
     </Link>
   );
 }
 
-/* Blueprint floor-plan — decorative drafting motif behind the hero (pure SVG). */
-function BlueprintPlan({ className = '' }) {
+// Small mono/label eyebrow (drafting annotation).
+function Eyebrow({ children, className = '' }) {
   return (
-    <svg viewBox="0 0 460 340" className={className} fill="none" aria-hidden>
-      <g stroke="var(--ar-sage)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round">
-        <rect x="24" y="64" width="412" height="252" rx="8" />
-        <path d="M160 64 V316" /><path d="M24 188 H120" /><path d="M236 188 H436" /><path d="M300 188 V316" />
-      </g>
-      <g stroke="var(--ar-sage)" strokeWidth="2" fill="none" strokeLinecap="round">
-        <path d="M160 120 a14 14 0 0 1 14 -14" /><path d="M120 188 a14 14 0 0 1 14 14" /><path d="M300 208 a14 14 0 0 1 -14 14" opacity="0.65" />
-      </g>
-      <g stroke="var(--ar-sage)" strokeWidth="2" fill="none">
-        <circle cx="360" cy="230" r="26" />
-        <rect x="376" y="202" width="12" height="12" rx="2" /><rect x="376" y="246" width="12" height="12" rx="2" />
-        <rect x="332" y="228" width="12" height="12" rx="2" /><rect x="376" y="228" width="12" height="12" rx="2" />
-      </g>
-      <g stroke="var(--ar-sage)" strokeWidth="2" fill="none">
-        <rect x="66" y="112" width="78" height="56" rx="6" /><path d="M66 132 h78" strokeDasharray="3 4" />
-      </g>
-      <text x="420" y="52" fontSize="15" letterSpacing="3" fill="var(--ar-sage)" textAnchor="end" opacity="0.95">FLOOR PLAN · SEA VIEW VILLA</text>
-    </svg>
+    <span className={`font-mono text-[11px] font-semibold uppercase tracking-[0.22em] ${className}`} style={{ color: 'var(--ca-accent)' }}>
+      {children}
+    </span>
   );
 }
 
-/* Floating glass card in the hero — mirrors the homepage GlassCard. */
-function GlassCard({ icon: Icon, label, value, accent, className = '', float = '' }) {
+/* Real image framed like an architectural drawing: thin frame + bronze corner
+   ticks, and an optional mono corner label. Used for hero / gallery / about /
+   final CTA imagery. */
+function Framed({ src, alt, className = '', imgClassName = '', priority = false, label }) {
+  const tick = 'pointer-events-none absolute h-4 w-4';
   return (
-    <div className={`ar-glass ${float} absolute z-20 flex items-center gap-3 rounded-2xl px-4 py-3 ${className}`}>
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={accent ? { background: 'rgba(111,140,93,0.16)', color: 'var(--ar-primary)' } : { background: 'rgba(20,32,23,0.06)', color: 'var(--ar-ink)' }}>
-        <Icon size={18} />
+    <div className={`relative ${className}`}>
+      <div className="relative overflow-hidden bg-white" style={{ border: '1px solid rgba(26,34,48,0.16)' }}>
+        <img
+          src={src}
+          alt={alt}
+          {...(priority ? { loading: 'eager', fetchpriority: 'high' } : { loading: 'lazy' })}
+          decoding="async"
+          className={`block h-full w-full object-cover ${imgClassName}`}
+        />
+      </div>
+      {/* bronze drafting corner ticks */}
+      <span aria-hidden className={`${tick} -left-[3px] -top-[3px] border-l-2 border-t-2`} style={{ borderColor: 'var(--ca-accent)' }} />
+      <span aria-hidden className={`${tick} -right-[3px] -top-[3px] border-r-2 border-t-2`} style={{ borderColor: 'var(--ca-accent)' }} />
+      <span aria-hidden className={`${tick} -bottom-[3px] -left-[3px] border-b-2 border-l-2`} style={{ borderColor: 'var(--ca-accent)' }} />
+      <span aria-hidden className={`${tick} -bottom-[3px] -right-[3px] border-b-2 border-r-2`} style={{ borderColor: 'var(--ca-accent)' }} />
+      {label && (
+        <span className="absolute bottom-2 left-2 bg-white/90 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--ca-ink)] backdrop-blur">
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* Spec-sheet service card — mono ref, drafting corner-mark, bronze underline. */
+function SpecCard({ s, i }) {
+  return (
+    <Link
+      to={START}
+      className="group relative flex h-full flex-col bg-white p-5 transition-colors hover:border-[color:var(--ca-accent)] hover:no-underline"
+      style={{ border: '1px solid rgba(26,34,48,0.12)' }}
+    >
+      {/* drafting corner-mark (top-right) */}
+      <span aria-hidden className="pointer-events-none absolute right-3 top-3 h-3.5 w-3.5 border-r border-t" style={{ borderColor: 'var(--ca-accent)' }} />
+      <Eyebrow>{`SVC-${String(i + 1).padStart(2, '0')}`}</Eyebrow>
+      <span className="mt-3 flex h-11 w-11 items-center justify-center rounded-[6px]" style={{ background: 'color-mix(in srgb, var(--ca-primary) 8%, transparent)', color: 'var(--ca-primary)' }}>
+        <s.icon size={20} />
       </span>
-      <div>
-        <div className="text-[11px] font-medium text-neutral-400">{label}</div>
-        <div className="text-sm font-semibold" style={{ color: accent ? 'var(--ar-primary)' : 'var(--ar-ink)' }}>{value}</div>
-      </div>
-    </div>
+      <h3 className="mt-3.5 font-heading text-[15px] font-bold text-[color:var(--ca-ink)]">{s.label}</h3>
+      <span aria-hidden className="mt-2 block h-[3px] w-8" style={{ background: 'var(--ca-accent)' }} />
+      <p className="mt-2 text-[13px] leading-relaxed text-slate-500">{s.desc}</p>
+    </Link>
   );
 }
 
-/* Use-case card — click the icon to cycle the card: white → olive → cream.
-   Text/icon colours adjust to the background for contrast. */
-const UC_STATES = [
-  { // white (default)
-    card: { background: '#fff', border: '1px solid rgba(0,0,0,0.06)' },
-    iconWrap: { background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' },
-    title: 'var(--ar-ink)', desc: '#737373',
-  },
-  { // olive (colour of the icon)
-    card: { background: 'var(--ar-primary)', border: '1px solid var(--ar-primary)' },
-    iconWrap: { background: 'rgba(255,255,255,0.16)', color: '#fff' },
-    title: '#fff', desc: 'rgba(255,255,255,0.75)',
-  },
-  { // cream (icing)
-    card: { background: 'var(--ar-cream)', border: '1px solid var(--ar-line)' },
-    iconWrap: { background: '#fff', color: 'var(--ar-primary)' },
-    title: 'var(--ar-ink)', desc: '#525252',
-  },
-];
-function UseCaseCard({ u }) {
-  const [st, setSt] = useState(0);
-  const s = UC_STATES[st];
-  return (
-    <div className="flex h-full flex-col rounded-[18px] p-6 transition-colors duration-300" style={s.card}>
-      <button type="button" onClick={() => setSt((v) => (v + 1) % UC_STATES.length)} aria-label={`${u.label} — change card colour`} className="flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-300" style={s.iconWrap}>
-        <u.icon size={22} />
-      </button>
-      <h3 className="mt-5 text-[15px] font-bold transition-colors duration-300" style={{ color: s.title }}>{u.label}</h3>
-      <p className="mt-1 text-[13px] leading-snug transition-colors duration-300" style={{ color: s.desc }}>{u.desc}</p>
-    </div>
-  );
-}
-
-/* How-it-works — STEP 1/2/3 with a connector rail + rounded square icon tiles.
-   One step is active at a time and cycles 1→2→3 every 3s (no uplift, just fill). */
-function HowItWorks({ steps }) {
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setActive((a) => (a + 1) % steps.length), 3000);
-    return () => clearTimeout(t);
-  }, [active, steps.length]);
-  const centers = ['16.667%', '50%', '83.333%'];
-  return (
-    <div className="relative mt-16 grid gap-12 md:grid-cols-3 md:gap-6">
-      {/* connector rail behind the tiles */}
-      <span aria-hidden className="pointer-events-none absolute top-7 hidden h-px md:block" style={{ left: centers[0], right: centers[0], background: 'linear-gradient(90deg, rgba(111,140,93,0.5), rgba(111,140,93,0.5))' }} />
-      {steps.map((s, i) => {
-        const on = i === active;
-        return (
-          <Reveal key={s.title} delay={i * 0.1} className="relative text-center">
-            <button type="button" onClick={() => setActive(i)} aria-current={on} aria-label={`${s.step}: ${s.title}`} className="mx-auto block">
-              <span className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl transition-colors duration-500" style={on ? { background: 'var(--ar-primary)', color: '#fff', boxShadow: '0 0 0 6px #fff, 0 14px 30px -12px rgba(35,65,47,0.8)' } : { background: 'var(--ar-cream)', color: 'var(--ar-primary)', boxShadow: '0 0 0 6px #fff' }}>
-                <s.icon size={22} />
-              </span>
-            </button>
-            <div className="mt-5 text-xs font-bold uppercase tracking-[0.18em] transition-colors duration-300" style={{ color: on ? 'var(--ar-primary)' : 'var(--ar-accent)' }}>{s.step}</div>
-            <h3 className={`mt-2 text-lg font-bold transition-colors duration-300 ${on ? 'text-[color:var(--ar-ink)]' : 'text-neutral-500'}`}>{s.title}</h3>
-            <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-          </Reveal>
-        );
-      })}
-    </div>
-  );
-}
-
-/* Photo project-type card — simple headline over an olive bottom-up gradient.
-   On hover the card fills full olive and the heading, subhead and button rise
-   up from the bottom. Icon stays put. */
-function ServiceCard({ s }) {
-  return (
-    <div className="group relative flex h-72 flex-col justify-end overflow-hidden rounded-[20px]">
-      <img src={s.img} alt={s.title} loading="lazy" decoding="async" width="640" height="480" className="absolute inset-0 h-full w-full object-cover" />
-      {/* olive bottom-up gradient (default) */}
-      <div aria-hidden className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--ar-ink) 4%, rgba(35,65,47,0.6) 42%, rgba(35,65,47,0) 78%)' }} />
-      {/* full olive fill on hover */}
-      <div aria-hidden className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: 'linear-gradient(160deg, var(--ar-primary), var(--ar-ink))' }} />
-      <span className="absolute left-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/85 backdrop-blur" style={{ color: 'var(--ar-primary)' }}><s.icon size={18} /></span>
-      <div className="relative z-10 p-5 text-white">
-        <h3 className="text-xl font-bold transition-transform duration-500 group-hover:-translate-y-1">{s.title}</h3>
-        {/* subhead + button rise up from the bottom on hover */}
-        <div className="grid grid-rows-[0fr] opacity-0 transition-all duration-500 group-hover:grid-rows-[1fr] group-hover:opacity-100">
-          <div className="overflow-hidden">
-            <p className="mt-2 text-sm text-white/85">{s.desc}</p>
-            <Link to={START} className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold hover:no-underline" style={{ color: 'var(--ar-primary)' }}>Set up this service <ArrowRight size={13} /></Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* Integration card + grid hub. */
-function ToolCard({ t }) {
-  return (
-    <div className="flex h-full w-full items-center gap-3 rounded-2xl border border-black/[0.05] bg-white px-4 py-3.5 shadow-[0_14px_34px_-20px_rgba(17,17,17,0.3)] transition-colors hover:border-[color:var(--ar-primary)]/30">
-      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[color:var(--ar-grey)]">
-        {t.logo
-          ? <img src={t.logo} alt="" loading="lazy" className="h-6 w-6 object-contain" />
-          : t.lucide
-            ? <t.lucide size={22} style={{ color: 'var(--ar-primary)' }} />
-            : <ToolLogo name={t.icon} size={24} className="h-6 w-6" />}
-      </span>
-      <div className="min-w-0">
-        <div className="text-sm font-bold leading-tight text-[color:var(--ar-ink)]">{t.name}</div>
-        <div className="mt-0.5 text-xs leading-snug text-neutral-500">{t.sub}</div>
-      </div>
-    </div>
-  );
-}
-function IntegrationHub() {
-  return (
-    <div className="relative mx-auto max-w-5xl">
-      <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-[46rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: 'radial-gradient(closest-side, rgba(111,140,93,0.12), transparent)' }} />
-      <div className="relative grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-        {TOOLS_ALL.map((t, i) => (
-          <Reveal key={t.name} delay={(i % 4) * 0.06}><ToolCard t={t} /></Reveal>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* Animated testimonials — studio owners reviewing the software. */
-function AnimatedTestimonials({ items }) {
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setActive((a) => (a + 1) % items.length), 3500);
-    return () => clearTimeout(t);
-  }, [active, items.length]);
-  const a = items[active];
-  // Brick pyramid: 1 on top, 2 in the middle, 3 on the bottom (indices 0 · 1,2 · 3,4,5).
-  // Every brick is the SAME fixed size, always — the active one only changes colour and
-  // shows the reviewer's first name; the rest show just the initial. Bricks stack tight.
-  const rows = [[0], [1, 2], [3, 4, 5]];
-  return (
-    <div className="mt-12 grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
-      <div className="flex flex-col items-center">
-        {rows.map((row, ri) => (
-          <div key={ri} className="flex justify-center" style={{ marginTop: ri === 0 ? 0 : -4 }}>
-            {row.map((k) => {
-              const t = items[k];
-              if (!t) return null;
-              const on = k === active;
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setActive(k)}
-                  aria-current={on}
-                  aria-label={`Show review from ${t.name}`}
-                  className="relative flex items-center justify-center rounded-[10px] font-bold ring-2 ring-white transition-colors duration-300"
-                  style={{ height: 60, width: 104, margin: 3, zIndex: on ? 10 : 1, background: on ? 'var(--ar-primary)' : '#fff', color: on ? '#fff' : 'var(--ar-ink)', border: on ? 'none' : '1px solid var(--ar-line)', boxShadow: on ? '0 0 0 3px rgba(111,140,93,0.3), 0 14px 28px -12px rgba(35,65,47,0.85)' : '0 6px 16px -10px rgba(35,65,47,0.4)' }}
-                >
-                  {on
-                    ? <span className="ar-fade text-[14px] font-extrabold tracking-tight">{t.name.split(' ')[0]}</span>
-                    : <span className="text-[18px]">{t.name.charAt(0)}</span>}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-        <div className="mt-4 flex gap-0.5">{[0, 1, 2, 3, 4].map((st) => <Star key={st} size={14} style={{ color: 'var(--ar-sage)', fill: 'var(--ar-sage)' }} />)}</div>
-      </div>
-      <div className="relative rounded-[24px] border border-black/[0.06] bg-white p-8 shadow-[0_30px_70px_-40px_rgba(35,65,47,0.5)] sm:p-10">
-        <span aria-hidden className="font-display text-6xl leading-none" style={{ color: 'var(--ar-primary)' }}>&ldquo;</span>
-        <blockquote key={active} className="ar-fade -mt-4">
-          <p className="text-lg font-medium italic leading-relaxed text-neutral-700 sm:text-2xl sm:leading-relaxed">{a.quote}</p>
-          <footer className="mt-6 border-t border-black/[0.06] pt-5">
-            <div className="text-[15px] font-bold text-[color:var(--ar-ink)]">{a.name}</div>
-            <div className="mt-0.5 text-sm text-neutral-500">{a.role}</div>
-          </footer>
-        </blockquote>
-      </div>
-    </div>
-  );
-}
-
-/* Two-column FAQ accordion. */
 function FaqAccordion() {
   const [open, setOpen] = useState(0);
   const renderItem = (f, i) => {
     const isOpen = open === i;
     return (
-      <div key={f.q} className="overflow-hidden rounded-[12px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'rgba(111,140,93,0.5)' : 'rgba(17,17,17,0.08)' }}>
-        <button type="button" onClick={() => setOpen(isOpen ? -1 : i)} aria-expanded={isOpen} className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-[15px] font-semibold text-[color:var(--ar-ink)]">
+      <div key={f.q} className="overflow-hidden rounded-[8px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'var(--ca-accent)' : 'rgba(26,34,48,0.12)' }}>
+        <button
+          type="button"
+          onClick={() => setOpen(isOpen ? -1 : i)}
+          aria-expanded={isOpen}
+          className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-[15px] font-semibold text-[color:var(--ca-ink)]"
+        >
           {f.q}
-          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300" style={{ backgroundColor: 'color-mix(in srgb, var(--ca-accent) 14%, transparent)', color: 'var(--ca-accent)', transform: isOpen ? 'rotate(45deg)' : 'none' }}>
             <Plus size={15} />
           </span>
         </button>
-        <div className="grid overflow-hidden transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}>
-          <div className="min-h-0 overflow-hidden">
-            <p className="px-5 pb-4 text-[14.5px] leading-relaxed text-neutral-500">{f.a}</p>
-          </div>
-        </div>
+        <AnimatePresence initial={false}>
+          {isOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
+              <p className="px-5 pb-4 text-[14.5px] leading-relaxed text-slate-500">{f.a}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   };
@@ -456,6 +305,7 @@ function FaqAccordion() {
 /* ─────────────────────────────  PAGE  ────────────────────────────── */
 
 export default function ArchitectPage() {
+  useLenis();
   const [menuOpen, setMenuOpen] = useState(false);
   const [yearly, setYearly] = useState(true);
 
@@ -470,483 +320,655 @@ export default function ArchitectPage() {
 
   const jsonLd = [
     {
-      '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication', applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web', url: canonical, description: seo.description,
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'Book A Sloth',
+      applicationCategory: 'BusinessApplication',
+      applicationSubCategory: 'Appointment Scheduling Software',
+      operatingSystem: 'Web',
+      url: canonical,
+      description: seo.description,
       offers: [
         { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
         { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
       ],
     },
     {
-      '@context': 'https://schema.org', '@type': 'Service',
+      '@context': 'https://schema.org',
+      '@type': 'Service',
       serviceType: 'Appointment booking software for architects and interior designers',
       provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN', description: seo.description, url: canonical,
+      areaServed: 'IN',
+      description: seo.description,
+      url: canonical,
     },
-    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
-    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-      { '@type': 'ListItem', position: 2, name: 'For Architects & Interior Designers', item: canonical },
-    ] },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'For Architects & Interior Designers', item: canonical },
+      ],
+    },
   ];
 
-  // Sage / forest palette — scoped --ar-* names.
+  // Graphite + bronze drafting palette. Legacy --ca-* names kept (shared classNames).
   const styleVars = {
-    '--ar-primary': '#23412F', // deep forest (AA-safe: white text/links)
-    '--ar-accent': '#4C6240',  // sage-700 (AA-safe as text on white ~5.4:1)
-    '--ar-sage': '#6F8C5D',    // sage (decorative fills)
-    '--ar-ink': '#21301F',     // deep forest text
-    '--ar-cream': '#F3F6EF',   // sage-50 tint section bg
-    '--ar-grey': '#F8F6F1',    // warm off-white section bg
-    '--ar-line': '#E8E3D7',    // warm hairline
+    '--ca-primary': '#334155', // graphite slate — text/links/fills, AA on white (~9.8:1)
+    '--ca-accent': '#B45309',  // bronze — eyebrows/underlines/ticks, AA on white (~5:1)
+    '--ca-ink': '#1A2230',     // near-black graphite text
+    '--ca-cream': '#F5F5F4',   // warm off-white section bg
+    '--ca-grey': '#F1F3F5',    // cool light section bg
+  };
+
+  const gridBg = {
+    backgroundImage: 'linear-gradient(to right, rgba(51,65,85,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(51,65,85,0.08) 1px, transparent 1px)',
+    backgroundSize: '30px 30px',
   };
 
   return (
-    <main className="ar-lp overflow-x-clip bg-white text-[color:var(--ar-ink)]" style={styleVars}>
-      {/* Scoped fonts — DM Serif Display headings + Inter body, confined to .ar-lp so
-          they never touch the global theme (Plus Jakarta/Poppins). Mirrors the zip
-          "index" architect design. */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
-        .ar-lp{font-family:'Inter',system-ui,-apple-system,sans-serif;}
-        .ar-lp h1,.ar-lp h2,.ar-lp h3,.ar-lp h4{font-family:'DM Serif Display',Georgia,serif;font-weight:400;letter-spacing:-0.01em;}
-        .ar-lp .font-display{font-family:'DM Serif Display',Georgia,serif;}
-        .ar-lp .bg-blueprint{background-image:linear-gradient(to right, rgba(111,140,93,0.12) 1px, transparent 1px),linear-gradient(to bottom, rgba(111,140,93,0.12) 1px, transparent 1px);background-size:32px 32px;}
-        .ar-glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.6);box-shadow:0 18px 40px -24px rgba(35,65,47,0.5);}
-        .ar-float{animation:ar-float 6s ease-in-out infinite;}
-        .ar-float--mid{animation-duration:7.5s;animation-delay:-1.8s;}
-        .ar-float--slow{animation-duration:9s;animation-delay:-3.2s;}
-        @keyframes ar-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-        @media (prefers-reduced-motion: reduce){.ar-float,.ar-float--mid,.ar-float--slow{animation:none;}}
-        .ar-rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease, transform .6s ease;}
-        .ar-rv-in{opacity:1;transform:none;}
-        .ar-fade{animation:ar-fade-in .4s ease both;}
-        @keyframes ar-fade-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-        @media (prefers-reduced-motion: reduce){.ar-rv{opacity:1;transform:none;transition:none;}.ar-fade{animation:none;}}
-      `}</style>
-      <Seo title={seo.title} description={seo.description} keywords={seo.keywords} canonical={canonical}
-        robots="index, follow, max-image-preview:large, max-snippet:-1" siteName="Book A Sloth" locale="en_IN"
-        themeColor="#23412F" ogTitle={seo.ogTitle} ogDescription={seo.ogDescription} jsonLd={jsonLd} />
+    <main className="overflow-x-clip bg-white text-[color:var(--ca-ink)]" style={styleVars}>
+      <Seo
+        title={seo.title}
+        description={seo.description}
+        keywords={seo.keywords}
+        canonical={canonical}
+        robots="index, follow, max-image-preview:large, max-snippet:-1"
+        siteName="Book A Sloth"
+        locale="en_IN"
+        themeColor="#334155"
+        ogTitle={seo.ogTitle}
+        ogDescription={seo.ogDescription}
+        jsonLd={jsonLd}
+      />
 
-      {/* ═══════════════ 1 · NAV ═══════════════ */}
+      {/* ═══════════════ 1 · NAV (shared shell) ═══════════════ */}
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
           <Link to="/" className="flex items-center gap-2 hover:no-underline" aria-label="Book A Sloth — home">
             <img src="/favicon.svg" alt="" className="h-7 w-7 rounded-md" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            <span className="text-[15px] font-extrabold tracking-tight text-[color:var(--ar-ink)]">Book A Sloth</span>
+            <span className="font-heading text-[15px] font-extrabold tracking-tight text-[color:var(--ca-ink)]">Book A Sloth</span>
           </Link>
-          <nav className="hidden items-center gap-7 lg:flex">
-            {NAV.map((item) => <NavLink key={item.label} item={item} className="text-sm font-medium text-neutral-600 transition-colors hover:text-[color:var(--ar-ink)] hover:no-underline" />)}
+          <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
+            {NAV.map((item) => (
+              <NavLink key={item.label} item={item} className="text-sm font-medium text-slate-600 transition-colors hover:text-[color:var(--ca-ink)] hover:no-underline" />
+            ))}
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
-            <Link to={LOGIN} className="text-sm font-semibold text-neutral-700 hover:text-[color:var(--ar-ink)] hover:no-underline">Login</Link>
-            <CtaButton to={START} className="!px-5 !py-2.5">Start for Free <ArrowRight size={15} /></CtaButton>
+            <Link to={LOGIN} className="text-sm font-semibold text-slate-700 hover:text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
+            <CtaButton to={START} className="!px-5 !py-2.5">Start Free <ArrowRight size={15} /></CtaButton>
           </div>
-          <button type="button" className="lg:hidden" aria-label="Menu" onClick={() => setMenuOpen((v) => !v)}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>
+          <button type="button" className="lg:hidden" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
-        {menuOpen && (
-          <div className="ar-fade overflow-hidden border-t border-black/5 bg-white lg:hidden">
-            <div className="flex flex-col gap-1 px-5 py-4">
-              {NAV.map((item) => <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-neutral-700 hover:bg-[color:var(--ar-cream)] hover:no-underline" />)}
-              <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-3">
-                <Link to={LOGIN} className="flex-1 rounded-[5px] border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--ar-ink)] hover:no-underline">Login</Link>
-                <CtaButton to={START} className="flex-1">Start for Free <ArrowRight size={15} /></CtaButton>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-black/5 bg-white lg:hidden">
+              <div className="flex flex-col gap-1 px-5 py-4">
+                {NAV.map((item) => (
+                  <NavLink key={item.label} item={item} onClick={() => setMenuOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-slate-700 hover:bg-[color:var(--ca-cream)] hover:no-underline" />
+                ))}
+                <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-3">
+                  <Link to={LOGIN} className="flex-1 rounded-[6px] border-2 border-black/10 py-2.5 text-center text-sm font-semibold text-[color:var(--ca-ink)] hover:no-underline">Login</Link>
+                  <CtaButton to={START} className="flex-1">Start Free <ArrowRight size={15} /></CtaButton>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* ═══════════════ 2 · HERO (blueprint) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-14 pt-8 sm:px-8 sm:pb-20 sm:pt-12 lg:pb-28 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ar-cream) 0%, #ffffff 100%)' }}>
-        {/* decorative blueprint bg */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-0">
-          <div className="bg-blueprint absolute inset-x-0 top-0 h-[520px] opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
-          <div className="absolute -top-40 left-1/2 h-[520px] w-[860px] -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(closest-side, rgba(168,179,139,0.28), transparent)' }} />
+      {/* ═══════════════ 2 · HERO (blueprint-grid + framed drawing) ═══════════════ */}
+      <section id="top" className="relative overflow-hidden px-5 pb-16 pt-10 sm:px-8 lg:pb-24 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
+        {/* drafting grid + graphite blob (mix-blend-multiply) */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-x-0 top-0 h-[560px] opacity-70 [mask-image:linear-gradient(to_bottom,black,transparent)]" style={gridBg} />
+          <div className="absolute -left-24 -top-20 h-80 w-80 rounded-full blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(51,65,85,0.18), transparent)' }} />
         </div>
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="h1" instant className="text-[clamp(1.9rem,7vw,2.9rem)] leading-[1.08] tracking-[-0.02em] text-[color:var(--ar-ink)] sm:text-[2.9rem] sm:leading-[1.08] lg:text-[3.25rem]">
-              Booking &amp; scheduling software for{' '}
-              <span style={{ color: 'var(--ar-primary)' }}>architects</span>{' '}
-              &amp; interior designers.
+            <Reveal as="div" instant className="mb-5 inline-flex items-center gap-2 border px-3.5 py-1.5" style={{ borderColor: 'rgba(180,83,9,0.4)', background: 'color-mix(in srgb, var(--ca-accent) 6%, transparent)' }}>
+              <Compass size={13} style={{ color: 'var(--ca-accent)' }} />
+              <Eyebrow>For Architects &amp; Interior Designers</Eyebrow>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg lg:mx-0">
+            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3.05rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Booking &amp; scheduling software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>architects</span> &amp; interior designers.
+            </Reveal>
+            <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
               Let clients book consultations, site visits and reviews online — pay your fee upfront, get automatic WhatsApp reminders, and keep your whole studio in one clear diary.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-6 flex flex-col items-center gap-3 sm:mt-9 sm:flex-row sm:gap-5 lg:justify-start">
-              <Link to={START} className="btn flex w-full items-center justify-center gap-2 rounded-[5px] px-7 py-3.5 text-sm font-semibold text-white shadow-[0_10px_30px_-8px_rgba(35,65,47,0.6)] transition-opacity hover:opacity-90 hover:no-underline sm:w-auto" style={{ background: 'var(--ar-primary)' }}>
-                Create a Free Account <ArrowRight size={16} />
+            <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
+              <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
+              <Link to={DEMO} className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-accent)] hover:no-underline">
+                See a 2-min Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <a href="#how" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ar-ink)] transition-colors hover:text-[color:var(--ar-primary)] hover:no-underline">
-                <Play size={15} className="fill-current" /> How it works
-              </a>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:mt-9 lg:justify-start">
-              {HERO_TRUST.map((t) => <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-500"><Check size={14} style={{ color: 'var(--ar-accent)' }} /> {t}</span>)}
+            <Reveal instant delay={0.14} className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
+              {HERO_TRUST.map((t) => (
+                <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-slate-500">
+                  <Check size={14} style={{ color: 'var(--ca-accent)' }} /> {t}
+                </span>
+              ))}
             </Reveal>
           </div>
-          <Reveal instant delay={0.1} className="relative">
-            <BlueprintPlan className="pointer-events-none absolute right-[2%] top-1/2 w-[min(520px,92%)] -translate-y-1/2 -rotate-2 opacity-40" />
-            <img src="/for/architects/architect.webp" alt="Book A Sloth — booking software for architects and interior designers" loading="eager" fetchpriority="high" decoding="async" width="760" height="760" className="relative z-10 mx-auto h-auto w-full max-w-[30rem] drop-shadow-[0_28px_44px_rgba(35,65,47,0.18)]" />
-            {/* floating glass cards — mirrors the homepage hero */}
-            <GlassCard icon={CalendarCheck} label="New booking" value="Consultation · Fri 4:30" float="ar-float" className="hidden sm:flex top-8 sm:-left-6" />
-            <GlassCard icon={Wallet} label="Payment received" value="₹1,500" accent float="ar-float ar-float--mid" className="hidden sm:flex top-1/2 sm:-right-4" />
-            <GlassCard icon={BellRing} label="Site visit" value="Tomorrow · 10:30" float="ar-float ar-float--slow" className="hidden sm:flex bottom-6 sm:left-4" />
+
+          {/* RIGHT — real hero image framed like a drawing sheet + floating card */}
+          <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
+            <Framed
+              src="/for/architects/architect.webp"
+              alt="Book A Sloth booking software shown on screen for an architecture and interior-design studio"
+              label="Fig. 01 · Studio Booking"
+              priority
+              className="shadow-[0_28px_60px_-30px_rgba(26,34,48,0.5)]"
+              imgClassName="aspect-square"
+            />
+            <div className="absolute -bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 border bg-white px-4 py-3 shadow-[0_18px_40px_-18px_rgba(26,34,48,0.55)]" style={{ borderColor: 'rgba(26,34,48,0.12)' }}>
+              <span className="flex h-9 w-9 items-center justify-center rounded-[6px] text-white" style={{ background: 'var(--ca-primary)' }}><CalendarCheck size={17} /></span>
+              <div>
+                <div className="text-[11px] text-slate-500">Consultation booked</div>
+                <div className="text-sm font-bold text-[color:var(--ca-ink)]">Site visit · Fri 4:30</div>
+              </div>
+            </div>
           </Reveal>
         </div>
 
-        <div className="relative mx-auto mt-12 grid max-w-7xl gap-3 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+        {/* benefit strip */}
+        <div className="relative mx-auto mt-16 grid max-w-7xl gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {BENEFITS.map((b, i) => (
             <Reveal key={b.title} delay={(i % 4) * 0.06}>
-              <div className="group flex h-full flex-col rounded-[10px] border border-black/[0.06] bg-white p-4 transition-colors hover:border-[color:var(--ar-primary)]/30">
+              <div className="flex h-full flex-col bg-white p-4 transition-colors hover:border-[color:var(--ca-accent)]" style={{ border: '1px solid rgba(26,34,48,0.1)' }}>
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' }}>
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[6px]" style={{ background: 'color-mix(in srgb, var(--ca-primary) 8%, transparent)', color: 'var(--ca-primary)' }}>
                     <b.icon size={18} />
                   </span>
-                  <div className="text-sm font-bold text-[color:var(--ar-ink)]">{b.title}</div>
+                  <div className="text-sm font-bold text-[color:var(--ca-ink)]">{b.title}</div>
                 </div>
-                <p className="mt-2 text-xs leading-snug text-neutral-500">{b.desc}</p>
+                <p className="mt-2 text-xs leading-snug text-slate-500">{b.desc}</p>
               </div>
             </Reveal>
           ))}
         </div>
       </section>
 
-      {/* ═══════════════ 3 · USE CASES ═══════════════ */}
-      <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ar-grey)' }}>
+      {/* ═══════════════ 3 · SERVICES (spec-sheet cards + project gallery) ═══════════════ */}
+      <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">
-              Every client meeting your studio runs, <span style={{ color: 'var(--ar-primary)' }}>in one place.</span>
+            <Reveal as="div"><Eyebrow>Services · Spec Sheet</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Every client meeting your studio runs, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
             </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">From discovery calls to site visits and handovers, take every booking online.</Reveal>
-          </div>
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {USE_CASES.map((u, i) => <Reveal key={u.label} delay={(i % 4) * 0.05}><UseCaseCard u={u} /></Reveal>)}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ 3b · SERVICES (photo project-type cards) ═══════════════ */}
-      <section id="services" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'linear-gradient(180deg, var(--ar-ink), var(--ar-primary))' }}>
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl leading-tight tracking-tight text-white sm:text-4xl">
-              Whatever you design, <span style={{ color: 'var(--ar-sage)' }}>take the booking online.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-4 text-base text-white/70">From interiors to landscapes, set up a service for every kind of work you take on.</Reveal>
-          </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {SERVICES.map((s, i) => <Reveal key={s.title} delay={(i % 4) * 0.06}><ServiceCard s={s} /></Reveal>)}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ 4 · HOW IT WORKS ═══════════════ */}
-      <section id="how" className="px-5 pb-10 pt-20 sm:px-8 lg:pb-14 lg:pt-28" style={{ background: 'var(--ar-grey)' }}>
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">
-              From link to paid. <span style={{ color: 'var(--ar-primary)' }}>In three steps.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.06} className="mt-3 text-base text-neutral-500">No app to install, no code to ship. Just three small steps.</Reveal>
-          </div>
-          <HowItWorks steps={STEPS} />
-        </div>
-      </section>
-
-      {/* ═══════════════ 5 · INTEGRATIONS ═══════════════ */}
-      <section id="features" className="px-5 pb-20 pt-6 sm:px-8 lg:pb-28 lg:pt-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">Works with the tools you already use.</Reveal>
-            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">Connect your calendar, meetings, payments and WhatsApp — Book A Sloth fits your workflow, no rewiring.</Reveal>
-          </div>
-          <div className="mt-12"><IntegrationHub /></div>
-          <Reveal delay={0.1} className="mt-10 text-center text-sm text-neutral-500">
-            Plus 2,000+ more tools through our API and Zapier —{' '}
-            <Link to="/pricing" className="inline-flex items-center gap-1 font-semibold hover:no-underline" style={{ color: 'var(--ar-primary)' }}>Explore integrations <ArrowUpRight size={14} /></Link>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ═══════════════ 6 · REAL IMPACT, REAL NUMBERS (ditto layout) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ar-cream)' }}>
-        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(60% 50% at 50% 0%, color-mix(in srgb, var(--ar-sage) 14%, transparent), transparent)' }} />
-        <div className="relative mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">Real impact, <span style={{ color: 'var(--ar-primary)' }}>real numbers.</span></Reveal>
-            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">Small stats, big difference — what actually changes when your studio goes live with Book A Sloth.</Reveal>
-          </div>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {IMPACT_STATS.map((s, i) => (
-              <Reveal key={s.value} delay={i * 0.08}>
-                <div className="group relative flex h-full flex-col overflow-hidden rounded-[16px] border border-black/[0.06] bg-white p-7 pt-8 shadow-[0_2px_6px_rgba(35,65,47,0.04),0_16px_32px_rgba(35,65,47,0.07)]">
-                  {/* accent top bar */}
-                  <span aria-hidden className="absolute inset-x-0 top-0 h-1.5" style={{ background: 'linear-gradient(90deg, var(--ar-primary), var(--ar-sage))' }} />
-                  <div className="flex items-start justify-between">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' }}><s.icon size={20} /></span>
-                    <Sparkles size={16} className="transition-transform duration-500 group-hover:rotate-45" style={{ color: 'var(--ar-sage)' }} />
-                  </div>
-                  <p className="mt-6 font-display text-4xl leading-none tracking-tight sm:text-5xl" style={{ color: 'var(--ar-ink)' }}>{s.value}</p>
-                  <div className="mt-3 text-sm font-bold text-[color:var(--ar-ink)]">{s.label}</div>
-                  <p className="mt-1 text-sm leading-relaxed text-neutral-500">{s.desc}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal delay={0.12} className="mt-6">
-            <div className="relative overflow-hidden rounded-[20px] p-8 text-white sm:p-10" style={{ background: 'linear-gradient(140deg, var(--ar-primary), var(--ar-ink))' }}>
-              <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--ar-sage) 45%, transparent), transparent 70%)' }} />
-              <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-                <div>
-                  <div className="mb-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-white/70"><Sparkles size={13} /> Book A Sloth</div>
-                  <h3 className="text-xl font-bold text-white sm:text-2xl">Join the studios that never chase a booking.</h3>
-                  <p className="mt-2 max-w-xl text-white/75">Book more, no-show less, and keep your diary full — one simple page.</p>
-                </div>
-                <Link to={START} className="inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ar-primary)' }}>Create your free page <ArrowRight size={16} /></Link>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ═══════════════ 7 · BUILT FOR A STUDIO ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" delay={0.05} className="text-3xl leading-tight tracking-tight sm:text-4xl">
-              Built for the way a <span style={{ color: 'var(--ar-primary)' }}>studio actually runs.</span>
-            </Reveal>
-            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
-              A scheduling tool for your practice — so you spend less time arranging meetings and more time designing.
+            <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
+              From discovery calls to site visits and handovers — each service with its own duration, fee and availability.
             </Reveal>
           </div>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {STUDIO_FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={(i % 4) * 0.06}>
-                <div className="flex h-full flex-col rounded-[16px] p-6 text-white" style={{ background: 'linear-gradient(155deg, var(--ar-primary), var(--ar-ink))' }}>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: 'rgba(255,255,255,0.16)', color: '#fff' }}><f.icon size={20} /></span>
-                  <h3 className="mt-4 text-[15px] font-bold text-white">{f.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-white/75">{f.desc}</p>
+            {SERVICES.map((s, i) => (
+              <Reveal key={s.label} delay={(i % 4) * 0.05}><SpecCard s={s} i={i} /></Reveal>
+            ))}
+          </div>
+
+          {/* project-type gallery — REAL images framed as drawings */}
+          <div className="mt-16">
+            <Reveal as="div" className="flex items-end justify-between gap-4 border-b pb-3" style={{ borderColor: 'rgba(26,34,48,0.14)' }}>
+              <Eyebrow>Drawing Set · Whatever You Design</Eyebrow>
+              <span className="font-mono text-[11px] text-slate-400">04 / 04</span>
+            </Reveal>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {PROJECT_TYPES.map((p, i) => (
+                <Reveal key={p.label} delay={(i % 4) * 0.06}>
+                  <figure className="flex h-full flex-col">
+                    <Framed
+                      src={p.img}
+                      alt={`${p.label} — ${p.meta}, a project type an architecture or interior-design studio takes bookings for on Book A Sloth`}
+                      label={`Type 0${i + 1}`}
+                      imgClassName="aspect-[4/3]"
+                    />
+                    <figcaption className="mt-4">
+                      <h3 className="font-heading text-[15px] font-bold text-[color:var(--ca-ink)]">{p.label}</h3>
+                      <span aria-hidden className="mt-1.5 block h-[3px] w-8" style={{ background: 'var(--ca-accent)' }} />
+                      <p className="mt-2 text-[13px] leading-relaxed text-slate-500">{p.desc}</p>
+                    </figcaption>
+                  </figure>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 4 · HOW IT WORKS (project-phases track / dimension line) ═══════════════ */}
+      <section id="how" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="div"><Eyebrow>Project Phases</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              From link to paid, <span style={{ color: 'var(--ca-primary)' }}>in three phases.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">No app to install, no code to ship — just three small steps.</Reveal>
+          </div>
+
+          <div className="relative mt-16">
+            {/* ruled dimension baseline (behind the phase markers) */}
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-7 hidden md:block">
+              <div className="relative mx-[8.333%] h-px" style={{ background: 'rgba(26,34,48,0.28)' }}>
+                {/* end caps */}
+                <span className="absolute -left-px -top-1.5 h-3.5 w-px" style={{ background: 'rgba(26,34,48,0.28)' }} />
+                <span className="absolute -right-px -top-1.5 h-3.5 w-px" style={{ background: 'rgba(26,34,48,0.28)' }} />
+                {/* phase ticks */}
+                {['16.667%', '50%', '83.333%'].map((c) => (
+                  <span key={c} className="absolute -top-1.5 h-3.5 w-px" style={{ left: c, background: 'var(--ca-accent)' }} />
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-12 md:grid-cols-3 md:gap-6">
+              {STEPS.map((s, i) => (
+                <Reveal key={s.title} delay={i * 0.1} className="relative text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[8px] font-mono text-lg font-bold text-white shadow-[0_10px_24px_-12px_rgba(26,34,48,0.8)] ring-[6px] ring-[color:var(--ca-cream)]" style={{ background: 'var(--ca-primary)' }}>
+                    {s.step}
+                  </div>
+                  <div className="mt-5 flex items-center justify-center gap-2">
+                    <s.icon size={16} style={{ color: 'var(--ca-accent)' }} />
+                    <Eyebrow>{`Phase ${s.step}`}</Eyebrow>
+                  </div>
+                  <h3 className="mt-2 font-heading text-lg font-bold text-[color:var(--ca-ink)]">{s.title}</h3>
+                  <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-slate-500">{s.desc}</p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 5 · INTEGRATIONS (real tool logos) ═══════════════ */}
+      <section id="features" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="div"><Eyebrow>Connections</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Works with the tools you <span style={{ color: 'var(--ca-primary)' }}>already use.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">
+              Connect your calendar, meetings, payments and WhatsApp — Book A Sloth fits your workflow, no rewiring.
+            </Reveal>
+          </div>
+          <div className="mt-12 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+            {TOOLS.map((t, i) => (
+              <Reveal key={t.name} delay={(i % 3) * 0.05}>
+                <div className="flex h-full items-center gap-3.5 bg-white px-4 py-4 transition-colors hover:border-[color:var(--ca-accent)]" style={{ border: '1px solid rgba(26,34,48,0.1)' }}>
+                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[6px] bg-[color:var(--ca-grey)]">
+                    {t.logo
+                      ? <img src={t.logo} alt={`${t.name} logo`} loading="lazy" className="h-6 w-6 object-contain" />
+                      : t.lucide
+                        ? <t.lucide size={22} style={{ color: 'var(--ca-primary)' }} />
+                        : <ToolLogo name={t.icon} size={24} className="h-6 w-6" />}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold leading-tight text-[color:var(--ca-ink)]">{t.name}</div>
+                    <div className="mt-0.5 text-xs leading-snug text-slate-500">{t.sub}</div>
+                  </div>
                 </div>
               </Reveal>
             ))}
           </div>
+          <Reveal delay={0.1} className="mt-10 text-center text-sm text-slate-500">
+            Plus 2,000+ more tools through our API and Zapier —{' '}
+            <Link to="/pricing" className="inline-flex items-center gap-1 font-semibold hover:no-underline" style={{ color: 'var(--ca-accent)' }}>
+              Explore integrations <ArrowUpRight size={14} />
+            </Link>
+          </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 7b · TESTIMONIALS (studio owners about Book A Sloth) ═══════════════ */}
-      <section id="testimonials" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ar-grey)' }}>
+      {/* ═══════════════ 6 · IMPACT (drawing title-block readout) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-ink)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">
-              What studios say about <span style={{ color: 'var(--ar-primary)' }}>Book A Sloth.</span>
+            <Reveal as="div"><Eyebrow>Project Readout</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+              Real impact, <span style={{ color: 'var(--ca-accent)' }}>real numbers.</span>
             </Reveal>
-            <Reveal as="p" delay={0.08} className="mt-3 text-base text-neutral-500">
+            <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-white/60">
+              Small stats, big difference — what actually changes when your studio goes live with Book A Sloth.
+            </Reveal>
+          </div>
+          {/* title-block table: bordered grid with internal dividers */}
+          <Reveal delay={0.1} className="mt-12 overflow-hidden border border-white/15">
+            <div className="grid grid-cols-2 lg:grid-cols-4">
+              {IMPACT_STATS.map((s, i) => (
+                <div
+                  key={s.value}
+                  className="relative p-6 sm:p-7"
+                  style={{
+                    borderRight: '1px solid rgba(255,255,255,0.12)',
+                    borderBottom: '1px solid rgba(255,255,255,0.12)',
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-[6px]" style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--ca-accent)' }}><s.icon size={18} /></span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/35">{`0${i + 1}`}</span>
+                  </div>
+                  <div className="mt-5 font-heading text-4xl font-extrabold tracking-tight text-white sm:text-5xl">{s.value}</div>
+                  <div className="mt-2 text-sm font-bold text-white/90">{s.label}</div>
+                  <p className="mt-1.5 text-xs leading-snug text-white/55">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════ 7 · TESTIMONIALS (revision log / sign-off sheet) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Reveal as="div"><Eyebrow>Revision Log</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              What studios say about <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">
               Reviews from architecture and interior-design studios using Book A Sloth — about the software.
             </Reveal>
           </div>
-          <Reveal delay={0.1}><AnimatedTestimonials items={ARCHITECT_TESTIMONIALS} /></Reveal>
+          {/* the "sheet": bordered frame, ledger rows split into two columns */}
+          <Reveal delay={0.1} className="mt-12 border" style={{ borderColor: 'rgba(26,34,48,0.14)' }}>
+            <div className="grid md:grid-cols-2">
+              {TESTIMONIALS.map((t, i) => (
+                <figure
+                  key={t.name}
+                  className="flex flex-col justify-between gap-4 p-6 sm:p-7"
+                  style={{
+                    borderBottom: '1px solid rgba(26,34,48,0.1)',
+                    borderRight: i % 2 === 0 ? '1px solid rgba(26,34,48,0.1)' : undefined,
+                  }}
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>{`R-${String(i + 1).padStart(2, '0')}`}</span>
+                      <span className="flex gap-0.5">{[0, 1, 2, 3, 4].map((st) => <Star key={st} size={13} style={{ color: 'var(--ca-accent)', fill: 'var(--ca-accent)' }} />)}</span>
+                    </div>
+                    <blockquote className="mt-3 text-sm leading-relaxed text-slate-700">&ldquo;{t.quote}&rdquo;</blockquote>
+                  </div>
+                  <figcaption className="flex items-center gap-3 border-t pt-4" style={{ borderColor: 'rgba(26,34,48,0.08)' }}>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-[6px] text-sm font-bold text-white" style={{ background: 'var(--ca-primary)' }}>{t.name.charAt(0)}</span>
+                    <div>
+                      <div className="text-[13px] font-bold text-[color:var(--ca-ink)]">{t.name}</div>
+                      <div className="text-[11px] text-slate-500">{t.role}</div>
+                    </div>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 8 · THE BOOK A SLOTH DIFFERENCE (ditto with / without) ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ═══════════════ 8 · COMPARISON (ruled spec-comparison sheet) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" className="text-3xl leading-tight tracking-tight sm:text-4xl">The <span style={{ color: 'var(--ar-primary)' }}>Book A Sloth</span> difference.</Reveal>
-            <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">See how booking a consultation changes with and without Book A Sloth.</Reveal>
+            <Reveal as="div"><Eyebrow>Before / After Spec</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              The <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth</span> difference.
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-slate-500">
+              See how booking a consultation changes with and without Book A Sloth.
+            </Reveal>
           </div>
-          <div className="relative mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
-            {/* VS badge between the two comparison cards */}
-            <span aria-hidden className="absolute left-1/2 top-1/2 z-10 hidden h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[13px] font-extrabold uppercase tracking-wide text-white shadow-[0_12px_28px_-10px_rgba(35,65,47,0.8)] ring-4 ring-white sm:flex" style={{ background: 'var(--ar-primary)' }}>vs</span>
-            <Reveal>
-              <div className="h-full rounded-[16px] border border-black/[0.06] bg-white p-7">
-                <div className="text-sm font-bold uppercase tracking-wide text-neutral-400">Without Book A Sloth</div>
-                <ul className="mt-5 space-y-3.5">
+          <Reveal delay={0.1} className="mt-12 overflow-hidden border bg-white" style={{ borderColor: 'rgba(26,34,48,0.14)' }}>
+            <div className="grid sm:grid-cols-2">
+              {/* manual (light) */}
+              <div className="p-7 sm:p-9" style={{ borderBottom: '1px solid rgba(26,34,48,0.1)' }}>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Col. A — Manual</span>
+                  <span className="font-mono text-[11px] text-slate-300">Ø</span>
+                </div>
+                <ul className="mt-6 space-y-4">
                   {WITHOUT.map((w) => (
-                    <li key={w} className="flex items-start gap-3 text-[15px] text-neutral-500">
-                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-400"><X size={13} /></span>{w}
+                    <li key={w} className="flex items-start gap-3 text-[15px] text-slate-500">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-[5px] bg-slate-100 text-slate-400"><X size={13} /></span>
+                      {w}
                     </li>
                   ))}
                 </ul>
               </div>
-            </Reveal>
-            <Reveal delay={0.08}>
-              <div className="relative h-full overflow-hidden rounded-[16px] p-7 text-white shadow-[0_24px_55px_-28px_rgba(35,65,47,0.75)]" style={{ background: 'linear-gradient(150deg, var(--ar-primary), var(--ar-ink))' }}>
-                <div aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--ar-sage) 40%, transparent), transparent 70%)' }} />
-                <div className="relative text-sm font-bold uppercase tracking-wide text-white/80">With Book A Sloth</div>
-                <ul className="relative mt-5 space-y-3.5">
+              {/* with BAS (graphite) */}
+              <div className="relative overflow-hidden p-7 text-white sm:p-9" style={{ background: 'var(--ca-primary)' }}>
+                <div aria-hidden className="pointer-events-none absolute -right-12 -top-14 h-48 w-48 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(180,83,9,0.55), transparent)' }} />
+                <div className="relative flex items-center justify-between">
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Col. B — With Book A Sloth</span>
+                  <span className="font-mono text-[11px]" style={{ color: 'var(--ca-accent)' }}>✓</span>
+                </div>
+                <ul className="relative mt-6 space-y-4">
                   {WITH_BAS.map((w) => (
                     <li key={w} className="flex items-start gap-3 text-[15px] font-medium text-white">
-                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.16)', color: '#fff' }}><Check size={13} /></span>{w}
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-[5px]" style={{ background: 'var(--ca-accent)', color: '#fff' }}><Check size={13} /></span>
+                      {w}
                     </li>
                   ))}
                 </ul>
               </div>
-            </Reveal>
-          </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 9 · TRUST STRIP ═══════════════ */}
-      <section className="border-y border-black/5 px-5 py-12 sm:px-8" style={{ background: 'var(--ar-ink)' }}>
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 lg:grid-cols-4">
-          {TRUST_STRIP.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.06} className="text-center">
-              <s.icon size={20} className="mx-auto" style={{ color: 'var(--ar-sage)' }} />
-              <div className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{s.value}</div>
-              <p className="mx-auto mt-1.5 max-w-[14rem] text-xs leading-snug text-white/65">{s.label}</p>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════ 10 · PRICING ═══════════════ */}
+      {/* ═══════════════ 9 · PRICING (spec-sheet plan cards) ═══════════════ */}
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-4xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="h2" delay={0.05} className="text-3xl leading-tight tracking-tight sm:text-4xl">
-              Start small. <span style={{ color: 'var(--ar-primary)' }}>Grow as your studio does.</span>
+            <Reveal as="div"><Eyebrow>Plans</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Start small. <span style={{ color: 'var(--ca-primary)' }}>Grow as your studio does.</span>
             </Reveal>
-            <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">Choose a plan that fits your studio today. Upgrade when you need more.</Reveal>
           </div>
-          <Reveal delay={0.1} className="mt-8 flex items-center justify-center gap-3">
-            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--ar-ink)]' : 'text-neutral-500'}`}>Monthly</button>
-            <button type="button" role="switch" aria-checked={yearly} aria-label="Toggle monthly or yearly billing" onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ar-primary)' : '#d4d4d4', minHeight: 0 }}>
+          <Reveal delay={0.08} className="mt-8 flex items-center justify-center gap-3">
+            <button type="button" onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-[color:var(--ca-ink)]' : 'text-slate-500'}`}>Monthly</button>
+            <button type="button" role="switch" aria-checked={yearly} aria-label="Toggle monthly or yearly billing" onClick={() => setYearly((v) => !v)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: yearly ? 'var(--ca-primary)' : '#cbd5e1', minHeight: 0 }}>
               <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: yearly ? '22px' : '2px' }} />
             </button>
-            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ar-ink)]' : 'text-neutral-500'}`}>Yearly <span className="ml-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: 'rgba(35,65,47,0.1)', color: 'var(--ar-primary)' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span></span>
+            <span className={`text-sm font-semibold transition-colors ${yearly ? 'text-[color:var(--ca-ink)]' : 'text-slate-500'}`}>
+              Yearly <span className="ml-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: 'color-mix(in srgb, var(--ca-accent) 14%, transparent)', color: 'var(--ca-accent)' }}>Save {PREMIUM_ANNUAL_SAVE_PCT}%</span>
+            </span>
           </Reveal>
-          <div className="relative mx-auto mt-10 max-w-3xl">
-            <div className="relative grid gap-5 sm:grid-cols-2 sm:gap-6">
-              <Reveal>
-                <div className="flex h-full flex-col rounded-[18px] border border-black/[0.08] bg-white p-7">
-                  <div className="text-lg font-bold">{FREE_PLAN.name}</div>
-                  <p className="mt-1 text-sm text-neutral-500">Everything you need to get booked.</p>
-                  <div className="mt-6 flex items-end gap-1"><span className="pb-1.5 text-2xl font-bold">₹</span><span className="font-display text-5xl tracking-tight">0</span><span className="pb-2 text-sm text-neutral-500">/month</span></div>
-                  <p className="mt-1.5 text-xs font-semibold text-neutral-500">Free forever · 5% per booking</p>
-                  <ul className="mt-6 flex flex-col gap-3">
-                    {FREE_PLAN.features.slice(0, 5).map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ar-accent)' }} /><span>{f}</span></li>)}
-                  </ul>
-                  <CtaButton to={START} variant="ghost" className="mt-7 w-full">Get Started</CtaButton>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {/* Free */}
+            <Reveal>
+              <div className="flex h-full flex-col bg-white p-7" style={{ border: '1px solid rgba(26,34,48,0.14)' }}>
+                <Eyebrow>Plan A</Eyebrow>
+                <div className="mt-3 font-heading text-lg font-bold">{FREE_PLAN.name}</div>
+                <p className="mt-1 text-sm text-slate-500">Everything you need to get booked.</p>
+                <div className="mt-6 flex items-end gap-1">
+                  <span className="pb-1.5 text-2xl font-bold">₹</span>
+                  <span className="font-heading text-5xl font-extrabold tracking-tight">0</span>
+                  <span className="pb-2 text-sm text-slate-500">/month</span>
                 </div>
-              </Reveal>
-              <Reveal delay={0.08}>
-                <div className="relative flex h-full flex-col overflow-hidden rounded-[18px] p-7 text-white shadow-[0_28px_65px_-30px_rgba(35,65,47,0.8)]" style={{ background: 'linear-gradient(155deg, var(--ar-primary), var(--ar-ink))' }}>
-                  {/* billing-dependent ribbon: monthly → 0% commission, yearly → save % */}
-                  <div className="absolute right-5 top-0 flex items-center gap-1 rounded-b-lg px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ background: 'var(--ar-sage)', color: '#1B3327' }}><Sparkles size={11} /> {yearly ? `Save ${PREMIUM_ANNUAL_SAVE_PCT}%` : '0% commission'}</div>
-                  <div className="text-lg font-bold">{PREMIUM_PLAN.name}</div>
-                  <p className="mt-1 text-sm text-white/70">Keep every rupee. Automate the rest.</p>
-                  <div className="mt-6 flex items-end gap-1">
-                    <span className="pb-1.5 text-2xl font-bold">₹</span>
-                    <span className="font-display text-5xl tracking-tight">{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
-                    <span className="pb-2 text-sm text-white/60">/month</span>
-                    {yearly && <span className="pb-2 ml-1 text-sm text-white/50 line-through">₹{PREMIUM_PLAN.monthly}</span>}
-                  </div>
-                  <p className="mt-1.5 text-xs font-semibold text-white/60">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
-                  <ul className="mt-6 flex flex-col gap-3">
-                    <li className="flex items-start gap-2.5 text-sm font-semibold"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ar-sage)' }} /><span>Everything in Free</span></li>
-                    {PREMIUM_PLAN.features.slice(0, 4).map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-white/85"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ar-sage)' }} /><span>{f}</span></li>)}
-                  </ul>
-                  <Link to={START} className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-[5px] px-6 py-3.5 text-sm font-semibold hover:no-underline" style={{ background: 'var(--ar-sage)', color: '#1B3327' }}>Get Started Now <ArrowRight size={15} /></Link>
+                <p className="mt-1.5 text-xs font-semibold text-slate-500">Free forever · 5% per booking</p>
+                <ul className="mt-6 flex flex-col gap-3">
+                  {FREE_PLAN.features.slice(0, 5).map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
+                      <Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-accent)' }} /><span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <CtaButton to={START} variant="ghost" className="mt-7 w-full">Start on the Free Plan</CtaButton>
+              </div>
+            </Reveal>
+            {/* Premium */}
+            <Reveal delay={0.08}>
+              <div className="relative flex h-full flex-col overflow-hidden p-7 text-white shadow-[0_28px_65px_-32px_rgba(26,34,48,0.8)]" style={{ background: 'var(--ca-primary)' }}>
+                <div aria-hidden className="pointer-events-none absolute -right-12 -top-14 h-48 w-48 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(180,83,9,0.5), transparent)' }} />
+                <div className="relative flex items-center gap-2">
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'var(--ca-accent)' }}>Plan B</span>
+                  <span className="rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide" style={{ background: 'var(--ca-accent)', color: '#fff' }}>Recommended</span>
                 </div>
-              </Reveal>
-            </div>
+                <div className="relative mt-3 font-heading text-lg font-bold">{PREMIUM_PLAN.name}</div>
+                <p className="relative mt-1 text-sm text-white/70">Keep every rupee. Automate the rest.</p>
+                <div className="relative mt-6 flex items-end gap-1">
+                  <span className="pb-1.5 text-2xl font-bold">₹</span>
+                  <span className="font-heading text-5xl font-extrabold tracking-tight">{yearly ? Math.round(PREMIUM_PLAN.yearly / 12) : PREMIUM_PLAN.monthly}</span>
+                  <span className="pb-2 text-sm text-white/60">/month</span>
+                  {yearly && <span className="pb-2 ml-1 text-sm text-white/50 line-through">₹{PREMIUM_PLAN.monthly}</span>}
+                </div>
+                <p className="relative mt-1.5 text-xs font-semibold text-white/60">{yearly ? `Billed ₹${PREMIUM_PLAN.yearly.toLocaleString('en-IN')}/year · GST included` : 'Billed monthly · GST included'}</p>
+                <ul className="relative mt-6 flex flex-col gap-3">
+                  <li className="flex items-start gap-2.5 text-sm font-semibold"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-accent)' }} /><span>Everything in Free</span></li>
+                  {PREMIUM_PLAN.features.slice(0, 4).map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-white/85"><Check size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--ca-accent)' }} /><span>{f}</span></li>
+                  ))}
+                </ul>
+                <Link to={START} className="relative mt-7 inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-6 py-3.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-all hover:brightness-95 hover:no-underline" style={{ background: '#fff' }}>
+                  Go Sloth Active <ArrowRight size={15} />
+                </Link>
+              </div>
+            </Reveal>
           </div>
           <Reveal delay={0.12} className="mt-8 flex flex-col items-center gap-2 text-center">
-            <span className="flex items-center gap-1.5 text-sm text-neutral-500"><Lock size={14} style={{ color: 'var(--ar-accent)' }} /> Access to all features with no hidden fees</span>
-            <Link to="/pricing" className="text-sm font-semibold text-neutral-500 underline-offset-4 hover:text-[color:var(--ar-ink)] hover:underline">Compare every feature on the full pricing page</Link>
+            <span className="flex items-center gap-1.5 text-sm text-slate-500"><Lock size={14} style={{ color: 'var(--ca-accent)' }} /> Access to all features with no hidden fees</span>
+            <Link to="/pricing" className="text-sm font-semibold text-slate-500 underline-offset-4 hover:text-[color:var(--ca-ink)] hover:underline">
+              Compare every feature on the full pricing page
+            </Link>
           </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 11 · ABOUT ═══════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ar-cream)' }}>
+      {/* ═══════════════ 10 · ABOUT (editorial + trust facts + framed image) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="order-1 text-center lg:text-left">
-            <Reveal as="h2" delay={0.05} className="text-3xl leading-tight tracking-tight sm:text-4xl">We&apos;re on a mission to make studios <span style={{ color: 'var(--ar-primary)' }}>run calmer.</span></Reveal>
-            <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">
+            <Reveal as="div"><Eyebrow>About Book A Sloth</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              We&apos;re on a mission to make studios <span style={{ color: 'var(--ca-primary)' }}>run calmer.</span>
+            </Reveal>
+            <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">
               Great design work shouldn&apos;t get lost in scheduling. Book A Sloth was built so a studio can manage every client consultation, site visit and review from one calm platform — instead of stitching together calendars, WhatsApp, email threads and payment tools.
             </Reveal>
             <div className="mt-8 flex flex-col gap-5 text-left">
-              {[
-                { icon: Sparkles, title: 'Built for studios', desc: 'A booking page and diary shaped around how a design practice works.' },
-                { icon: BadgePercent, title: 'Honest pricing', desc: 'A free forever plan and 0% commission on Active — no hidden fees, ever.' },
-                { icon: MessageCircle, title: 'Real support', desc: 'A team in India by your side, from setup to your first booking.' },
-              ].map((f, i) => (
+              {ABOUT_FEATURES.map((f, i) => (
                 <Reveal key={f.title} delay={0.1 + i * 0.06} className="flex items-start gap-3.5">
-                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(111,140,93,0.14)', color: 'var(--ar-primary)' }}><f.icon size={18} /></span>
-                  <div><p className="text-[15px] font-bold text-[color:var(--ar-ink)]">{f.title}</p><p className="mt-0.5 text-sm leading-relaxed text-neutral-500">{f.desc}</p></div>
+                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[6px]" style={{ background: 'color-mix(in srgb, var(--ca-primary) 8%, transparent)', color: 'var(--ca-primary)' }}><f.icon size={18} /></span>
+                  <div>
+                    <p className="text-[15px] font-bold text-[color:var(--ca-ink)]">{f.title}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-slate-500">{f.desc}</p>
+                  </div>
                 </Reveal>
               ))}
             </div>
-            <Reveal delay={0.3} className="mt-8">
-              <Link to="/about" className="inline-flex items-center gap-2 rounded-[5px] px-6 py-3 text-sm font-semibold text-white hover:no-underline" style={{ background: 'var(--ar-primary)' }}>Learn more about Book A Sloth <ArrowRight size={16} /></Link>
+            {/* trust facts */}
+            <Reveal delay={0.28} className="mt-8 flex flex-wrap justify-center gap-2.5 lg:justify-start">
+              {TRUST_STRIP.map((it) => (
+                <span key={it.value} className="inline-flex items-center gap-2 border bg-white px-3.5 py-2 text-sm font-semibold text-[color:var(--ca-ink)]" style={{ borderColor: 'rgba(26,34,48,0.12)' }}>
+                  <it.icon size={15} style={{ color: 'var(--ca-accent)' }} /> {it.value}
+                </span>
+              ))}
+            </Reveal>
+            <Reveal delay={0.34} className="mt-8">
+              <CtaButton to="/about">Learn more about Book A Sloth <ArrowRight size={16} /></CtaButton>
             </Reveal>
           </div>
-          <Reveal className="relative order-2">
-            {/* framed blueprint sketch border */}
-            <div aria-hidden className="absolute inset-4 -rotate-2 rounded-[28px] border" style={{ borderColor: 'rgba(111,140,93,0.5)' }} />
-            <div aria-hidden className="absolute inset-2 rotate-1 rounded-[28px] border" style={{ borderColor: 'rgba(111,140,93,0.3)' }} />
-            <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: 'rgba(111,140,93,0.2)' }} />
-            <img src="/for/architects/about-archi.webp" alt="Book A Sloth for architecture and interior-design studios" loading="lazy" decoding="async" width="1100" height="1100" className="relative z-10 mx-auto h-auto w-full max-w-md object-contain drop-shadow-[0_24px_40px_rgba(35,65,47,0.16)]" />
+          <Reveal className="order-2">
+            <Framed
+              src="/for/architects/about-archi.webp"
+              alt="Book A Sloth, a calm booking platform for architecture and interior-design studios in India"
+              label="Fig. 02 · One Calm Diary"
+              className="mx-auto max-w-md"
+              imgClassName="aspect-square"
+            />
           </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 12 · FAQ ═══════════════ */}
+      {/* ═══════════════ 11 · FAQ (two-column accordion) ═══════════════ */}
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
-          <Reveal as="h2" className="text-center text-3xl leading-tight tracking-tight sm:text-4xl">Questions? <span style={{ color: 'var(--ar-primary)' }}>We&apos;ve got answers.</span></Reveal>
+          <div className="text-center">
+            <Reveal as="div"><Eyebrow>Queries</Eyebrow></Reveal>
+            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Questions? <span style={{ color: 'var(--ca-primary)' }}>We&apos;ve got answers.</span>
+            </Reveal>
+          </div>
           <div className="mt-12"><FaqAccordion /></div>
         </div>
       </section>
 
-      {/* ═══════════════ 13 · FINAL CTA ═══════════════ */}
-      <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-24" style={{ background: 'var(--ar-primary)' }}>
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="text-center lg:text-left">
-            <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl lg:mx-0" style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}><Zap size={26} className="text-white" /></Reveal>
-            <Reveal as="h2" delay={0.06} className="mt-6 text-3xl leading-tight tracking-tight text-white sm:text-4xl">Spend less time arranging meetings. Spend more time designing.</Reveal>
-            <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base text-white/70 lg:mx-0">Set up your booking page today and give your clients a simpler way to reach you.</Reveal>
-            <Reveal delay={0.14} className="mt-8">
-              <Link to={START} className="inline-flex items-center justify-center gap-2 rounded-[5px] bg-white px-8 py-4 text-sm font-semibold text-[color:var(--ar-primary)] transition-opacity hover:opacity-90 hover:no-underline">Start for Free <ArrowRight size={16} /></Link>
+      {/* ═══════════════ 12 · FINAL CTA (graphite + bronze mix-blend glow) ═══════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-24">
+        <div className="mx-auto max-w-6xl overflow-hidden" style={{ background: 'var(--ca-ink)' }}>
+          <div className="relative grid items-center gap-10 px-8 py-14 sm:px-12 lg:grid-cols-[1.1fr_0.9fr]">
+            <div aria-hidden className="pointer-events-none absolute -left-16 -top-16 h-72 w-72 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(180,83,9,0.55), transparent)' }} />
+            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(circle_at_20%_20%,black,transparent_60%)]" style={gridBg} />
+            <div className="relative text-center lg:text-left">
+              <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-[8px] lg:mx-0" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <Zap size={26} style={{ color: 'var(--ca-accent)' }} />
+              </Reveal>
+              <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-[clamp(1.8rem,4.5vw,2.5rem)] font-extrabold leading-[1.1] tracking-tight text-white">
+                Spend less time arranging meetings. Spend more time designing.
+              </Reveal>
+              <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/70 lg:mx-0">
+                Set up your studio&apos;s booking page today — free forever, ready to share in minutes.
+              </Reveal>
+              <Reveal delay={0.14} className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4 lg:justify-start">
+                <Link to={START} className="inline-flex items-center justify-center gap-2 rounded-[6px] bg-white px-7 py-3.5 text-sm font-bold text-[color:var(--ca-ink)] transition-shadow hover:shadow-[0_18px_44px_-10px_rgba(0,0,0,0.5)] hover:no-underline">
+                  Launch My Studio Page — Free <ArrowRight size={16} />
+                </Link>
+                <Link to={DEMO} className="inline-flex items-center justify-center gap-2 rounded-[6px] border-2 border-white/25 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline">
+                  Book A Demo
+                </Link>
+              </Reveal>
+              <Reveal delay={0.18} className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 lg:justify-start">
+                {['No credit card', 'Free forever', '0% on Sloth Active'].map((t) => (
+                  <span key={t} className="flex items-center gap-1.5 text-[13px] font-medium text-white/70"><Check size={14} style={{ color: 'var(--ca-accent)' }} /> {t}</span>
+                ))}
+              </Reveal>
+            </div>
+            <Reveal delay={0.1} className="relative hidden lg:block">
+              <img
+                src="/for/architects/choose-archi.webp"
+                alt="An architect choosing Book A Sloth to schedule studio consultations"
+                loading="lazy"
+                decoding="async"
+                className="mx-auto h-auto w-full max-w-sm object-contain drop-shadow-[0_28px_44px_rgba(0,0,0,0.4)]"
+              />
             </Reveal>
-            <Reveal as="p" delay={0.18} className="mt-4 text-xs text-white/70">No credit card required</Reveal>
           </div>
-          <Reveal delay={0.1} className="hidden lg:block">
-            <img src="/for/architects/choose-archi.webp" alt="" loading="lazy" decoding="async" width="1100" height="1100" className="mx-auto h-auto w-full max-w-sm object-contain drop-shadow-[0_28px_44px_rgba(0,0,0,0.3)]" />
-          </Reveal>
         </div>
       </section>
 
-      {/* ═══════════════ 14 · FOOTER ═══════════════ */}
+      {/* ═══════════════ 13 · FOOTER (shared shell) ═══════════════ */}
       <footer className="border-t border-black/5 px-5 py-16 sm:px-8" style={{ background: '#ffffff' }}>
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
             <div>
-              <div className="text-lg font-extrabold text-[color:var(--ar-ink)]">Book A Sloth</div>
-              <p className="mt-2 max-w-xs text-sm text-neutral-500">The simpler way to manage appointments.</p>
-              <CtaButton to={START} className="mt-5">Start for Free <ArrowRight size={15} /></CtaButton>
+              <div className="font-heading text-lg font-extrabold text-[color:var(--ca-ink)]">Book A Sloth</div>
+              <p className="mt-2 max-w-xs text-sm text-slate-500">The simpler way to manage your studio&apos;s appointments.</p>
+              <CtaButton to={START} className="mt-5">Create Your Page — Free <ArrowRight size={15} /></CtaButton>
             </div>
             {FOOTER_COLS.map((col) => (
               <div key={col.title}>
-                <div className="text-xs font-bold uppercase tracking-wide text-neutral-600">{col.title}</div>
+                <div className="text-xs font-bold uppercase tracking-wide text-slate-600">{col.title}</div>
                 <ul className="mt-4 space-y-2.5">
-                  {col.links.map((l) => <li key={l.label}><NavLink item={l} className="text-sm text-neutral-600 transition-colors hover:text-[color:var(--ar-primary)] hover:no-underline" /></li>)}
+                  {col.links.map((l) => (
+                    <li key={l.label}>
+                      <NavLink item={l} className="text-sm text-slate-600 transition-colors hover:text-[color:var(--ca-accent)] hover:no-underline" />
+                    </li>
+                  ))}
                 </ul>
               </div>
             ))}
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-black/5 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-neutral-500">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
-            <p className="text-xs text-neutral-500">Made for India&apos;s architects &amp; designers</p>
+            <p className="text-xs text-slate-500">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+            <p className="text-xs text-slate-500">Made for India&apos;s architects &amp; interior designers</p>
           </div>
         </div>
       </footer>
