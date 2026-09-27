@@ -66,7 +66,8 @@ describe('ServiceBooking — loading/error', () => {
   test('shows loading state while loading', () => {
     getServiceBySlug.mockReturnValueOnce(new Promise(() => {}));
     renderBooking();
-    expect(document.querySelector('.animate-pulse')).toBeTruthy();
+    // Redesigned booking-entry loader: branded petal spinner + copy.
+    expect(screen.getByText(/setting up your booking/i)).toBeTruthy();
   });
 
   test('shows "Service not found" when API fails', async () => {
