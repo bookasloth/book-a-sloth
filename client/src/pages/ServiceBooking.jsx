@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   getServiceBySlug,
@@ -148,7 +148,7 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
       <div className="max-w-md mx-auto text-center py-2">
         <div className="mb-4 flex justify-center"><PetalSpinner size={40} color={tc} /></div>
         <h2 className="text-xl font-bold mb-1">Wrapping things up…</h2>
@@ -198,6 +198,8 @@ const DIAL_CODES = ["+91", "+1", "+44", "+971"];
 // Floating-label text input: label rests centered inside an empty field and
 // animates up onto the top border on focus / when filled. Uses the CSS `peer`
 // pattern — no extra JS. Focus color comes from the --tc var set on the step.
+// Floating label: label sits inside the empty field and animates up to the
+// border on focus / when filled.
 const FloatingInput = ({ id, label, type = "text", value, onChange, required, autoComplete }) => (
   <div className="relative">
     <input
@@ -208,7 +210,7 @@ const FloatingInput = ({ id, label, type = "text", value, onChange, required, au
       placeholder={label}
       value={value}
       onChange={onChange}
-      className="peer fb-input fb-input--sm !rounded-sm !border placeholder-transparent"
+      className="peer fb-input fb-input--sm !rounded-lg !border placeholder-transparent"
     />
     <label
       htmlFor={id}
@@ -326,6 +328,8 @@ const ServiceBooking = () => {
     pan: user?.billing_details?.pan || "",
   });
   const [stateOpen, setStateOpen] = useState(false); // state combobox dropdown
+  const [showBilling, setShowBilling] = useState(false); // reveal optional billing address / GSTIN / notes
+  const [resendIn, setResendIn] = useState(0); // OTP resend cooldown (seconds)
   const [invoiceRef, setInvoiceRef] = useState(null); // {id, token}
 
   const [otp, setOtp] = useState("");
@@ -708,6 +712,7 @@ const ServiceBooking = () => {
     try {
       await sendOtp({ email, phone: fullPhone, name: `${firstName} ${lastName}`.trim() });
       toast.success("Verification code sent to your WhatsApp!");
+      setResendIn(30);
       setStep("otp");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send code");
@@ -873,16 +878,63 @@ const ServiceBooking = () => {
     }
   };
 
-  // Derive theme color from host profile
-  const tc = host && isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
+  // The host's theme colour is only known after the fetch resolves, but the
+  // loading spinner paints before that. Seed it from a colour the profile page
+  // stashed for this slug so the spinner matches the host immediately; fall back
+  // to brand orange only for a cold direct link (never visited the profile).
+  const seededTheme = useMemo(() => {
+    try {
+      const c = sessionStorage.getItem(`bas_theme:${profileSlug}`);
+      return isValidHex(c) ? c : null;
+    } catch { return null; }
+  }, [profileSlug]);
+
+  // Derive theme color from host profile (seed → default while host loads).
+  const tc = host && isValidHex(host.theme_color)
+    ? host.theme_color
+    : (seededTheme || DEFAULT_THEME_COLOR);
   const textOnTheme = getContrastColor(tc);
   const borderColor = getPlanBorderColor(host?.plan || 'explorer');
 
+  // OTP resend cooldown tick.
+  useEffect(() => {
+    if (resendIn <= 0) return undefined;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
+
+  // Masked phone for the verify screen: dial code + last 4, middle dotted.
+  const maskedPhone = (() => {
+    const digits = String(phone || "").replace(/\D/g, "");
+    if (digits.length < 4) return fullPhone;
+    return `${dialCode} ${"•".repeat(Math.max(3, digits.length - 4))} ${digits.slice(-4)}`;
+  })();
+
+  // Once the host resolves, remember its theme colour so a refresh or a repeat
+  // booking paints the spinner in the host's colour from the first frame.
+  useEffect(() => {
+    if (host && isValidHex(host.theme_color)) {
+      try { sessionStorage.setItem(`bas_theme:${profileSlug}`, host.theme_color); } catch { /* private mode */ }
+    }
+  }, [host, profileSlug]);
+
   if (loading)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-        <img src="/favicon.svg" alt="" className="w-12 h-12 animate-pulse" />
-        <p className="text-sm text-gray-400">Getting things ready…</p>
+      <div className="min-h-screen flex flex-col items-center justify-center px-6"
+        style={{ background: `radial-gradient(circle at top, ${tc}0f, transparent 22rem), linear-gradient(180deg,#fffaf3,#faf7f1)` }}>
+        <style>{`@keyframes bkspin{to{transform:rotate(360deg)}}`}</style>
+        {/* Petal spinner — 8 rounded squares in one colour, stepped shades,
+            rotating as a wheel. Overlap at the centre deepens the shade. */}
+        <svg width="72" height="72" viewBox="0 0 100 100" role="img" aria-label="Loading"
+          style={{ animation: 'bkspin 1.1s linear infinite' }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <rect key={i} x="37" y="9" width="26" height="26" rx="9"
+              fill={tc} opacity={0.12 + i * 0.11}
+              transform={`rotate(${i * 45} 50 50)`} />
+          ))}
+        </svg>
+        <p className="mt-5 font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#111' }}>Setting up your booking</p>
+        <p className="mt-1 text-sm text-gray-400">Just a moment while we load the calendar…</p>
       </div>
     );
   if (!service)
@@ -931,7 +983,7 @@ const ServiceBooking = () => {
 
   return (
     <div
-      className="min-h-screen"
+      className="bk-page min-h-screen"
       style={{
         background:
           `radial-gradient(circle at top, ${tc}0f, transparent 22rem), linear-gradient(180deg, #fffaf3 0%, #faf7f1 100%)`,
@@ -939,6 +991,15 @@ const ServiceBooking = () => {
       }}
     >
       <style>{BAS_KEYFRAMES}</style>
+      {/* Focus affordance: the global fb-input focus draws a 6px green-grey ring.
+          Scope it to this page so booking inputs get a slim on-brand orange ring
+          + orange border instead. */}
+      <style>{`
+        .bk-page .fb-input:focus {
+          border-color: ${tc};
+          box-shadow: 0 0 0 3px color-mix(in srgb, ${tc} 22%, transparent);
+        }
+      `}</style>
       {host?.is_verified === false && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-sm text-amber-700">
           ⚠️ This creator is pending admin verification. Bookings may be subject to confirmation.
@@ -948,7 +1009,7 @@ const ServiceBooking = () => {
 
         {/* ── LEFT: Permanent Profile Sidebar (content collapsible, column stays put) ── */}
         <div className="lg:w-[300px] flex-shrink-0">
-          <div className="bg-white border border-gray-100 rounded overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
+          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
             {/* Header toggle */}
             <button
               onClick={() => setProfileOpen((o) => !o)}
@@ -990,35 +1051,56 @@ const ServiceBooking = () => {
                   )}
                 </div>
 
-                {/* Service details — name, price, duration only (icons in brand colour) */}
-                <div className="px-4 py-4 border-t text-left space-y-3">
-                  {/* Service name */}
-                  <div className="flex items-center gap-2.5">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
-                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                      <line x1="7" y1="7" x2="7.01" y2="7" />
-                    </svg>
-                    <span className="text-sm font-semibold text-gray-900 leading-snug">{service.title}</span>
-                  </div>
-                  {/* Price */}
-                  <div className="flex items-center gap-2.5">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
-                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
-                      <path d="M6 5h12M6 9h12M9 5c3 0 5 1.5 5 4s-2 4-5 4H6l6 6" />
-                    </svg>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {priceOnRequest ? "Price on request" : service.price === 0 ? "Free" : `₹${service.price}`}
+                {/* Service being booked — eyebrow, prominent title, then a clean
+                    price · duration · mode meta row. */}
+                <div className="px-4 py-4 border-t text-left">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400 mb-1.5">You're booking</div>
+                  <h3 className="text-[15px] font-bold text-gray-900 leading-snug">{service.title}</h3>
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-sm text-gray-600">
+                    <span className="font-bold" style={{ color: tc }}>
+                      {priceOnRequest ? "On request" : service.price === 0 ? "Free" : `₹${service.price}`}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300" />
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+                      </svg>
+                      {service.duration} min
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300" />
+                    <span className="flex items-center gap-1.5">
+                      {service.meeting_mode === "offline" ? (
+                        <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
+                      )}
+                      {service.meeting_mode === "offline" ? "In-person" : "Online"}
                     </span>
                   </div>
-                  {/* Duration */}
-                  <div className="flex items-center gap-2.5">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
-                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
-                      <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
-                    </svg>
-                    <span className="text-sm font-semibold text-gray-900">{service.duration} min</span>
-                  </div>
+                  {selectedDate && selectedTime && (
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t text-sm font-semibold text-gray-900">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: tc }} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></svg>
+                      {selectedDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })} · {formatTime(selectedTime)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Assurances — set expectations up front, reduce abandonment.
+                    Only claims we can stand behind (no reschedule-policy promise). */}
+                <div className="px-4 py-3 border-t space-y-2">
+                  {[
+                    'Instant confirmation',
+                    'Calendar invite + reminders',
+                    ...(isPaid ? ['Secure payment via Razorpay'] : []),
+                  ].map((t) => (
+                    <div key={t} className="flex items-center gap-2 text-xs text-gray-500">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#16A34A' }} fill="none"
+                        stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                      {t}
+                    </div>
+                  ))}
                 </div>
 
                 {/* View full profile */}
@@ -1041,30 +1123,43 @@ const ServiceBooking = () => {
 
         {/* ── RIGHT: Booking Engine ── */}
         <div className="flex-1 min-w-0 flex flex-col">
-          {/* Progress bar — icons only; solid brand + border when active, grey linear when not */}
-          <div className="mb-4 flex items-center w-full">
+          {/* Progress bar — only the ACTIVE step expands to a horizontal
+              icon + label pill; done steps stay a solid orange icon, upcoming
+              steps a grey icon. */}
+          <div className="mb-5 flex items-center w-full">
             {STEPS.map((s, i) => {
               const idx = STEPS.indexOf(step);
-              const active = i <= idx;
+              const active = i === idx;
               const done = i < idx;
               return (
                 <div key={s} className={`flex items-center ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-colors"
-                    style={active
-                      ? { background: tc, color: textOnTheme, borderColor: tc }
-                      : { background: '#fff', color: '#9ca3af', borderColor: '#d1d5db' }}
-                    title={LABELS[s]}
-                    aria-label={LABELS[s]}
-                  >
-                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor"
-                      strokeWidth={active ? 2.4 : 1.8}
-                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      {STEP_ICONS[s]}
-                    </svg>
-                  </div>
+                  {active ? (
+                    <div className="flex items-center gap-1.5 rounded-full pl-1 pr-2.5 h-7 flex-shrink-0"
+                      style={{ background: tc, color: textOnTheme }} aria-current="step" aria-label={LABELS[s]}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.22)" }}>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.4}
+                          strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{STEP_ICONS[s]}</svg>
+                      </span>
+                      <span className="text-xs font-semibold whitespace-nowrap">{LABELS[s]}</span>
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-colors"
+                      style={done
+                        ? { background: tc, color: textOnTheme, borderColor: tc }
+                        : { background: "#fff", color: "#9ca3af", borderColor: "#d1d5db" }}
+                      aria-label={LABELS[s]}>
+                      {done ? (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.6}
+                          strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8}
+                          strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{STEP_ICONS[s]}</svg>
+                      )}
+                    </div>
+                  )}
                   {i < STEPS.length - 1 && (
                     <div className="flex-1 h-0.5 mx-2 transition-colors"
-                      style={{ background: done ? tc : '#e5e7eb' }} />
+                      style={{ background: done ? tc : "#e5e7eb" }} />
                   )}
                 </div>
               );
@@ -1079,7 +1174,7 @@ const ServiceBooking = () => {
 
           {/* Payment verify failed after the instant move — smart by failure type */}
           {!finalizing && payError && (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ background: payError.type === "server" ? "#FEE2E2" : "#FEF3C7" }}>
@@ -1124,8 +1219,8 @@ const ServiceBooking = () => {
 
           {/* STEP: time */}
           {!finalizing && step === "time" && (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-5 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
-              <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-4">
                 <Link
                   to={`/${profileSlug}`}
                   className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-shrink-0"
@@ -1135,8 +1230,8 @@ const ServiceBooking = () => {
                   </svg>
                   Back to Services
                 </Link>
-                <div className="flex items-center gap-2 min-w-0">
-                  <h2 className="text-xl font-bold truncate">When works for you?</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg sm:text-xl font-bold">When works for you?</h2>
                   <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full flex-shrink-0">
                     {tzAbbr}
                   </span>
@@ -1255,23 +1350,38 @@ const ServiceBooking = () => {
                           )}
                           {timeSlots.length === 0 ? (
                             <div className="py-8 text-center bas-fade">
-                              <p className="text-sm font-medium text-gray-600">No open times that day 🦥</p>
+                              <p className="text-sm font-medium text-gray-600">No open times that day</p>
                               <p className="text-xs text-gray-400 mt-1">Try another date — there's bound to be a good one.</p>
                             </div>
                           ) : (
-                            <div className="grid grid-cols-3 gap-2 max-h-[276px] overflow-y-auto pr-1 bas-fade">
-                              {timeSlots.map((t) => (
-                                <button
-                                  key={t}
-                                  onClick={() => setSelectedTime(t)}
-                                  className="btn btn--outline py-2.5 text-sm transition-all"
-                                  style={selectedTime === t
-                                    ? { background: tc, color: textOnTheme, fontWeight: 600 }
-                                    : {}}
-                                >
-                                  {formatTime(t)}
-                                </button>
-                              ))}
+                            <div className="max-h-[300px] overflow-y-auto pr-1 bas-fade space-y-4">
+                              {[
+                                { label: "Morning",   test: (h) => h < 12 },
+                                { label: "Afternoon", test: (h) => h >= 12 && h < 17 },
+                                { label: "Evening",   test: (h) => h >= 17 },
+                              ].map((g) => {
+                                const items = timeSlots.filter((t) => g.test(parseInt(t.slice(0, 2), 10)));
+                                if (!items.length) return null;
+                                return (
+                                  <div key={g.label}>
+                                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">{g.label}</h4>
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {items.map((t) => (
+                                        <button
+                                          key={t}
+                                          onClick={() => setSelectedTime(t)}
+                                          className="btn btn--outline py-2.5 text-sm transition-all"
+                                          style={selectedTime === t
+                                            ? { background: tc, color: textOnTheme, fontWeight: 600 }
+                                            : {}}
+                                        >
+                                          {formatTime(t)}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </>
@@ -1286,83 +1396,109 @@ const ServiceBooking = () => {
                 </div>
               </div>
               {selectedTime && (
-                <button
-                  onClick={() => {
-                    analytics.track(EVENTS.BOOKING_STARTED, {
-                      service_id: service.id, host_id: host.id,
-                      price: Number(service.price) || 0,
-                    });
-                    setStep("details");
-                  }}
-                  className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85"
-                  style={{ background: tc, color: textOnTheme }}
-                >
-                  Continue →
-                </button>
+                <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t pt-4"
+                  style={{ borderColor: "#f0ece6" }}>
+                  <div className="text-sm text-gray-500">
+                    Selected{" "}
+                    <span className="font-bold text-gray-900">
+                      {DAYS_SHORT[selectedDate.getDay()]} {selectedDate.getDate()} {MONTHS[selectedDate.getMonth()]} · {formatTime(selectedTime)}
+                    </span>{" "}
+                    <span className="text-gray-400">({tzAbbr})</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      analytics.track(EVENTS.BOOKING_STARTED, {
+                        service_id: service.id, host_id: host.id,
+                        price: Number(service.price) || 0,
+                      });
+                      setStep("details");
+                    }}
+                    className="btn py-3 px-7 font-bold text-sm transition-opacity hover:opacity-85 flex-shrink-0"
+                    style={{ background: tc, color: textOnTheme }}
+                  >
+                    Continue →
+                  </button>
+                </div>
               )}
             </div>
           )}
 
           {/* STEP: details */}
           {!finalizing && step === "details" && (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]" style={{ "--tc": tc }}>
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <button
-                  onClick={() => setStep("time")}
-                  className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 flex-shrink-0 mt-1 font-medium"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Back
-                </button>
-                <div className="text-right">
-                  <h2 className="text-xl sm:text-2xl font-bold leading-tight">Tell us who's coming</h2>
-                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">We just need a few quick details to confirm your booking.</p>
-                </div>
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]" style={{ "--tc": tc }}>
+              <button
+                onClick={() => setStep("time")}
+                className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 font-medium mb-3"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
+              <div className="mb-5">
+                <h2 className="text-xl sm:text-2xl font-bold leading-tight">Tell us who's coming</h2>
+                <p className="text-sm text-gray-400 mt-1">We just need a few quick details to confirm your booking.</p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5">
                 {/* LEFT: Booking Summary — icon-chip card */}
                 <div className="order-2 lg:order-1">
-                  <div className="rounded border border-gray-200 bg-white">
+                  <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
                     <div className="p-4 space-y-0.5">
                       {/* Service */}
-                      <div className="flex items-center gap-3 py-2">
-                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                      <div className="flex items-center gap-3 py-2.5">
+                        <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
-                        <span className="font-semibold text-[10px] leading-snug">{service.title}</span>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm leading-snug text-gray-900">{service.title}</div>
+                        </div>
                       </div>
                       {/* Date */}
-                      <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                      <div className="flex items-center gap-3 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
+                        <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
-                        <span className="font-medium text-[10px]">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] text-gray-400 leading-none mb-0.5">Date</div>
+                          <div className="font-semibold text-sm text-gray-900">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</div>
+                        </div>
+                        <button type="button" onClick={() => setStep("time")} aria-label="Edit"
+                          className="flex items-center justify-center p-1 transition-opacity hover:opacity-70 shrink-0"
+                          style={{ color: tc }}>
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+                        </button>
                       </div>
                       {/* Time */}
-                      <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <div className="flex items-center gap-3 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
+                        <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </span>
-                        <span className="font-medium text-[10px]">
-                          {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
-                          <span className="text-gray-400 text-[9px] font-normal">({tzAbbr})</span>
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] text-gray-400 leading-none mb-0.5">Time</div>
+                          <div className="font-semibold text-sm text-gray-900">
+                            {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
+                            <span className="text-gray-400 text-xs font-normal">({tzAbbr})</span>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => setStep("time")} aria-label="Edit"
+                          className="flex items-center justify-center p-1 transition-opacity hover:opacity-70 shrink-0"
+                          style={{ color: tc }}>
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+                        </button>
                       </div>
                       {/* Platform fee */}
                       {isPaid && (
-                        <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
-                          <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        <div className="flex items-center gap-3 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
+                          <span className="flex items-center justify-center shrink-0 w-5" style={{ color: `color-mix(in srgb, ${tc} 50%, #111111)` }}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                           </span>
                           <span className="flex-1 flex items-center justify-between gap-2">
-                            <span className="text-[10px] text-gray-600 flex items-center gap-1.5">
+                            <span className="text-sm text-gray-600 flex items-center gap-1.5">
                               Platform Fee (₹{fees.platformFee} + GST)
                               <span className="relative group inline-flex">
                                 <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[10px] font-bold leading-none cursor-help"
-                                  style={{ background: tc }}>i</span>
+                                  style={{ background: "#9CA3AF" }}>i</span>
                                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 rounded-2xl bg-gray-950 text-white text-xs p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 shadow-2xl shadow-black/40 border border-white/10 backdrop-blur-sm">
                                   <span className="flex items-start gap-2.5">
                                     <svg className="w-3.5 h-3.5 mt-px shrink-0 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1a9 9 0 100 18A9 9 0 0010 1zm.75 13.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V5.5h1.5V11.5z"/></svg>
@@ -1372,14 +1508,17 @@ const ServiceBooking = () => {
                                 </span>
                               </span>
                             </span>
-                            <span className="font-semibold text-[10px]">₹{fees.bookingFee}</span>
+                            <span className="font-semibold text-sm text-gray-900">₹{fees.bookingFee}</span>
                           </span>
                         </div>
                       )}
                     </div>
                     {/* Total band */}
-                    <div className="flex items-center justify-between px-4 py-3 rounded-b" style={{ background: `${tc}17` }}>
-                      <span className="font-bold text-[16px]">Total Amount</span>
+                    <div className="flex items-center justify-between px-4 py-3.5" style={{ background: `${tc}17` }}>
+                      <div>
+                        <div className="font-bold text-[16px]">Total Amount</div>
+                        {!priceOnRequest && <div className="text-[11px] text-gray-500">Inclusive of all taxes</div>}
+                      </div>
                       <span className="font-bold text-[20px]" style={{ color: tc }}>
                         {priceOnRequest ? "Price on request" : isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
                       </span>
@@ -1390,14 +1529,14 @@ const ServiceBooking = () => {
                 {/* RIGHT: Customer Information — floating-label fields */}
                 <div className="order-1 lg:order-2 space-y-3.5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <FloatingInput id="bk-first" label="First Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
-                    <FloatingInput id="bk-last" label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
+                    <FloatingInput id="bk-first" label="First Name" required placeholder="e.g. Riya" value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
+                    <FloatingInput id="bk-last" label="Last Name" placeholder="e.g. Sharma" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <FloatingInput id="bk-email" label="Email Address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-                    {/* Mobile: country dial-code select + national number; sent as fullPhone. */}
+                  <div className="space-y-3.5">
+                    <FloatingInput id="bk-email" label="Email Address" type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                    {/* Mobile: floating label + country dial-code select + national number; sent as fullPhone. */}
                     <div className="relative">
-                      <div className="flex items-stretch rounded-sm border overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
+                      <div className="flex items-stretch rounded-lg border overflow-hidden focus-within:border-[color:var(--tc)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
                         <select
                           aria-label="Country code"
                           className="w-[64px] shrink-0 bg-gray-50 text-sm font-medium text-gray-700 border-r pl-2 pr-0.5 outline-none cursor-pointer"
@@ -1409,84 +1548,106 @@ const ServiceBooking = () => {
                             <option key={c} value={c}>{c}</option>
                           ))}
                         </select>
-                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-2 bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-2 bg-transparent outline-none text-sm" value={phone} onChange={(e) => setPhone(e.target.value)} />
                       </div>
                       <label htmlFor="bk-phone" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
                         Mobile Number<span style={{ color: "#e42527" }}> *</span>
                       </label>
+                      <p className="mt-1.5 text-xs text-gray-400">We'll send your booking details here.</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <FloatingInput id="bk-address" label="Address" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
-                    {/* Searchable state — dropdown only appears after 3 chars typed. */}
-                    <div className="relative">
-                      <input
-                        id="bk-state"
-                        placeholder="State"
-                        autoComplete="off"
-                        className="peer fb-input fb-input--sm !rounded-sm !border placeholder-transparent"
-                        value={billing.state}
-                        onFocus={() => setStateOpen(true)}
-                        onBlur={() => setTimeout(() => setStateOpen(false), 120)}
-                        onChange={(e) => {
-                          const name = e.target.value;
-                          const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
-                          setStateOpen(true);
-                          setBilling((b) => ({ ...b, state: name, state_code: code }));
-                        }}
-                      />
-                      {stateOpen && billing.state.trim().length >= 3 && (() => {
-                        const q = billing.state.trim().toLowerCase();
-                        const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
-                        if (!matches.length) return null;
-                        return (
-                          <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-sm border border-gray-100 bg-white py-1 shadow-lg">
-                            {matches.map((s) => (
-                              <li key={s.code}>
-                                <button
-                                  type="button"
-                                  className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
-                                  onMouseDown={(e) => e.preventDefault()}
-                                  onClick={() => {
-                                    setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
-                                    setStateOpen(false);
-                                  }}
-                                >
-                                  {s.name}
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        );
-                      })()}
-                      <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
-                        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
-                        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
-                        State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
-                      </label>
-                    </div>
+                  {/* State — place of supply for the GST invoice. Required for
+                      paid bookings, so it stays visible; the rest of the billing
+                      detail is optional and tucked behind the toggle below. */}
+                  <div className="relative">
+                    <input
+                      id="bk-state"
+                      placeholder="State"
+                      autoComplete="off"
+                      className="peer fb-input fb-input--sm !rounded-lg !border placeholder-transparent"
+                      value={billing.state}
+                      onFocus={() => setStateOpen(true)}
+                      onBlur={() => setTimeout(() => setStateOpen(false), 120)}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
+                        setStateOpen(true);
+                        setBilling((b) => ({ ...b, state: name, state_code: code }));
+                      }}
+                    />
+                    {stateOpen && billing.state.trim().length >= 3 && (() => {
+                      const q = billing.state.trim().toLowerCase();
+                      const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
+                      if (!matches.length) return null;
+                      return (
+                        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-100 bg-white py-1 shadow-lg">
+                          {matches.map((s) => (
+                            <li key={s.code}>
+                              <button
+                                type="button"
+                                className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
+                                  setStateOpen(false);
+                                }}
+                              >
+                                {s.name}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
+                    <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                      peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                      peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
+                      State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
+                    </label>
                   </div>
-                  {/* Optional GSTIN — full width, under Address/State */}
-                  <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
-                    onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
 
-                  {/* Notes — plain optional box, full width */}
+                  {/* GST toggle sits under State; its fields open full width below the grid. */}
+                  <button type="button" onClick={() => setShowBilling((v) => !v)}
+                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                    style={{ borderColor: "var(--color-line)" }}>
+                    <span className="relative inline-flex rounded-full transition-colors flex-shrink-0"
+                      style={{ width: 28, height: 16, background: showBilling ? tc : "#D1D5DB" }}>
+                      <span className="absolute rounded-full bg-white transition-all"
+                        style={{ top: 2, width: 12, height: 12, left: showBilling ? 14 : 2 }} />
+                    </span>
+                    Add GST Details
+                    <span className="text-xs text-gray-400">Optional</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* GST fields — open full width under both columns */}
+              {showBilling && (
+                <div className="mt-4 space-y-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <FloatingInput id="bk-address" label="Billing address" value={billing.address}
+                      onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
+                    <FloatingInput id="bk-gstin" label="GSTIN" value={billing.gstin}
+                      onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
+                  </div>
                   <div className="relative">
                     <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
-                      className="peer fb-input fb-input--sm !rounded-sm !border resize-none !min-h-0 !h-[88px]"
+                      className="peer fb-input fb-input--sm !rounded-lg !border resize-none !min-h-0 !h-[88px] placeholder-transparent"
                       value={notes} onChange={(e) => setNotes(e.target.value)} />
-                    <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                    <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                      peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                      peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
                       Notes <span className="font-normal text-gray-400">(Optional)</span>
                     </label>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Full-width Continue */}
               <button
                 onClick={handleSendOtp}
                 disabled={otpSending || verifying || !firstName || !email || (!user && !isPhoneValid) || (isPaid && !billing.state_code)}
-                className="btn mt-4 w-full py-2.5 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn mt-4 w-full py-2.5 font-bold text-sm transition-opacity hover:opacity-85 disabled:!bg-gray-200 disabled:!text-gray-500 disabled:cursor-not-allowed"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {otpSending || verifying
@@ -1505,7 +1666,7 @@ const ServiceBooking = () => {
 
           {/* STEP: otp */}
           {!finalizing && step === "otp" && (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <button
                 onClick={() => setStep("details")}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-6"
@@ -1527,22 +1688,20 @@ const ServiceBooking = () => {
               </button>
               <div className="max-w-md mx-auto text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ background: `${tc}18` }}>
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  style={{ color: tc }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                style={{ background: "#25D3661f" }}>
+                <svg className="w-8 h-8" fill="#25D366" viewBox="0 0 24 24">
+                  <path d="M17.5 14.4c-.3-.15-1.7-.84-2-.94s-.46-.15-.65.15-.75.94-.92 1.13-.34.22-.63.07a8.2 8.2 0 0 1-2.4-1.48 9 9 0 0 1-1.67-2.06c-.17-.3 0-.46.13-.6s.3-.35.44-.53a2 2 0 0 0 .3-.5.55.55 0 0 0 0-.52c-.08-.15-.65-1.56-.9-2.14s-.47-.48-.65-.49h-.56a1.06 1.06 0 0 0-.77.36 3.25 3.25 0 0 0-1 2.4 5.66 5.66 0 0 0 1.18 3 12.9 12.9 0 0 0 4.94 4.37c.69.3 1.23.48 1.65.61a4 4 0 0 0 1.82.11 3 3 0 0 0 2-1.39 2.44 2.44 0 0 0 .17-1.39c-.07-.13-.26-.2-.55-.35zM12 2a10 10 0 0 0-8.6 15.06L2 22l5.06-1.33A10 10 0 1 0 12 2z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold mb-2">Check your messages</h2>
+              <h2 className="text-xl font-bold mb-2">Check WhatsApp</h2>
               <p className="text-sm text-gray-500 mb-6">
-                We sent a 6-digit code to <strong>{fullPhone}</strong> on WhatsApp.
+                We sent a 6-digit code to <strong>{maskedPhone}</strong> on WhatsApp.
               </p>
               <OtpBoxes value={otp} onChange={setOtp} tc={tc} />
               <button
                 onClick={handleVerifyAndBook}
                 disabled={verifying || otp.length !== 6}
-                className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:!bg-gray-200 disabled:!text-gray-500 disabled:cursor-not-allowed"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {verifying
@@ -1551,12 +1710,19 @@ const ServiceBooking = () => {
                     ? "Verify & Continue to Payment"
                     : "Verify & Confirm Booking"}
               </button>
-              <button
-                onClick={handleSendOtp}
-                className="mt-3 text-xs text-gray-400 hover:text-gray-600"
-              >
-                Didn't receive it? Resend code
-              </button>
+              {resendIn > 0 ? (
+                <p className="mt-3 text-xs text-gray-400">
+                  Resend code in 0:{String(resendIn).padStart(2, "0")}
+                </p>
+              ) : (
+                <button
+                  onClick={handleSendOtp}
+                  className="mt-3 text-xs font-medium hover:opacity-70"
+                  style={{ color: tc }}
+                >
+                  Didn't receive it? Resend code
+                </button>
+              )}
               </div>{/* end max-w-md center wrapper */}
             </div>
           )}
@@ -1573,7 +1739,7 @@ const ServiceBooking = () => {
               ? Number(confirmation.customer_total)
               : Math.round((service.price + _fee + _gst) * 100) / 100;
             return (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ background: `${tc}18` }}>
@@ -1585,9 +1751,9 @@ const ServiceBooking = () => {
               </div>
               <h2 className="text-xl font-bold mb-2">One last step</h2>
               <p className="text-sm text-gray-500 mb-6">
-                Your spot's saved — pay now to lock it in. ⏳
+                Your spot's saved — pay now to lock it in.
               </p>
-              <div className="bg-gray-50 rounded p-4 text-sm text-left space-y-2 mb-6">
+              <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Service</span>
                   <span className="font-medium">{service.title}</span>
@@ -1631,14 +1797,17 @@ const ServiceBooking = () => {
               <button
                 onClick={handlePayment}
                 disabled={paymentLoading}
-                className="btn w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:!bg-gray-200 disabled:!text-gray-500 disabled:cursor-not-allowed"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {paymentLoading
                   ? "Opening payment..."
                   : `Pay ₹${checkoutTotal} with Razorpay`}
               </button>
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-gray-400 mt-3 flex items-center justify-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
                 Encrypted &amp; secured by Razorpay · UPI, Card &amp; Wallet accepted
               </p>
               <p className="text-[11px] text-gray-300 mt-1">
@@ -1708,7 +1877,7 @@ const ServiceBooking = () => {
             const docIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6" strokeLinejoin="round"/></svg>;
             const mailIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6" strokeLinecap="round" strokeLinejoin="round"/></svg>;
             return (
-            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-3xl mx-auto">
                 {/* Top: two columns — success message | booking details. Stacks on mobile. */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center">
@@ -1721,13 +1890,31 @@ const ServiceBooking = () => {
                     <p className="text-sm text-gray-500 mb-5 bas-fade">
                       See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
                     </p>
-                    <div className="flex items-center gap-3 border border-gray-100 rounded p-3 bg-gray-50/40 text-left">
+                    <div className="flex items-center gap-3 border border-gray-100 rounded-2xl p-3 bg-gray-50/40 text-left">
                       <span style={{ color: tc }}>{mailIcon}</span>
                       <span className="text-xs text-gray-500 leading-snug">Confirmation email sent to<br /><span className="text-gray-700 font-medium break-all">{email}</span></span>
                     </div>
+                    {/* How to join / reminders */}
+                    <div className="flex items-start gap-3 border border-gray-100 rounded-2xl p-3 bg-gray-50/40 text-left mt-3">
+                      <span className="mt-0.5" style={{ color: tc }}>
+                        {confirmation.meeting_link ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                        )}
+                      </span>
+                      <span className="text-xs text-gray-500 leading-snug">
+                        {confirmation.meeting_link ? (
+                          <><span className="text-gray-700 font-medium">How to join:</span> your meeting link is in the confirmation email and calendar invite. </>
+                        ) : (
+                          <><span className="text-gray-700 font-medium">Reminders:</span> </>
+                        )}
+                        We&rsquo;ll remind you 24h and 1h before.
+                      </span>
+                    </div>
                   </div>
                   {/* RIGHT: booking details */}
-                  <div className="border border-gray-100 rounded px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
+                  <div className="border border-gray-100 rounded-xl px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
                     <Row icon={calIcon} label="Service">{service.title}</Row>
                     <Row icon={calIcon} label="Date">{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</Row>
                     <Row icon={clockIcon} label="Time">{formatTime(selectedTime)} ({tzAbbr})</Row>

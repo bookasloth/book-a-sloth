@@ -849,7 +849,7 @@ const getServiceBySlug = async (req, res) => {
     const { data: host } = await supabaseAdmin
       .from("profiles")
       .select(
-        "id, name, username, tagline, profession, profile_image, cover_image, bio, location, social_links, badges, google_calendar_connected",
+        "id, name, username, tagline, profession, profile_image, cover_image, bio, location, social_links, badges, google_calendar_connected, theme_color, plan",
       )
       .eq("username", req.params.username)
       .eq("role", "host")
