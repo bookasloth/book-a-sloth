@@ -51,7 +51,12 @@ const loadEntries = async () => {
 
 const sendXml = (res, xml) => {
   res.set('Content-Type', 'application/xml; charset=utf-8');
-  res.set('Cache-Control', 'public, max-age=3600');
+  // s-maxage lets the Vercel/Cloudflare edge cache and serve sitemaps to crawlers
+  // instead of hitting the Render origin on every fetch; stale-while-revalidate
+  // keeps serving the last-good copy while it refreshes in the background, so a
+  // cold-start/egress 5xx at the origin never surfaces to Googlebot as a
+  // "General HTTP error". Sitemaps are DB-driven but change slowly.
+  res.set('Cache-Control', 'public, max-age=3600, s-maxage=21600, stale-while-revalidate=86400');
   res.send(xml);
 };
 
