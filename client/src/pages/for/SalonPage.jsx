@@ -743,7 +743,7 @@ export default function SalonPage() {
               Claim Your Booking Link <ArrowRight size={16} />
             </Link>
             <Link to="/demo" className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-white/30 px-6 py-4 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline sm:w-auto">
-              See a 2-min Demo
+              Book A Demo
             </Link>
           </Reveal>
           <Reveal as="p" delay={0.18} className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">

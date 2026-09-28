@@ -707,7 +707,7 @@ export default function Gynecologists() {
               Launch My Clinic Page <ArrowRight size={16} />
             </Link>
             <Link to="/demo" className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-white/30 px-7 py-4 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline sm:w-auto">
-              See a 2-min Demo
+              Book A Demo
             </Link>
           </Reveal>
           <Reveal delay={0.18} className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">

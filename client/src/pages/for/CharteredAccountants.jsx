@@ -450,7 +450,7 @@ export default function CharteredAccountants() {
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
               <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline">
-                See a 2-min Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+                Book A Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Reveal>
             <Reveal instant delay={0.14} className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
@@ -867,7 +867,7 @@ export default function CharteredAccountants() {
                 Launch My Practice Page <ArrowRight size={16} />
               </Link>
               <Link to="/demo" className="inline-flex w-full items-center justify-center gap-2 rounded-[8px] border-2 border-white/30 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline sm:w-auto">
-                See a 2-min Demo
+                Book A Demo
               </Link>
             </Reveal>
             <Reveal delay={0.18} className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">

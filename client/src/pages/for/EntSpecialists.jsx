@@ -891,7 +891,7 @@ export default function EntSpecialists() {
                 Launch My Page — Free <ArrowRight size={16} />
               </Link>
               <Link to="/demo" className="inline-flex items-center justify-center gap-2 rounded-[10px] border-2 border-white/30 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:border-white/60 hover:no-underline">
-                See a 2-min Demo
+                Book A Demo
               </Link>
             </Reveal>
             <Reveal delay={0.16} className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2">
