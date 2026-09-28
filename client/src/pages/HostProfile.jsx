@@ -122,34 +122,26 @@ const SocialIcon = ({ platform, href }) => {
   );
 };
 
-// ─── Badge (image award with tooltip) ─────────────────────────────────────────
+// ─── Badge (image award) ──────────────────────────────────────────────────────
 // Renders a real vendor_badges award: { name, image_url, is_bas_team, ... }.
-const Badge = ({ badge }) => {
-  const [tip, setTip] = useState(false);
+// No hover tooltip (it got clipped by the card) — click opens a bottom-right
+// info popup via onSelect. Border matches the social icons (light grey C.border).
+const Badge = ({ badge, onSelect }) => {
   const label = badge.label || badge.name || 'Badge';
   return (
-    <div className="relative">
-      <div
-        onMouseEnter={() => setTip(true)}
-        onMouseLeave={() => setTip(false)}
-        className="flex items-center justify-center cursor-default select-none overflow-hidden transition-transform hover:scale-110"
-        style={{
-          width: 44, height: 44, borderRadius: 2, background: '#F4F4F4', fontSize: 22,
-          border: `0.5px solid ${badge.is_bas_team ? C.text : C.border}`,
-        }}>
-        {badge.image_url
-          ? <img src={badge.image_url} alt={label} className="w-full h-full object-contain" />
-          : <span className="font-extrabold" style={{ color: C.text }}>{label.charAt(0)?.toUpperCase()}</span>}
-      </div>
-      {tip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap pointer-events-none z-20">
-          <div className="text-[11px] font-medium px-2 py-1 rounded-md shadow-sm"
-            style={{ background: C.text, color: C.btnText }}>
-            {label}
-          </div>
-        </div>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={() => onSelect?.(badge)}
+      aria-label={label}
+      className="flex items-center justify-center cursor-pointer select-none overflow-hidden transition-transform hover:scale-110"
+      style={{
+        width: 44, height: 44, borderRadius: 2, background: '#F4F4F4', fontSize: 22,
+        border: `1px solid ${C.border}`,
+      }}>
+      {badge.image_url
+        ? <img src={badge.image_url} alt={label} className="w-full h-full object-contain" />
+        : <span className="font-extrabold" style={{ color: C.text }}>{label.charAt(0)?.toUpperCase()}</span>}
+    </button>
   );
 };
 
@@ -350,6 +342,7 @@ const HostProfile = () => {
   const [showReviews, setShowReviews] = useState(false);
   const [products,    setProducts]    = useState([]);
   const [badgeList,   setBadgeList]   = useState([]); // real awards from vendor_badges
+  const [badgeInfo,   setBadgeInfo]   = useState(null); // clicked badge → bottom-right info popup
   const [cardExpanded, setCardExpanded] = useState(false); // mobile-only collapse
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
@@ -492,6 +485,13 @@ const HostProfile = () => {
   ] : null;
 
   // All hooks have run — safe to short-circuit the render for a vanity slug.
+  // Badge info popup auto-dismisses after 5s.
+  useEffect(() => {
+    if (!badgeInfo) return;
+    const t = setTimeout(() => setBadgeInfo(null), 5000);
+    return () => clearTimeout(t);
+  }, [badgeInfo]);
+
   if (isVanity) return <Navigate to={`/${VANITY_TARGET}`} replace />;
 
   // A dead slug otherwise renders thin "Host not found" HTML at 200 — which Google
@@ -706,7 +706,7 @@ const HostProfile = () => {
                 {/* Badges — single row, no text */}
                 {badges.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2 mt-5">
-                    {badges.map((b, i) => <Badge key={i} badge={b} />)}
+                    {badges.map((b, i) => <Badge key={i} badge={b} onSelect={setBadgeInfo} />)}
                   </div>
                 )}
 
@@ -872,6 +872,29 @@ const HostProfile = () => {
         </div>
       </div>
     </div>
+      )}
+
+      {/* Badge info popup — bottom-right, click-triggered, auto-dismiss 5s. Replaces
+          the old hover tooltip that got clipped by the profile card. */}
+      {badgeInfo && (
+        <div className="fixed bottom-4 right-4 z-[60] w-[min(20rem,calc(100vw-2rem))]" role="status" aria-live="polite">
+          <div className="flex items-start gap-3 rounded-xl bg-white p-3 shadow-lg" style={{ border: `1px solid ${C.border}` }}>
+            <div className="flex-shrink-0 flex items-center justify-center overflow-hidden"
+              style={{ width: 40, height: 40, borderRadius: 6, background: '#F4F4F4', border: `1px solid ${C.border}` }}>
+              {badgeInfo.image_url
+                ? <img src={badgeInfo.image_url} alt="" className="w-full h-full object-contain" />
+                : <span className="font-extrabold" style={{ color: C.text }}>{(badgeInfo.name || 'B').charAt(0).toUpperCase()}</span>}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold" style={{ color: C.text }}>{badgeInfo.name}</p>
+              {badgeInfo.description && (
+                <p className="mt-0.5 text-xs leading-snug" style={{ color: C.secondary }}>{badgeInfo.description}</p>
+              )}
+            </div>
+            <button type="button" onClick={() => setBadgeInfo(null)} aria-label="Dismiss"
+              className="ml-1 flex-shrink-0 leading-none text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+        </div>
       )}
     </>
   );
