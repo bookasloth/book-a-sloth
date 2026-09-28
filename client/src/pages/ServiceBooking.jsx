@@ -999,6 +999,10 @@ const ServiceBooking = () => {
           border-color: ${tc};
           box-shadow: 0 0 0 3px color-mix(in srgb, ${tc} 22%, transparent);
         }
+        .bk-page .bk-phone-wrap:focus-within {
+          border-color: ${tc};
+          box-shadow: 0 0 0 3px color-mix(in srgb, ${tc} 22%, transparent);
+        }
       `}</style>
       {host?.is_verified === false && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-sm text-amber-700">
@@ -1536,7 +1540,7 @@ const ServiceBooking = () => {
                     <FloatingInput id="bk-email" label="Email Address" type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
                     {/* Mobile: floating label + country dial-code select + national number; sent as fullPhone. */}
                     <div className="relative">
-                      <div className="flex items-stretch rounded-lg border overflow-hidden focus-within:border-[color:var(--tc)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
+                      <div className="bk-phone-wrap flex items-stretch rounded-lg border border-[color:var(--color-line)] overflow-hidden transition-shadow">
                         <select
                           aria-label="Country code"
                           className="w-[64px] shrink-0 bg-gray-50 text-sm font-medium text-gray-700 border-r pl-2 pr-0.5 outline-none cursor-pointer"
@@ -1615,7 +1619,7 @@ const ServiceBooking = () => {
                       <span className="absolute rounded-full bg-white transition-all"
                         style={{ top: 2, width: 12, height: 12, left: showBilling ? 14 : 2 }} />
                     </span>
-                    Add GST Details
+                    Add GST Details or Notes
                     <span className="text-xs text-gray-400">Optional</span>
                   </button>
                 </div>
