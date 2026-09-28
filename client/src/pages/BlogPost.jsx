@@ -421,22 +421,22 @@ const BlogPost = () => {
 
             {/* Meta row */}
             <div className="mt-10 border-t pt-5" style={{ borderColor: tt.rule }}>
-              <dl className="grid grid-cols-3 gap-4">
+              <dl className="grid grid-cols-3 gap-x-3 gap-y-4">
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>Published</dt>
-                  <dd className="mt-1 text-sm font-semibold sm:text-base" style={{ color: tt.title }}>
+                  <dd className="mt-1 text-[13px] font-semibold sm:text-sm" style={{ color: tt.title }}>
                     <time dateTime={post.published_at || undefined}>{post.date}</time>
                   </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>Author</dt>
-                  <dd className="mt-1 text-sm font-semibold sm:text-base">
+                  <dd className="mt-1 text-[13px] font-semibold sm:text-sm">
                     <AuthorLink name={post.author} className="underline decoration-from-font underline-offset-2 hover:opacity-80" style={{ color: tt.title }} />
                   </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>Read</dt>
-                  <dd className="mt-1 text-sm font-semibold sm:text-base" style={{ color: tt.title }}>{post.readMins} min</dd>
+                  <dd className="mt-1 text-[13px] font-semibold sm:text-sm" style={{ color: tt.title }}>{post.readMins} min</dd>
                 </div>
               </dl>
             </div>
