@@ -2,6 +2,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const otpStore = require('../utils/otpStore');
+const { identifierOf } = require('../utils/bookingGrant');
 const crypto = require('crypto');
 const { calculatePlatformFee, calculateGst, round2 } = require('../lib/pricingEngine');
 const platformConfig = require('../services/platformConfig');
@@ -230,11 +231,11 @@ const freeDownload = async (req, res) => {
       return res.status(400).json({ message: 'A valid email is required' });
     }
 
-    // Identity check: the caller must prove ownership of buyer_email with a
-    // verified OTP (single-use, keyed by email — same store as guest booking).
-    // Without this, any anonymous caller could mint a paid purchase row + token
-    // for an arbitrary email. Verified before any token is issued or reused.
-    const otpResult = await otpStore.verify(buyerEmail, otp);
+    // Identity check: the caller must prove ownership with a verified OTP
+    // (single-use, same store as guest booking). Keyed phone-first via
+    // identifierOf to match send-otp (the product page sends a WhatsApp-keyed
+    // code); verifying by email alone diverged from the issued key and failed.
+    const otpResult = await otpStore.verify(identifierOf({ email: buyerEmail, phone: buyer_phone }), otp);
     if (!otpResult.valid) {
       return res.status(400).json({ message: 'Invalid or expired code' });
     }

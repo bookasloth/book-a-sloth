@@ -588,6 +588,34 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
 // GET /api/auth/google/callback — single callback for BOTH flows, branched on
 // the signed state param. Invalid/missing state on a vendor-auth attempt is
 // rejected (CSRF); legacy state attaches tokens to the vendor in the state.
+// "Google Verified" host trust badge. Every host authenticates via Google, so
+// this badge is an attribute of the account (has a Google identity), NOT a
+// metric-driven automatic badge — the previous automatic rule (revenue = 0)
+// meant the engine REVOKED it the moment a host earned money. It is now a
+// `manual` badge awarded here on Google login. Best-effort + idempotent: never
+// blocks sign-in, never double-awards, self-heals on the next login.
+const GOOGLE_VERIFIED_BADGE_SLUG = "google-verified";
+const awardGoogleVerifiedBadge = async (profileId) => {
+  if (!profileId) return;
+  try {
+    const { data: badge } = await supabaseAdmin
+      .from("badges").select("id, status").eq("slug", GOOGLE_VERIFIED_BADGE_SLUG).maybeSingle();
+    if (!badge || badge.status !== "active") return;
+    const { data: held } = await supabaseAdmin
+      .from("vendor_badges").select("id")
+      .eq("vendor_id", profileId).eq("badge_id", badge.id).is("revoked_at", null).maybeSingle();
+    if (held) return;
+    const { error } = await supabaseAdmin
+      .from("vendor_badges")
+      .insert({ vendor_id: profileId, badge_id: badge.id, assigned_by: null, reason: "Signed in with Google" });
+    if (error && !/duplicate key/i.test(error.message)) {
+      console.error("awardGoogleVerifiedBadge insert (non-fatal):", error.message);
+    }
+  } catch (e) {
+    console.error("awardGoogleVerifiedBadge (non-fatal):", e.message);
+  }
+};
+
 const googleCallback = async (req, res) => {
   const clientUrl = process.env.CLIENT_URL || "";
   // Tracked outside the try so the catch can route failures to the right place:
@@ -705,6 +733,10 @@ const googleCallback = async (req, res) => {
       if (needsAttach) {
         await attachGoogleToProfile(profileId, tokens, googleUser);
       }
+
+      // Award the "Google Verified" trust badge — this host authenticated via
+      // Google. Idempotent + best-effort (never blocks the session mint below).
+      await awardGoogleVerifiedBadge(profileId);
 
       // Mint a Supabase session without a password (magiclink redeem on a
       // disposable client). Tokens travel in the URL FRAGMENT — never logged.

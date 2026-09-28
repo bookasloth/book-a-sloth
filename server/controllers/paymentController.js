@@ -28,6 +28,7 @@ const { trackServer } = require("../utils/trackServer");
 const manageBookingToken = require("../utils/manageBookingToken");
 const { runInBackground } = require("../utils/background");
 const otpStore = require("../utils/otpStore");
+const { identifierOf } = require("../utils/bookingGrant");
 const { sendProductDownloadEmail } = require("../utils/productEmail");
 const { generateInvoice } = require("../services/invoiceService");
 
@@ -914,7 +915,11 @@ const createProductOrder = async (req, res) => {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail)) {
       return res.status(400).json({ message: 'A valid email is required' });
     }
-    const otpResult = await otpStore.verify(buyerEmail, otp);
+    // Verify against the SAME identifier the OTP was issued under. send-otp is
+    // phone-first (normalizePhone(phone) || email), so the product page's
+    // WhatsApp-keyed code must be verified phone-first too — verifying by email
+    // alone broke every purchase where the buyer supplied a phone.
+    const otpResult = await otpStore.verify(identifierOf({ email: buyerEmail, phone: buyer_phone }), otp);
     if (!otpResult.valid) {
       return res.status(400).json({ message: otpResult.reason || 'Invalid or expired code' });
     }

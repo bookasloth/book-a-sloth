@@ -106,14 +106,18 @@ const ProductPurchase = () => {
     : 0;
 
   const handleSendOtp = async () => {
-    if (!name || !email) {
-      toast.error("Name and email are required");
+    if (!name || !email || !phone) {
+      toast.error("Name, email and mobile number are required");
       return;
     }
     setOtpSending(true);
     try {
-      await sendOtp({ email, phone, name });
-      toast.success("Verification code sent to your email!");
+      // WhatsApp-keyed OTP: send phone-first so the code is issued (and delivered
+      // on WhatsApp) under the same identifier the server verifies against in
+      // createProductOrder / freeDownload. (Email-keying here diverged from the
+      // phone-first verify and broke the flow for anyone who entered a phone.)
+      await sendOtp({ phone, name });
+      toast.success("Verification code sent to your WhatsApp!");
       setStep("otp");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send code");
@@ -440,7 +444,7 @@ const ProductPurchase = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Phone <span className="text-gray-400 font-normal">(optional)</span>
+                      WhatsApp number <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -448,9 +452,10 @@ const ProductPurchase = () => {
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98765 43210"
                       className="fb-input"
+                      required
                     />
                     <p className="text-xs text-gray-400 mt-1">
-                      For order-related contact. Your verification code is sent to your email.
+                      Your verification code is sent to this number on WhatsApp.
                     </p>
                   </div>
                 </div>
