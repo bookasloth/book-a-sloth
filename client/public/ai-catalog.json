@@ -1,0 +1,47 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Book A Sloth",
+    "identifier": "did:web:bookasloth.com",
+    "documentationUrl": "https://bookasloth.com/help/docs",
+    "logoUrl": "https://bookasloth.com/og-image.png"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:bookasloth:docs:llms-txt",
+      "displayName": "Book A Sloth — LLM Guide (llms.txt)",
+      "description": "Structured overview of Book A Sloth for AI agents: what it is, plans and pricing, key pages, features, comparisons and profession landing pages.",
+      "type": "text/markdown",
+      "url": "https://bookasloth.com/llms.txt",
+      "tags": ["overview", "documentation", "pricing", "features"],
+      "representativeQueries": [
+        "What is Book A Sloth and how does it work?",
+        "How much does Book A Sloth cost and what are the plans?"
+      ]
+    },
+    {
+      "identifier": "urn:air:bookasloth:index:sitemap",
+      "displayName": "Book A Sloth — Sitemap Index",
+      "description": "XML sitemap index listing all indexable pages: marketing pages, profession pages, host profiles, bookable services and blog posts.",
+      "type": "application/xml",
+      "url": "https://bookasloth.com/sitemap.xml",
+      "tags": ["sitemap", "index", "urls"],
+      "representativeQueries": [
+        "List all pages and bookable services on Book A Sloth",
+        "Where can I find every host profile on Book A Sloth?"
+      ]
+    },
+    {
+      "identifier": "urn:air:bookasloth:site:home",
+      "displayName": "Book A Sloth — Booking Platform",
+      "description": "India-first appointment-booking platform. Hosts publish services and share one booking link; guests book in seconds via OTP or a free account, paying up front through Razorpay (UPI, cards, netbanking).",
+      "type": "text/html",
+      "url": "https://bookasloth.com/",
+      "tags": ["appointment-booking", "scheduling", "payments", "india", "creators"],
+      "representativeQueries": [
+        "Book an appointment with a coach or consultant in India",
+        "Create a booking page and get paid up front for my services"
+      ]
+    }
+  ]
+}
