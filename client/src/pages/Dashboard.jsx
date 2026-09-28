@@ -204,15 +204,31 @@ const Dashboard = () => {
   // link on the current user, then have the server confirm the identity + award
   // the badge. Idempotent server-side; the ref guards StrictMode's double mount.
   useEffect(() => {
-    if (searchParams.get('linkedin') !== 'done' || linkedinRan.current) return;
+    const qs = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    // Supabase returns errors in the query (PKCE) or the hash (implicit); read both.
+    const errCode = qs.get('error_code') || hash.get('error_code');
+    const isReturn = qs.get('linkedin') === 'done' || !!errCode;
+    if (!isReturn || linkedinRan.current) return;
     linkedinRan.current = true;
     (async () => {
       try {
         const sb = await getSupabase();
-        const code = new URLSearchParams(window.location.search).get('code');
-        if (code) {
-          const { error } = await sb.auth.exchangeCodeForSession(code);
-          if (error) throw error;
+        // identity_already_exists = this LinkedIn identity is already linked to the
+        // account from an earlier attempt (the link succeeded; only the finalize
+        // didn't run — e.g. an interrupted redirect). Don't surface it as a failure:
+        // the identity IS present, so skip the code exchange and just confirm +
+        // award the badge server-side (idempotent). Any OTHER error is real.
+        if (errCode && errCode !== 'identity_already_exists') {
+          const desc = hash.get('error_description') || qs.get('error_description');
+          throw new Error(desc || 'LinkedIn verification could not be completed.');
+        }
+        if (errCode !== 'identity_already_exists') {
+          const code = qs.get('code');
+          if (code) {
+            const { error } = await sb.auth.exchangeCodeForSession(code);
+            if (error) throw error;
+          }
         }
         const { data } = await verifyLinkedin(); // server checks identity + awards badge
         updateUser({ linkedin_verified: true });
