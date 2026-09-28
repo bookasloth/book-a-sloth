@@ -588,32 +588,16 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
 // GET /api/auth/google/callback — single callback for BOTH flows, branched on
 // the signed state param. Invalid/missing state on a vendor-auth attempt is
 // rejected (CSRF); legacy state attaches tokens to the vendor in the state.
-// "Google Verified" host trust badge. Every host authenticates via Google, so
-// this badge is an attribute of the account (has a Google identity), NOT a
-// metric-driven automatic badge — the previous automatic rule (revenue = 0)
-// meant the engine REVOKED it the moment a host earned money. It is now a
-// `manual` badge awarded here on Google login. Best-effort + idempotent: never
-// blocks sign-in, never double-awards, self-heals on the next login.
-const GOOGLE_VERIFIED_BADGE_SLUG = "google-verified";
-const awardGoogleVerifiedBadge = async (profileId) => {
+// Instantly reconcile a host's automatic badges (award/revoke) right after an
+// event that changes their attributes — e.g. a Google login (has_google_identity)
+// or a LinkedIn verify (linkedin_verified). The periodic engine run reconciles
+// everyone; this just removes the wait so the host sees the badge immediately.
+// Scoped to one vendor, best-effort, never blocks the request.
+const reconcileBadges = (profileId) => {
   if (!profileId) return;
-  try {
-    const { data: badge } = await supabaseAdmin
-      .from("badges").select("id, status").eq("slug", GOOGLE_VERIFIED_BADGE_SLUG).maybeSingle();
-    if (!badge || badge.status !== "active") return;
-    const { data: held } = await supabaseAdmin
-      .from("vendor_badges").select("id")
-      .eq("vendor_id", profileId).eq("badge_id", badge.id).is("revoked_at", null).maybeSingle();
-    if (held) return;
-    const { error } = await supabaseAdmin
-      .from("vendor_badges")
-      .insert({ vendor_id: profileId, badge_id: badge.id, assigned_by: null, reason: "Signed in with Google" });
-    if (error && !/duplicate key/i.test(error.message)) {
-      console.error("awardGoogleVerifiedBadge insert (non-fatal):", error.message);
-    }
-  } catch (e) {
-    console.error("awardGoogleVerifiedBadge (non-fatal):", e.message);
-  }
+  require("../services/badgeEngine")
+    .evaluate({ vendorIds: [profileId] })
+    .catch((e) => console.error("reconcileBadges (non-fatal):", e.message));
 };
 
 const googleCallback = async (req, res) => {
@@ -734,9 +718,10 @@ const googleCallback = async (req, res) => {
         await attachGoogleToProfile(profileId, tokens, googleUser);
       }
 
-      // Award the "Google Verified" trust badge — this host authenticated via
-      // Google. Idempotent + best-effort (never blocks the session mint below).
-      await awardGoogleVerifiedBadge(profileId);
+      // This host authenticated via Google → has_google_identity is now true.
+      // Kick a scoped badge reconcile so the "Google Verified" automatic badge is
+      // awarded immediately (best-effort; never blocks the session mint below).
+      reconcileBadges(profileId);
 
       // Mint a Supabase session without a password (magiclink redeem on a
       // disposable client). Tokens travel in the URL FRAGMENT — never logged.
@@ -1445,30 +1430,24 @@ const verifyLinkedin = async (req, res) => {
       console.error("verifyLinkedin: profile stamp error (non-fatal):", upErr.message);
     }
 
-    // Award the manual "LinkedIn Verified" badge. assigned_by is set (non-null)
-    // so the badge engine never auto-revokes it. The partial unique index makes a
-    // repeat insert a duplicate-key we swallow → idempotent.
+    // "LinkedIn Verified" is an automatic (engine-owned) badge keyed off the
+    // linkedin_verified attribute metric (= linkedin_verified_at IS NOT NULL,
+    // just stamped above). Run a scoped, synchronous reconcile so the engine
+    // awards it now, then report whether it's held. Best-effort; a badge failure
+    // never fails verification (the profile stamp is the real outcome).
     let badgeAwarded = false;
     try {
+      await require("../services/badgeEngine").evaluate({ vendorIds: [userId] });
       const { data: badge } = await supabaseAdmin
-        .from("badges")
-        .select("id, name, description, status")
-        .eq("slug", LINKEDIN_BADGE_SLUG)
-        .maybeSingle();
-      if (badge && badge.status === "active") {
-        const { error: insErr } = await supabaseAdmin.from("vendor_badges").insert({
-          vendor_id: userId,
-          badge_id: badge.id,
-          assigned_by: userId,
-          reason: "LinkedIn account verified",
-        });
-        if (!insErr || /duplicate key/i.test(insErr.message)) badgeAwarded = true;
-        else console.error("verifyLinkedin: badge insert error (non-fatal):", insErr.message);
-      } else {
-        console.error(`verifyLinkedin: badge '${LINKEDIN_BADGE_SLUG}' missing or inactive`);
+        .from("badges").select("id").eq("slug", LINKEDIN_BADGE_SLUG).maybeSingle();
+      if (badge) {
+        const { data: held } = await supabaseAdmin
+          .from("vendor_badges").select("id")
+          .eq("vendor_id", userId).eq("badge_id", badge.id).is("revoked_at", null).maybeSingle();
+        badgeAwarded = !!held;
       }
     } catch (e) {
-      console.error("verifyLinkedin: badge award threw (non-fatal):", e.message);
+      console.error("verifyLinkedin: badge reconcile (non-fatal):", e.message);
     }
 
     // Re-serialize so the client picks up linkedin_verified in one round trip.
