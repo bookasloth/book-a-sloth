@@ -70,6 +70,127 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "september-2026-product-update",
+  "title": "September Update: Two Plans, AI Pages & Honest Pricing",
+  "date": "Sep 28, 2026",
+  "icons": [
+    "sparkles",
+    "tag",
+    "rocket"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Feature Update",
+  "image": null,
+  "excerpt": "September's Book A Sloth update: a simpler two-plan model, a Build-with-Bolt AI page builder, a real-data price benchmark, plus local-SEO and invoice fixes.",
+  "body": [
+    {
+      "p": "September was about simplifying. Book A Sloth is the booking and payment system for professionals who sell their time — coaches, tutors, consultants, therapists, designers — and this month's update cut the plan choices from three to two, added an AI that writes your first service page, and made prices read the same on every screen. Here is what actually shipped."
+    },
+    {
+      "h2": "Two plans, not three: Sloth and Sloth Active"
+    },
+    {
+      "p": "The old Starter / Host+ / Studio ladder is gone. In its place are two public plans. Sloth is free — unlimited services, unlimited bookings, unlimited categories, 24-hour reminders and offline (in-person) appointments — with a 5% commission. Sloth Active is ₹399/month or ₹3,599/year with zero commission plus the paid perks."
+    },
+    {
+      "table": {
+        "head": [
+          "Plan",
+          "Price (incl. GST)",
+          "Commission",
+          "Best for"
+        ],
+        "rows": [
+          [
+            "Sloth",
+            "₹0",
+            "5%",
+            "Getting booked and paid with no monthly fee"
+          ],
+          [
+            "Sloth Active",
+            "₹399/mo · ₹3,599/yr",
+            "0%",
+            "High-volume hosts who want to keep every rupee"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Only the two things with real marginal cost stay capped on the free plan: digital products (storage) and AI generations (model spend). The 5% commission is what lets the free plan stay genuinely useful instead of a crippled trial. If you want to understand why zero-commission sits behind a paid tier, we wrote about [the 0% commission bet](/blog/zero-commission-bet)."
+    },
+    {
+      "p": "Two changes make Sloth more generous than a typical free tier. The free plan now keeps a Client CRM of your 10 most recent clients instead of blocking it entirely, and WhatsApp reminders come with a two-month free grace period before falling back to email. Reminders are one of the highest-leverage things a booking tool does: controlled studies find automated appointment reminders cut no-shows by roughly a third ([JAMA](https://jamanetwork.com/journals/jama/fullarticle/388161))."
+    },
+    {
+      "p": "We also fixed a long-standing confusion: prices now show GST-inclusive everywhere — the number Razorpay actually charges. Previously the dashboard led with the ex-GST base while the marketing page showed the inclusive price, which made an annual plan look more expensive than twelve monthly payments. One price basis, every surface. See it on the [pricing page](/pricing)."
+    },
+    {
+      "h2": "Build with Bolt: your first service page, written by AI"
+    },
+    {
+      "p": "New hosts now write their first service listing with AI at the moment they go live. Type a one-line title, tap Build with Bolt, and it writes a real title and description, suggests a duration, and picks a category for you. This is where the funnel used to leak — the blank first-service form — so turning it into “describe it, AI builds your page” puts the AI-powered hook exactly where new hosts need the most help. It builds on the same generator behind [Write with Bolt](/blog/write-with-bolt-drafts-your-listing)."
+    },
+    {
+      "h2": "A price benchmark grounded in real data"
+    },
+    {
+      "p": "When you set a price on the dashboard, an optional chip can now show what comparable hosts on Book A Sloth actually charge — tap to see a Low, Median and High range, then tap a value to fill it in. Nothing auto-applies. The important design decision: this is built on real platform data, not a language model. An LLM would happily invent rupee figures; the benchmark aggregates actual active listings in your category, excluding your own, so the numbers are honest and only get better as more hosts list."
+    },
+    {
+      "h2": "A rebuilt place to find an expert"
+    },
+    {
+      "p": "The solutions page has been rebuilt as a guest-facing “find an expert” landing — a search bar, a category grid linking every profession page, clear value props and calls to action, all in the main homepage style. If you are on the guest side, here is [how to find and book an expert online](/blog/how-to-find-book-expert-online)."
+    },
+    {
+      "h2": "Homepage: clearer words, faster, more accessible"
+    },
+    {
+      "p": "The homepage copy was repositioned around a single promise: get booked, paid, and reminded, without the admin. Same design, sharper story, built around the flow of choosing a service, picking a time, paying, and getting confirmations and reminders automatically."
+    },
+    {
+      "p": "Performance and accessibility work landed too. The hero now renders instantly because we removed the render delay on the largest element, homepage images are WebP-optimized and self-hosted with longer caching, and the site hits an Accessibility score of 100 with AA contrast on text and controls."
+    },
+    {
+      "h2": "Local SEO for in-person hosts"
+    },
+    {
+      "p": "If you offer in-person appointments, your city now appears in the page title and meta description — so searches like “physiotherapist in Nagpur” can find you. Online-only pages are unchanged. To feed this, hosts are gently nudged to add their city, both in the dashboard setup checklist and during onboarding, and it never blocks going live. Ready to claim your page? [Become a Sloth](/be-a-sloth)."
+    },
+    {
+      "h2": "A quieter fix: reschedule-fee tax invoices"
+    },
+    {
+      "p": "When a guest pays a reschedule fee, that is Book A Sloth's own revenue and carries GST. We were collecting the tax but never minting a tax invoice against it. Under Section 31 of the CGST Act, a GST-registered supplier must issue a tax invoice for a taxable supply of services ([CBIC](https://cbic-gst.gov.in/gst-invoice-rules.html)), so that gap was ours to close. It is fixed — a proper tax invoice is now issued for the guest-paid reschedule fee, with its own series, closing a gap in our GST records. It is the same discipline behind our earlier work on [GST invoices and host verification](/blog/gst-invoices-host-verification-mobile)."
+    },
+    {
+      "h2": "Frequently asked questions"
+    },
+    {
+      "faq": [
+        {
+          "q": "How much does Book A Sloth cost?",
+          "a": "Book A Sloth has two plans. Sloth is free with a 5% commission and includes unlimited services, bookings, categories, 24-hour reminders and offline appointments. Sloth Active is ₹399/month or ₹3,599/year (GST inclusive) with zero commission."
+        },
+        {
+          "q": "What is the difference between Sloth and Sloth Active?",
+          "a": "Sloth is free and charges a 5% commission on earnings. Sloth Active removes the commission entirely for a flat monthly or yearly fee and adds paid perks. Both include unlimited services and bookings."
+        },
+        {
+          "q": "Is the free plan actually usable?",
+          "a": "Yes. The free Sloth plan has unlimited services, bookings and categories, plus reminders and offline appointments. Only digital products and AI generations are capped, and it now includes a Client CRM of your 10 most recent clients."
+        },
+        {
+          "q": "What is Build with Bolt?",
+          "a": "Build with Bolt is an AI helper that writes a new host's first service listing. You type a one-line title and it generates a real title, description, suggested duration and category, so a new page is ready to publish in seconds."
+        }
+      ]
+    }
+  ]
+},
+{
   "slug": "how-to-find-book-expert-online",
   "title": "How to Find and Book an Expert Online",
   "date": "Sep 22, 2026",
