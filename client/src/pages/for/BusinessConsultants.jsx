@@ -635,7 +635,7 @@ export default function BusinessConsultants() {
               >
                 Create a Free Account <ArrowRight size={16} />
               </Link>
-              <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline">
+              <Link to="/sndatarkar/booking/book-a-sloth-app-online-demo-30-min-advisory-session" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-ink)] transition-colors hover:text-[color:var(--ca-primary)] hover:no-underline">
                 Book A Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Reveal>
