@@ -289,7 +289,7 @@ const ProductCard = ({ product: p, profileSlug }) => {
 
       {/* Thumbnail — left column on mobile, full-width 16:10 on desktop */}
       <Link to={detailUrl}
-        className="relative flex-shrink-0 w-28 self-stretch sm:w-full sm:self-auto sm:aspect-[16/10] overflow-hidden"
+        className="relative flex-shrink-0 w-28 self-stretch sm:w-full sm:self-auto aspect-[16/9] overflow-hidden"
         style={{ background: 'linear-gradient(135deg, var(--profile-accent-light, #FFEDE5), var(--profile-accent, #FE5100))' }}>
         {p.thumbnail_url
           ? <img src={p.thumbnail_url} alt={p.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />

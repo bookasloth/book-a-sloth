@@ -39,6 +39,7 @@ jest.mock('../../lib/subscriptionPricing', () => ({
 }));
 
 const { supabaseAdmin } = require('../../config/supabase');
+const platformConfig = require('../../services/platformConfig');
 const otpStore = require('../../utils/otpStore');
 const razorpayConfig = require('../../services/razorpayConfig');
 const { verifySignature } = require('../../utils/razorpaySignature');
@@ -57,6 +58,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   razorpayConfig.getKeyId.mockResolvedValue('key_x');
   razorpayConfig.getKeySecret.mockResolvedValue('secret');
+  platformConfig.getConfig.mockResolvedValue({ platformFee: 10, gstRate: 0.18 });
   supabaseAdmin.rpc.mockResolvedValue({});
 });
 
