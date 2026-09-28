@@ -9,6 +9,7 @@ import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCatego
 import toast from 'react-hot-toast';
 import { TrendingUp } from 'lucide-react';
 import FeatureGate from '../../components/common/FeatureGate';
+import ThumbnailCropper from '../../components/common/ThumbnailCropper';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
 import { BOLT_ENABLED } from '../../config/aiListing';
 import { useAuth } from '../../context/AuthContext';
@@ -279,147 +280,6 @@ const FAQBuilder = ({ value, onChange }) => {
       <button type="button" onClick={add} className="mt-1 flex items-center gap-2 text-sm font-medium text-primary transition-opacity hover:opacity-80">
         <Plus className="h-4 w-4" /> Add FAQ
       </button>
-    </div>
-  );
-};
-
-// ─── Thumbnail Cropper (inline, no modal) ────────────────────────────────────
-
-const ThumbnailCropper = ({ currentUrl, onUploaded }) => {
-  const canvasRef = useRef(null);
-  const fileRef   = useRef(null);
-  const [imgEl, setImgEl]       = useState(null);
-  const [scale, setScale]       = useState(1);
-  const [offset, setOffset]     = useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [uploading, setUploading] = useState(false);
-  const [preview, setPreview]   = useState(currentUrl || '');
-
-  const CANVAS_W = 480;
-  const CANVAS_H = 270; // 16:9
-
-  const draw = useCallback(() => {
-    if (!imgEl || !canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-    ctx.drawImage(imgEl, offset.x, offset.y, imgEl.naturalWidth * scale, imgEl.naturalHeight * scale);
-    // NOTE: crop-guide border is CSS on the <canvas> element, NOT stroked here —
-    // a canvas stroke bakes into the exported JPEG (permanent border on uploads).
-  }, [imgEl, scale, offset]);
-
-  useEffect(() => { draw(); }, [draw]);
-
-  const loadFile = (file) => {
-    const ALLOWED = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!ALLOWED.includes(file.type)) { toast.error('Only JPG, PNG, WEBP allowed'); return; }
-    if (file.size > 2 * 1024 * 1024)  { toast.error('Max 2MB'); return; }
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const fit = Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight);
-      setScale(fit);
-      setOffset({ x: (CANVAS_W - img.naturalWidth * fit) / 2, y: (CANVAS_H - img.naturalHeight * fit) / 2 });
-      setImgEl(img);
-    };
-    img.src = url;
-  };
-
-  const onMouse = (e) => {
-    if (e.type === 'mousedown') { setDragging(true); setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y }); }
-    if (e.type === 'mousemove' && dragging) setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-    if (e.type === 'mouseup' || e.type === 'mouseleave') setDragging(false);
-  };
-
-  // Touch support
-  const onTouch = (e) => {
-    const t = e.touches[0];
-    if (e.type === 'touchstart') { setDragging(true); setDragStart({ x: t.clientX - offset.x, y: t.clientY - offset.y }); }
-    if (e.type === 'touchmove' && dragging) { e.preventDefault(); setOffset({ x: t.clientX - dragStart.x, y: t.clientY - dragStart.y }); }
-    if (e.type === 'touchend') setDragging(false);
-  };
-
-  const upload = async () => {
-    if (!canvasRef.current) return;
-    setUploading(true);
-    try {
-      // Use backend /api/upload/image which runs as service role — no RLS issues
-      const blob = await new Promise(res => canvasRef.current.toBlob(res, 'image/jpeg', 0.88));
-      const file = new File([blob], `thumb-${Date.now()}.jpg`, { type: 'image/jpeg' });
-      const formData = new FormData();
-      formData.append('image', file);
-      const { data } = await uploadImage(formData, 'services');
-      setPreview(data.url);
-      onUploaded(data.url);
-      setImgEl(null);
-      toast.success('Thumbnail saved!');
-    } catch (err) {
-      toast.error('Upload failed: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div>
-      <label className={fieldLabel}>Thumbnail <span className="text-gray-400 text-xs font-normal">(optional — we'll use a Book A Sloth card if you skip)</span></label>
-
-      {/* Preview if no new file selected */}
-      {!imgEl && (
-        <div
-          className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50"
-          style={{ width: '100%', aspectRatio: '16/9', maxHeight: 220 }}
-          onClick={() => fileRef.current?.click()}
-        >
-          {preview
-            ? <img src={preview} alt="" className="h-full w-full object-cover"/>
-            : <div className="p-6 text-center text-gray-400">
-                <svg className="mx-auto mb-2 h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <p className="text-sm font-medium">Click to upload thumbnail</p>
-                <p className="mt-1 text-xs">JPG, PNG, WEBP · Max 2MB · 16:9 recommended</p>
-              </div>
-          }
-          {preview && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-              <span className="text-sm font-medium text-white">Change thumbnail</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Cropper canvas */}
-      {imgEl && (
-        <div className="space-y-3">
-          <canvas
-            ref={canvasRef}
-            width={CANVAS_W}
-            height={CANVAS_H}
-            className="w-full cursor-move rounded-xl border border-gray-200"
-            style={{ aspectRatio: '16/9' }}
-            onMouseDown={onMouse} onMouseMove={onMouse} onMouseUp={onMouse} onMouseLeave={onMouse}
-            onTouchStart={onTouch} onTouchMove={onTouch} onTouchEnd={onTouch}
-          />
-          <div className="flex items-center gap-3">
-            <label className="whitespace-nowrap text-xs text-gray-500">Zoom</label>
-            <input type="range" min={0.1} max={4} step={0.05} value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="flex-1"/>
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={() => setImgEl(null)}>Cancel</Button>
-            <Button type="button" size="sm" className="flex-1" onClick={upload} disabled={uploading}>{uploading ? 'Uploading…' : 'Save Thumbnail'}</Button>
-          </div>
-        </div>
-      )}
-
-      <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden"
-        onChange={e => { if (e.target.files?.[0]) loadFile(e.target.files[0]); e.target.value = ''; }}/>
-
-      {!imgEl && (
-        <button type="button" onClick={() => fileRef.current?.click()} className="mt-2 text-xs text-primary hover:underline">
-          {preview ? 'Replace thumbnail' : 'Choose file'}
-        </button>
-      )}
     </div>
   );
 };
@@ -822,7 +682,12 @@ export default function ServiceForm({ initialData, serviceId }) {
 
             {/* Thumbnail */}
             <FeatureGate flag="service_thumbnail">
-              <ThumbnailCropper currentUrl={form.thumbnail_url} onUploaded={url => set('thumbnail_url', url)} />
+              <ThumbnailCropper
+                value={form.thumbnail_url}
+                onChange={url => set('thumbnail_url', url)}
+                folder="services"
+                label={<label className={fieldLabel}>Thumbnail <span className="text-gray-400 text-xs font-normal">(optional — we'll use a Book A Sloth card if you skip)</span></label>}
+              />
             </FeatureGate>
           </div>
         </div>

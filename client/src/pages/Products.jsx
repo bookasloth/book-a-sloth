@@ -12,6 +12,7 @@ import { planLabel, normalizePlan } from "../utils/themeUtils";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeatureContext";
 import BackButton from "../components/common/BackButton";
+import ThumbnailCropper from "../components/common/ThumbnailCropper";
 import { Link } from "react-router-dom";
 import { Plus, Package } from "lucide-react";
 import toast from "react-hot-toast";
@@ -72,7 +73,6 @@ const Products = () => {
   const [dirty, setDirty] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
   const [fileError, setFileError] = useState("");
-  const [thumbUploading, setThumbUploading] = useState(false);
   const [thumbMode, setThumbMode] = useState("url"); // "url" | "upload"
   const [confirmDelete, setConfirmDelete] = useState(null); // product pending delete
   const [confirmDiscard, setConfirmDiscard] = useState(false); // unsaved-changes guard
@@ -194,31 +194,6 @@ const Products = () => {
       setFileError(err.response?.data?.message || "Upload failed");
     } finally {
       setFileUploading(false);
-    }
-  };
-
-  const handleThumbPick = async (file) => {
-    if (!file) return;
-    if (!["png", "jpg", "jpeg", "webp"].includes(file.name.toLowerCase().split(".").pop())) {
-      toast.error("Thumbnail must be a PNG, JPG, or WEBP image.");
-      return;
-    }
-    if (file.size > MAX_PRODUCT_FILE_BYTES) {
-      toast.error("Image must be under 2 MB.");
-      return;
-    }
-    setThumbUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("image", file);
-      const { data } = await uploadImage(fd, "products");
-      setForm((f) => ({ ...f, thumbnail_url: data.url }));
-      setDirty(true);
-      toast.success("Thumbnail uploaded");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Upload failed");
-    } finally {
-      setThumbUploading(false);
     }
   };
 
@@ -389,26 +364,24 @@ const Products = () => {
             )}
           </FormField>
 
-          <FormField label={<>Cover Image <span className="font-normal text-gray-400">(optional)</span></>} className="mb-0">
+          <FormField label={<>Cover image — 16:9 <span className="font-normal text-gray-400">(optional)</span></>} className="mb-0">
             <div className="mb-2 flex gap-2">
               <button type="button" onClick={() => setThumbMode("url")} className={cn("rounded px-3 py-1 text-xs", thumbMode === "url" ? "bg-primary text-white" : "bg-gray-100 text-gray-500")}>Paste URL</button>
               <button type="button" onClick={() => setThumbMode("upload")} className={cn("rounded px-3 py-1 text-xs", thumbMode === "upload" ? "bg-primary text-white" : "bg-gray-100 text-gray-500")}>Upload</button>
             </div>
             {thumbMode === "url" ? (
-              <Input type="url" placeholder="Paste an image URL — https://..." value={form.thumbnail_url} onChange={(e) => handleChange("thumbnail_url", e.target.value)} />
+              <>
+                <Input type="url" placeholder="Paste an image URL — https://..." value={form.thumbnail_url} onChange={(e) => handleChange("thumbnail_url", e.target.value)} />
+                {form.thumbnail_url && (
+                  <img src={form.thumbnail_url} alt="Thumbnail preview" className="mt-2 aspect-[16/9] w-full rounded-lg object-cover" onError={(e) => (e.target.style.display = "none")} />
+                )}
+              </>
             ) : (
-              <input
-                type="file"
-                data-testid="product-thumb-input"
-                accept=".png,.jpg,.jpeg,.webp"
-                className={fileInputCls}
-                disabled={thumbUploading}
-                onChange={(e) => handleThumbPick(e.target.files?.[0])}
+              <ThumbnailCropper
+                value={form.thumbnail_url}
+                onChange={(url) => { handleChange("thumbnail_url", url); }}
+                folder="products"
               />
-            )}
-            {thumbUploading && <p className="mt-1 animate-pulse text-xs text-primary">Uploading…</p>}
-            {form.thumbnail_url && (
-              <img src={form.thumbnail_url} alt="Thumbnail preview" className="mt-2 h-24 w-full rounded-lg object-cover" onError={(e) => (e.target.style.display = "none")} />
             )}
           </FormField>
 

@@ -39,12 +39,16 @@ const SAC_COMMISSION   = env.SAC_COMMISSION   || '998314';
 // booking can carry both a booking-fee invoice and a reschedule-fee invoice, and
 // two BAS-BKG numbers against one booking is needlessly confusing to audit.
 const SAC_RESCHEDULE   = env.SAC_RESCHEDULE   || '998314';
+// Digital product = the same platform booking/facilitation supply as a booking fee,
+// so it shares 998314. Own series (BAS-PRD) so a product's fee invoice is distinct.
+const SAC_PRODUCT      = env.SAC_PRODUCT      || '998314';
 
 const SERIES = {
   subscription: { code: 'SUB', prefix: 'BAS-SUB' },
   booking:      { code: 'BKG', prefix: 'BAS-BKG' },
   commission:   { code: 'COM', prefix: 'BAS-COM' },  // v4: BAS → host commission invoice
   reschedule:   { code: 'RSF', prefix: 'BAS-RSF' },  // guest-paid reschedule fee
+  product:      { code: 'PRD', prefix: 'BAS-PRD' },  // digital-product platform fee
 };
 
-module.exports = { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SAC_RESCHEDULE, SERIES };
+module.exports = { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SAC_RESCHEDULE, SAC_PRODUCT, SERIES };

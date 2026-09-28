@@ -7,7 +7,7 @@ const { securityLog, auditLog } = require("../utils/logger");
 const sendEmail = require("../utils/sendEmail");
 const { adminAlert } = require("../utils/adminAlert");
 const NotificationEngine = require("../services/notificationEngine");
-const { computeBreakdown, calculateVendorPayout, calculatePlatformFee, computeSubscriptionBreakdown, round2 } = require("../lib/pricingEngine");
+const { computeBreakdown, calculateVendorPayout, calculatePlatformFee, calculateGst, computeSubscriptionBreakdown, round2 } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
 const stateService = require("../services/stateService");
@@ -925,21 +925,31 @@ const createProductOrder = async (req, res) => {
     if (!product || !product.is_active) return res.status(404).json({ message: "Product not found" });
     if (product.price === 0) return res.status(400).json({ message: "This product is free" });
 
-    const productFee = calculatePlatformFee(product.price);
-    const totalPaise = Math.round((product.price + productFee) * 100);
+    // Config-driven fee + GST-on-fee (mirrors bookings/services); customer pays
+    // price + fee + gst. buyer_state / buyer_gstin are optional place-of-supply.
+    const cfg = await platformConfig.getConfig();
+    const productFee = calculatePlatformFee(product.price, { platformFee: cfg.platformFee });
+    const gstOnFee = calculateGst(productFee, { gstRate: cfg.gstRate });
+    const totalPaise = Math.round((product.price + productFee + gstOnFee) * 100);
+    const buyerState = String(req.body.buyer_state || '');
+    const buyerGstin = String(req.body.buyer_gstin || '');
     const razorpay = await razorpayConfig.getClient();
     const order = await razorpay.orders.create({
       amount: totalPaise, currency: "INR",
       receipt: `prd_${product_id.slice(0, 20)}`,
       notes: {
         product_id, title: product.title,
-        platform_fee: productFee, product_price: product.price,
+        platform_fee: productFee, platform_fee_gst: gstOnFee, gst_rate: cfg.gstRate,
+        product_price: product.price,
         buyer_name: buyer_name || '', buyer_email: buyerEmail, buyer_phone: buyer_phone || '',
+        buyer_state: buyerState, buyer_gstin: buyerGstin,
       },
     });
     res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
       key: await razorpayConfig.getKeyId(),
-      product_price: product.price, platform_fee: productFee });
+      product_price: product.price, platform_fee: productFee,
+      platform_fee_gst: gstOnFee, gst_rate: cfg.gstRate,
+      total: round2(product.price + productFee + gstOnFee) });
   } catch (error) {
     safeError(res, error);
   }
@@ -993,6 +1003,7 @@ const materializeProductPurchase = async ({ product, notes, orderId, paymentId, 
   const productPrice = Number(notes.product_price);
   const price = Number.isFinite(productPrice) ? productPrice : 0;
   const platformFee = Number(notes.platform_fee) || 0;
+  const gstOnFee = Number(notes.platform_fee_gst) || 0;
 
   // Actual Razorpay gateway fee+tax — VENDOR-borne for products (mirrors
   // bookings). Razorpay's `fee` (paise) INCLUDES `tax`. Best-effort: a fetch
@@ -1012,7 +1023,7 @@ const materializeProductPurchase = async ({ product, notes, orderId, paymentId, 
   tax = Math.min(tax, feeTotal);
   const feeExclTax = Math.max(0, round2(feeTotal - tax));
   const gatewayTotal = round2(feeExclTax + tax);
-  const customerTotal = round2(price + platformFee);
+  const customerTotal = round2(price + platformFee + gstOnFee);
   const vendorAmount = round2(price - gatewayTotal);
 
   const baseRow = {
@@ -1035,6 +1046,11 @@ const materializeProductPurchase = async ({ product, notes, orderId, paymentId, 
     vendor_amount: vendorAmount,
     razorpay_fee_actual: feeExclTax,
     razorpay_tax_actual: tax,
+    // v3.171 GST-on-fee + place-of-supply snapshot (schema-fallback safe).
+    platform_fee_gst: gstOnFee,
+    gst_rate: Number(notes.gst_rate) || null,
+    buyer_state: notes.buyer_state || null,
+    buyer_gstin: notes.buyer_gstin || null,
   };
 
   const insertRow = (body) =>
@@ -1077,6 +1093,19 @@ const materializeProductPurchase = async ({ product, notes, orderId, paymentId, 
     });
   } catch (ledgerErr) {
     console.error("Product ledger post error (non-fatal):", ledgerErr.message);
+  }
+
+  // GST invoice for BAS's own platform fee (mirrors bookings — taxable = fee,
+  // gst = gst on fee). Best-effort: never let invoicing throw/block delivery.
+  if (platformFee > 0) {
+    try {
+      const invoiceService = require('../services/invoiceService');
+      await invoiceService.generateInvoice({
+        sourceType: 'product', sourceId: purchase.id, paymentId,
+        buyer: { name: notes.buyer_name, email: baseRow.buyer_email, gstin: notes.buyer_gstin, state: notes.buyer_state },
+        taxableValue: platformFee, gstAmount: gstOnFee,
+      });
+    } catch (e) { console.error('product invoice (non-fatal):', e.message); }
   }
 
   return { reused: false, downloadToken, purchase };

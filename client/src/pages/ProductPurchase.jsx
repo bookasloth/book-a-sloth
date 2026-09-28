@@ -13,6 +13,7 @@ import { useAuth } from "../context/AuthContext";
 import { analytics, EVENTS, gaClientId } from "../services/analytics";
 import useUtm from "../hooks/useUtm";
 import { isValidHex } from "../utils/themeUtils";
+import { INDIAN_STATES } from "../lib/indianStates";
 import { useMinimalFooter } from "../context/ChromeContext";
 import loadRazorpay from "../utils/loadRazorpay";
 import Seo from "../components/common/Seo";
@@ -56,6 +57,9 @@ const ProductPurchase = () => {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
+  // Optional place-of-supply for the GST invoice on the platform fee.
+  const [buyerState, setBuyerState] = useState("");
+  const [gstin, setGstin] = useState("");
   const [otp, setOtp] = useState("");
   const [order, setOrder] = useState(null); // Razorpay order, created at the OTP step (paid)
   const utm = useUtm(); // first-touch ad attribution → carried into the paid conversion event
@@ -96,7 +100,10 @@ const ProductPurchase = () => {
   // Platform fee comes from the server (never hardcoded here, so it can't drift
   // from what's actually charged).
   const fee = Number(product?.platform_fee ?? 0);
-  const total = product ? Number(product.price) + fee : 0;
+  const gst = Number(product?.platform_fee_gst ?? 0);
+  const total = product
+    ? (product.total != null ? Number(product.total) : Number(product.price) + fee + gst)
+    : 0;
 
   const handleSendOtp = async () => {
     if (!name || !email) {
@@ -144,6 +151,8 @@ const ProductPurchase = () => {
           buyer_name: name,
           buyer_email: email,
           buyer_phone: phone,
+          buyer_state: buyerState,
+          buyer_gstin: gstin,
           otp,
         });
         setOrder(data);
@@ -329,11 +338,13 @@ const ProductPurchase = () => {
         {/* Product card */}
         <div className="fb-card overflow-hidden mb-6">
           {product.thumbnail_url && (
-            <img
-              src={product.thumbnail_url}
-              alt={product.title}
-              className="w-full h-48 object-cover"
-            />
+            <div className="aspect-[16/9] w-full">
+              <img
+                src={product.thumbnail_url}
+                alt={product.title}
+                className="h-full w-full object-cover"
+              />
+            </div>
           )}
           <div className="p-5">
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -353,7 +364,7 @@ const ProductPurchase = () => {
                   {product.price === 0 ? "Free" : `₹${product.price}`}
                 </p>
                 {product.price > 0 && fee > 0 && (
-                  <p className="text-xs text-gray-400">+ ₹{fee} platform fee</p>
+                  <p className="text-xs text-gray-400">+ ₹{fee} platform fee + GST</p>
                 )}
               </div>
             </div>
@@ -451,13 +462,52 @@ const ProductPurchase = () => {
                     </div>
                     {fee > 0 && (
                       <div className="flex justify-between mb-1">
-                        <span className="text-gray-500">Platform fee</span>
+                        <span className="text-gray-500">Platform Fee (₹{fee} + GST)</span>
                         <span>₹{fee}</span>
+                      </div>
+                    )}
+                    {gst > 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span className="text-gray-500">GST</span>
+                        <span>₹{gst}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-semibold pt-2 border-t">
                       <span>Total</span>
                       <span style={{ color: accent }}>₹{total}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Optional place-of-supply for the GST invoice on the platform fee. */}
+                {product.price > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        State <span className="text-gray-400 font-normal">(optional)</span>
+                      </label>
+                      <select
+                        value={buyerState}
+                        onChange={(e) => setBuyerState(e.target.value)}
+                        className="fb-input"
+                      >
+                        <option value="">Select state</option>
+                        {INDIAN_STATES.map((s) => (
+                          <option key={s.code} value={s.name}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        GSTIN <span className="text-gray-400 font-normal">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={gstin}
+                        onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                        placeholder="For a GST invoice"
+                        className="fb-input"
+                      />
                     </div>
                   </div>
                 )}
@@ -615,7 +665,23 @@ const ProductPurchase = () => {
                 You'll receive a secure download link after payment
               </p>
               <div className="bg-gray-50 rounded-xl p-4 text-sm text-left mb-5">
-                <div className="flex justify-between font-semibold text-base">
+                <div className="flex justify-between mb-1">
+                  <span className="text-gray-500">Product</span>
+                  <span>₹{product.price}</span>
+                </div>
+                {fee > 0 && (
+                  <div className="flex justify-between mb-1">
+                    <span className="text-gray-500">Platform Fee (₹{fee} + GST)</span>
+                    <span>₹{fee}</span>
+                  </div>
+                )}
+                {gst > 0 && (
+                  <div className="flex justify-between mb-1">
+                    <span className="text-gray-500">GST</span>
+                    <span>₹{gst}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-semibold text-base pt-2 border-t">
                   <span>Total</span>
                   <span style={{ color: accent }}>₹{total}</span>
                 </div>
