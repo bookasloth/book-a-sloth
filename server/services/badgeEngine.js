@@ -26,6 +26,9 @@ const METRIC_FIELDS = [
   'five_star_reviews', 'one_star_reviews', 'avg_response_time_minutes',
   'active_days', 'login_streak', 'repeat_customers', 'customer_count',
   'cancellation_count', 'inactive_days', 'account_age_days',
+  // Attribute metrics (0/1) — account facts, not activity counts. Power the
+  // Google/LinkedIn verification badges (rule: field = 1). See v3.173.
+  'has_google_identity', 'linkedin_verified',
 ];
 
 const OPERATORS = {
