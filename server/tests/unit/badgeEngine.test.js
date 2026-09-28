@@ -61,11 +61,14 @@ const SNAP = {
   avg_response_time_minutes: 0, active_days: 80, login_streak: 0,
   repeat_customers: 12, customer_count: 90, cancellation_count: 2,
   inactive_days: 3, account_age_days: 400,
+  // Attribute metrics (0/1) — see v3.173 (Google/LinkedIn verification badges).
+  has_google_identity: 1, linkedin_verified: 0,
 };
 
 describe('badgeEngine — rule evaluation', () => {
-  test('all 14 PRD metric fields are supported', () => {
-    expect(METRIC_FIELDS).toHaveLength(14);
+  test('all metric fields (14 PRD + 2 attribute) are supported', () => {
+    expect(METRIC_FIELDS).toHaveLength(16);
+    expect(METRIC_FIELDS).toEqual(expect.arrayContaining(['has_google_identity', 'linkedin_verified']));
     METRIC_FIELDS.forEach((f) => expect(SNAP).toHaveProperty(f));
   });
 
