@@ -506,7 +506,7 @@ export default function SportsTurf() {
               >
                 Create a Free Account <ArrowRight size={16} />
               </Link>
-              <Link to="/demo" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-white transition-colors hover:text-[#A3E635] hover:no-underline">
+              <Link to="/sndatarkar/booking/book-a-sloth-app-online-demo-30-min-advisory-session" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-white transition-colors hover:text-[#A3E635] hover:no-underline">
                 Book A Demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Reveal>

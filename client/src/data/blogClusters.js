@@ -90,6 +90,7 @@ export const POST_TAGS = {
   'the-vanity-links': ['incident', 'data', 'discovery'],
   'the-confirmation-that-didnt-confirm': ['incident', 'booking', 'support'],
   'the-opening-again': ['updates', 'marketing', 'growth'],
+  'september-2026-product-update': ['updates', 'ai'],
 };
 
 // Clusters, highest priority first. priority breaks ties when a post matches

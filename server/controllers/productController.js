@@ -3,7 +3,8 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const otpStore = require('../utils/otpStore');
 const crypto = require('crypto');
-const { calculatePlatformFee } = require('../lib/pricingEngine');
+const { calculatePlatformFee, calculateGst, round2 } = require('../lib/pricingEngine');
+const platformConfig = require('../services/platformConfig');
 const { sendProductDownloadEmail } = require('../utils/productEmail');
 const { runInBackground } = require('../utils/background');
 const { canActivateMore } = require('../middleware/planMiddleware');
@@ -313,7 +314,19 @@ const getProductPublic = async (req, res) => {
     }
     if (!data) return res.status(404).json({ message: 'Product not found' });
 
-    res.json({ ...data, platform_fee: calculatePlatformFee(data.price) });
+    // Config-driven fee + GST so the client never hardcodes money math (mirrors
+    // services). A free product (price 0) → fee 0, gst 0 via calculatePlatformFee.
+    const cfg = await platformConfig.getConfig();
+    const price = Number(data.price) || 0;
+    const fee = calculatePlatformFee(price, { platformFee: cfg.platformFee });
+    const gst = calculateGst(fee, { gstRate: cfg.gstRate });
+    res.json({
+      ...data,
+      platform_fee: fee,
+      platform_fee_gst: gst,
+      gst_rate: cfg.gstRate,
+      total: round2(price + fee + gst),
+    });
   } catch (error) { safeError(res, error); }
 };
 
