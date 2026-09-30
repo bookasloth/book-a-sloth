@@ -69,6 +69,7 @@ const NAV = [
   { label: 'FAQ', href: '#faq' },
 ];
 
+const MASCOT = '/for/salon/hero.webp';
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian salons'];
 
 // LOOKBOOK service grid — number + uppercase label + desc (no icons, by design).
@@ -201,17 +202,19 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 
 /* Empty image placeholder — warm cream → fuchsia-tint. */
 function ImgSlot({ alt, className = '', rounded = 'rounded-[10px]' }) {
-  const decorative = !alt;
+  const layout = className
+    .replace(/shadow-\[[^\]]*\]/g, '')
+    .replace(/shadow-\w+/g, '')
+    .replace(/rounded-\[[^\]]*\]/g, '')
+    .replace(/\bborder\b(-[^\s]+)?/g, '')
+    .replace(/bg-\[[^\]]*\]/g, '');
+  const pos = /\b(absolute|fixed)\b/.test(layout) ? '' : 'relative';
   return (
     <div
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
-      className={`relative flex items-center justify-center overflow-hidden border border-black/[0.07] ${rounded} ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, color-mix(in srgb, var(--ca-accent) 12%, var(--ca-cream)) 100%)' }}
+      {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
+      className={`${pos} z-40 flex items-center justify-center ${layout}`}
     >
-      <span aria-hidden className="flex flex-col items-center gap-1.5 text-neutral-400">
-        <ImageIcon size={26} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium tracking-wide">Image</span>
-      </span>
+      <img src={MASCOT} alt={alt || ''} loading="lazy" decoding="async" className="h-full w-full object-contain" />
     </div>
   );
 }
@@ -407,8 +410,7 @@ export default function SalonPage() {
           <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-sm lg:mx-0 lg:max-w-md">
             <div className="relative aspect-[5/6] w-full">
               <div aria-hidden className="absolute inset-x-8 inset-y-10 rotate-[7deg] rounded-[8px] border-2" style={{ borderColor: 'var(--ca-accent)' }} />
-              <ImgSlot alt="A stylist finishing a client's blow-dry at the salon chair" rounded="rounded-[8px]" className="absolute left-[5%] top-[3%] h-[60%] w-[64%] -rotate-3 shadow-[0_26px_52px_-30px_rgba(17,17,17,0.55)]" />
-              <ImgSlot alt="A calm salon reception with a client checking in" rounded="rounded-[8px]" className="absolute bottom-[5%] right-[3%] h-[52%] w-[58%] rotate-3 shadow-[0_22px_46px_-28px_rgba(17,17,17,0.5)]" />
+              <ImgSlot alt="A stylist finishing a client's blow-dry at the salon chair" className="absolute inset-0 h-full w-full" />
               <div className="absolute -bottom-3 left-[6%] z-20 flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-[0_18px_40px_-18px_rgba(17,17,17,0.5)]">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-accent)' }}><Star size={17} /></span>
                 <div><div className="text-[11px] text-neutral-500">This week</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">Fully booked</div></div>

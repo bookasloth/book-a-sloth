@@ -60,6 +60,7 @@ const NAV = [
   { label: 'FAQ', href: '#faq' },
 ];
 
+const MASCOT = '/for/dermatologists/hero.webp';
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian clinics'];
 
 // Service bento (asymmetric). `wide` tiles span two columns.
@@ -197,17 +198,19 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 }
 
 function ImgSlot({ alt, className = '', rounded = 'rounded-[18px]' }) {
-  const decorative = !alt;
+  const layout = className
+    .replace(/shadow-\[[^\]]*\]/g, '')
+    .replace(/shadow-\w+/g, '')
+    .replace(/rounded-\[[^\]]*\]/g, '')
+    .replace(/\bborder\b(-[^\s]+)?/g, '')
+    .replace(/bg-\[[^\]]*\]/g, '');
+  const pos = /\b(absolute|fixed)\b/.test(layout) ? '' : 'relative';
   return (
     <div
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
-      className={`relative flex items-center justify-center overflow-hidden border border-black/[0.06] ${rounded} ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, #dcecef 100%)' }}
+      {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
+      className={`${pos} z-40 flex items-center justify-center ${layout}`}
     >
-      <span aria-hidden className="flex flex-col items-center gap-1.5 text-slate-400">
-        <ImageIcon size={26} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium tracking-wide">Image</span>
-      </span>
+      <img src={MASCOT} alt={alt || ''} loading="lazy" decoding="async" className="h-full w-full object-contain" />
     </div>
   );
 }
@@ -440,10 +443,8 @@ export default function Dermatologists() {
           </div>
 
           {/* RIGHT — 2-tile stacked image collage + floating chip */}
-          <Reveal instant delay={0.1} className="relative mx-auto grid w-full max-w-md grid-cols-2 gap-4 lg:mx-0 lg:max-w-none">
-            <ImgSlot alt="A dermatologist examining a patient's skin" className="col-span-2 aspect-[16/10] shadow-[0_24px_50px_-28px_rgba(18,35,43,0.4)]" />
-            <ImgSlot alt="Close-up of a skincare consultation" className="aspect-square shadow-[0_18px_40px_-24px_rgba(18,35,43,0.4)]" />
-            <ImgSlot alt="A calm skin-clinic reception desk" className="aspect-square shadow-[0_18px_40px_-24px_rgba(18,35,43,0.4)]" />
+          <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
+            <ImgSlot alt="A dermatologist examining a patient's skin" className="aspect-[4/5] w-full" />
             <div className="absolute -bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_16px_36px_-18px_rgba(18,35,43,0.5)]">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}><CalendarCheck size={17} /></span>
               <div><div className="text-[11px] text-slate-500">Booked &amp; paid</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">Skin consult · 4:00 PM</div></div>

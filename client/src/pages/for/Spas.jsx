@@ -61,6 +61,7 @@ const NAV = [
   { label: 'FAQ', href: '#faq' },
 ];
 
+const MASCOT = '/for/spa/hero.webp';
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian spas'];
 
 // Spa treatment MENU — grouped, leader-dot rows (not cards, not bento).
@@ -201,17 +202,19 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 }
 
 function ImgSlot({ alt, className = '', rounded = 'rounded-[20px]' }) {
-  const decorative = !alt;
+  const layout = className
+    .replace(/shadow-\[[^\]]*\]/g, '')
+    .replace(/shadow-\w+/g, '')
+    .replace(/rounded-\[[^\]]*\]/g, '')
+    .replace(/\bborder\b(-[^\s]+)?/g, '')
+    .replace(/bg-\[[^\]]*\]/g, '');
+  const pos = /\b(absolute|fixed)\b/.test(layout) ? '' : 'relative';
   return (
     <div
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
-      className={`relative flex items-center justify-center overflow-hidden border border-black/[0.06] ${rounded} ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, #dbe7e0 100%)' }}
+      {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
+      className={`${pos} z-40 flex items-center justify-center ${layout}`}
     >
-      <span aria-hidden className="flex flex-col items-center gap-1.5 text-slate-400">
-        <ImageIcon size={24} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium tracking-wide">Image</span>
-      </span>
+      <img src={MASCOT} alt={alt || ''} loading="lazy" decoding="async" className="h-full w-full object-contain" />
     </div>
   );
 }
@@ -374,7 +377,7 @@ export default function Spas() {
         <div aria-hidden className="pointer-events-none absolute left-1/2 top-[-6rem] h-[26rem] w-[40rem] -translate-x-1/2 rounded-full blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(63,107,94,0.14), transparent)' }} />
         <div aria-hidden className="pointer-events-none absolute right-[-4rem] top-24 h-72 w-72 rounded-full blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(176,137,104,0.16), transparent)' }} />
 
-        <div className="relative mx-auto max-w-3xl">
+        <div className="relative z-10 mx-auto max-w-3xl">
           <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(63,107,94,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
             <Sparkles size={13} /> For spas &amp; wellness centres
           </Reveal>
@@ -401,18 +404,8 @@ export default function Spas() {
         </div>
 
         {/* centered cluster of overlapping rounded ImgSlots + thin outline pills */}
-        <Reveal instant delay={0.2} className="relative mx-auto mt-16 w-full max-w-2xl">
-          <div className="flex items-center justify-center -space-x-6 sm:-space-x-10">
-            <ImgSlot alt="A serene spa treatment room with soft lighting" className="z-0 aspect-[3/4] w-24 rotate-[-5deg] shadow-[0_18px_40px_-24px_rgba(36,50,46,0.5)] sm:w-40" />
-            <ImgSlot alt="Warm towels and smooth stones laid out at a wellness centre" className="z-20 aspect-[3/4] w-28 shadow-[0_26px_54px_-26px_rgba(36,50,46,0.55)] sm:w-48" />
-            <ImgSlot alt="A calm spa reception welcoming a guest" className="z-0 aspect-[3/4] w-24 rotate-[5deg] shadow-[0_18px_40px_-24px_rgba(36,50,46,0.5)] sm:w-40" />
-          </div>
-          <span className="absolute left-1/2 top-2 z-30 flex -translate-x-[7.5rem] items-center gap-1.5 rounded-full border border-black/10 bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-[color:var(--ca-ink)] shadow-sm backdrop-blur sm:-translate-x-[10rem]">
-            <CalendarCheck size={13} style={{ color: 'var(--ca-primary)' }} /> Booked &amp; confirmed
-          </span>
-          <span className="absolute bottom-4 left-1/2 z-30 flex translate-x-[4.5rem] items-center gap-1.5 rounded-full border border-black/10 bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-[color:var(--ca-ink)] shadow-sm backdrop-blur sm:translate-x-[7rem]">
-            <Wallet size={13} style={{ color: 'var(--ca-accent)' }} /> Advance received
-          </span>
+        <Reveal instant delay={0.2} className="pointer-events-none absolute bottom-0 right-0 z-0 hidden w-72 opacity-90 lg:block xl:right-8 xl:w-80">
+          <ImgSlot alt="A serene spa treatment room with soft lighting" className="aspect-[3/4] w-full" />
         </Reveal>
       </section>
 

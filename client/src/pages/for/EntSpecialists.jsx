@@ -60,6 +60,7 @@ const NAV = [
   { label: 'FAQ', href: '#faq' },
 ];
 
+const MASCOT = '/for/ent-specialists/hero.webp';
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian clinics'];
 
 // Services grouped for the segmented-tab switcher (Ear / Nose & Throat / Consult & Surgery).
@@ -197,17 +198,19 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 }
 
 function ImgSlot({ alt, className = '', rounded = 'rounded-[16px]' }) {
-  const decorative = !alt;
+  const layout = className
+    .replace(/shadow-\[[^\]]*\]/g, '')
+    .replace(/shadow-\w+/g, '')
+    .replace(/rounded-\[[^\]]*\]/g, '')
+    .replace(/\bborder\b(-[^\s]+)?/g, '')
+    .replace(/bg-\[[^\]]*\]/g, '');
+  const pos = /\b(absolute|fixed)\b/.test(layout) ? '' : 'relative';
   return (
     <div
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
-      className={`relative flex items-center justify-center overflow-hidden border border-black/[0.06] ${rounded} ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, #e0e7ff 100%)' }}
+      {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
+      className={`${pos} z-40 flex items-center justify-center ${layout}`}
     >
-      <span aria-hidden className="flex flex-col items-center gap-1.5 text-slate-400">
-        <ImageIcon size={26} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium tracking-wide">Image</span>
-      </span>
+      <img src={MASCOT} alt={alt || ''} loading="lazy" decoding="async" className="h-full w-full object-contain" />
     </div>
   );
 }
@@ -598,21 +601,8 @@ export default function EntSpecialists() {
           {/* RIGHT — audiogram instrument panel behind an ImgSlot + floating chip */}
           <Reveal instant delay={0.1} className="relative mx-auto mt-6 mb-10 w-full max-w-md lg:mx-0 lg:my-0 lg:max-w-none">
             <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(67,56,202,0.22), transparent)' }} />
-            <div className="relative rounded-[18px] border border-black/[0.08] bg-white p-5 shadow-[0_30px_60px_-38px_rgba(30,27,58,0.5)]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span aria-hidden className="relative flex h-2 w-2">
-                    <span className="live-dot absolute inline-flex h-full w-full rounded-full" style={{ background: 'var(--ca-accent)' }} />
-                    <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: 'var(--ca-accent)' }} />
-                  </span>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Audiogram · Live</span>
-                </div>
-                <span className="text-[11px] font-semibold text-slate-400">dB / Hz</span>
-              </div>
-              <AudiogramMotif />
-            </div>
-            <ImgSlot alt="An ENT specialist reviewing a patient's hearing results" className="absolute -bottom-8 -left-6 aspect-[4/5] w-36 ring-4 ring-white shadow-[0_22px_44px_-24px_rgba(30,27,58,0.55)] sm:w-44" />
-            <div className="absolute -right-3 -top-4 z-20 flex items-center gap-2.5 rounded-[12px] border border-black/[0.06] bg-white px-3.5 py-2.5 shadow-[0_16px_36px_-18px_rgba(30,27,58,0.5)]">
+            <ImgSlot alt="An ENT specialist reviewing a patient's hearing results" className="aspect-[4/5] w-full" />
+            <div className="absolute top-[58%] -left-4 z-20 flex items-center gap-2.5 rounded-[12px] border border-black/[0.06] bg-white px-3.5 py-2.5 shadow-[0_16px_36px_-18px_rgba(30,27,58,0.5)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}><CalendarCheck size={16} /></span>
               <div>
                 <div className="text-[10px] text-slate-500">Appointment confirmed</div>
