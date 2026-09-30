@@ -51,8 +51,8 @@ import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const HERO_ART = '/images/abs/illustrations/man-analytics.webp'; // consulting/analytics illustration
-const ABOUT_ART = '/images/abs/illustrations/sloth-laptop-booking.webp';
+const HERO_ART = '/for/business-consultant/hero.webp'; // consulting/analytics illustration
+const ABOUT_ART = '/for/business-consultant/hero.webp';
 const AMBER = '#F59E0B'; // bright amber — used only on the dark hero/CTA where contrast is high
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */

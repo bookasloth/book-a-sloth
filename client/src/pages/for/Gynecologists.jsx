@@ -59,6 +59,7 @@ const NAV = [
   { label: 'FAQ', href: '#faq' },
 ];
 
+const MASCOT = '/for/gynecologists/hero.webp';
 const HERO_TRUST = ['No credit card required', 'Private by design', 'Built for Indian clinics'];
 
 const SERVICES = [
@@ -180,17 +181,12 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 }
 
 function ImgSlot({ alt, className = '', rounded = 'rounded-[24px]' }) {
-  const decorative = !alt;
   return (
     <div
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
+      {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
       className={`relative flex items-center justify-center overflow-hidden ${rounded} ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, #e2f0e8 100%)' }}
     >
-      <span aria-hidden className="flex flex-col items-center gap-1.5 text-emerald-800/30">
-        <ImageIcon size={26} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium tracking-wide">Image</span>
-      </span>
+      <img src={MASCOT} alt={alt || ''} loading="lazy" decoding="async" className="h-full w-full object-contain p-2" />
     </div>
   );
 }

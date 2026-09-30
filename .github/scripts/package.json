@@ -1,9 +1,0 @@
-{
-  "name": "x-autopost-scripts",
-  "private": true,
-  "type": "module",
-  "description": "Isolated deps for the X (Twitter) build-in-public autopost Action. Kept out of client/ and server/ so their installs stay untouched.",
-  "dependencies": {
-    "twitter-api-v2": "^1.18.2"
-  }
-}

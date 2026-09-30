@@ -63,6 +63,7 @@ const NAV = [
   { label: 'FAQ', href: '#faq' },
 ];
 
+const MASCOT = '/for/physiotherapists/hero.webp';
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian clinics'];
 
 // Treatment index rows.
@@ -195,17 +196,12 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 /* Intentional EMPTY image placeholder — layout-final, drop real photos in later.
    Empty alt = decorative (aria-hidden); otherwise exposed as role="img". */
 function ImgSlot({ alt, className = '', rounded = 'rounded-[20px]' }) {
-  const decorative = !alt;
   return (
     <div
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
-      className={`relative flex items-center justify-center overflow-hidden border border-black/[0.06] ${rounded} ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, #e9efec 100%)' }}
+      {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
+      className={`relative flex items-center justify-center overflow-hidden ${rounded} ${className}`}
     >
-      <span aria-hidden className="flex flex-col items-center gap-1.5 text-neutral-400">
-        <ImageIcon size={26} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium tracking-wide">Image</span>
-      </span>
+      <img src={MASCOT} alt={alt || ''} loading="lazy" decoding="async" className="h-full w-full object-contain p-2" />
     </div>
   );
 }
