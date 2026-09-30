@@ -51,8 +51,8 @@ import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const HERO_ART = '/images/abs/illustrations/man-analytics.webp'; // consulting/analytics illustration
-const ABOUT_ART = '/images/abs/illustrations/sloth-laptop-booking.webp';
+const HERO_ART = '/for/business-consultant/hero.webp'; // consulting/analytics illustration
+const ABOUT_ART = '/for/business-consultant/hero.webp';
 const AMBER = '#F59E0B'; // bright amber — used only on the dark hero/CTA where contrast is high
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
@@ -651,7 +651,7 @@ export default function BusinessConsultants() {
           {/* RIGHT — illustration + floating glass cards */}
           <Reveal instant delay={0.1} className="relative hidden lg:block">
             <div aria-hidden className="absolute left-1/2 top-1/2 h-[27rem] w-[27rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[rgba(30,41,59,0.1)] to-[rgba(180,83,9,0.12)] blur-2xl" />
-            <img src={HERO_ART} alt="Book A Sloth — appointment booking for business and management consultants" loading="eager" className="relative z-10 mx-auto w-full max-w-[27rem] drop-shadow-[0_28px_40px_rgba(15,23,42,0.2)]" />
+            <img src={HERO_ART} alt="Book A Sloth — appointment booking for business and management consultants" loading="eager" className="relative z-30 mx-auto w-full max-w-[27rem] drop-shadow-[0_28px_40px_rgba(15,23,42,0.2)]" />
             <GlassCard icon={CalendarCheck} label="New booking" value="Strategy Call · 4:30 PM" float="sloth-float" className="top-6 -right-4" />
             <GlassCard icon={Wallet} label="Fee received" value="₹5,000" accent float="sloth-float--mid" className="top-1/2 -left-6" />
             <GlassCard icon={BellRing} label="WhatsApp reminder" value="Sent · 1h before" float="sloth-float--slow" className="bottom-10 -right-2" />

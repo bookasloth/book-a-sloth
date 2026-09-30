@@ -63,6 +63,7 @@ const NAV = [
   { label: 'FAQ', href: '#faq' },
 ];
 
+const MASCOT = '/for/nutritionists/hero.webp';
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian practices'];
 
 // Balanced-plate wedges (hero). Soft green → citrus tones.
@@ -210,17 +211,19 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 }
 
 function ImgSlot({ alt, className = '', rounded = 'rounded-[18px]' }) {
-  const decorative = !alt;
+  const layout = className
+    .replace(/shadow-\[[^\]]*\]/g, '')
+    .replace(/shadow-\w+/g, '')
+    .replace(/rounded-\[[^\]]*\]/g, '')
+    .replace(/\bborder\b(-[^\s]+)?/g, '')
+    .replace(/bg-\[[^\]]*\]/g, '');
+  const pos = /\b(absolute|fixed)\b/.test(layout) ? '' : 'relative';
   return (
     <div
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
-      className={`relative flex items-center justify-center overflow-hidden border border-black/[0.06] ${rounded} ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, #dcefdc 100%)' }}
+      {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
+      className={`${pos} z-40 flex items-center justify-center ${layout}`}
     >
-      <span aria-hidden className="flex flex-col items-center gap-1.5 text-emerald-700/40">
-        <ImageIcon size={26} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium tracking-wide">Image</span>
-      </span>
+      <img src={MASCOT} alt={alt || ''} loading="lazy" decoding="async" className="h-full w-full object-contain" />
     </div>
   );
 }

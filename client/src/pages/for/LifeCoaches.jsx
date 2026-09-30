@@ -60,6 +60,7 @@ const NAV = [
   { label: 'FAQ', href: '#faq' },
 ];
 
+const MASCOT = '/for/life-coaches/hero.webp';
 const HERO_TRUST = ['No credit card required', 'Setup in minutes', 'Built for Indian coaches'];
 
 // Editorial numbered offering rows — the sessions a coach sells.
@@ -191,17 +192,19 @@ function CtaButton({ to, children, variant = 'solid', className = '' }) {
 }
 
 function ImgSlot({ alt, className = '', rounded = 'rounded-[18px]' }) {
-  const decorative = !alt;
+  const layout = className
+    .replace(/shadow-\[[^\]]*\]/g, '')
+    .replace(/shadow-\w+/g, '')
+    .replace(/rounded-\[[^\]]*\]/g, '')
+    .replace(/\bborder\b(-[^\s]+)?/g, '')
+    .replace(/bg-\[[^\]]*\]/g, '');
+  const pos = /\b(absolute|fixed)\b/.test(layout) ? '' : 'relative';
   return (
     <div
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': alt })}
-      className={`relative flex items-center justify-center overflow-hidden border border-black/[0.06] ${rounded} ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--ca-grey) 0%, #E8DBC9 100%)' }}
+      {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
+      className={`${pos} z-40 flex items-center justify-center ${layout}`}
     >
-      <span aria-hidden className="flex flex-col items-center gap-1.5 text-stone-400">
-        <ImageIcon size={26} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium tracking-wide">Image</span>
-      </span>
+      <img src={MASCOT} alt={alt || ''} loading="lazy" decoding="async" className="h-full w-full object-contain" />
     </div>
   );
 }
@@ -467,7 +470,7 @@ export default function LifeCoaches() {
               <circle cx="152" cy="8" r="4.5" fill="var(--ca-accent)" />
             </svg>
             <ImgSlot alt="A life coach in a calm one-on-one session with a client" rounded="rounded-[28px]" className="aspect-[4/5] w-full shadow-[0_30px_60px_-30px_rgba(28,43,34,0.45)]" />
-            <div className="absolute -bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-black/5 bg-white px-4 py-3 shadow-[0_18px_40px_-18px_rgba(28,43,34,0.5)]">
+            <div className="absolute top-[16%] -left-6 z-20 flex items-center gap-3 rounded-2xl border border-black/5 bg-white px-4 py-3 shadow-[0_18px_40px_-18px_rgba(28,43,34,0.5)]">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}><CalendarCheck size={17} /></span>
               <div>
                 <div className="text-[11px] text-neutral-500">Session booked</div>
