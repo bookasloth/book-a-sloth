@@ -9,7 +9,11 @@
 const PIXEL_ID = import.meta.env.VITE_FB_PIXEL_ID;
 
 const STANDARD = {
-  booking_started:   'InitiateCheckout',
+  // booking_started (opening the flow) stays a custom event on purpose: only
+  // checkout_started maps to InitiateCheckout, and it carries event_id=booking.id
+  // so Meta de-dupes it against the server's booking_created InitiateCheckout hit.
+  // Mapping booking_started here too fired a second, event_id-less InitiateCheckout
+  // that Meta could never merge — inflating the metric. One mapped event, deduped.
   checkout_started:  'InitiateCheckout',
   booking_paid:      'Purchase',
   product_purchased: 'Purchase',
@@ -24,7 +28,11 @@ let loaded = false;
 
 export default {
   name: 'pixel',
-  needsConsent: true,
+  // Fires pre-consent (base pixel + PageView) so retargeting audiences
+  // (e.g. "Website Visitors") fill from all prod visitors, not only those who
+  // accept the marketing banner. Deliberate business decision — DPDP/GDPR risk
+  // accepted by founder. Still prod-host gated in the bus (bookasloth.com only).
+  needsConsent: false,
   init() {
     if (loaded || !PIXEL_ID || typeof window === 'undefined') return;
     loaded = true;

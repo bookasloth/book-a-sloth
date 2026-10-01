@@ -28,10 +28,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight, Check, Menu, X, Plus, Star,
-  CalendarCheck, LayoutDashboard,
-  Wallet, BellRing,
-  Landmark, Image as ImageIcon,
+  ArrowRight, Check, Menu, X, Plus,
+  CalendarCheck, LayoutDashboard, BellRing,
+  Landmark,
   Baby, Flower2, ShieldCheck, Stethoscope, Activity, Video,
   BadgePercent, Lock, Sparkles, Share2, Heart,
 } from 'lucide-react';

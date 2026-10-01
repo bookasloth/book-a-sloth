@@ -8,8 +8,14 @@ describe('cleanAttribution', () => {
     expect(cleanAttribution({ utm_source: ' google ', medium: 'cpc', campaign: 'launch', referrer: 'https://x', landing: '/p?a=1' }))
       .toEqual({
         utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'launch',
-        utm_content: null, utm_term: null, referrer: 'https://x', landing_page: '/p?a=1',
+        utm_content: null, utm_term: null, fbclid: null, gclid: null,
+        referrer: 'https://x', landing_page: '/p?a=1',
       });
+  });
+  test('captures raw click ids; a click id alone counts as a touch', () => {
+    const out = cleanAttribution({ fbclid: 'abc123' });
+    expect(out).not.toBeNull();
+    expect(out.fbclid).toBe('abc123');
   });
   test('null when nothing usable', () => {
     expect(cleanAttribution({})).toBeNull();
@@ -26,7 +32,7 @@ test('touchSnapshot adds a timestamp', () => {
 });
 
 test('stripAttributionColumns removes every attribution field, keeps the rest', () => {
-  const row = { name: 'A', utm_source: 'g', first_touch: {}, last_touch: {}, referrer: 'x', landing_page: '/p', email: 'e' };
+  const row = { name: 'A', utm_source: 'g', fbclid: 'f', gclid: 'g', first_touch: {}, last_touch: {}, referrer: 'x', landing_page: '/p', email: 'e' };
   expect(stripAttributionColumns(row)).toEqual({ name: 'A', email: 'e' });
 });
 

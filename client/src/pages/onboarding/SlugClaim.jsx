@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Check } from 'lucide-react';
 import { checkOnboardingSlug, claimOnboardingSlug } from '../../services/api';
-import { analytics, EVENTS } from '../../services/analytics';
 import OnboardingStepper from './OnboardingStepper';
 import useOnboardingGuard from './useOnboardingGuard';
 import PetalSpinner from '../../components/common/PetalSpinner';
@@ -38,9 +37,6 @@ const SlugClaim = () => {
   const [claiming, setClaiming] = useState(false);
   const debounceRef = useRef(null);
   const requestSeq = useRef(0);
-
-  // Track top-of-slug-step entry
-  useEffect(() => { analytics.track(EVENTS.SIGNUP_STARTED, {}); }, []);
 
   // On mount (and if urlSlug changes after a redirect), check availability of
   // the pre-filled slug so the host sees immediate feedback without typing.

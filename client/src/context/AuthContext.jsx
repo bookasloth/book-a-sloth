@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { analytics } from '../services/analytics';
+import { analytics, EVENTS } from '../services/analytics';
 import { registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost, cancelHosting as apiCancelHosting } from '../services/api';
 import { getSupabase } from '../services/supabaseClient';
 
@@ -188,6 +188,12 @@ export const AuthProvider = ({ children }) => {
   // Vendor Google auth: signup/login with one consent screen (identity +
   // calendar). The callback lands on /auth/google/done with session tokens.
   const startVendorGoogleAuth = async (intent = 'login') => {
+    // signup_started = the TRUE top of the signup funnel: the host clicked
+    // "Continue with Google" to CREATE an account. Fire before the redirect so the
+    // drop-off at Google's own screen is captured. Login clicks aren't signups, so
+    // only intent==='signup' fires it. (Previously this fired on the slug-claim step,
+    // i.e. AFTER OAuth already succeeded — missing every pre-OAuth abandon.)
+    if (intent === 'signup') analytics.track(EVENTS.SIGNUP_STARTED, {});
     const { data } = await getVendorGoogleUrl(intent);
     window.location.href = data.url;
   };

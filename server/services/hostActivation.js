@@ -38,10 +38,11 @@ async function maybeTrackFirstBooking({ host, booking }) {
       .eq('payment_status', 'paid');
 
     if (count === 1) {
+      const amount = Number(booking.vendor_amount ?? booking.amount ?? 0);
       trackServer(host.id, 'host_first_booking', {
         booking_id: booking.id,
-        amount: Number(booking.vendor_amount ?? booking.amount ?? 0),
-      });
+        amount,
+      }, { value: amount, currency: 'INR' }); // → GA4 + Meta custom activation event (external_id match)
       return { tracked: true };
     }
     return { tracked: false };

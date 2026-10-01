@@ -7,8 +7,12 @@
  */
 
 const UTM = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+// Raw ad click ids. Kept verbatim (not inferred) so a lead can be matched back to
+// the exact Instagram/Meta or Google ad click — the utm_* columns hold the inferred
+// source, these hold the join key. fbclid/gclid can be long, so cap at 255.
+const CLICK_IDS = ['fbclid', 'gclid'];
 // The flat columns a lead row carries (also what the schema-fallback strips).
-const ATTRIBUTION_COLUMNS = [...UTM, 'referrer', 'landing_page', 'first_touch', 'last_touch'];
+const ATTRIBUTION_COLUMNS = [...UTM, ...CLICK_IDS, 'referrer', 'landing_page', 'first_touch', 'last_touch'];
 
 const cap = (v, n = 200) => {
   if (v == null) return null;
@@ -24,9 +28,10 @@ function cleanAttribution(raw = {}) {
   if (!raw || typeof raw !== 'object') return null;
   const out = {};
   for (const k of UTM) out[k] = cap(raw[k] ?? raw[k.replace('utm_', '')]);
+  for (const k of CLICK_IDS) out[k] = cap(raw[k], 255);
   out.referrer = cap(raw.referrer, 500);
   out.landing_page = cap(raw.landing_page ?? raw.landing, 500);
-  const hasAny = UTM.some((k) => out[k]) || out.referrer || out.landing_page;
+  const hasAny = UTM.some((k) => out[k]) || CLICK_IDS.some((k) => out[k]) || out.referrer || out.landing_page;
   return hasAny ? out : null;
 }
 
@@ -54,6 +59,6 @@ function isMissingColumnError(error) {
 }
 
 module.exports = {
-  UTM, ATTRIBUTION_COLUMNS,
+  UTM, CLICK_IDS, ATTRIBUTION_COLUMNS,
   cleanAttribution, touchSnapshot, stripAttributionColumns, isMissingColumnError,
 };

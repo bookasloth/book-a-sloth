@@ -36,7 +36,7 @@ import {
   ArrowRight, Check, Menu, X, Plus, Star, ArrowUpRight,
   CalendarCheck, LayoutDashboard, MessagesSquare, MessageCircle, BellRing, Wallet,
   Landmark, FileText, Lock, BadgePercent, Zap, Share2, ShieldCheck,
-  Compass, PenTool, Building2, Home, TreePine, Hammer, Box,
+  Compass, PenTool,Home,Hammer, Box,
   ClipboardCheck, HardHat, Palette, Video, Sparkles,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';

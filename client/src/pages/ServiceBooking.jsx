@@ -798,6 +798,9 @@ const ServiceBooking = () => {
     analytics.track(EVENTS.CHECKOUT_STARTED, {
       booking_id: confirmation.id, service_id: service.id, host_id: host.id,
       value: Number(confirmation?.customer_total) || 0, currency: "INR",
+      // event_id = booking id → Meta de-dupes this browser InitiateCheckout against
+      // the server booking_created InitiateCheckout (trackServer eventId=booking.id).
+      event_id: confirmation.id,
     });
     try {
       // BUG-02 fix: send guest_email so server can authorize the payment

@@ -26,10 +26,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight, Check, Menu, X, Plus, Star,
+  ArrowRight, Check, Menu, X, Plus,
   CalendarCheck, LayoutDashboard,
   Wallet, BellRing, Baby,
-  Landmark, Image as ImageIcon,
+  Landmark,
   Syringe, Stethoscope, Smile, Thermometer, Activity, Video,
   BadgePercent, Lock, ShieldCheck, Share2, Heart,
 } from 'lucide-react';

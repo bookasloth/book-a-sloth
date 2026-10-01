@@ -30,7 +30,8 @@ test('fires host_first_booking on the first paid booking (count === 1)', async (
   const r = await maybeTrackFirstBooking({ host: HOST, booking: PAID });
   expect(r).toEqual({ tracked: true });
   expect(trackServer).toHaveBeenCalledWith('h1', 'host_first_booking',
-    expect.objectContaining({ booking_id: 'b1', amount: 500 }));
+    expect.objectContaining({ booking_id: 'b1', amount: 500 }),
+    expect.objectContaining({ value: 500, currency: 'INR' })); // conversion → GA4 + Meta custom
 });
 
 test('does NOT fire on a later booking (count > 1)', async () => {

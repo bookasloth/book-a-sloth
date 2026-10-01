@@ -31,10 +31,9 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus, Star,
-  CalendarCheck, LayoutDashboard,
-  Wallet, BellRing, HeartPulse,
-  Landmark, Image as ImageIcon,
-  Stethoscope, Thermometer, ClipboardCheck, Syringe, Video, Activity,
+  CalendarCheck, LayoutDashboard, BellRing, HeartPulse,
+  Landmark,
+  Stethoscope, Thermometer, ClipboardCheck, Syringe, Video,
   BadgePercent, Lock, ShieldCheck, Share2, Zap,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
