@@ -20,6 +20,7 @@ import OnboardingStepper from './OnboardingStepper';
 import LivePreviewCard from './LivePreviewCard';
 import { personaLabelForSlug, personaTagForSlug } from './personas';
 import PetalSpinner from '../../components/common/PetalSpinner';
+import ConfirmSheet from '../../components/dashboard/ui/ConfirmSheet';
 
 // First-service durations — the common set; host refines everything else in the
 // dashboard. Kept tiny on purpose: this screen exists to get ONE bookable
@@ -45,6 +46,9 @@ const ExploreWithBolt = () => {
   const [category, setCategory]   = useState('');
   const [publishing, setPublishing] = useState(false);
   const [skipping, setSkipping]   = useState(false);
+  // Soft-gate: 2-in-3 stalled hosts finished here with zero services by tapping
+  // the one-click skip. Now a deliberate confirm sits between tap and finish.
+  const [confirmSkip, setConfirmSkip] = useState(false);
 
   // "Build with Bolt": one-line title → AI fills the real listing copy (and
   // suggests a duration/category). Stored so handlePublish sends the rich copy
@@ -174,6 +178,9 @@ const ExploreWithBolt = () => {
   const handleSkip = async () => {
     setSkipping(true);
     try {
+      // Pairs with service_published {source:onboarding} so the skip rate is
+      // finally measurable — the old one-click skip fired nothing.
+      analytics.track(EVENTS.FIRST_SERVICE_SKIPPED, { source: 'onboarding' });
       await markOnboardingComplete();
       navigate('/dashboard');
     } catch (error) {
@@ -342,9 +349,9 @@ const ExploreWithBolt = () => {
           </div>
         </div>
 
-        {/* Escape hatch — never trap the host */}
+        {/* Escape hatch — never trap the host, but make leaving empty deliberate */}
         <button
-          onClick={handleSkip}
+          onClick={() => setConfirmSkip(true)}
           disabled={busy}
           className="mt-4 flex w-full items-center justify-center gap-1 text-sm text-gray-500 transition hover:text-gray-800 disabled:opacity-50"
         >
@@ -375,6 +382,18 @@ const ExploreWithBolt = () => {
 
         </div>
       </div>
+
+      <ConfirmSheet
+        open={confirmSkip}
+        title="Leave without a service?"
+        message="Your page can’t take a single booking until it has a service. Adding one takes about a minute — and it’s the whole reason you’re here."
+        confirmLabel="Skip anyway"
+        cancelLabel="Add my service"
+        danger
+        busy={skipping}
+        onConfirm={handleSkip}
+        onClose={() => setConfirmSkip(false)}
+      />
     </div>
   );
 };

@@ -92,4 +92,37 @@ describe('onboarding first-service publish', () => {
     fireEvent.click(screen.getByRole('button', { name: /Build with Bolt/i }));
     await waitFor(() => expect(aiGenerateListing).not.toHaveBeenCalled());
   });
+
+  // NOTE: onboarding_completed flips on /live MOUNT (idempotent), not on the
+  // skip button — so these assert on NAVIGATION, which is what the soft-gate
+  // actually governs: one tap no longer leaves the screen.
+  test('skip is soft-gated — the tap opens a confirm instead of leaving', async () => {
+    renderLive();
+    await screen.findByPlaceholderText(/1:1 Strategy Call/i);
+
+    fireEvent.click(screen.getByRole('button', { name: /Skip for now/i }));
+
+    // Confirm sheet appears; the host has NOT left for the dashboard.
+    await screen.findByText(/Leave without a service\?/i);
+    expect(screen.queryByTestId('dashboard')).not.toBeInTheDocument();
+
+    // "Add my service" backs out — still on the screen, nothing published.
+    fireEvent.click(screen.getByRole('button', { name: /Add my service/i }));
+    await waitFor(() =>
+      expect(screen.queryByText(/Leave without a service\?/i)).not.toBeInTheDocument());
+    expect(screen.queryByTestId('dashboard')).not.toBeInTheDocument();
+    expect(svcCreate).not.toHaveBeenCalled();
+  });
+
+  test('confirming "Skip anyway" leaves for the dashboard with no service', async () => {
+    renderLive();
+    await screen.findByPlaceholderText(/1:1 Strategy Call/i);
+
+    fireEvent.click(screen.getByRole('button', { name: /Skip for now/i }));
+    await screen.findByText(/Leave without a service\?/i);
+    fireEvent.click(screen.getByRole('button', { name: /Skip anyway/i }));
+
+    await screen.findByTestId('dashboard');
+    expect(svcCreate).not.toHaveBeenCalled();
+  });
 });
