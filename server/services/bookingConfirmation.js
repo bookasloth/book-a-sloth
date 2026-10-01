@@ -73,7 +73,10 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
             endTime: endTime.toISOString(),
             timezone: tz,
             attendees: [
-              { email: host.email },
+              // Organiser (host) owns this calendar — mark accepted so the event
+              // shows the host as "Yes", not "awaiting". Google no longer auto-accepts
+              // the organiser implicitly when they appear in attendees.
+              { email: host.email, responseStatus: 'accepted' },
               ...(booking.guest_email ? [{ email: booking.guest_email }] : []),
             ],
           },
