@@ -1,30 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { getHostProfile } from '../../services/api';
 import { FALLBACK_HOST } from './demoData';
 
-const DEFAULT_USERNAME = 'sndatarkar';
-const TIMEOUT_MS = 2500;
-
-// Never throws. First render returns FALLBACK_HOST so paint is never blank;
-// swaps to live data only if the fetch succeeds with usable services.
-export function usePresentationHost(username = DEFAULT_USERNAME) {
-  const [state, setState] = useState({ host: FALLBACK_HOST, loading: true, source: 'fallback' });
-  const done = useRef(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => { if (!done.current) { done.current = true; setState((s) => ({ ...s, loading: false })); } }, TIMEOUT_MS);
-    getHostProfile(username)
-      .then(({ data }) => {
-        if (done.current) return;
-        const services = Array.isArray(data?.services) ? data.services : [];
-        if (!data || services.length === 0) return; // keep fallback
-        done.current = true;
-        setState({ host: { ...data, services }, loading: false, source: 'live' });
-      })
-      .catch(() => {}) // swallow: fallback stays
-      .finally(() => { if (!done.current) { done.current = true; setState((s) => ({ ...s, loading: false })); } clearTimeout(timer); });
-    return () => clearTimeout(timer);
-  }, [username]);
-
-  return { host: state.host, services: state.host.services || [], loading: state.loading, source: state.source };
+// The deck's booking demo runs on a curated persona — never live/internal
+// account data — so an externally shared link always shows a clean,
+// aspirational flow (no ₹1 test services, no internal "KYC"/"App Demo"
+// listings). Slide 08 re-skins this per profession via CATEGORY_DEMOS.
+// ponytail: intentionally static — the old live fetch of /sndatarkar added a
+// 2.5s timeout + fragile data risk for zero selling upside. Bring back a live
+// fetch only if the deck must show a real, curated showcase host.
+export function usePresentationHost() {
+  return { host: FALLBACK_HOST, services: FALLBACK_HOST.services, loading: false, source: 'curated' };
 }

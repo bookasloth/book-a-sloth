@@ -8,7 +8,7 @@ export const FALLBACK_HOST = {
   cover_image: '',   // HostCover renders theme gradient
   accent_color: '#FE5100',
   services: [
-    { id: 'd1', title: 'Discovery Call', slug: 'discovery-call', short_description: '20 min to see if we click.', price: 0, duration: 20, meeting_mode: 'online' },
+    { id: 'd1', title: 'Discovery Call', slug: 'discovery-call', short_description: 'A quick, no-pressure fit check.', price: 0, duration: 20, meeting_mode: 'online' },
     { id: 'd2', title: 'Strategy Session', slug: 'strategy-session', short_description: 'A focused hour on your goals.', price: 1500, duration: 60, meeting_mode: 'online' },
     { id: 'd3', title: 'Deep Dive', slug: 'deep-dive', short_description: 'Half-day intensive.', price: 4000, duration: 180, meeting_mode: 'in_person' },
   ],
