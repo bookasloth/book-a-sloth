@@ -9,7 +9,11 @@
 const PIXEL_ID = import.meta.env.VITE_FB_PIXEL_ID;
 
 const STANDARD = {
-  booking_started:   'InitiateCheckout',
+  // booking_started (opening the flow) stays a custom event on purpose: only
+  // checkout_started maps to InitiateCheckout, and it carries event_id=booking.id
+  // so Meta de-dupes it against the server's booking_created InitiateCheckout hit.
+  // Mapping booking_started here too fired a second, event_id-less InitiateCheckout
+  // that Meta could never merge — inflating the metric. One mapped event, deduped.
   checkout_started:  'InitiateCheckout',
   booking_paid:      'Purchase',
   product_purchased: 'Purchase',

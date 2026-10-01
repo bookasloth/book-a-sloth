@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Check,
@@ -26,6 +26,8 @@ import {
 } from "../data/plans";
 import PricingCards from "../components/pricing/PricingCards";
 import useFeeOnly from "../hooks/useFeeOnly";
+import { analytics, EVENTS } from "../services/analytics";
+import useUtm from "../hooks/useUtm";
 
 // /pricing — dedicated public pricing page. A product journey, not a spec sheet:
 //   Sloth = Operate (free) → Sloth Active = Grow (premium).
@@ -88,6 +90,12 @@ export default function Pricing() {
   // Route go-live.
   const feeOnly = useFeeOnly();
   const columns = feeOnly ? PLAN_COLUMNS.filter((c) => c.key !== "free") : PLAN_COLUMNS;
+
+  // plan_viewed — the pricing-visitor retargeting audience (Meta/GA4). Fire once
+  // on mount, carrying first-touch ad attribution so the audience ties back to the
+  // Reel/campaign that sent them here.
+  const utm = useUtm();
+  useEffect(() => { analytics.track(EVENTS.PLAN_VIEWED, { ...utm }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <main className="bg-white">
