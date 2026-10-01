@@ -32,10 +32,9 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus,
-  CalendarCheck, BellRing, Wallet, LayoutDashboard, Share2,
+  CalendarCheck, BellRing,LayoutDashboard, Share2,
   Hand, Droplet, Sparkles, Wind, Sun, Leaf,
-  Landmark, Lock, ShieldCheck, BadgePercent,
-  Image as ImageIcon, Flower2,
+  Landmark, Lock, ShieldCheck, BadgePercent, Flower2,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';

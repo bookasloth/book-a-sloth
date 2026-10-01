@@ -31,12 +31,12 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus, Star,
-  CalendarCheck, LayoutDashboard, MessageCircle,
-  Wallet, BellRing, TrendingUp,
-  Users, Clock3, Landmark, Folder,
-  FileText, Target, Briefcase, ShieldCheck, LineChart, Building2,
+  CalendarCheck, LayoutDashboard,
+  Wallet, BellRing,
+  Users,Landmark,
+  FileText, Target, Briefcase, ShieldCheck, LineChart,
   Presentation, Rocket, Lightbulb, ClipboardCheck,
-  BadgePercent, Lock, Zap, Share2, IndianRupee,
+  BadgePercent, Lock, Zap, Share2,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';

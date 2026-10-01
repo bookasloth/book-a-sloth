@@ -34,7 +34,6 @@ import {
   CalendarCheck, LayoutDashboard, BellRing, Share2,
   Ear, Stethoscope, Wind, Volume2, Mic, Activity,
   Landmark, Lock, ShieldCheck, BadgePercent, Zap,
-  Image as ImageIcon,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
@@ -216,45 +215,6 @@ function ImgSlot({ alt, className = '', rounded = 'rounded-[16px]' }) {
 }
 
 /* Decorative audiogram / frequency readout — the hero's "instrument panel" motif. */
-function AudiogramMotif() {
-  const bars = [0.45, 0.62, 0.5, 0.78, 0.6, 0.9, 0.7, 0.82, 0.55, 0.68];
-  const baseY = 150;
-  const maxH = 84;
-  const barW = 15;
-  const x0 = 30;
-  const slot = 29;
-  const curve = [[45, 66], [100, 58], [155, 60], [210, 46], [265, 40], [312, 32]];
-  const labels = [{ x: 44, t: '250' }, { x: 108, t: '1k' }, { x: 172, t: '2k' }, { x: 236, t: '4k' }, { x: 300, t: '8k' }];
-  return (
-    <svg viewBox="0 0 340 190" aria-hidden="true" className="mt-4 w-full">
-      <defs>
-        <linearGradient id="entBar" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0891B2" />
-          <stop offset="100%" stopColor="#4338CA" />
-        </linearGradient>
-      </defs>
-      {[40, 70, 100, 130].map((y) => (
-        <line key={y} x1="30" y1={y} x2="320" y2={y} stroke="#1E1B3A" strokeOpacity="0.06" strokeWidth="1" />
-      ))}
-      <line x1="30" y1={baseY} x2="320" y2={baseY} stroke="#1E1B3A" strokeOpacity="0.12" strokeWidth="1.5" />
-      {bars.map((b, i) => {
-        const h = b * maxH;
-        const x = x0 + i * slot + (slot - barW) / 2;
-        return (
-          <rect key={i} className="eq-bar" style={{ animationDelay: `${i * 0.12}s` }}
-            x={x} y={baseY - h} width={barW} height={h} rx="3" fill="url(#entBar)" opacity="0.9" />
-        );
-      })}
-      <polyline points={curve.map((p) => p.join(',')).join(' ')} fill="none" stroke="#4338CA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {curve.map((p, i) => (
-        <circle key={i} cx={p[0]} cy={p[1]} r="4" fill="#fff" stroke="#0891B2" strokeWidth="2.5" />
-      ))}
-      {labels.map((l) => (
-        <text key={l.t} x={l.x} y="170" textAnchor="middle" fontSize="10" fill="#1E1B3A" fillOpacity="0.45" fontWeight="600">{l.t}</text>
-      ))}
-    </svg>
-  );
-}
 
 /* Bento-free service tile (no hover uplift). */
 function ServiceCard({ s }) {

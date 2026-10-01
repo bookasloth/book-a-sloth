@@ -43,7 +43,6 @@ import {
   Eye, Glasses, Focus, Activity, ScanLine, Video,
   CalendarCheck, Wallet, BellRing,
   Lock, Landmark, ShieldCheck, BadgePercent,
-  Image as ImageIcon,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';

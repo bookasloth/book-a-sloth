@@ -43,7 +43,6 @@ import {
   ArrowRight, Check, Menu, X, Plus, Star, Sparkles,
   CalendarCheck, LayoutDashboard, BellRing,
   Lock, Landmark, FileText, BadgePercent,
-  Image as ImageIcon,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
