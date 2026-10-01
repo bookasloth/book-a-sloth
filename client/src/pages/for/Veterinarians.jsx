@@ -37,7 +37,6 @@ import {
   CalendarCheck, LayoutDashboard, BellRing,
   Stethoscope, Syringe, Scissors, Bone, Heart, Video,
   ShieldCheck, Lock, Landmark, BadgePercent,
-  Image as ImageIcon,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';

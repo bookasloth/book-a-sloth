@@ -35,7 +35,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus, Star,
   CalendarCheck, Wallet, BellRing, Activity,
-  Landmark, Image as ImageIcon, TrendingUp, FileText,
+  Landmark,TrendingUp, FileText,
   Dumbbell, Bone, PersonStanding, Footprints, Video,
   BadgePercent, Lock, ShieldCheck, Zap,
 } from 'lucide-react';

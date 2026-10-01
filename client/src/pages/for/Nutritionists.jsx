@@ -37,7 +37,6 @@ import {
   CalendarCheck, LayoutDashboard, BellRing, Share2,
   Salad, Scale, Dumbbell, HeartPulse, Apple, Video,
   Landmark, Lock, ShieldCheck, BadgePercent, Leaf,
-  Image as ImageIcon,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';

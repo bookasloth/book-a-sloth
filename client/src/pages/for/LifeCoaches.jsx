@@ -33,7 +33,6 @@ import {
   CalendarCheck, LayoutDashboard, Share2, BellRing,
   Compass, Target, Sparkles, Leaf, Sunrise, Users,
   Landmark, ShieldCheck, BadgePercent, Lock,
-  Image as ImageIcon,
 } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';

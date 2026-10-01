@@ -30,7 +30,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Menu, X, Plus, Star,
-  CalendarCheck, LayoutDashboard, MessageCircle, TrendingUp,
+  CalendarCheck, LayoutDashboard, MessageCircle,
   Wallet, BellRing,
   Users, Clock3, Landmark,
   FileText, Target, Flag, Trophy, Dumbbell, GraduationCap,
@@ -269,19 +269,6 @@ function HowItWorks({ steps }) {
 
 /* Decorative CSS pattern behind a card — grid / dots / rings / stripes, faded from
    one corner so it adds life without touching the text. */
-function CardPattern({ variant = 'dots', light = true, corner = 'tr' }) {
-  const c = light ? '255,255,255' : '17,17,17';
-  const a = light ? 0.16 : 0.05;
-  const bg = {
-    dots: { backgroundImage: `radial-gradient(rgba(${c},${a}) 1.2px, transparent 1.2px)`, backgroundSize: '16px 16px' },
-    grid: { backgroundImage: `linear-gradient(rgba(${c},${a}) 1px, transparent 1px), linear-gradient(90deg, rgba(${c},${a}) 1px, transparent 1px)`, backgroundSize: '22px 22px' },
-    rings: { backgroundImage: `repeating-radial-gradient(circle at center, rgba(${c},${a}) 0 1px, transparent 1px 16px)` },
-    stripes: { backgroundImage: `repeating-linear-gradient(135deg, rgba(${c},${a}) 0 1.5px, transparent 1.5px 12px)` },
-  }[variant];
-  const pos = { tr: '85% 15%', br: '86% 85%', bl: '15% 85%', tl: '15% 15%' }[corner];
-  const mask = `radial-gradient(circle at ${pos}, #000 0, transparent 60%)`;
-  return <div aria-hidden className="pointer-events-none absolute inset-0" style={{ ...bg, maskImage: mask, WebkitMaskImage: mask }} />;
-}
 
 /* One integration card — logo + title + subtitle. */
 function ToolCard({ t }) {
