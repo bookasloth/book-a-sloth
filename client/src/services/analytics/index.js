@@ -9,12 +9,14 @@
 //   analytics.track(EVENTS.BOOKING_STARTED, { service_id });
 //
 // Consent model:
-//   - PostHog (needsConsent:false) is always-on; its SDK is dynamically imported
-//     and initialised on first idle (see AnalyticsBridge) so it stays out of the
-//     initial bundle and off the first-paint critical path.
-//   - GA4 / Pixel / Clarity / GTM (needsConsent:true) load ONLY after the user
-//     grants marketing consent. Events fired before consent are dropped for those
-//     tools (not replayed) — we never backfill pre-consent activity into ad networks.
+//   - PostHog + Meta Pixel (needsConsent:false) are always-on; their SDKs are
+//     dynamically imported and initialised on first idle (see AnalyticsBridge) so
+//     they stay out of the initial bundle and off the first-paint critical path.
+//     The Pixel fires pre-consent by deliberate business decision (fills
+//     retargeting audiences from all prod visitors — see adapters/pixel.js).
+//   - GA4 / Clarity / GTM (needsConsent:true) load ONLY after the user grants
+//     marketing consent. Events fired before consent are dropped for those tools
+//     (not replayed) — we never backfill pre-consent activity into those tools.
 import { assertKnownEvent } from './events';
 import { getConsent, onConsentChange, setConsent, isGranted, hasDecided } from './consent';
 import posthog from './adapters/posthog';
