@@ -36,6 +36,13 @@ function fromUrl() {
       }
     }
     if (!UTM.some((k) => out[k])) return null; // no utm and no click id → not a real touch
+    // Keep the raw click id as its own field (server stores it in a first-class
+    // leads column) — the join key back to the exact ad, kept even when a real
+    // utm_source is also present.
+    for (const id of Object.keys(CLICK_ID_SOURCE)) {
+      const v = q.get(id);
+      if (v) out[id] = v.slice(0, 255);
+    }
     if (document.referrer) out.referrer = document.referrer.slice(0, 500);
     out.landing_page = (window.location.pathname + window.location.search).slice(0, 500);
     return out;

@@ -33,14 +33,16 @@ describe('attribution capture', () => {
     setUrl('?fbclid=abc123');
     captureAttribution();
     const att = getAttribution();
-    expect(att).toMatchObject({ utm_source: 'facebook', utm_medium: 'paid' });
+    expect(att).toMatchObject({ utm_source: 'facebook', utm_medium: 'paid', fbclid: 'abc123' });
     expect(att.landing_page).toContain('fbclid=abc123'); // raw id kept for exact attribution
   });
 
-  test('a real utm_source wins over click-id inference', () => {
+  test('a real utm_source wins over click-id inference but the raw id is still kept', () => {
     setUrl('?utm_source=newsletter&fbclid=abc123');
     captureAttribution();
-    expect(getAttribution().utm_source).toBe('newsletter');
+    const att = getAttribution();
+    expect(att.utm_source).toBe('newsletter');
+    expect(att.fbclid).toBe('abc123');
   });
 
   test('blocked storage never throws', () => {
