@@ -28,7 +28,11 @@ let loaded = false;
 
 export default {
   name: 'pixel',
-  needsConsent: true,
+  // Fires pre-consent (base pixel + PageView) so retargeting audiences
+  // (e.g. "Website Visitors") fill from all prod visitors, not only those who
+  // accept the marketing banner. Deliberate business decision — DPDP/GDPR risk
+  // accepted by founder. Still prod-host gated in the bus (bookasloth.com only).
+  needsConsent: false,
   init() {
     if (loaded || !PIXEL_ID || typeof window === 'undefined') return;
     loaded = true;
