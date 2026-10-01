@@ -36,6 +36,11 @@ const CONVERSIONS = {
   booking_created:       { ga4: 'begin_checkout', meta: 'InitiateCheckout' },
   user_registered:       { ga4: 'sign_up',        meta: 'CompleteRegistration' },
   lead_captured:         { ga4: 'generate_lead',  meta: 'Lead' },
+  // Activation milestone (host received their first paid booking). CUSTOM names,
+  // NOT 'purchase'/'Purchase' — the guest's payment already fired booking_paid, so
+  // reusing Purchase here would double-count revenue. Sent so Meta/GA4 can build an
+  // "activated hosts" audience to exclude from acquisition ads and optimize toward.
+  host_first_booking:    { ga4: 'host_first_booking', meta: 'HostFirstBooking' },
 };
 
 const sha256 = (v) =>
