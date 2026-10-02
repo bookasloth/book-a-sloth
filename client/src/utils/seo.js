@@ -473,6 +473,123 @@ export const articleGraphJsonLd = ({
   return { '@context': 'https://schema.org', '@graph': graph };
 };
 
+/**
+ * professionGraphJsonLd — the ONE structured-data object a bespoke /for/<profession>
+ * landing page emits. Mirrors articleGraphJsonLd: a single `@graph` whose nodes
+ * cross-reference by stable `@id`, so the page renders exactly one JSON-LD script.
+ *
+ * Replaces the hand-rolled 4-orphan-block array (SoftwareApplication + Service +
+ * FAQPage + BreadcrumbList with a bare `{name,url}` org stub) that every /for page
+ * duplicated. Here the brand is the canonical Organization (ORG_SAME_AS + logo), a
+ * WebPage ties the page to the WebSite, and a HowTo (from the page's own steps)
+ * is added — none of the pages emitted HowTo before.
+ *
+ * Honesty rules unchanged: NO aggregateRating (a profession page has no reviews of
+ * its own — that would be the self-serving markup search engines flag). Nothing is
+ * invented; HowTo/FAQ nodes appear only when the page passes real steps/faqs.
+ */
+export const professionGraphJsonLd = ({
+  siteUrl = SITE_URL,
+  canonical,
+  name,                 // the product-for-profession headline, e.g. 'Appointment Booking Software for Consultants'
+  description,
+  breadcrumbName,       // the page's breadcrumb label, e.g. 'For Business & Management Consultants'
+  serviceType,          // the Service node's serviceType sentence
+  image,
+  steps = [],           // [{ title, desc }] → HowTo
+  faqs = [],            // [{ q, a }] → FAQPage
+  appOffers = [],       // [{ price, name }] → SoftwareApplication.offers
+} = {}) => {
+  const site = trimSlash(siteUrl);
+  const pageUrl = canonical || `${site}/`;
+  const abs = (p) => (/^https?:/i.test(p) ? p : `${site}${String(p || '').startsWith('/') ? '' : '/'}${p || ''}`);
+
+  const id = {
+    website: `${site}/#website`,
+    org: `${site}/#organization`,
+    webpage: `${pageUrl}#webpage`,
+    software: `${pageUrl}#software`,
+    service: `${pageUrl}#service`,
+    howto: `${pageUrl}#howto`,
+    faq: `${pageUrl}#faq`,
+    breadcrumb: `${pageUrl}#breadcrumb`,
+  };
+
+  const graph = [
+    { '@type': 'WebSite', '@id': id.website, url: `${site}/`, name: 'Book A Sloth', publisher: { '@id': id.org }, inLanguage: 'en-IN' },
+    orgNode(site),
+    {
+      '@type': 'WebPage',
+      '@id': id.webpage,
+      url: pageUrl,
+      name,
+      description: description || undefined,
+      isPartOf: { '@id': id.website },
+      breadcrumb: { '@id': id.breadcrumb },
+      primaryImageOfPage: image ? { '@type': 'ImageObject', url: image } : undefined,
+      inLanguage: 'en-IN',
+      // Answer-engine hint: the headline + FAQ are the spoken-answer candidates.
+      speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '#faq'] },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': id.software,
+      name: 'Book A Sloth',
+      applicationCategory: 'BusinessApplication',
+      applicationSubCategory: 'Appointment Scheduling Software',
+      operatingSystem: 'Web',
+      url: pageUrl,
+      description: description || undefined,
+      publisher: { '@id': id.org },
+      offers: (appOffers || [])
+        .filter((o) => o && o.price != null)
+        .map((o) => ({ '@type': 'Offer', price: String(o.price), priceCurrency: 'INR', name: o.name })),
+      // No aggregateRating — platform rating lives only on the homepage node.
+    },
+    {
+      '@type': 'Service',
+      '@id': id.service,
+      serviceType: serviceType || name,
+      provider: { '@id': id.org },
+      areaServed: 'IN',
+      description: description || undefined,
+      url: pageUrl,
+    },
+  ];
+
+  if (Array.isArray(steps) && steps.length) {
+    graph.push({
+      '@type': 'HowTo',
+      '@id': id.howto,
+      name: `How to use Book A Sloth${breadcrumbName ? ` ${breadcrumbName.replace(/^For\s+/i, 'for ')}` : ''}`,
+      step: steps
+        .filter((s) => s && s.title)
+        .map((s, i) => ({ '@type': 'HowToStep', position: i + 1, name: s.title, text: s.desc || s.title })),
+    });
+  }
+
+  if (Array.isArray(faqs) && faqs.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': id.faq,
+      mainEntity: faqs
+        .filter((f) => f && f.q && f.a)
+        .map((f) => ({ '@type': 'Question', name: String(f.q), acceptedAnswer: { '@type': 'Answer', text: String(f.a) } })),
+    });
+  }
+
+  graph.push({
+    '@type': 'BreadcrumbList',
+    '@id': id.breadcrumb,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${site}/` },
+      { '@type': 'ListItem', position: 2, name: breadcrumbName || name, item: pageUrl },
+    ],
+  });
+
+  return { '@context': 'https://schema.org', '@graph': graph };
+};
+
 // ContactPage node with the support contact point.
 export const contactPageJsonLd = ({ siteUrl = SITE_URL, email = 'bolt@bookasloth.in' } = {}) => {
   const site = trimSlash(siteUrl);

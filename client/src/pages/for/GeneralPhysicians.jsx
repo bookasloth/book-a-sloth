@@ -39,7 +39,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -252,44 +252,22 @@ export default function GeneralPhysicians() {
     ogDescription: 'Patients book consultations, pay upfront over UPI and get WhatsApp reminders — automatically. A clean booking page for doctors and clinics in India. Free forever, no card required.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for general physicians and clinics',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Doctors & Clinics', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Doctors & Clinics',
+    serviceType: 'Appointment booking software for general physicians and clinics',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Trust-Blue system — clinical medical blue + cyan. Legacy --ca-* names kept.
   const styleVars = {

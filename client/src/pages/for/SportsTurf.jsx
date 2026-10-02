@@ -39,7 +39,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -356,46 +356,22 @@ export default function SportsTurf() {
     ogDescription: 'Players book open slots, pay upfront over UPI, and get WhatsApp reminders — automatically. The booking page every turf and sports arena in India should have.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-      // No aggregateRating — a testimonial-derived self-rating is exactly the
-      // "self-serving review" markup search engines flag. Add only with real data.
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Online slot booking software for sports turf and arenas',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Sports & Turf', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Sports & Turf',
+    serviceType: 'Online slot booking software for sports turf and arenas',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Floodlit-night palette — legacy --ca-* var names kept so shared classNames work.
   const styleVars = {
