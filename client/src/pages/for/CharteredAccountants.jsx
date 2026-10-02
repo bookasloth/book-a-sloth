@@ -53,7 +53,7 @@ import outlookLogo from '../enterprise-v2/assets/logo/outlook.svg';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const MASCOT = '/images/ca-sloth.png'; // CA sloth mascot
+const MASCOT = '/images/ca-sloth.webp'; // CA sloth mascot (800px webp, ~103KB)
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
