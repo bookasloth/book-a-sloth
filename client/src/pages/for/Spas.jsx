@@ -358,12 +358,12 @@ export default function Spas() {
           <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(63,107,94,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
             <Sparkles size={13} /> For spas &amp; wellness centres
           </Reveal>
-          <Reveal as="h1" instant className="mx-auto max-w-2xl font-heading text-[clamp(2rem,7vw,3.15rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-            The calm you sell,{' '}
-            <span style={{ color: 'var(--ca-primary)' }}>starting at your booking page.</span>
+          <Reveal as="h1" instant className="mx-auto max-w-2xl font-heading text-[clamp(1.5rem,5vw,3.15rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+            Seamless appointment booking software for{' '}
+            <span style={{ color: 'var(--ca-primary)' }}>spas and wellness centres.</span>
           </Reveal>
           <Reveal as="p" instant delay={0.05} className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Let guests book massages, facials and spa journeys, pay an advance and get gentle reminders — from one serene platform built for spas and wellness centres.
+            Book A Sloth is appointment booking software for spas — guests book massages, facials and treatments, pay an advance, and get gentle reminders, from one serene booking page.
           </Reveal>
           <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-5">
             <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -391,7 +391,7 @@ export default function Spas() {
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every treatment on your menu, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for spas, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-slate-500">
               From massages to facials, body treatments and spa journeys — let guests reserve any treatment in seconds.

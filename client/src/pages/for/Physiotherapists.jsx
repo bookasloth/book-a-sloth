@@ -259,7 +259,7 @@ export default function Physiotherapists() {
   const canonical = `${SITE_URL}/for/physiotherapists`;
   const seo = {
     title: 'Appointment Booking Software for Physiotherapists & Rehab Centres | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for physiotherapists and rehab centres in India. Let patients book sessions online — fees collected upfront, WhatsApp reminders, GST invoices, tele-rehab, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for physiotherapists and rehab centres in India. Let patients book sessions online — fees collected upfront, WhatsApp reminders, GST invoices, tele-rehab, 0% commission. Start free.',
     keywords: 'appointment booking software for physiotherapists, physiotherapy clinic scheduling software india, book physio session online, rehab centre appointment booking, physiotherapist booking page, tele-rehab scheduling',
     ogTitle: 'Keep Patients Moving — Booking Software for Physiotherapists',
     ogDescription: 'Patients book physiotherapy sessions, pay upfront over UPI and get WhatsApp reminders — automatically. A clean booking page for physiotherapists and rehab centres in India. Free forever, no card required.',
@@ -367,13 +367,13 @@ export default function Physiotherapists() {
             <Reveal as="p" instant className="mb-5 inline-block -rotate-1 px-2 py-0.5 text-[12px] font-bold uppercase tracking-[0.16em] text-[color:var(--ca-ink)]" style={{ background: 'var(--ca-lime)' }}>
               Physio &amp; Rehab
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Keep patients moving — and{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>booking &amp; paying</span>{' '}
-              on their own.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Flexible appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>physiotherapists</span>{' '}
+              managing recurring sessions.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-600 sm:text-lg lg:mx-0">
-              Let patients book physiotherapy and rehab sessions, pay upfront and get reminded — from one clean platform built for modern centres. No phone tag, no chasing.
+              Book A Sloth is appointment booking software for physiotherapists — patients book and rebook recurring sessions, pay upfront, and get reminders, so no one drops off mid-recovery.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -411,7 +411,8 @@ export default function Physiotherapists() {
         <div className="mx-auto max-w-5xl">
           <div className="max-w-2xl">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every session your centre offers, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for physiotherapists,{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">
               From assessments to sports rehab, post-surgery recovery and tele-rehab — patients book any service in seconds.

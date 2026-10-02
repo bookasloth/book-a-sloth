@@ -272,7 +272,7 @@ export default function Nutritionists() {
   const canonical = `${SITE_URL}/for/nutritionists`;
   const seo = {
     title: 'Appointment Booking Software for Nutritionists & Dietitians | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for nutritionists and dietitians in India. Let clients book diet consultations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for nutritionists and dietitians in India. Let clients book diet consultations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
     keywords: 'appointment booking software for nutritionists, dietitian scheduling software india, book diet consultation online, nutritionist booking page, online nutrition consultation scheduling, diet clinic appointment system',
     ogTitle: 'Your practice runs on consults. Let Book A Sloth schedule them.',
     ogDescription: 'Clients book diet consultations, pay upfront and get WhatsApp reminders — automatically. A clean booking page for nutritionists and dietitians in India.',
@@ -367,13 +367,12 @@ export default function Nutritionists() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(21,128,61,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <Leaf size={13} /> For nutritionists &amp; dietitians
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              A fresh way for nutritionists to{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>book &amp; get paid</span>{' '}
-              for their consults.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Convenient appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>nutritionists</span> managing client consultations.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Stop losing clients in your DMs. Let them book diet consultations, pay upfront and get reminded on their own — from one clean platform built for dietitians.
+              Book A Sloth is appointment booking software for nutritionists — clients book diet consultations, pay upfront, and get reminded, so you keep plans on track without chasing anyone.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -431,7 +430,7 @@ export default function Nutritionists() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every consultation you offer, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for nutritionists, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From diet plans to weight management, sports and clinical nutrition — clients book any consult in seconds.

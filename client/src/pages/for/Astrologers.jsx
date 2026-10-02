@@ -492,12 +492,12 @@ export default function Astrologers() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(76,29,149,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <Moon size={13} /> For astrologers &amp; Vedic consultants
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Read the charts.{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>Let Book A Sloth run the bookings.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Seamless appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>astrologers</span> managing one-to-one consultations.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let seekers book and pay for readings online. Manage your services, availability, payments, reminders and follow-ups from one calm platform built for astrologers.
+              Book A Sloth is appointment booking software for astrologers — seekers book and pay for readings online, while WhatsApp reminders and one calm dashboard handle the rest.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Free Page <ArrowRight size={16} /></CtaButton>
@@ -557,7 +557,7 @@ export default function Astrologers() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every reading you offer, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for astrologers, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From birth-chart readings to Vastu, numerology and remedies — set up every service, each with its own price, duration and availability.

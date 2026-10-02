@@ -302,7 +302,7 @@ export default function DentistPage() {
   const canonical = `${SITE_URL}/for/dentists`;
   const seo = {
     title: 'Appointment Booking Software for Dental Clinics | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for dental clinics in India. Let your patients book and reschedule appointments online, with automatic WhatsApp reminders, GST invoices and 0% commission. A scheduling tool for your practice — not an advertising channel. Start free.',
+    description: 'Book A Sloth is appointment booking software for dentists and dental clinics in India. Let your patients book and reschedule appointments online, with automatic WhatsApp reminders, GST invoices and 0% commission. A scheduling tool for your practice — not an advertising channel. Start free.',
     keywords: 'dental clinic appointment software, dentist booking software india, dental practice scheduling, patient appointment booking, dental clinic management booking',
     ogTitle: 'Your clinic runs on appointments. Let Book A Sloth schedule them.',
     ogDescription: 'Patients book and reschedule online, get WhatsApp reminders, and your front desk spends less time on the phone. A calm scheduling page for dental clinics in India.',
@@ -400,12 +400,12 @@ export default function DentistPage() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(3,105,161,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <Sparkles size={13} /> For dentists &amp; dental clinics
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Fill your chairs,{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>not your phone line.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Simple appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>dentists</span> who want fewer calls and fuller chairs.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let patients book and reschedule dental appointments online, pay upfront and get WhatsApp reminders — so your front desk spends less time on the phone and more with patients in the chair.
+              Book A Sloth is appointment booking software for dentists — patients book and reschedule online, pay upfront, and get WhatsApp reminders, so your front desk stays off the phone and your chairs stay full.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -458,7 +458,7 @@ export default function DentistPage() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every appointment your clinic runs, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for dentists, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From check-ups to consultations and emergency slots — patients pick a service and a time in seconds.

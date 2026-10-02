@@ -230,7 +230,7 @@ export default function Pediatricians() {
   const canonical = `${SITE_URL}/for/pediatricians`;
   const seo = {
     title: 'Appointment Booking Software for Pediatricians & Child-Care Clinics | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for pediatricians and child-care clinics in India. Let parents book consultations and vaccinations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for pediatricians and child-care clinics in India. Let parents book consultations and vaccinations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
     keywords: 'appointment booking software for pediatricians, child clinic scheduling software india, book pediatrician appointment online, vaccination appointment booking, children clinic booking page, paediatric appointment system',
     ogTitle: 'Booking Software Parents Love — for Paediatric Clinics',
     ogDescription: 'Parents book consultations and vaccinations, pay upfront over UPI and get WhatsApp reminders — automatically. A friendly booking page for paediatric clinics in India. Free forever, no card required.',
@@ -327,12 +327,12 @@ export default function Pediatricians() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(37,99,235,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <Baby size={13} /> For pediatricians &amp; child care
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Booking that&apos;s easy for parents,{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>calm for your clinic.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Easy online appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>pediatricians and child-care clinics.</span>
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let parents book consultations and vaccinations, pay upfront and get gentle reminders — from one friendly platform built for children&apos;s clinics.
+              Book A Sloth is appointment booking software for pediatricians — parents book consultations and vaccinations, pay upfront, and get gentle reminders, so your waiting room stays calm.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Set Up My Clinic Page <ArrowRight size={16} /></CtaButton>
@@ -373,7 +373,8 @@ export default function Pediatricians() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every visit your clinic offers, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for pediatricians,{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From consultations to vaccinations, well-baby care and sick visits — parents book any service in seconds.

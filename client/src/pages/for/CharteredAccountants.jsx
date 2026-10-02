@@ -53,7 +53,7 @@ import outlookLogo from '../enterprise-v2/assets/logo/outlook.svg';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const MASCOT = '/images/ca-sloth.webp'; // CA sloth mascot — transparent cutout (216KB webp)
+const MASCOT = '/images/ca-sloth.png'; // CA sloth mascot
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
@@ -415,13 +415,12 @@ export default function CharteredAccountants() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(30,58,95,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
               <Landmark size={13} /> For Chartered Accountants &amp; CA firms
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Simple appointment booking for{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants</span>{' '}
-              of modern India.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Professional appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants</span> running modern practices.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Stop juggling ITR and GST consults over WhatsApp. Let clients book, pay and get reminded on their own — from one clean platform built for modern CA practices.
+              Book A Sloth is appointment booking software for chartered accountants — clients book tax, GST and advisory consultations, pay upfront, and get reminded, so your practice runs without the back-and-forth.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
@@ -469,7 +468,7 @@ export default function CharteredAccountants() {
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>The services ledger</Reveal>
             <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--ca-primary)' }}>CA practices work.</span>
+              Appointment booking software for chartered accountants, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
               From tax consultations to audits, registrations and financial advisory — every service is a bookable line item.

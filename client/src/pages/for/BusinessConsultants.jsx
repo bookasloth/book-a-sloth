@@ -497,7 +497,7 @@ export default function BusinessConsultants() {
   const canonical = `${SITE_URL}/for/business-consultant`;
   const seo = {
     title: 'Appointment Booking Software for Consultants & Advisory Firms | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for business and management consultants in India. Let clients book advisory calls and paid discovery sessions online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for business consultants and advisory firms in India. Let clients book advisory calls and paid discovery sessions online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
     keywords: 'appointment booking software for consultants, consultant scheduling software india, book advisory call online, management consultant booking page, paid discovery call scheduling, business advisory appointment software',
     ogTitle: 'Make Every Meeting Easier — Booking Software for Consultants',
     ogDescription: 'Let clients book advisory calls, pay upfront over UPI and get WhatsApp reminders — automatically. A professional booking page for consultants & advisory firms in India. Free forever, no card required.',
@@ -596,12 +596,12 @@ export default function BusinessConsultants() {
             <Reveal as="p" instant className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(180,83,9,0.3)', color: 'var(--ca-accent)', background: 'color-mix(in srgb, var(--ca-accent) 8%, transparent)' }}>
               For business &amp; management consultants
             </Reveal>
-            <Reveal as="h1" instant className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-[color:var(--ca-ink)] sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
-              Make every meeting easier with appointment booking software for{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>consultants &amp; advisory firms</span>
+            <Reveal as="h1" instant className="text-[clamp(1.5rem,5vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-[color:var(--ca-ink)] sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
+              Effortless appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>consultants</span> who sell their expertise.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg lg:mx-0">
-              Stop losing prospects in email threads. Let clients book advisory calls, pay upfront and get reminded on their own — from one professional platform built for modern consulting practices.
+              Book A Sloth is appointment booking software for consultants — let clients book advisory calls, pay upfront, and get automatic reminders, so you spend time advising, not chasing calendars.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-6 flex flex-col items-center gap-3 sm:mt-9 sm:flex-row sm:gap-5 lg:justify-start">
               <Link
@@ -657,7 +657,7 @@ export default function BusinessConsultants() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--ca-primary)' }}>consultants work.</span>
+              Appointment booking software for <span style={{ color: 'var(--ca-primary)' }}>consultants</span>, built around how you work.
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">
               From strategy calls to coaching and paid discovery sessions, manage every engagement in one place.

@@ -242,7 +242,7 @@ export default function Gynecologists() {
   const canonical = `${SITE_URL}/for/gynecologists`;
   const seo = {
     title: 'Appointment Booking Software for Gynecologists & OB-GYNs | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for gynecologists and OB-GYN clinics in India. Let patients book consultations and antenatal visits online — private, fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for gynecologists and OB-GYN clinics in India. Let patients book consultations and antenatal visits online — private, fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
     keywords: 'appointment booking software for gynecologists, OB-GYN clinic scheduling software india, book gynaecologist appointment online, antenatal appointment booking, women health clinic booking page, gynecology appointment system',
     ogTitle: 'A Calm, Private Way to Book Your Women’s-Health Clinic',
     ogDescription: 'Patients book gynaecology and antenatal visits, pay upfront over UPI and get gentle WhatsApp reminders — privately and automatically. A calm booking page for OB-GYN clinics in India. Free forever, no card required.',
@@ -337,12 +337,12 @@ export default function Gynecologists() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(4,120,87,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <Heart size={13} /> For gynecologists &amp; OB-GYNs
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              A calm, private way for patients to{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>book your clinic.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Private online appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>gynecologists</span> and women's health clinics.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let patients book consultations and antenatal visits, pay upfront and get gentle reminders — privately, from one calm platform built for women&apos;s-health clinics.
+              Book A Sloth is appointment booking software for gynecologists — patients book consultations and antenatal visits privately, pay upfront, and get gentle reminders, with discretion built in.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Set Up My Clinic Page <ArrowRight size={16} /></CtaButton>
@@ -379,7 +379,7 @@ export default function Gynecologists() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every women&apos;s-health service, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for gynecologists, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From consultations to antenatal care, fertility and menopause support — patients book any service privately.

@@ -246,7 +246,7 @@ export default function GeneralPhysicians() {
   const canonical = `${SITE_URL}/for/doctors`;
   const seo = {
     title: 'Appointment Booking Software for Doctors & Clinics | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for general physicians, doctors and clinics in India. Let patients book consultations online — fees collected upfront, WhatsApp reminders, GST invoices, tele-medicine, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for doctors, general physicians and clinics in India. Let patients book consultations online — fees collected upfront, WhatsApp reminders, GST invoices, tele-medicine, 0% commission. Start free.',
     keywords: 'appointment booking software for doctors, clinic scheduling software india, book doctor appointment online, general physician booking page, tele-medicine appointment booking, clinic appointment system india',
     ogTitle: 'Book More Consultations — Appointment Software for Clinics',
     ogDescription: 'Patients book consultations, pay upfront over UPI and get WhatsApp reminders — automatically. A clean booking page for doctors and clinics in India. Free forever, no card required.',
@@ -339,12 +339,12 @@ export default function GeneralPhysicians() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(29,78,216,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <Stethoscope size={13} /> For doctors &amp; clinics
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Book more consultations,{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>answer fewer calls.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Easy online appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>doctors</span> who want fewer calls.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let patients book consultations, pay upfront and get reminded — from one clean platform built for Indian clinics. Your reception runs without the constant ringing phone.
+              Book A Sloth is appointment booking software for doctors — patients book consultations online, pay upfront, and get reminders, so your clinic runs smoothly and reception answers fewer calls.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Set Up My Clinic Page <ArrowRight size={16} /></CtaButton>
@@ -381,7 +381,7 @@ export default function GeneralPhysicians() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every consultation your clinic offers, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for doctors, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From everyday consults to check-ups, chronic care and tele-medicine — patients book any service in seconds.

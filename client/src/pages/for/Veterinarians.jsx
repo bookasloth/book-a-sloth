@@ -299,7 +299,7 @@ export default function Veterinarians() {
   const canonical = `${SITE_URL}/for/veterinarians`;
   const seo = {
     title: 'Appointment Booking Software for Veterinarians & Pet Clinics | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for veterinarians and pet clinics in India. Let pet parents book consultations and vaccinations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for veterinarians and pet clinics in India. Let pet parents book consultations and vaccinations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
     keywords: 'appointment booking software for veterinarians, pet clinic scheduling software india, book vet appointment online, pet vaccination booking, pet vaccination reminder software, veterinary appointment app india, veterinary clinic booking page, animal clinic appointment system',
     ogTitle: 'Your clinic runs on appointments. Let Book A Sloth schedule them.',
     ogDescription: 'Pet parents book consultations and vaccinations, pay upfront and get WhatsApp reminders — automatically. A friendly booking page for vets and pet clinics in India.',
@@ -397,12 +397,12 @@ export default function Veterinarians() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(21,127,118,0.28)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <PawPrint size={13} /> For veterinarians &amp; pet clinics
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              A calmer clinic,{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>a happier waiting room.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Easy appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>veterinarians</span> managing pet-care appointments.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let pet parents book consultations and vaccinations in a minute, pay upfront and get reminders — from one friendly platform built for busy pet clinics.
+              Book A Sloth is appointment booking software for veterinarians — pet parents book consultations and vaccinations in a minute, pay upfront, and get reminders, for a calmer clinic and waiting room.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -446,7 +446,7 @@ export default function Veterinarians() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every service your clinic offers, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for veterinarians, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From consultations to vaccinations, grooming and dental care, let pet parents book any visit in seconds.

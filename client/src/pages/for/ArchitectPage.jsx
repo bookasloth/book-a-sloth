@@ -312,7 +312,7 @@ export default function ArchitectPage() {
   const canonical = `${SITE_URL}/for/architects`;
   const seo = {
     title: 'Appointment Booking Software for Architects & Interior Designers | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for architects and interior designers in India. Let clients book consultations, site visits and reviews online, with paid bookings, automatic WhatsApp reminders, GST invoices and 0% commission. A scheduling tool for your studio — not an advertising channel. Start free.',
+    description: 'Book A Sloth is appointment booking software for architects and interior designers in India. Let clients book consultations, site visits and reviews online, with paid bookings, automatic WhatsApp reminders, GST invoices and 0% commission. A scheduling tool for your studio — not an advertising channel. Start free.',
     keywords: 'architect appointment software, interior designer booking software india, design studio scheduling, consultation booking software, architecture practice scheduling',
     ogTitle: 'Your studio runs on client meetings. Let Book A Sloth schedule them.',
     ogDescription: 'Clients book consultations and site visits online, pay upfront, and get WhatsApp reminders — while you keep one clear diary. A calm scheduling page for architects and interior designers in India.',
@@ -416,12 +416,12 @@ export default function ArchitectPage() {
               <Compass size={13} style={{ color: 'var(--ca-accent)' }} />
               <Eyebrow>For Architects &amp; Interior Designers</Eyebrow>
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3.05rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Booking &amp; scheduling software for{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>architects</span> &amp; interior designers.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3.05rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Flexible appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>architects and interior designers</span> managing client meetings.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let clients book consultations, site visits and reviews online — pay your fee upfront, get automatic WhatsApp reminders, and keep your whole studio in one clear diary.
+              Book A Sloth is appointment booking software for architects and interior designers — clients book consultations, site visits and reviews online, pay your fee upfront, and get automatic reminders.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
@@ -482,7 +482,7 @@ export default function ArchitectPage() {
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="div"><Eyebrow>Services · Spec Sheet</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every client meeting your studio runs, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for architects, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
               From discovery calls to site visits and handovers — each service with its own duration, fee and availability.
