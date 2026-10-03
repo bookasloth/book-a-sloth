@@ -389,6 +389,14 @@ export default function SalonPage() {
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-accent)' }}><Star size={17} /></span>
                 <div><div className="text-[11px] text-neutral-500">This week</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">Fully booked</div></div>
               </div>
+              <div className="absolute -top-4 -left-4 z-20 flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-[0_18px_40px_-18px_rgba(17,17,17,0.5)]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-accent)' }}><CalendarCheck size={17} /></span>
+                <div><div className="text-[11px] text-neutral-500">New booking</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">Haircut · 2:00 PM</div></div>
+              </div>
+              <div className="absolute -top-4 -right-4 z-20 flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-[0_18px_40px_-18px_rgba(17,17,17,0.5)]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-accent)' }}><BellRing size={17} /></span>
+                <div><div className="text-[11px] text-neutral-500">Reminder sent</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">1h before</div></div>
+              </div>
             </div>
           </Reveal>
         </div>

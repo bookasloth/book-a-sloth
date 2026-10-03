@@ -319,10 +319,9 @@ export default function Pediatricians() {
       </header>
 
       {/* ═══════════════ 2 · HERO (image + scattered sticker chips) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-16 pt-10 sm:px-8 lg:pb-24 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
-        <div aria-hidden className="pointer-events-none absolute right-10 top-10 h-3 w-3 rounded-full" style={{ background: 'var(--ca-amber)' }} />
+      <section className="relative overflow-hidden px-5 pb-8 pt-6 sm:px-8 lg:pb-10 lg:pt-10" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
         <div aria-hidden className="pointer-events-none absolute left-1/2 top-24 h-2 w-2 rounded-full bg-[color:var(--ca-primary)]/40" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative mx-auto grid max-w-7xl items-center lg:items-start gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(37,99,235,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <Baby size={13} /> For pediatricians &amp; child care
@@ -350,17 +349,17 @@ export default function Pediatricians() {
           </div>
 
           {/* RIGHT — image + scattered sticker chips */}
-          <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
+          <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-md">
             <ImgSlot alt="A paediatrician with a happy child and parent" rounded="rounded-[32px]" className="aspect-[4/5] w-full shadow-[0_28px_60px_-30px_rgba(23,37,84,0.4)]" />
-            <div className="absolute -left-4 top-10 z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
+            <div className="absolute -left-4 top-[160px] z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-full text-white" style={{ background: 'var(--ca-primary)' }}><Syringe size={15} /></span>
               <div className="text-[12px] font-bold text-[color:var(--ca-ink)]">Vaccine reminder sent</div>
             </div>
-            <div className="absolute -right-3 top-1/2 z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
+            <div className="absolute -right-[42px] top-[calc(50%-190px)] z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'color-mix(in srgb, var(--ca-amber) 22%, transparent)', color: 'var(--ca-accent)' }}><Smile size={15} /></span>
               <div className="text-[12px] font-bold text-[color:var(--ca-ink)]">Booked in 1 min</div>
             </div>
-            <div className="absolute -bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
+            <div className="absolute bottom-[88px] left-[calc(50%-250px)] z-20 flex -translate-x-1/2 items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-full text-white" style={{ background: 'var(--ca-primary)' }}><Wallet size={15} /></span>
               <div className="text-[12px] font-bold text-[color:var(--ca-ink)]">Fee paid ₹500</div>
             </div>
@@ -369,7 +368,7 @@ export default function Pediatricians() {
       </section>
 
       {/* ═══════════════ 3 · SERVICES (tinted cards) ═══════════════ */}
-      <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
+      <section id="usecases" className="px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-12">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">

@@ -421,9 +421,17 @@ export default function Dermatologists() {
           {/* RIGHT — 2-tile stacked image collage + floating chip */}
           <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
             <ImgSlot alt="A dermatologist examining a patient's skin" className="aspect-[4/5] w-full" />
-            <div className="absolute -bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_16px_36px_-18px_rgba(18,35,43,0.5)]">
+            <div className="absolute bottom-8 left-0 z-50 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_16px_36px_-18px_rgba(18,35,43,0.5)]">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}><CalendarCheck size={17} /></span>
               <div><div className="text-[11px] text-slate-500">Booked &amp; paid</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">Skin consult · 4:00 PM</div></div>
+            </div>
+            <div className="absolute top-12 left-6 z-50 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_16px_36px_-18px_rgba(18,35,43,0.5)]">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}><BellRing size={17} /></span>
+              <div><div className="text-[11px] text-slate-500">Reminder sent</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">1h before</div></div>
+            </div>
+            <div className="absolute top-12 right-6 z-50 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_16px_36px_-18px_rgba(18,35,43,0.5)]">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ background: 'var(--ca-primary)' }}><Video size={17} /></span>
+              <div><div className="text-[11px] text-slate-500">Teledermatology</div><div className="text-sm font-bold text-[color:var(--ca-ink)]">Online consult</div></div>
             </div>
           </Reveal>
         </div>
