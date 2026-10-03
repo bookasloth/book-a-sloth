@@ -46,7 +46,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -302,50 +302,28 @@ export default function DentistPage() {
   const canonical = `${SITE_URL}/for/dentists`;
   const seo = {
     title: 'Appointment Booking Software for Dental Clinics | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for dental clinics in India. Let your patients book and reschedule appointments online, with automatic WhatsApp reminders, GST invoices and 0% commission. A scheduling tool for your practice — not an advertising channel. Start free.',
+    description: 'Book A Sloth is appointment booking software for dentists and dental clinics in India. Let your patients book and reschedule appointments online, with automatic WhatsApp reminders, GST invoices and 0% commission. A scheduling tool for your practice — not an advertising channel. Start free.',
     keywords: 'dental clinic appointment software, dentist booking software india, dental practice scheduling, patient appointment booking, dental clinic management booking',
     ogTitle: 'Your clinic runs on appointments. Let Book A Sloth schedule them.',
     ogDescription: 'Patients book and reschedule online, get WhatsApp reminders, and your front desk spends less time on the phone. A calm scheduling page for dental clinics in India.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for dental clinics',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Dentists & Dental Clinics', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Dentists & Dental Clinics',
+    serviceType: 'Appointment booking software for dental clinics',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Clean clinical sky-blue + mint. Legacy --ca-* names kept (shared classNames).
   const styleVars = {
@@ -419,15 +397,12 @@ export default function DentistPage() {
         <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(20,184,166,0.14), transparent)' }} />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(3,105,161,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Sparkles size={13} /> For dentists &amp; dental clinics
-            </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Fill your chairs,{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>not your phone line.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Simple appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>dentists</span> who want fewer calls and fuller chairs.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let patients book and reschedule dental appointments online, pay upfront and get WhatsApp reminders — so your front desk spends less time on the phone and more with patients in the chair.
+              Book A Sloth is appointment booking software for dentists — patients book and reschedule online, pay upfront, and get WhatsApp reminders, so your front desk stays off the phone and your chairs stay full.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -480,7 +455,7 @@ export default function DentistPage() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every appointment your clinic runs, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for dentists, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From check-ups to consultations and emergency slots — patients pick a service and a time in seconds.
@@ -806,10 +781,7 @@ export default function DentistPage() {
             </div>
           </Reveal>
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.05} className="mt-5 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Small practices deserve better tools.</Reveal>
+            <Reveal as="h2" delay={0.05} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Small practices deserve better tools.</Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">
               Book A Sloth was built to make appointment-based practices easier to run. Instead of stitching together calendars, WhatsApp messages, a paper register and payment tools, your clinic manages patient appointments from one calm platform — a scheduling and payment tool, not a dental-records system.
             </Reveal>

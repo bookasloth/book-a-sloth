@@ -42,7 +42,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -53,7 +53,7 @@ import outlookLogo from '../enterprise-v2/assets/logo/outlook.svg';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
-const MASCOT = '/images/ca-sloth.webp'; // CA sloth mascot — transparent cutout (216KB webp)
+const MASCOT = '/images/ca-sloth.webp'; // CA sloth mascot (800px webp, ~103KB)
 
 /* ─────────────────────────────  CONTENT  ────────────────────────────── */
 
@@ -324,46 +324,22 @@ export default function CharteredAccountants() {
     ogDescription: 'Clients book tax & GST consultations, pay upfront, and get WhatsApp reminders — automatically. The booking page every CA practice in India should already have.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-      // No self-rating / review markup — a testimonial-derived rating is exactly the
-      // "self-serving review" markup search engines flag. Add only with real data.
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for chartered accountants and CA firms',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Chartered Accountants & CA Firms', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Chartered Accountants & CA Firms',
+    serviceType: 'Appointment booking software for chartered accountants and CA firms',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Trusted-finance palette. Legacy --ca-* names kept (shared classNames depend on them).
   const styleVars = {
@@ -436,16 +412,12 @@ export default function CharteredAccountants() {
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(30,58,95,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
-              <Landmark size={13} /> For Chartered Accountants &amp; CA firms
-            </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Simple appointment booking for{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants</span>{' '}
-              of modern India.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Professional appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants</span> running modern practices.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Stop juggling ITR and GST consults over WhatsApp. Let clients book, pay and get reminded on their own — from one clean platform built for modern CA practices.
+              Book A Sloth is appointment booking software for chartered accountants — clients book tax, GST and advisory consultations, pay upfront, and get reminded, so your practice runs without the back-and-forth.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
@@ -491,9 +463,8 @@ export default function CharteredAccountants() {
       <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>The services ledger</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--ca-primary)' }}>CA practices work.</span>
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Appointment booking software for chartered accountants, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
               From tax consultations to audits, registrations and financial advisory — every service is a bookable line item.
@@ -580,8 +551,7 @@ export default function CharteredAccountants() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>The bottom line</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Your practice, <span style={{ color: 'var(--ca-primary)' }}>balanced.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
@@ -665,8 +635,7 @@ export default function CharteredAccountants() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>The reconciliation</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               The manual way vs <span style={{ color: 'var(--ca-primary)' }}>a better-run practice.</span>
             </Reveal>
           </div>
@@ -808,8 +777,7 @@ export default function CharteredAccountants() {
 
           {/* RIGHT — statement + trust facts */}
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>About Book A Sloth</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
               Small businesses deserve better tools.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">

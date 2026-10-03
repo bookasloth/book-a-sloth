@@ -42,7 +42,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -259,50 +259,28 @@ export default function Physiotherapists() {
   const canonical = `${SITE_URL}/for/physiotherapists`;
   const seo = {
     title: 'Appointment Booking Software for Physiotherapists & Rehab Centres | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for physiotherapists and rehab centres in India. Let patients book sessions online — fees collected upfront, WhatsApp reminders, GST invoices, tele-rehab, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for physiotherapists and rehab centres in India. Let patients book sessions online — fees collected upfront, WhatsApp reminders, GST invoices, tele-rehab, 0% commission. Start free.',
     keywords: 'appointment booking software for physiotherapists, physiotherapy clinic scheduling software india, book physio session online, rehab centre appointment booking, physiotherapist booking page, tele-rehab scheduling',
     ogTitle: 'Keep Patients Moving — Booking Software for Physiotherapists',
     ogDescription: 'Patients book physiotherapy sessions, pay upfront over UPI and get WhatsApp reminders — automatically. A clean booking page for physiotherapists and rehab centres in India. Free forever, no card required.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for physiotherapists and rehab centres',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Physiotherapists & Rehab Centres', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Physiotherapists & Rehab Centres',
+    serviceType: 'Appointment booking software for physiotherapists and rehab centres',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Style H — Light + Lime/teal. Legacy --ca-* var names kept so shared classNames
   // stay valid. All text-bearing tokens are AA on white.
@@ -386,16 +364,13 @@ export default function Physiotherapists() {
       <section className="relative overflow-hidden px-5 pb-16 pt-10 sm:px-8 lg:pb-24 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-block -rotate-1 px-2 py-0.5 text-[12px] font-bold uppercase tracking-[0.16em] text-[color:var(--ca-ink)]" style={{ background: 'var(--ca-lime)' }}>
-              Physio &amp; Rehab
-            </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Keep patients moving — and{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>booking &amp; paying</span>{' '}
-              on their own.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Flexible appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>physiotherapists</span>{' '}
+              managing recurring sessions.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-600 sm:text-lg lg:mx-0">
-              Let patients book physiotherapy and rehab sessions, pay upfront and get reminded — from one clean platform built for modern centres. No phone tag, no chasing.
+              Book A Sloth is appointment booking software for physiotherapists — patients book and rebook recurring sessions, pay upfront, and get reminders, so no one drops off mid-recovery.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -433,7 +408,8 @@ export default function Physiotherapists() {
         <div className="mx-auto max-w-5xl">
           <div className="max-w-2xl">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every session your centre offers, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for physiotherapists,{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">
               From assessments to sports rehab, post-surgery recovery and tele-rehab — patients book any service in seconds.
@@ -783,10 +759,7 @@ export default function Physiotherapists() {
           </Reveal>
 
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="inline-block -rotate-1 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[color:var(--ca-ink)]" style={{ background: 'var(--ca-lime)' }}>
-              About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Modern centres deserve <span style={{ color: 'var(--ca-primary)' }}>better tools.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">
@@ -827,10 +800,7 @@ export default function Physiotherapists() {
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-16 h-72 w-72 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(45,212,191,0.5), transparent)' }} />
 
         <div className="relative mx-auto max-w-2xl">
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-            <Zap size={13} style={{ color: 'var(--ca-lime)' }} /> Ready when you are
-          </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
+          <Reveal as="h2" delay={0.06} className="font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
             Spend less time scheduling.<br className="hidden sm:block" /> <span style={{ color: 'var(--ca-lime)' }}>Spend more time on recovery.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/70">

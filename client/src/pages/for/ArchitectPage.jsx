@@ -42,7 +42,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -312,50 +312,28 @@ export default function ArchitectPage() {
   const canonical = `${SITE_URL}/for/architects`;
   const seo = {
     title: 'Appointment Booking Software for Architects & Interior Designers | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for architects and interior designers in India. Let clients book consultations, site visits and reviews online, with paid bookings, automatic WhatsApp reminders, GST invoices and 0% commission. A scheduling tool for your studio — not an advertising channel. Start free.',
+    description: 'Book A Sloth is appointment booking software for architects and interior designers in India. Let clients book consultations, site visits and reviews online, with paid bookings, automatic WhatsApp reminders, GST invoices and 0% commission. A scheduling tool for your studio — not an advertising channel. Start free.',
     keywords: 'architect appointment software, interior designer booking software india, design studio scheduling, consultation booking software, architecture practice scheduling',
     ogTitle: 'Your studio runs on client meetings. Let Book A Sloth schedule them.',
     ogDescription: 'Clients book consultations and site visits online, pay upfront, and get WhatsApp reminders — while you keep one clear diary. A calm scheduling page for architects and interior designers in India.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for architects and interior designers',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Architects & Interior Designers', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Architects & Interior Designers',
+    serviceType: 'Appointment booking software for architects and interior designers',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Graphite + bronze drafting palette. Legacy --ca-* names kept (shared classNames).
   const styleVars = {
@@ -434,16 +412,12 @@ export default function ArchitectPage() {
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="div" instant className="mb-5 inline-flex items-center gap-2 border px-3.5 py-1.5" style={{ borderColor: 'rgba(180,83,9,0.4)', background: 'color-mix(in srgb, var(--ca-accent) 6%, transparent)' }}>
-              <Compass size={13} style={{ color: 'var(--ca-accent)' }} />
-              <Eyebrow>For Architects &amp; Interior Designers</Eyebrow>
-            </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3.05rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Booking &amp; scheduling software for{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>architects</span> &amp; interior designers.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3.05rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Flexible appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>architects and interior designers</span> managing client meetings.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let clients book consultations, site visits and reviews online — pay your fee upfront, get automatic WhatsApp reminders, and keep your whole studio in one clear diary.
+              Book A Sloth is appointment booking software for architects and interior designers — clients book consultations, site visits and reviews online, pay your fee upfront, and get automatic reminders.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create a Free Account <ArrowRight size={16} /></CtaButton>
@@ -502,9 +476,8 @@ export default function ArchitectPage() {
       <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Services · Spec Sheet</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every client meeting your studio runs, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Appointment booking software for architects, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
               From discovery calls to site visits and handovers — each service with its own duration, fee and availability.
@@ -549,8 +522,7 @@ export default function ArchitectPage() {
       <section id="how" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Project Phases</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               From link to paid, <span style={{ color: 'var(--ca-primary)' }}>in three phases.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">No app to install, no code to ship — just three small steps.</Reveal>
@@ -593,8 +565,7 @@ export default function ArchitectPage() {
       <section id="features" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Connections</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Works with the tools you <span style={{ color: 'var(--ca-primary)' }}>already use.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">
@@ -633,8 +604,7 @@ export default function ArchitectPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-ink)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Project Readout</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
               Real impact, <span style={{ color: 'var(--ca-accent)' }}>real numbers.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-white/60">
@@ -671,8 +641,7 @@ export default function ArchitectPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Revision Log</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               What studios say about <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">
@@ -716,8 +685,7 @@ export default function ArchitectPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Before / After Spec</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               The <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth</span> difference.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-slate-500">
@@ -766,8 +734,7 @@ export default function ArchitectPage() {
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-4xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Plans</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Start small. <span style={{ color: 'var(--ca-primary)' }}>Grow as your studio does.</span>
             </Reveal>
           </div>
@@ -846,7 +813,6 @@ export default function ArchitectPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="order-1 text-center lg:text-left">
-            <Reveal as="div"><Eyebrow>About Book A Sloth</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               We&apos;re on a mission to make studios <span style={{ color: 'var(--ca-primary)' }}>run calmer.</span>
             </Reveal>
@@ -892,7 +858,6 @@ export default function ArchitectPage() {
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
-            <Reveal as="div"><Eyebrow>Queries</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Questions? <span style={{ color: 'var(--ca-primary)' }}>We&apos;ve got answers.</span>
             </Reveal>

@@ -38,7 +38,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -411,50 +411,28 @@ export default function EntSpecialists() {
   const canonical = `${SITE_URL}/for/ent-specialists`;
   const seo = {
     title: 'Appointment Booking Software for ENT Specialists & Surgeons | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for ENT specialists and surgeons in India. Let patients book ENT consultations and hearing tests online — fees collected upfront, WhatsApp reminders, GST invoices, tele-ENT, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for ENT specialists and surgeons in India. Let patients book ENT consultations and hearing tests online — fees collected upfront, WhatsApp reminders, GST invoices, tele-ENT, 0% commission. Start free.',
     keywords: 'appointment booking software for ENT specialists, ENT clinic scheduling software india, book ENT consultation online, ear nose throat appointment booking, ENT surgeon booking page, audiology appointment system',
     ogTitle: 'Your clinic runs on appointments. Let Book A Sloth schedule them.',
     ogDescription: 'Patients book ENT consultations, pay upfront and get WhatsApp reminders — automatically. A professional booking page for ENT clinics in India.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for ENT specialists and surgeons',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For ENT Specialists & Surgeons', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For ENT Specialists & Surgeons',
+    serviceType: 'Appointment booking software for ENT specialists and surgeons',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Precise clinical instrument palette — indigo + cyan. Legacy --ca-* names kept.
   const styleVars = {
@@ -532,16 +510,12 @@ export default function EntSpecialists() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT — copy */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(67,56,202,0.28)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Ear size={13} /> For ENT specialists &amp; surgeons
-            </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Professional appointment booking software for{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>ENT specialists &amp; surgeons</span>{' '}
-              of modern India.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Reliable appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>ENT specialists</span> managing busy clinics.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Stop the endless phone calls at reception. Let patients book ENT consultations, pay upfront and get reminded on their own — from one professional platform built for modern clinics.
+              Book A Sloth is appointment booking software for ENT specialists — patients book consultations and hearing tests, pay upfront, and get reminded, so reception stops drowning in calls.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -578,7 +552,7 @@ export default function EntSpecialists() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every consultation your clinic offers, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for ENT specialists, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From ENT consultations to audiology, sinus care and surgical reviews — switch a category to see what patients can book in seconds.
@@ -782,10 +756,7 @@ export default function EntSpecialists() {
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="text-center lg:text-left">
-            <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-5 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Modern clinics deserve <span style={{ color: 'var(--ca-primary)' }}>better tools.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">

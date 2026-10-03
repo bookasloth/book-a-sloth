@@ -37,7 +37,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -318,53 +318,29 @@ export default function LifeCoaches() {
 
   const canonical = `${SITE_URL}/for/life-coaches`;
   const seo = {
-    title: 'Appointment Booking Software for Life & Wellness Coaches | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for life and wellness coaches in India. Let clients book coaching sessions and paid discovery calls online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
+    title: 'Appointment Booking Software for Life Coaches in India | Book A Sloth',
+    description: 'Book A Sloth is appointment booking software for life coaches and wellness coaches in India. Let clients book coaching sessions and paid discovery calls online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
     keywords: 'appointment booking software for coaches, life coach scheduling software india, book coaching session online, wellness coach booking page, paid discovery call scheduling, coaching appointment software',
     ogTitle: 'Your practice runs on sessions. Let Book A Sloth schedule them.',
     ogDescription: 'Clients book coaching sessions, pay upfront and get WhatsApp reminders — automatically. A calm booking page for life and wellness coaches in India.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-      // No aggregateRating — a testimonial-derived self-rating is exactly the
-      // "self-serving review" markup search engines flag. Add only with real data.
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for life and wellness coaches',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Life & Wellness Coaches', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Life & Wellness Coaches',
+    serviceType: 'Appointment booking software for life and wellness coaches',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Warm editorial palette — legacy --ca-* var names kept so shared classNames work.
   const styleVars = {
@@ -436,16 +412,12 @@ export default function LifeCoaches() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
           {/* LEFT — editorial copy */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(22,101,52,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Leaf size={13} /> For life &amp; wellness coaches
-            </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2.2rem,7.5vw,3.6rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[color:var(--ca-ink)]">
-              A calm way for coaches to{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>book &amp; get paid</span>{' '}
-              for their sessions.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3.6rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[color:var(--ca-ink)]">
+              Flexible appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>life coaches</span> managing one-to-one sessions.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-600 sm:text-lg lg:mx-0">
-              Stop losing clients in your DMs. Let them book sessions, pay upfront and get reminded on their own — from one calm platform built for coaches.
+              Book A Sloth is appointment booking software for life coaches — stop losing clients in your DMs; they book sessions, pay upfront, and get reminded, so you coach instead of coordinating.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -485,7 +457,7 @@ export default function LifeCoaches() {
         <div className="mx-auto max-w-4xl">
           <div className="max-w-2xl">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--ca-primary)' }}>coaches work.</span>
+              Appointment booking software for life coaches, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">
               From discovery calls to 1:1s, packages and group sessions — manage every booking in one place.
@@ -748,10 +720,7 @@ export default function LifeCoaches() {
       {/* ═══════════════ 10 · ABOUT (drop-cap editorial statement + ruled trust rows) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-4xl">
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-          </Reveal>
-          <Reveal as="p" delay={0.04} className="mt-7 font-heading text-[clamp(1.35rem,2.6vw,1.9rem)] font-semibold leading-[1.42] tracking-[-0.01em] text-[color:var(--ca-ink)] first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-heading first-letter:text-[4.5rem] first-letter:font-black first-letter:leading-[0.68] first-letter:text-[#C2410C]">
+          <Reveal as="p" delay={0.04} className="font-heading text-[clamp(1.35rem,2.6vw,1.9rem)] font-semibold leading-[1.42] tracking-[-0.01em] text-[color:var(--ca-ink)] first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-heading first-letter:text-[4.5rem] first-letter:font-black first-letter:leading-[0.68] first-letter:text-[#C2410C]">
             Book A Sloth was built to make appointment-based practices easier to run. Instead of stitching together calendars, DMs, notebooks and payment tools, coaches manage every client session from one calm platform — built for Indian professionals, and designed for the way modern practices actually work.
           </Reveal>
           <Reveal delay={0.1} className="mt-12 border-t border-black/10">

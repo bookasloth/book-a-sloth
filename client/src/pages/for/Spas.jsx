@@ -39,7 +39,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -269,44 +269,22 @@ export default function Spas() {
     ogDescription: 'Guests book massages, facials and spa journeys, pay an advance and get WhatsApp reminders — automatically. A serene booking page for spas and wellness centres in India. Free forever, no card required.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for spas and wellness centres',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Spas & Wellness Centres', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Spas & Wellness Centres',
+    serviceType: 'Appointment booking software for spas and wellness centres',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Serene sage + stone "quiet luxury" spa palette — legacy --ca-* var names kept.
   const styleVars = {
@@ -377,15 +355,12 @@ export default function Spas() {
         <div aria-hidden className="pointer-events-none absolute right-[-4rem] top-24 h-72 w-72 rounded-full blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(176,137,104,0.16), transparent)' }} />
 
         <div className="relative z-10 mx-auto max-w-3xl">
-          <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(63,107,94,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
-            <Sparkles size={13} /> For spas &amp; wellness centres
-          </Reveal>
-          <Reveal as="h1" instant className="mx-auto max-w-2xl font-heading text-[clamp(2rem,7vw,3.15rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-            The calm you sell,{' '}
-            <span style={{ color: 'var(--ca-primary)' }}>starting at your booking page.</span>
+          <Reveal as="h1" instant className="mx-auto max-w-2xl font-heading text-[clamp(1.5rem,5vw,3.15rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+            Seamless appointment booking software for{' '}
+            <span style={{ color: 'var(--ca-primary)' }}>spas and wellness centres.</span>
           </Reveal>
           <Reveal as="p" instant delay={0.05} className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Let guests book massages, facials and spa journeys, pay an advance and get gentle reminders — from one serene platform built for spas and wellness centres.
+            Book A Sloth is appointment booking software for spas — guests book massages, facials and treatments, pay an advance, and get gentle reminders, from one serene booking page.
           </Reveal>
           <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-5">
             <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -413,7 +388,7 @@ export default function Spas() {
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every treatment on your menu, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for spas, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-xl text-base text-slate-500">
               From massages to facials, body treatments and spa journeys — let guests reserve any treatment in seconds.
@@ -672,10 +647,7 @@ export default function Spas() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="order-2 text-center lg:order-1 lg:text-left">
-            <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-5 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
               Wellness businesses deserve tools as calm as the care they give.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">

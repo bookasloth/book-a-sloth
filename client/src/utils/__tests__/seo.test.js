@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, cityForSeo } from '../seo';
+import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, professionGraphJsonLd, cityForSeo } from '../seo';
 
 const SITE = 'https://bookasloth.com';
 const VENDOR = { name: 'John Doe', username: 'john-doe', profile_image: 'https://img/john.jpg' };
@@ -310,5 +310,64 @@ describe('articleGraphJsonLd — one @graph, real Person, stable @id relationshi
     expect(types).not.toContain('Person');
     const article = g['@graph'].find((n) => n['@type'] === 'Article');
     expect(article.author).toEqual({ '@id': `${SITE}/#organization` });
+  });
+});
+
+describe('professionGraphJsonLd — one @graph for /for pages, HowTo + linked org', () => {
+  const base = {
+    canonical: `${SITE}/for/business-consultant`,
+    name: 'Appointment Booking Software for Consultants | Book A Sloth',
+    description: 'Scheduling software for consultants.',
+    breadcrumbName: 'For Business & Management Consultants',
+    serviceType: 'Appointment booking software for business and management consultants',
+    steps: [{ title: 'Set up', desc: 'Add services.' }, { title: 'Share', desc: 'Send your link.' }],
+    faqs: [{ q: 'Is it for consultants?', a: 'Yes.' }, { q: 'Online?', a: 'Yes.' }],
+    appOffers: [{ price: 0, name: 'Sloth plan' }, { price: 3600, name: 'Sloth Active plan (yearly)' }],
+  };
+  const typesOf = (g) => g['@graph'].map((n) => n['@type']);
+
+  test('single @graph with one of each core node + HowTo + FAQPage', () => {
+    const g = professionGraphJsonLd({ siteUrl: SITE, ...base });
+    expect(g['@context']).toBe('https://schema.org');
+    const types = typesOf(g);
+    for (const t of ['WebSite', 'Organization', 'WebPage', 'SoftwareApplication', 'Service', 'HowTo', 'FAQPage', 'BreadcrumbList']) {
+      expect(types.filter((x) => x === t)).toHaveLength(1);
+    }
+  });
+
+  test('NO aggregateRating anywhere (a profession page has no reviews of its own)', () => {
+    const g = professionGraphJsonLd({ siteUrl: SITE, ...base });
+    expect(JSON.stringify(g)).not.toContain('aggregateRating');
+  });
+
+  test('Organization carries sameAs; Service + SoftwareApplication reference it by @id', () => {
+    const g = professionGraphJsonLd({ siteUrl: SITE, ...base });
+    const org = g['@graph'].find((n) => n['@type'] === 'Organization');
+    const svc = g['@graph'].find((n) => n['@type'] === 'Service');
+    const app = g['@graph'].find((n) => n['@type'] === 'SoftwareApplication');
+    expect(Array.isArray(org.sameAs) && org.sameAs.length).toBeTruthy();
+    expect(svc.provider).toEqual({ '@id': org['@id'] });
+    expect(app.publisher).toEqual({ '@id': org['@id'] });
+  });
+
+  test('HowTo steps map from the passed steps, in order', () => {
+    const g = professionGraphJsonLd({ siteUrl: SITE, ...base });
+    const howto = g['@graph'].find((n) => n['@type'] === 'HowTo');
+    expect(howto.step).toHaveLength(2);
+    expect(howto.step[0]).toMatchObject({ '@type': 'HowToStep', position: 1, name: 'Set up', text: 'Add services.' });
+  });
+
+  test('offers come through as INR Offers with the passed names', () => {
+    const g = professionGraphJsonLd({ siteUrl: SITE, ...base });
+    const app = g['@graph'].find((n) => n['@type'] === 'SoftwareApplication');
+    expect(app.offers).toHaveLength(2);
+    expect(app.offers[0]).toMatchObject({ '@type': 'Offer', price: '0', priceCurrency: 'INR', name: 'Sloth plan' });
+  });
+
+  test('omits HowTo / FAQPage when no steps / faqs are passed', () => {
+    const g = professionGraphJsonLd({ siteUrl: SITE, ...base, steps: [], faqs: [] });
+    const types = typesOf(g);
+    expect(types).not.toContain('HowTo');
+    expect(types).not.toContain('FAQPage');
   });
 });

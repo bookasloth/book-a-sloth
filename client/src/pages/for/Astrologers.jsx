@@ -44,7 +44,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import { FREE_PLAN, PREMIUM_PLAN, PREMIUM_ANNUAL_SAVE_PCT } from '../../data/plans';
 import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 import outlookLogo from '../enterprise-v2/assets/logo/outlook.svg';
@@ -371,46 +371,22 @@ export default function Astrologers() {
     ogDescription: 'Seekers book readings, pay upfront and get WhatsApp reminders — automatically. The booking page every astrologer in India should already have.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-      // No aggregateRating — a testimonial-derived self-rating is exactly the
-      // "self-serving review" markup search engines flag. Add only with real data.
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for astrologers and Vedic consultants',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Astrologers & Vedic Consultants', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Astrologers & Vedic Consultants',
+    serviceType: 'Appointment booking software for astrologers and Vedic consultants',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Celestial cosmic-violet + gold. Legacy --ca-* names kept (shared classNames depend on them).
   const styleVars = {
@@ -513,15 +489,12 @@ export default function Astrologers() {
         <Constellation aria-hidden className="absolute right-6 top-10 hidden w-52 opacity-70 lg:block" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(76,29,149,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Moon size={13} /> For astrologers &amp; Vedic consultants
-            </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Read the charts.{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>Let Book A Sloth run the bookings.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Seamless appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>astrologers</span> managing one-to-one consultations.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let seekers book and pay for readings online. Manage your services, availability, payments, reminders and follow-ups from one calm platform built for astrologers.
+              Book A Sloth is appointment booking software for astrologers — seekers book and pay for readings online, while WhatsApp reminders and one calm dashboard handle the rest.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Free Page <ArrowRight size={16} /></CtaButton>
@@ -581,7 +554,7 @@ export default function Astrologers() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every reading you offer, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for astrologers, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From birth-chart readings to Vastu, numerology and remedies — set up every service, each with its own price, duration and availability.
@@ -851,10 +824,7 @@ export default function Astrologers() {
             </Reveal>
             {/* editorial + facts */}
             <div>
-              <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-              </Reveal>
-              <Reveal as="h2" delay={0.04} className="mt-5 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+              <Reveal as="h2" delay={0.04} className="font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
                 More than a booking link. Book A Sloth turns endless DMs, missed calls and chased fees into <span style={{ color: 'var(--ca-primary)' }}>one calm way to practise</span> — built for the way Indian astrologers actually work.
               </Reveal>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">

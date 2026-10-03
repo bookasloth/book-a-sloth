@@ -36,7 +36,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -230,50 +230,28 @@ export default function Pediatricians() {
   const canonical = `${SITE_URL}/for/pediatricians`;
   const seo = {
     title: 'Appointment Booking Software for Pediatricians & Child-Care Clinics | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for pediatricians and child-care clinics in India. Let parents book consultations and vaccinations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for pediatricians and child-care clinics in India. Let parents book consultations and vaccinations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. Start free.',
     keywords: 'appointment booking software for pediatricians, child clinic scheduling software india, book pediatrician appointment online, vaccination appointment booking, children clinic booking page, paediatric appointment system',
     ogTitle: 'Booking Software Parents Love — for Paediatric Clinics',
     ogDescription: 'Parents book consultations and vaccinations, pay upfront over UPI and get WhatsApp reminders — automatically. A friendly booking page for paediatric clinics in India. Free forever, no card required.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for pediatricians and child-care clinics',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Pediatricians & Child Care', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Pediatricians & Child Care',
+    serviceType: 'Appointment booking software for pediatricians and child-care clinics',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Friendly blue + warm amber. Legacy --ca-* names kept.
   const styleVars = {
@@ -341,20 +319,16 @@ export default function Pediatricians() {
       </header>
 
       {/* ═══════════════ 2 · HERO (image + scattered sticker chips) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-16 pt-10 sm:px-8 lg:pb-24 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
-        <div aria-hidden className="pointer-events-none absolute right-10 top-10 h-3 w-3 rounded-full" style={{ background: 'var(--ca-amber)' }} />
+      <section className="relative overflow-hidden px-5 pb-8 pt-6 sm:px-8 lg:pb-10 lg:pt-10" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
         <div aria-hidden className="pointer-events-none absolute left-1/2 top-24 h-2 w-2 rounded-full bg-[color:var(--ca-primary)]/40" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative mx-auto grid max-w-7xl items-center lg:items-start gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(37,99,235,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Baby size={13} /> For pediatricians &amp; child care
-            </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Booking that&apos;s easy for parents,{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>calm for your clinic.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Easy online appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>pediatricians and child-care clinics.</span>
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let parents book consultations and vaccinations, pay upfront and get gentle reminders — from one friendly platform built for children&apos;s clinics.
+              Book A Sloth is appointment booking software for pediatricians — parents book consultations and vaccinations, pay upfront, and get gentle reminders, so your waiting room stays calm.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Set Up My Clinic Page <ArrowRight size={16} /></CtaButton>
@@ -372,17 +346,17 @@ export default function Pediatricians() {
           </div>
 
           {/* RIGHT — image + scattered sticker chips */}
-          <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
+          <Reveal instant delay={0.1} className="relative mx-auto w-full max-w-md">
             <ImgSlot alt="A paediatrician with a happy child and parent" rounded="rounded-[32px]" className="aspect-[4/5] w-full shadow-[0_28px_60px_-30px_rgba(23,37,84,0.4)]" />
-            <div className="absolute -left-4 top-10 z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
+            <div className="absolute -left-4 top-[160px] z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-full text-white" style={{ background: 'var(--ca-primary)' }}><Syringe size={15} /></span>
               <div className="text-[12px] font-bold text-[color:var(--ca-ink)]">Vaccine reminder sent</div>
             </div>
-            <div className="absolute -right-3 top-1/2 z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
+            <div className="absolute -right-[42px] top-[calc(50%-190px)] z-20 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'color-mix(in srgb, var(--ca-amber) 22%, transparent)', color: 'var(--ca-accent)' }}><Smile size={15} /></span>
               <div className="text-[12px] font-bold text-[color:var(--ca-ink)]">Booked in 1 min</div>
             </div>
-            <div className="absolute -bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
+            <div className="absolute bottom-[88px] left-[calc(50%-250px)] z-20 flex -translate-x-1/2 items-center gap-2.5 rounded-2xl bg-white px-4 py-2.5 shadow-[0_16px_36px_-18px_rgba(23,37,84,0.5)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-full text-white" style={{ background: 'var(--ca-primary)' }}><Wallet size={15} /></span>
               <div className="text-[12px] font-bold text-[color:var(--ca-ink)]">Fee paid ₹500</div>
             </div>
@@ -391,11 +365,12 @@ export default function Pediatricians() {
       </section>
 
       {/* ═══════════════ 3 · SERVICES (tinted cards) ═══════════════ */}
-      <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
+      <section id="usecases" className="px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-12">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every visit your clinic offers, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for pediatricians,{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From consultations to vaccinations, well-baby care and sick visits — parents book any service in seconds.
@@ -633,10 +608,7 @@ export default function Pediatricians() {
       {/* ═══════════════ 11 · ABOUT (tinted banner) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl rounded-[28px] px-6 py-12 text-center sm:px-12 sm:py-16" style={{ background: 'var(--ca-cream)' }}>
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-            <Heart size={12} style={{ color: 'var(--ca-accent)' }} /> About Book A Sloth
-          </Reveal>
-          <Reveal as="h2" delay={0.04} className="mx-auto mt-5 max-w-2xl font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+          <Reveal as="h2" delay={0.04} className="mx-auto max-w-2xl font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
             Children&apos;s clinics deserve tools as caring as their care. Book A Sloth turns a ringing phone and a paper register into <span style={{ color: 'var(--ca-primary)' }}>one friendly booking platform</span> — calm for your desk, easy for parents.
           </Reveal>
           <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -666,10 +638,7 @@ export default function Pediatricians() {
         <div aria-hidden className="pointer-events-none absolute bottom-16 left-[22%] h-2 w-2 rounded-full bg-white/40" />
         <div aria-hidden className="pointer-events-none absolute bottom-24 right-[12%] h-3 w-3 rounded-full" style={{ background: 'var(--ca-amber)' }} />
         <div className="relative mx-auto max-w-2xl">
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-            <Smile size={13} style={{ color: 'var(--ca-amber)' }} /> Ready when you are
-          </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
+          <Reveal as="h2" delay={0.06} className="font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
             Give parents an easier way<br className="hidden sm:block" /> <span style={{ color: 'var(--ca-amber)' }}>to book your clinic.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/75">
