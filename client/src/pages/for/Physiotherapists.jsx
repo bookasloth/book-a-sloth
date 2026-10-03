@@ -364,9 +364,6 @@ export default function Physiotherapists() {
       <section className="relative overflow-hidden px-5 pb-16 pt-10 sm:px-8 lg:pb-24 lg:pt-16" style={{ background: 'linear-gradient(180deg, var(--ca-cream) 0%, #ffffff 100%)' }}>
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-block -rotate-1 px-2 py-0.5 text-[12px] font-bold uppercase tracking-[0.16em] text-[color:var(--ca-ink)]" style={{ background: 'var(--ca-lime)' }}>
-              Physio &amp; Rehab
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
               Flexible appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>physiotherapists</span>{' '}
@@ -762,10 +759,7 @@ export default function Physiotherapists() {
           </Reveal>
 
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="inline-block -rotate-1 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[color:var(--ca-ink)]" style={{ background: 'var(--ca-lime)' }}>
-              About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Modern centres deserve <span style={{ color: 'var(--ca-primary)' }}>better tools.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">
@@ -806,10 +800,7 @@ export default function Physiotherapists() {
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-16 h-72 w-72 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(45,212,191,0.5), transparent)' }} />
 
         <div className="relative mx-auto max-w-2xl">
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-            <Zap size={13} style={{ color: 'var(--ca-lime)' }} /> Ready when you are
-          </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
+          <Reveal as="h2" delay={0.06} className="font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
             Spend less time scheduling.<br className="hidden sm:block" /> <span style={{ color: 'var(--ca-lime)' }}>Spend more time on recovery.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/70">

@@ -355,9 +355,6 @@ export default function Spas() {
         <div aria-hidden className="pointer-events-none absolute right-[-4rem] top-24 h-72 w-72 rounded-full blur-3xl mix-blend-multiply" style={{ background: 'radial-gradient(closest-side, rgba(176,137,104,0.16), transparent)' }} />
 
         <div className="relative z-10 mx-auto max-w-3xl">
-          <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(63,107,94,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
-            <Sparkles size={13} /> For spas &amp; wellness centres
-          </Reveal>
           <Reveal as="h1" instant className="mx-auto max-w-2xl font-heading text-[clamp(1.5rem,5vw,3.15rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
             Seamless appointment booking software for{' '}
             <span style={{ color: 'var(--ca-primary)' }}>spas and wellness centres.</span>
@@ -650,10 +647,7 @@ export default function Spas() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="order-2 text-center lg:order-1 lg:text-left">
-            <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-5 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
               Wellness businesses deserve tools as calm as the care they give.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">

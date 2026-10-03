@@ -334,9 +334,6 @@ export default function Gynecologists() {
         <div aria-hidden className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(190,24,93,0.10), transparent)' }} />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(4,120,87,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Heart size={13} /> For gynecologists &amp; OB-GYNs
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
               Private online appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>gynecologists</span> and women's health clinics.
@@ -632,10 +629,7 @@ export default function Gynecologists() {
             <ImgSlot alt="A calm women's-health clinic reception" rounded="rounded-[58%_42%_47%_53%/42%_53%_47%_58%]" className="relative aspect-square w-full shadow-[0_28px_60px_-30px_rgba(20,52,42,0.4)]" />
           </Reveal>
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> Our promise
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Care that feels <span style={{ color: 'var(--ca-primary)' }}>considered — from the first click.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">
@@ -673,10 +667,7 @@ export default function Gynecologists() {
         <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-80 w-[42rem] -translate-x-1/2 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(190,24,93,0.4), transparent)' }} />
         <div aria-hidden className="pointer-events-none absolute -bottom-28 -right-16 h-72 w-72 rounded-full blur-3xl mix-blend-screen" style={{ background: 'radial-gradient(closest-side, rgba(110,231,183,0.4), transparent)' }} />
         <div className="relative mx-auto max-w-2xl">
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-            <Heart size={13} style={{ color: '#FBCFE8' }} /> Ready when you are
-          </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
+          <Reveal as="h2" delay={0.06} className="font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
             Give patients a calmer,<br className="hidden sm:block" /> <span style={{ color: '#6EE7B7' }}>more private way to book.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/75">

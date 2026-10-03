@@ -336,9 +336,6 @@ export default function GeneralPhysicians() {
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.5]" style={{ backgroundImage: 'radial-gradient(rgba(29,78,216,0.10) 1px, transparent 1px)', backgroundSize: '24px 24px', maskImage: 'radial-gradient(120% 70% at 80% 20%, #000 20%, transparent 70%)', WebkitMaskImage: 'radial-gradient(120% 70% at 80% 20%, #000 20%, transparent 70%)' }} />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(29,78,216,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Stethoscope size={13} /> For doctors &amp; clinics
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
               Easy online appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>doctors</span> who want fewer calls.
@@ -660,10 +657,7 @@ export default function GeneralPhysicians() {
             </div>
           </Reveal>
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Modern clinics deserve <span style={{ color: 'var(--ca-primary)' }}>better tools.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">
@@ -700,10 +694,7 @@ export default function GeneralPhysicians() {
       <section className="relative overflow-hidden px-5 py-24 text-center sm:px-8" style={{ background: 'linear-gradient(160deg, #0F1E3D 0%, #1D4ED8 100%)' }}>
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.14]" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)', backgroundSize: '24px 24px', maskImage: 'radial-gradient(120% 80% at 50% 50%, #000 30%, transparent 75%)', WebkitMaskImage: 'radial-gradient(120% 80% at 50% 50%, #000 30%, transparent 75%)' }} />
         <div className="relative mx-auto max-w-2xl">
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-            <Zap size={13} style={{ color: '#93C5FD' }} /> Ready when you are
-          </Reveal>
-          <Reveal as="h2" delay={0.06} className="mt-6 font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
+          <Reveal as="h2" delay={0.06} className="font-heading text-[clamp(1.9rem,5vw,2.75rem)] font-extrabold leading-[1.08] tracking-tight text-white">
             Give patients an easier way<br className="hidden sm:block" /> <span style={{ color: '#93C5FD' }}>to book your clinic.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/70">

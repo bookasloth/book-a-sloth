@@ -364,9 +364,6 @@ export default function Nutritionists() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           {/* LEFT — copy */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(21,128,61,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Leaf size={13} /> For nutritionists &amp; dietitians
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
               Convenient appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>nutritionists</span> managing client consultations.
@@ -730,10 +727,7 @@ export default function Nutritionists() {
           </Reveal>
 
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-5 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
               Small practices deserve <span style={{ color: 'var(--ca-primary)' }}>better tools.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">

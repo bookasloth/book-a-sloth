@@ -412,10 +412,6 @@ export default function ArchitectPage() {
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="div" instant className="mb-5 inline-flex items-center gap-2 border px-3.5 py-1.5" style={{ borderColor: 'rgba(180,83,9,0.4)', background: 'color-mix(in srgb, var(--ca-accent) 6%, transparent)' }}>
-              <Compass size={13} style={{ color: 'var(--ca-accent)' }} />
-              <Eyebrow>For Architects &amp; Interior Designers</Eyebrow>
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3.05rem)] font-extrabold leading-[1.06] tracking-[-0.02em] text-[color:var(--ca-ink)]">
               Flexible appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>architects and interior designers</span> managing client meetings.
@@ -480,8 +476,7 @@ export default function ArchitectPage() {
       <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Services · Spec Sheet</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Appointment booking software for architects, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
@@ -527,8 +522,7 @@ export default function ArchitectPage() {
       <section id="how" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Project Phases</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               From link to paid, <span style={{ color: 'var(--ca-primary)' }}>in three phases.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">No app to install, no code to ship — just three small steps.</Reveal>
@@ -571,8 +565,7 @@ export default function ArchitectPage() {
       <section id="features" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Connections</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Works with the tools you <span style={{ color: 'var(--ca-primary)' }}>already use.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">
@@ -611,8 +604,7 @@ export default function ArchitectPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-ink)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Project Readout</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
               Real impact, <span style={{ color: 'var(--ca-accent)' }}>real numbers.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-white/60">
@@ -649,8 +641,7 @@ export default function ArchitectPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Revision Log</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               What studios say about <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-3 text-base text-slate-500">
@@ -694,8 +685,7 @@ export default function ArchitectPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Before / After Spec</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               The <span style={{ color: 'var(--ca-primary)' }}>Book A Sloth</span> difference.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-xl text-base text-slate-500">
@@ -744,8 +734,7 @@ export default function ArchitectPage() {
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-4xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="div"><Eyebrow>Plans</Eyebrow></Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Start small. <span style={{ color: 'var(--ca-primary)' }}>Grow as your studio does.</span>
             </Reveal>
           </div>
@@ -824,7 +813,6 @@ export default function ArchitectPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="order-1 text-center lg:text-left">
-            <Reveal as="div"><Eyebrow>About Book A Sloth</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               We&apos;re on a mission to make studios <span style={{ color: 'var(--ca-primary)' }}>run calmer.</span>
             </Reveal>
@@ -870,7 +858,6 @@ export default function ArchitectPage() {
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
-            <Reveal as="div"><Eyebrow>Queries</Eyebrow></Reveal>
             <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Questions? <span style={{ color: 'var(--ca-primary)' }}>We&apos;ve got answers.</span>
             </Reveal>

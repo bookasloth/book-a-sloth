@@ -412,9 +412,6 @@ export default function LifeCoaches() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
           {/* LEFT — editorial copy */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(22,101,52,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Leaf size={13} /> For life &amp; wellness coaches
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3.6rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[color:var(--ca-ink)]">
               Flexible appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>life coaches</span> managing one-to-one sessions.
@@ -723,10 +720,7 @@ export default function LifeCoaches() {
       {/* ═══════════════ 10 · ABOUT (drop-cap editorial statement + ruled trust rows) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-4xl">
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-          </Reveal>
-          <Reveal as="p" delay={0.04} className="mt-7 font-heading text-[clamp(1.35rem,2.6vw,1.9rem)] font-semibold leading-[1.42] tracking-[-0.01em] text-[color:var(--ca-ink)] first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-heading first-letter:text-[4.5rem] first-letter:font-black first-letter:leading-[0.68] first-letter:text-[#C2410C]">
+          <Reveal as="p" delay={0.04} className="font-heading text-[clamp(1.35rem,2.6vw,1.9rem)] font-semibold leading-[1.42] tracking-[-0.01em] text-[color:var(--ca-ink)] first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-heading first-letter:text-[4.5rem] first-letter:font-black first-letter:leading-[0.68] first-letter:text-[#C2410C]">
             Book A Sloth was built to make appointment-based practices easier to run. Instead of stitching together calendars, DMs, notebooks and payment tools, coaches manage every client session from one calm platform — built for Indian professionals, and designed for the way modern practices actually work.
           </Reveal>
           <Reveal delay={0.1} className="mt-12 border-t border-black/10">

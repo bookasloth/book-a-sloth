@@ -402,9 +402,6 @@ export default function LawyersPage() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           {/* LEFT — the editorial statement */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgba(127,29,29,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
-              <Scale size={13} /> For advocates &amp; law firms
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3.1rem)] font-extrabold leading-[1.06] tracking-[-0.025em] text-[color:var(--ca-ink)]">
               Streamlined appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>lawyers and law firms</span> managing client consultations.
@@ -459,8 +456,7 @@ export default function LawyersPage() {
       <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>Practice areas</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Appointment booking software for lawyers, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
@@ -495,8 +491,7 @@ export default function LawyersPage() {
       <section id="how" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>The process</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               From &ldquo;when are you free?&rdquo; to a <span style={{ color: 'var(--ca-primary)' }}>confirmed consultation.</span>
             </Reveal>
           </div>
@@ -532,8 +527,7 @@ export default function LawyersPage() {
       <section id="features" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>Connected &amp; ready</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Works with the tools you <span style={{ color: 'var(--ca-primary)' }}>already use.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
@@ -580,7 +574,6 @@ export default function LawyersPage() {
             <div className="relative grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-16">
               {/* left — the statement */}
               <div>
-                <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-white/70">By the numbers</p>
                 <h2 className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
                   Real impact for a modern law practice.
                 </h2>
@@ -609,8 +602,7 @@ export default function LawyersPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>In their words</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Practices that swapped the <span style={{ color: 'var(--ca-primary)' }}>phone for a link.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
@@ -625,8 +617,7 @@ export default function LawyersPage() {
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>Old way vs new</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               The old way, <span style={{ color: 'var(--ca-primary)' }}>redlined.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
@@ -681,8 +672,7 @@ export default function LawyersPage() {
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>Engagement terms</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Start small. <span style={{ color: 'var(--ca-primary)' }}>Grow as your practice does.</span>
             </Reveal>
           </div>
@@ -779,8 +769,7 @@ export default function LawyersPage() {
 
           {/* RIGHT — statement + trust facts */}
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>About Book A Sloth</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Small practices deserve better tools.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">

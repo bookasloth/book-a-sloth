@@ -450,9 +450,6 @@ export default function SportsTurf() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#A3E635]">
-              For turf & sports arenas
-            </Reveal>
             <Reveal as="h1" instant className="text-[clamp(1.5rem,5vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
               Instant online booking software for{' '}
               <span style={{ color: '#A3E635' }}>sports turfs and arenas</span> with open slots.

@@ -412,9 +412,6 @@ export default function CharteredAccountants() {
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(30,58,95,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
-              <Landmark size={13} /> For Chartered Accountants &amp; CA firms
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
               Professional appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>Chartered Accountants</span> running modern practices.
@@ -466,8 +463,7 @@ export default function CharteredAccountants() {
       <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>The services ledger</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Appointment booking software for chartered accountants, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
@@ -555,8 +551,7 @@ export default function CharteredAccountants() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>The bottom line</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Your practice, <span style={{ color: 'var(--ca-primary)' }}>balanced.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-slate-500">
@@ -640,8 +635,7 @@ export default function CharteredAccountants() {
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>The reconciliation</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               The manual way vs <span style={{ color: 'var(--ca-primary)' }}>a better-run practice.</span>
             </Reveal>
           </div>
@@ -783,8 +777,7 @@ export default function CharteredAccountants() {
 
           {/* RIGHT — statement + trust facts */}
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-accent)' }}>About Book A Sloth</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
               Small businesses deserve better tools.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-slate-600">
