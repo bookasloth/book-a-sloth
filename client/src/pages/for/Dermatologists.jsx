@@ -393,9 +393,6 @@ export default function Dermatologists() {
         <div aria-hidden className="pointer-events-none absolute -right-20 -top-16 h-80 w-80 rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(219,39,119,0.14), transparent)' }} />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(14,116,144,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Sparkles size={13} /> For dermatologists &amp; skin clinics
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
               Modern appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>dermatologists</span> managing busy skin clinics.
@@ -642,10 +639,7 @@ export default function Dermatologists() {
       {/* ═══════════════ 11 · ABOUT (editorial statement + trust pills) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-cream)' }}>
         <div className="mx-auto max-w-3xl text-center">
-          <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-          </Reveal>
-          <Reveal as="h2" delay={0.04} className="mt-5 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+          <Reveal as="h2" delay={0.04} className="font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
             Modern skin clinics deserve tools that feel as considered as their care. Book A Sloth turns a ringing phone, a paper register and desk payments into <span style={{ color: 'var(--ca-primary)' }}>one calm booking platform</span> — built for the way Indian practices actually work.
           </Reveal>
           <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center justify-center gap-3">

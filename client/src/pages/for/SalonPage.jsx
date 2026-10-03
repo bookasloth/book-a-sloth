@@ -355,9 +355,6 @@ export default function SalonPage() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           {/* LEFT — oversized display headline */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-6 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em]" style={{ borderColor: 'rgba(214,0,154,0.3)', color: 'var(--ca-accent)', background: 'color-mix(in srgb, var(--ca-accent) 7%, transparent)' }}>
-              <Sparkles size={13} /> For salons &amp; beauticians
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,4rem)] font-black leading-[1.02] tracking-[-0.03em] text-[color:var(--ca-ink)]">
               Smart appointment booking software for{' '}
               <span style={{ color: 'var(--ca-accent)' }}>salons and beauticians</span> managing busy schedules.
@@ -398,8 +395,7 @@ export default function SalonPage() {
       <section id="usecases" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-2xl">
-            <Reveal as="p" className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--ca-accent)' }}>The menu</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-black leading-tight tracking-tight sm:text-5xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-black leading-tight tracking-tight sm:text-5xl">
               Appointment booking software for salons, <span style={{ color: 'var(--ca-accent)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
@@ -666,8 +662,7 @@ export default function SalonPage() {
             <ImgSlot alt="A salon owner reviewing the day's bookings on a tablet" className="aspect-[4/5] w-full shadow-[0_24px_54px_-32px_rgba(17,17,17,0.4)]" />
           </Reveal>
           <div className="order-1 lg:order-2">
-            <Reveal as="p" className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--ca-accent)' }}>About Book A Sloth</Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-black leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-black leading-tight tracking-tight sm:text-4xl">
               Small salons deserve better tools.
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">

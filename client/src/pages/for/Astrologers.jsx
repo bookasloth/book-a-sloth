@@ -489,9 +489,6 @@ export default function Astrologers() {
         <Constellation aria-hidden className="absolute right-6 top-10 hidden w-52 opacity-70 lg:block" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(76,29,149,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
-              <Moon size={13} /> For astrologers &amp; Vedic consultants
-            </Reveal>
             <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
               Seamless appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>astrologers</span> managing one-to-one consultations.
@@ -827,10 +824,7 @@ export default function Astrologers() {
             </Reveal>
             {/* editorial + facts */}
             <div>
-              <Reveal as="p" className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-              </Reveal>
-              <Reveal as="h2" delay={0.04} className="mt-5 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+              <Reveal as="h2" delay={0.04} className="font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
                 More than a booking link. Book A Sloth turns endless DMs, missed calls and chased fees into <span style={{ color: 'var(--ca-primary)' }}>one calm way to practise</span> — built for the way Indian astrologers actually work.
               </Reveal>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">

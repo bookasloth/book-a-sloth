@@ -593,9 +593,6 @@ export default function BusinessConsultants() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT */}
           <div className="text-center lg:text-left">
-            <Reveal as="p" instant className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(180,83,9,0.3)', color: 'var(--ca-accent)', background: 'color-mix(in srgb, var(--ca-accent) 8%, transparent)' }}>
-              For business &amp; management consultants
-            </Reveal>
             <Reveal as="h1" instant className="text-[clamp(1.5rem,5vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-[color:var(--ca-ink)] sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
               Effortless appointment booking software for{' '}
               <span style={{ color: 'var(--ca-primary)' }}>consultants</span> who sell their expertise.
@@ -958,12 +955,9 @@ export default function BusinessConsultants() {
             </div>
           </Reveal>
 
-          {/* RIGHT — eyebrow + heading + copy + trust grid + CTA */}
+          {/* RIGHT — heading + copy + trust grid + CTA */}
           <div className="order-1 text-center lg:order-2 lg:text-left">
-            <Reveal className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--ca-primary)' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--ca-accent)' }} /> About Book A Sloth
-            </Reveal>
-            <Reveal as="h2" delay={0.04} className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <Reveal as="h2" delay={0.04} className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
               Built to make appointment-based practices <span style={{ color: 'var(--ca-primary)' }}>easier to run.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-5 text-base leading-relaxed text-neutral-600">
