@@ -34,6 +34,7 @@ export const EVENTS = Object.freeze({
   ONBOARDING_STEP:    'onboarding_step_completed',
   ONBOARDING_COMPLETED:'onboarding_completed', // server-emitted (markComplete)
   SERVICE_PUBLISHED:  'service_published',    // server-emitted — activation (first live service)
+  FIRST_SERVICE_SKIPPED:'first_service_skipped', // host dismissed the /live skip-confirm and finished with 0 services
   PROFILE_LINK_SHARED:'profile_link_shared',  // host copied/shared their profile link (activation funnel)
   PLAN_VIEWED:        'plan_viewed',         // pricing/plans seen
 
