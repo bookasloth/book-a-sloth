@@ -625,8 +625,8 @@ export default function BusinessConsultants() {
           <Reveal instant delay={0.1} className="relative hidden lg:block">
             <div aria-hidden className="absolute left-1/2 top-1/2 h-[27rem] w-[27rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[rgba(30,41,59,0.1)] to-[rgba(180,83,9,0.12)] blur-2xl" />
             <img src={HERO_ART} alt="Book A Sloth — appointment booking for business and management consultants" loading="eager" className="relative z-30 mx-auto w-full max-w-[27rem] drop-shadow-[0_28px_40px_rgba(15,23,42,0.2)]" />
-            <GlassCard icon={CalendarCheck} label="New booking" value="Strategy Call · 4:30 PM" float="sloth-float" className="top-6 -right-4" />
-            <GlassCard icon={Wallet} label="Fee received" value="₹5,000" accent float="sloth-float--mid" className="top-1/2 -left-6" />
+            <GlassCard icon={CalendarCheck} label="New booking" value="Strategy Call · 4:30 PM" float="sloth-float" className="top-[-26px] -right-[26px]" />
+            <GlassCard icon={Wallet} label="Fee received" value="₹5,000" accent float="sloth-float--mid" className="top-[calc(50%-90px)] -left-6" />
             <GlassCard icon={BellRing} label="WhatsApp reminder" value="Sent · 1h before" float="sloth-float--slow" className="bottom-10 -right-2" />
           </Reveal>
         </div>
