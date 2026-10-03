@@ -47,7 +47,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -270,46 +270,22 @@ export default function SalonPage() {
     ogDescription: 'Clients book haircuts, facials and bridal appointments, pay an advance and get WhatsApp reminders — automatically. The booking page every salon in India should have.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-      // No aggregateRating — a testimonial-derived self-rating is exactly the
-      // "self-serving review" markup search engines flag. Add only with real data.
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for salons and beauticians',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Salons & Beauticians', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Salons & Beauticians',
+    serviceType: 'Appointment booking software for salons and beauticians',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Chic editorial: near-black + electric fuchsia on warm cream. Legacy --ca-* names kept.
   const styleVars = {
@@ -382,13 +358,12 @@ export default function SalonPage() {
             <Reveal as="p" instant className="mb-6 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em]" style={{ borderColor: 'rgba(214,0,154,0.3)', color: 'var(--ca-accent)', background: 'color-mix(in srgb, var(--ca-accent) 7%, transparent)' }}>
               <Sparkles size={13} /> For salons &amp; beauticians
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2.1rem,6.2vw,4rem)] font-black leading-[1.02] tracking-[-0.03em] text-[color:var(--ca-ink)]">
-              Beautiful booking software for{' '}
-              <span style={{ color: 'var(--ca-accent)' }}>salons &amp; beauticians</span>{' '}
-              of modern India.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,4rem)] font-black leading-[1.02] tracking-[-0.03em] text-[color:var(--ca-ink)]">
+              Smart appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-accent)' }}>salons and beauticians</span> managing busy schedules.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-6 max-w-md text-base leading-relaxed text-neutral-600 sm:text-lg lg:mx-0">
-              Stop the endless phone calls at the front desk. Let clients book haircuts, facials and bridal appointments, pay an advance and get reminded — from one pretty booking page for your salon.
+              Book A Sloth is appointment booking software for salons — clients book haircuts, facials and bridal appointments, pay an advance, and get reminders, so your chairs stay booked and no-shows drop.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -425,7 +400,7 @@ export default function SalonPage() {
           <div className="max-w-2xl">
             <Reveal as="p" className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--ca-accent)' }}>The menu</Reveal>
             <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-black leading-tight tracking-tight sm:text-5xl">
-              Every service on your menu, <span style={{ color: 'var(--ca-accent)' }}>bookable online.</span>
+              Appointment booking software for salons, <span style={{ color: 'var(--ca-accent)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
               From haircuts to facials, colour, nails and bridal makeup — let clients book any treatment in seconds.

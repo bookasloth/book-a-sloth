@@ -39,7 +39,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -349,53 +349,29 @@ export default function SportsTurf() {
 
   const canonical = `${SITE_URL}/for/sports-turf`;
   const seo = {
-    title: 'Slot Booking Software for Turf & Sports Arenas | Book A Sloth',
-    description: 'Book A Sloth is online slot booking software for turf and sports-arena owners in India — box cricket, football turf, badminton and pickleball courts. Let players book open slots and pay upfront, with WhatsApp reminders, GST invoices and 0% commission. Start free.',
+    title: 'Booking Software for Sports Turf & Arenas | Book A Sloth',
+    description: 'Book A Sloth is booking software for sports turf and arena owners in India — box cricket, football turf, badminton and pickleball courts. Let players book open slots and pay upfront, with WhatsApp reminders, GST invoices and 0% commission. Start free.',
     keywords: 'turf booking software, sports arena booking software, box cricket slot booking, football turf booking online india, badminton court booking system, book turf online, sports venue scheduling india',
     ogTitle: 'Your ground runs on slots. Let Book A Sloth fill them.',
     ogDescription: 'Players book open slots, pay upfront over UPI, and get WhatsApp reminders — automatically. The booking page every turf and sports arena in India should have.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-      // No aggregateRating — a testimonial-derived self-rating is exactly the
-      // "self-serving review" markup search engines flag. Add only with real data.
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Online slot booking software for sports turf and arenas',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Sports & Turf', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Sports & Turf',
+    serviceType: 'Online slot booking software for sports turf and arenas',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Floodlit-night palette — legacy --ca-* var names kept so shared classNames work.
   const styleVars = {
@@ -477,13 +453,12 @@ export default function SportsTurf() {
             <Reveal as="p" instant className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#A3E635]">
               For turf & sports arenas
             </Reveal>
-            <Reveal as="h1" instant className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
-              A modern booking software for{' '}
-              <span style={{ color: '#A3E635' }}>turf &amp; sports grounds</span>{' '}
-              to host games better.
+            <Reveal as="h1" instant className="text-[clamp(1.5rem,5vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[2.7rem] sm:leading-[1.1] lg:text-[3rem]">
+              Instant online booking software for{' '}
+              <span style={{ color: '#A3E635' }}>sports turfs and arenas</span> with open slots.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-white/70 sm:mt-7 sm:text-lg lg:mx-0">
-              Stop taking bookings over phone calls and WhatsApp. Let players see your open slots, book and pay online — for your turf, box-cricket ground or court.
+              Book A Sloth is booking software for sports turfs and arenas — players see open slots, book and pay online for box cricket, football turf and courts, with reminders and GST invoices.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-6 flex flex-col items-center gap-3 sm:mt-9 sm:flex-row sm:gap-5 lg:justify-start">
               <Link
@@ -539,7 +514,7 @@ export default function SportsTurf() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--ca-primary)' }}>grounds get booked.</span>
+              Booking software for sports turf, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-neutral-500">
               From box cricket to badminton courts, take every slot booking in one place.

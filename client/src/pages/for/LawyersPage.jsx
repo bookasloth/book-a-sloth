@@ -49,7 +49,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -306,52 +306,28 @@ export default function LawyersPage() {
   const canonical = `${SITE_URL}/for/lawyers`;
   const seo = {
     title: 'Appointment Booking Software for Advocates & Law Firms | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for advocates and law firms in India. Let the clients you work with book consultations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. A practice-scheduling tool, not an advertising channel. Start free.',
+    description: 'Book A Sloth is appointment booking software for lawyers, advocates and law firms in India. Let the clients you work with book consultations online — fees collected upfront, WhatsApp reminders, GST invoices, 0% commission. A practice-scheduling tool, not an advertising channel. Start free.',
     keywords: 'appointment booking software for advocates, law firm scheduling software india, book legal consultation online, lawyer appointment scheduling, advocate practice management, consultation booking for law firms',
     ogTitle: 'Your practice runs on consultations. Let Book A Sloth schedule them.',
     ogDescription: 'Clients book consultations, pay upfront and get WhatsApp reminders — automatically. A calm scheduling page for advocates and law firms in India.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-      // No aggregateRating — a testimonial-derived self-rating is exactly the
-      // "self-serving review" markup search engines flag. Add only with real data.
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for advocates and law firms',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Lawyers & Legal Advisors', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Lawyers & Legal Advisors',
+    serviceType: 'Appointment booking software for advocates and law firms',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Authoritative editorial-law palette. Legacy --ca-* var names kept so shared
   // classNames stay valid; only the values change.
@@ -429,13 +405,12 @@ export default function LawyersPage() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgba(127,29,29,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 6%, transparent)' }}>
               <Scale size={13} /> For advocates &amp; law firms
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,6.4vw,3.1rem)] font-extrabold leading-[1.06] tracking-[-0.025em] text-[color:var(--ca-ink)]">
-              Simple appointment booking software for{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>advocates &amp; law firms</span>{' '}
-              of modern India.
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3.1rem)] font-extrabold leading-[1.06] tracking-[-0.025em] text-[color:var(--ca-ink)]">
+              Streamlined appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>lawyers and law firms</span> managing client consultations.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-600 sm:text-lg lg:mx-0">
-              Give the clients you already work with a simpler way to book consultations — no phone tag, confirmed slots, reminders — from one calm platform for your practice.
+              Book A Sloth is appointment booking software for lawyers — the clients you work with book consultations online with confirmed slots, upfront fees and reminders, so no case starts with phone tag.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Create Your Booking Page <ArrowRight size={16} /></CtaButton>
@@ -486,7 +461,7 @@ export default function LawyersPage() {
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="p" className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--ca-primary)' }}>Practice areas</Reveal>
             <Reveal as="h2" delay={0.04} className="mt-3 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Built around the way <span style={{ color: 'var(--ca-primary)' }}>a legal practice runs.</span>
+              Appointment booking software for lawyers, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.08} className="mt-4 text-base text-neutral-500">
               From consultations to document review and litigation strategy — every appointment type, in one place.

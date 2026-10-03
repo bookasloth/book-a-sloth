@@ -37,7 +37,7 @@ import {
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
 import useLenis from '../../hooks/useLenis';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import {
   FREE_PLAN, PREMIUM_PLAN,
   PREMIUM_ANNUAL_SAVE_PCT,
@@ -303,50 +303,28 @@ export default function Dermatologists() {
   const canonical = `${SITE_URL}/for/dermatologists`;
   const seo = {
     title: 'Appointment Booking Software for Dermatologists & Skin Clinics | Book A Sloth',
-    description: 'Book A Sloth is appointment scheduling software for dermatologists and skin clinics in India. Let patients book skin consultations and laser appointments online — fees collected upfront, WhatsApp reminders, GST invoices, teledermatology, 0% commission. Start free.',
+    description: 'Book A Sloth is appointment booking software for dermatologists and skin clinics in India. Let patients book skin consultations and laser appointments online — fees collected upfront, WhatsApp reminders, GST invoices, teledermatology, 0% commission. Start free.',
     keywords: 'appointment booking software for dermatologists, skin clinic scheduling software india, book dermatology consultation online, teledermatology booking, skin clinic appointment system, dermatologist booking page',
     ogTitle: 'Fill Your Skin Clinic — Booking Software for Dermatologists',
     ogDescription: 'Patients book skin consultations, pay upfront over UPI and get WhatsApp reminders — automatically. A clean booking page for dermatologists and skin clinics in India. Free forever, no card required.',
   };
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PREMIUM_PLAN.yearly), priceCurrency: 'INR', name: `${PREMIUM_PLAN.name} plan (yearly)` },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: 'Appointment booking software for dermatologists and skin clinics',
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'For Dermatologists & Skin Clinics', item: canonical },
-      ],
-    },
-  ];
+  // One @graph (WebSite · Organization · WebPage · SoftwareApplication · Service ·
+  // HowTo · FAQPage · BreadcrumbList), cross-linked by @id. See seo.js. No
+  // aggregateRating by design — a profession page has no reviews of its own.
+  const jsonLd = professionGraphJsonLd({
+    canonical,
+    name: seo.title,
+    description: seo.description,
+    breadcrumbName: 'For Dermatologists & Skin Clinics',
+    serviceType: 'Appointment booking software for dermatologists and skin clinics',
+    steps: STEPS,
+    faqs: FAQ,
+    appOffers: [
+      { price: 0, name: `${FREE_PLAN.name} plan` },
+      { price: PREMIUM_PLAN.yearly, name: `${PREMIUM_PLAN.name} plan (yearly)` },
+    ],
+  });
 
   // Clinical cyan + rose. Legacy --ca-* names kept.
   const styleVars = {
@@ -418,12 +396,12 @@ export default function Dermatologists() {
             <Reveal as="p" instant className="mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ borderColor: 'rgba(14,116,144,0.25)', color: 'var(--ca-primary)', background: 'color-mix(in srgb, var(--ca-primary) 7%, transparent)' }}>
               <Sparkles size={13} /> For dermatologists &amp; skin clinics
             </Reveal>
-            <Reveal as="h1" instant className="font-heading text-[clamp(2rem,7vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
-              Fill your skin clinic,{' '}
-              <span style={{ color: 'var(--ca-primary)' }}>not your call log.</span>
+            <Reveal as="h1" instant className="font-heading text-[clamp(1.5rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.02em] text-[color:var(--ca-ink)]">
+              Modern appointment booking software for{' '}
+              <span style={{ color: 'var(--ca-primary)' }}>dermatologists</span> managing busy skin clinics.
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-              Let patients book skin consultations and laser follow-ups, pay upfront and get reminded — from one clean platform built for Indian skin clinics.
+              Book A Sloth is appointment booking software for dermatologists — patients book skin consultations and laser follow-ups, pay upfront, and get reminded, so your clinic fills without the call log.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
               <CtaButton to={START} className="w-full sm:w-auto">Set Up My Clinic Page <ArrowRight size={16} /></CtaButton>
@@ -456,7 +434,7 @@ export default function Dermatologists() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Every skin service, <span style={{ color: 'var(--ca-primary)' }}>bookable online.</span>
+              Appointment booking software for dermatologists, <span style={{ color: 'var(--ca-primary)' }}>built around how you work.</span>
             </Reveal>
             <Reveal as="p" delay={0.06} className="mt-4 text-base text-slate-500">
               From consultations to acne care, laser and teledermatology — patients book any service in seconds.
