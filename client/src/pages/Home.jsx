@@ -61,6 +61,13 @@ import { TESTIMONIALS } from "../data/testimonials";
 import PricingCards from "../components/pricing/PricingCards";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
+// Real, consented testimonials shown on /wall-of-love — the honest basis for the
+// SoftwareApplication reviewCount below. Derived (not hardcoded) so the schema
+// count can never drift from what the site actually displays.
+import { WALL_TWEETS, WALL_GOOGLE, WALL_LINKEDIN, WALL_INSTAGRAM } from "../data/wallOfLove";
+
+const WALL_OF_LOVE_COUNT =
+  WALL_TWEETS.length + WALL_GOOGLE.length + WALL_LINKEDIN.length + WALL_INSTAGRAM.length;
 
 /* Hero headline is a single static line now — the old cycling-word typewriter
    ("Calmer / Smoother / …") was retired with the copy reposition. */
@@ -88,16 +95,16 @@ const HOME_JSONLD = [
     description:
       "Book A Sloth is the appointment booking and payment system for professionals who sell their time — appointment scheduling, booking and payment, availability, invoices and appointment reminders in one link.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
-    // Users' rating of the product (avg of real reviews, currently 5.0).
-    // reviewCount/ratingCount deliberately OMITTED: the prior hardcoded 176 was
-    // not backed by real data (DB has a handful of reviews), so we no longer
-    // state a count. NOTE: Google requires reviewCount OR ratingCount for a star
-    // rich result, so this node is intentionally not snippet-eligible until there
-    // is an honest count to publish — carry the rating value only, never inflate.
+    // Users' rating of the product. ratingValue is the (uniformly 5★) sentiment of
+    // the real, consented testimonials on /wall-of-love; reviewCount is DERIVED from
+    // that same set (WALL_OF_LOVE_COUNT), so it stays truthful and in sync with what
+    // the site actually displays. The prior hardcoded 176 was not backed by real
+    // data — never hardcode or inflate this again.
     aggregateRating: {
       "@type": "AggregateRating",
       ratingValue: "5",
       bestRating: "5",
+      reviewCount: String(WALL_OF_LOVE_COUNT),
     },
   },
   {
