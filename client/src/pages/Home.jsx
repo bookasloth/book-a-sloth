@@ -88,15 +88,16 @@ const HOME_JSONLD = [
     description:
       "Book A Sloth is the appointment booking and payment system for professionals who sell their time — appointment scheduling, booking and payment, availability, invoices and appointment reminders in one link.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
-    // Users' rating of the product. SoftwareApplication (not Organization) is the
-    // snippet-eligible node for a self-hosted rating. KEEP TRUTHFUL: reviewCount
-    // must reflect real 5★ user reviews/testimonials shown on the site — bump it
-    // as more come in, don't inflate.
+    // Users' rating of the product (avg of real reviews, currently 5.0).
+    // reviewCount/ratingCount deliberately OMITTED: the prior hardcoded 176 was
+    // not backed by real data (DB has a handful of reviews), so we no longer
+    // state a count. NOTE: Google requires reviewCount OR ratingCount for a star
+    // rich result, so this node is intentionally not snippet-eligible until there
+    // is an honest count to publish — carry the rating value only, never inflate.
     aggregateRating: {
       "@type": "AggregateRating",
       ratingValue: "5",
       bestRating: "5",
-      reviewCount: "176",
     },
   },
   {
