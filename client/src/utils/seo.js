@@ -275,7 +275,11 @@ export const organizationJsonLd = ({ siteUrl = SITE_URL } = {}) => {
     '@type': 'Organization',
     name: 'Book A Sloth',
     url: `${site}/`,
-    logo: `${site}/logo-512.png`,
+    // On-domain 512x512 brand mark. Was /logo-512.png — a file that does not
+    // exist in client/public (dead 404 on every page that inlines this node),
+    // so Google silently dropped the Organization logo. web-app-manifest-512x512.png
+    // is a real, shipped, genuinely-512px asset.
+    logo: `${site}/web-app-manifest-512x512.png`,
     description: 'Online booking and appointment scheduling platform for coaches, consultants, therapists, and small businesses.',
     sameAs: ORG_SAME_AS,
   };
@@ -341,7 +345,9 @@ export const faqJsonLd = ({ faqs = [] } = {}) => ({
 // Organization as a @graph node (with a stable @id and an ImageObject logo), for
 // pages that build a single @graph and reference the org by @id. The standalone
 // organizationJsonLd above stays as-is for pages that inline the org directly.
-const LOGO_URL = (site) => `${site}/logo-512.png`;
+// On-domain, real 512x512 asset (see organizationJsonLd note) — /logo-512.png
+// never existed, so the @graph logo ImageObject 404'd everywhere it was used.
+const LOGO_URL = (site) => `${site}/web-app-manifest-512x512.png`;
 const orgNode = (site) => ({
   '@type': 'Organization',
   '@id': `${site}/#organization`,
