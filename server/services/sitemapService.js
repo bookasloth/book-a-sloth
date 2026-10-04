@@ -103,6 +103,13 @@ const STATIC_ROUTES = [
   { path: '/lp/acuity-alternative',    changefreq: 'monthly', priority: '0.7' },
   { path: '/lp/simplybook-alternative', changefreq: 'monthly', priority: '0.7' },
   { path: '/lp/zoho-bookings-alternative', changefreq: 'monthly', priority: '0.7' },
+  // These 5 are live, prerendered /for pages (client/scripts/prerender.mjs)
+  // that were missing from the sitemap — crawlable only via internal links.
+  { path: '/for/astrologers',          changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/architects',           changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/dentists',             changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/sports-turf',          changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/chartered-accountants', changefreq: 'monthly', priority: '0.8' },
   { path: '/for/lawyers',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors-india',        changefreq: 'monthly', priority: '0.8' },
