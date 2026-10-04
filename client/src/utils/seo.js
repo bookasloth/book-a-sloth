@@ -266,6 +266,27 @@ export const ORG_SAME_AS = [
   'https://x.com/bookasloth',
 ];
 
+// Registered legal entity + office and a support contact point. Source of truth
+// is the company's own published legal pages (/privacy, /terms — Timewheel
+// Internet Private Limited). Added to the Organization node for NAP consistency
+// and entity disambiguation (Google knowledge panel + GEO). Keep in sync with
+// the legal pages if the registered office ever changes.
+export const ORG_LEGAL_NAME = 'Timewheel Internet Private Limited';
+export const ORG_ADDRESS = {
+  '@type': 'PostalAddress',
+  streetAddress: 'Ground Floor, Holding No-55, Ward No-19, Natapada, Jajpur Road, Byasanagar',
+  addressLocality: 'Jajpur',
+  addressRegion: 'Odisha',
+  postalCode: '755019',
+  addressCountry: 'IN',
+};
+export const ORG_CONTACT_POINT = {
+  '@type': 'ContactPoint',
+  contactType: 'customer support',
+  email: 'bolt@bookasloth.in',
+  availableLanguage: ['en', 'hi'],
+};
+
 // Canonical Organization node. Pages that need it inline it into their JSON-LD
 // so the brand entity is consistent everywhere (never hand-roll a second one).
 export const organizationJsonLd = ({ siteUrl = SITE_URL } = {}) => {
@@ -274,6 +295,7 @@ export const organizationJsonLd = ({ siteUrl = SITE_URL } = {}) => {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Book A Sloth',
+    legalName: ORG_LEGAL_NAME,
     url: `${site}/`,
     // On-domain 512x512 brand mark. Was /logo-512.png — a file that does not
     // exist in client/public (dead 404 on every page that inlines this node),
@@ -281,6 +303,8 @@ export const organizationJsonLd = ({ siteUrl = SITE_URL } = {}) => {
     // is a real, shipped, genuinely-512px asset.
     logo: `${site}/web-app-manifest-512x512.png`,
     description: 'Online booking and appointment scheduling platform for coaches, consultants, therapists, and small businesses.',
+    address: ORG_ADDRESS,
+    contactPoint: ORG_CONTACT_POINT,
     sameAs: ORG_SAME_AS,
   };
 };
@@ -352,9 +376,12 @@ const orgNode = (site) => ({
   '@type': 'Organization',
   '@id': `${site}/#organization`,
   name: 'Book A Sloth',
+  legalName: ORG_LEGAL_NAME,
   url: `${site}/`,
   logo: { '@type': 'ImageObject', '@id': `${site}/#logo`, url: LOGO_URL(site), contentUrl: LOGO_URL(site), width: 512, height: 512 },
   description: 'Online booking and appointment scheduling platform for coaches, consultants, therapists, and small businesses.',
+  address: ORG_ADDRESS,
+  contactPoint: ORG_CONTACT_POINT,
   sameAs: ORG_SAME_AS,
 });
 

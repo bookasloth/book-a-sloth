@@ -103,10 +103,27 @@ const HOME_JSONLD = [
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Book A Sloth",
+    // Registered legal entity + office (source: /privacy, /terms). Mirrors
+    // ORG_LEGAL_NAME/ORG_ADDRESS/ORG_CONTACT_POINT in utils/seo.js — keep in sync.
+    legalName: "Timewheel Internet Private Limited",
     url: SITE_URL,
     logo: ORG_LOGO,
     description:
       "The booking link that gets India's creators and professionals paid — bookings, UPI payments and reminders in one link.",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Ground Floor, Holding No-55, Ward No-19, Natapada, Jajpur Road, Byasanagar",
+      addressLocality: "Jajpur",
+      addressRegion: "Odisha",
+      postalCode: "755019",
+      addressCountry: "IN",
+    },
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: "bolt@bookasloth.in",
+      availableLanguage: ["en", "hi"],
+    },
     sameAs: [
       "https://www.linkedin.com/company/book-a-sloth/",
       "https://www.instagram.com/bookasloth",
