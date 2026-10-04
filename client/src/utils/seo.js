@@ -710,6 +710,88 @@ export const comparisonGraphJsonLd = ({
   return { '@context': 'https://schema.org', '@graph': graph };
 };
 
+/**
+ * toolAppJsonLd — the ONE structured-data object a /tools/<calculator> page emits.
+ * A single `@graph`: WebSite, canonical Organization (orgNode), WebPage (+speakable
+ * h1/#faq), a WebApplication for the free calculator itself (isAccessibleForFree,
+ * ₹0 Offer, publisher = org), an optional FAQPage (only when the page shows the Q&A),
+ * and a BreadcrumbList under the /tools hub.
+ *
+ * WebApplication (not SoftwareApplication) is the right type for an in-page tool.
+ * No aggregateRating — a utility page has no reviews of its own.
+ */
+export const toolAppJsonLd = ({
+  siteUrl = SITE_URL,
+  canonical,
+  name,                 // the tool's name, e.g. 'No-Show Cost Calculator'
+  description,
+  category = 'FinanceApplication',
+  breadcrumbName,       // breadcrumb label for the tool
+  faqs = [],            // [{ q, a }] → FAQPage (only when the page shows them)
+} = {}) => {
+  const site = trimSlash(siteUrl);
+  const pageUrl = canonical || `${site}/`;
+
+  const id = {
+    website: `${site}/#website`,
+    org: `${site}/#organization`,
+    webpage: `${pageUrl}#webpage`,
+    app: `${pageUrl}#app`,
+    faq: `${pageUrl}#faq`,
+    breadcrumb: `${pageUrl}#breadcrumb`,
+  };
+
+  const graph = [
+    { '@type': 'WebSite', '@id': id.website, url: `${site}/`, name: 'Book A Sloth', publisher: { '@id': id.org }, inLanguage: 'en-IN' },
+    orgNode(site),
+    {
+      '@type': 'WebPage',
+      '@id': id.webpage,
+      url: pageUrl,
+      name,
+      description: description || undefined,
+      isPartOf: { '@id': id.website },
+      breadcrumb: { '@id': id.breadcrumb },
+      inLanguage: 'en-IN',
+      speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '#faq'] },
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': id.app,
+      name,
+      applicationCategory: category,
+      operatingSystem: 'Web',
+      url: pageUrl,
+      description: description || undefined,
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      publisher: { '@id': id.org },
+    },
+  ];
+
+  if (Array.isArray(faqs) && faqs.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': id.faq,
+      mainEntity: faqs
+        .filter((f) => f && f.q && f.a)
+        .map((f) => ({ '@type': 'Question', name: String(f.q), acceptedAnswer: { '@type': 'Answer', text: String(f.a) } })),
+    });
+  }
+
+  graph.push({
+    '@type': 'BreadcrumbList',
+    '@id': id.breadcrumb,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${site}/` },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: `${site}/tools` },
+      { '@type': 'ListItem', position: 3, name: breadcrumbName || name, item: pageUrl },
+    ],
+  });
+
+  return { '@context': 'https://schema.org', '@graph': graph };
+};
+
 // ContactPage node with the support contact point.
 export const contactPageJsonLd = ({ siteUrl = SITE_URL, email = 'bolt@bookasloth.in' } = {}) => {
   const site = trimSlash(siteUrl);

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, professionGraphJsonLd, comparisonGraphJsonLd, cityForSeo } from '../seo';
+import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, professionGraphJsonLd, comparisonGraphJsonLd, toolAppJsonLd, cityForSeo } from '../seo';
 
 const SITE = 'https://bookasloth.com';
 const VENDOR = { name: 'John Doe', username: 'john-doe', profile_image: 'https://img/john.jpg' };
@@ -422,5 +422,41 @@ describe('comparisonGraphJsonLd — one @graph for /lp competitor pages', () => 
     const app = g['@graph'].find((n) => n['@type'] === 'SoftwareApplication');
     expect(app.publisher).toEqual({ '@id': org['@id'] });
     expect(app.offers).toMatchObject({ '@type': 'Offer', price: '0', priceCurrency: 'INR' });
+  });
+});
+
+describe('toolAppJsonLd — one @graph for /tools calculator pages', () => {
+  const base = {
+    canonical: 'https://bookasloth.com/tools/no-show-cost-calculator',
+    name: 'No-Show Cost Calculator',
+    description: 'What no-shows cost you a year.',
+    breadcrumbName: 'No-Show Cost Calculator',
+    faqs: [{ q: 'Is it free?', a: 'Yes.' }],
+  };
+  const typesOf = (g) => g['@graph'].map((n) => n['@type']);
+
+  test('single @graph: WebSite, Organization, WebPage, WebApplication, FAQPage, BreadcrumbList', () => {
+    const g = toolAppJsonLd({ siteUrl: SITE, ...base });
+    for (const t of ['WebSite', 'Organization', 'WebPage', 'WebApplication', 'FAQPage', 'BreadcrumbList']) {
+      expect(typesOf(g).filter((x) => x === t)).toHaveLength(1);
+    }
+  });
+
+  test('WebApplication is free + accessible-for-free, publisher = org, NO aggregateRating', () => {
+    const g = toolAppJsonLd({ siteUrl: SITE, ...base });
+    const org = g['@graph'].find((n) => n['@type'] === 'Organization');
+    const app = g['@graph'].find((n) => n['@type'] === 'WebApplication');
+    expect(app.isAccessibleForFree).toBe(true);
+    expect(app.offers).toMatchObject({ price: '0', priceCurrency: 'INR' });
+    expect(app.publisher).toEqual({ '@id': org['@id'] });
+    expect(JSON.stringify(g)).not.toContain('aggregateRating');
+  });
+
+  test('breadcrumb trails Home → Tools → the page; omits FAQPage without faqs', () => {
+    const g = toolAppJsonLd({ siteUrl: SITE, ...base });
+    const bc = g['@graph'].find((n) => n['@type'] === 'BreadcrumbList');
+    expect(bc.itemListElement.map((i) => i.name)).toEqual(['Home', 'Tools', 'No-Show Cost Calculator']);
+    const g2 = toolAppJsonLd({ siteUrl: SITE, ...base, faqs: [] });
+    expect(typesOf(g2)).not.toContain('FAQPage');
   });
 });

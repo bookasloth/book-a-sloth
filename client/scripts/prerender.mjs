@@ -75,6 +75,9 @@ const PRERENDER_ROUTES = [
   '/host-agreement',
   '/host-fees',
   '/earnings-calculator',
+  '/tools',
+  '/tools/no-show-cost-calculator',
+  '/tools/gst-calculator',
   '/wall-of-love',
   // SEO discovery hubs — crawlable directories that link every /for/* profession
   // page and /lp/* competitor page (which hide the global nav). Prerender so the
