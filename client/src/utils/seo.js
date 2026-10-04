@@ -623,6 +623,93 @@ export const professionGraphJsonLd = ({
   return { '@context': 'https://schema.org', '@graph': graph };
 };
 
+/**
+ * comparisonGraphJsonLd — the ONE structured-data object a /lp competitor page
+ * emits ("<competitor> alternative" / "vs <competitor>"). A single `@graph`:
+ * WebSite, Organization (canonical orgNode + logo + sameAs + address), WebPage
+ * (+ speakable h1/#faq), SoftwareApplication (Book A Sloth, free-tier Offer), an
+ * optional FAQPage (only when the page actually shows the Q&A it's built from),
+ * and a BreadcrumbList under the /compare hub.
+ *
+ * These pages hid the global nav and emitted NO JSON-LD at all despite being the
+ * highest commercial-intent pages on the site. Honesty rules mirror
+ * professionGraphJsonLd: NO aggregateRating (platform rating lives only on the
+ * homepage node), and the FAQPage appears only when real faqs are passed.
+ */
+export const comparisonGraphJsonLd = ({
+  siteUrl = SITE_URL,
+  canonical,
+  name,              // page headline / meta title
+  description,
+  breadcrumbName,    // e.g. 'Calendly Alternative'
+  faqs = [],         // [{ q, a }] → FAQPage (only when the page shows them)
+} = {}) => {
+  const site = trimSlash(siteUrl);
+  const pageUrl = canonical || `${site}/`;
+
+  const id = {
+    website: `${site}/#website`,
+    org: `${site}/#organization`,
+    webpage: `${pageUrl}#webpage`,
+    software: `${pageUrl}#software`,
+    faq: `${pageUrl}#faq`,
+    breadcrumb: `${pageUrl}#breadcrumb`,
+  };
+
+  const graph = [
+    { '@type': 'WebSite', '@id': id.website, url: `${site}/`, name: 'Book A Sloth', publisher: { '@id': id.org }, inLanguage: 'en-IN' },
+    orgNode(site),
+    {
+      '@type': 'WebPage',
+      '@id': id.webpage,
+      url: pageUrl,
+      name,
+      description: description || undefined,
+      isPartOf: { '@id': id.website },
+      breadcrumb: { '@id': id.breadcrumb },
+      inLanguage: 'en-IN',
+      // Answer-engine hint: the headline + FAQ are the spoken-answer candidates.
+      speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '#faq'] },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': id.software,
+      name: 'Book A Sloth',
+      applicationCategory: 'BusinessApplication',
+      applicationSubCategory: 'Appointment Scheduling Software',
+      operatingSystem: 'Web',
+      url: pageUrl,
+      description: description || undefined,
+      publisher: { '@id': id.org },
+      // Free Starter plan — mirrors the homepage SoftwareApplication Offer.
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      // No aggregateRating — platform rating lives only on the homepage node.
+    },
+  ];
+
+  if (Array.isArray(faqs) && faqs.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': id.faq,
+      mainEntity: faqs
+        .filter((f) => f && f.q && f.a)
+        .map((f) => ({ '@type': 'Question', name: String(f.q), acceptedAnswer: { '@type': 'Answer', text: String(f.a) } })),
+    });
+  }
+
+  graph.push({
+    '@type': 'BreadcrumbList',
+    '@id': id.breadcrumb,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${site}/` },
+      { '@type': 'ListItem', position: 2, name: 'Compare', item: `${site}/compare` },
+      { '@type': 'ListItem', position: 3, name: breadcrumbName || name, item: pageUrl },
+    ],
+  });
+
+  return { '@context': 'https://schema.org', '@graph': graph };
+};
+
 // ContactPage node with the support contact point.
 export const contactPageJsonLd = ({ siteUrl = SITE_URL, email = 'bolt@bookasloth.in' } = {}) => {
   const site = trimSlash(siteUrl);

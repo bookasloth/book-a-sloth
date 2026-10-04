@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, professionGraphJsonLd, cityForSeo } from '../seo';
+import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, professionGraphJsonLd, comparisonGraphJsonLd, cityForSeo } from '../seo';
 
 const SITE = 'https://bookasloth.com';
 const VENDOR = { name: 'John Doe', username: 'john-doe', profile_image: 'https://img/john.jpg' };
@@ -369,5 +369,58 @@ describe('professionGraphJsonLd — one @graph for /for pages, HowTo + linked or
     const types = typesOf(g);
     expect(types).not.toContain('HowTo');
     expect(types).not.toContain('FAQPage');
+  });
+});
+
+describe('comparisonGraphJsonLd — one @graph for /lp competitor pages', () => {
+  const base = {
+    canonical: 'https://bookasloth.com/lp/setmore-alternative',
+    name: 'The Best Setmore Alternative for Indian Professionals — Book A Sloth',
+    description: 'UPI payments, WhatsApp reminders, GST invoices, built for India.',
+    breadcrumbName: 'Setmore Alternative',
+    faqs: [{ q: 'Does it support UPI?', a: 'Yes.' }, { q: 'Free to start?', a: 'Yes.' }],
+  };
+  const typesOf = (g) => g['@graph'].map((n) => n['@type']);
+
+  test('single @graph: WebSite, Organization, WebPage, SoftwareApplication, FAQPage, BreadcrumbList', () => {
+    const g = comparisonGraphJsonLd({ siteUrl: SITE, ...base });
+    expect(g['@context']).toBe('https://schema.org');
+    const types = typesOf(g);
+    for (const t of ['WebSite', 'Organization', 'WebPage', 'SoftwareApplication', 'FAQPage', 'BreadcrumbList']) {
+      expect(types.filter((x) => x === t)).toHaveLength(1);
+    }
+  });
+
+  test('NO aggregateRating (platform rating lives only on the homepage node)', () => {
+    const g = comparisonGraphJsonLd({ siteUrl: SITE, ...base });
+    expect(JSON.stringify(g)).not.toContain('aggregateRating');
+  });
+
+  test('FAQ questions map from the passed faqs', () => {
+    const g = comparisonGraphJsonLd({ siteUrl: SITE, ...base });
+    const faq = g['@graph'].find((n) => n['@type'] === 'FAQPage');
+    expect(faq.mainEntity).toHaveLength(2);
+    expect(faq.mainEntity[0]).toMatchObject({ '@type': 'Question', name: 'Does it support UPI?' });
+    expect(faq.mainEntity[0].acceptedAnswer).toMatchObject({ '@type': 'Answer', text: 'Yes.' });
+  });
+
+  test('omits FAQPage when no faqs are passed (e.g. the Calendly page)', () => {
+    const g = comparisonGraphJsonLd({ siteUrl: SITE, ...base, faqs: [] });
+    expect(typesOf(g)).not.toContain('FAQPage');
+  });
+
+  test('breadcrumb trails Home → Compare → the page', () => {
+    const g = comparisonGraphJsonLd({ siteUrl: SITE, ...base });
+    const bc = g['@graph'].find((n) => n['@type'] === 'BreadcrumbList');
+    expect(bc.itemListElement.map((i) => i.name)).toEqual(['Home', 'Compare', 'Setmore Alternative']);
+    expect(bc.itemListElement[2].item).toBe(base.canonical);
+  });
+
+  test('SoftwareApplication references Organization by @id and carries a free INR Offer', () => {
+    const g = comparisonGraphJsonLd({ siteUrl: SITE, ...base });
+    const org = g['@graph'].find((n) => n['@type'] === 'Organization');
+    const app = g['@graph'].find((n) => n['@type'] === 'SoftwareApplication');
+    expect(app.publisher).toEqual({ '@id': org['@id'] });
+    expect(app.offers).toMatchObject({ '@type': 'Offer', price: '0', priceCurrency: 'INR' });
   });
 });

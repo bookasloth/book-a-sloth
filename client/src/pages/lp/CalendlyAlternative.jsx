@@ -15,7 +15,7 @@ import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import Seo from "../../components/common/Seo";
 import { ogCard } from "../../config/ogImages";
-import { SITE_URL } from "../../utils/seo";
+import { SITE_URL, comparisonGraphJsonLd } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
 import { ALL_PLANS } from "../../data/plans";
@@ -259,6 +259,12 @@ const CalendlyAlternative = () => {
         description="Looking for a Calendly alternative? Book A Sloth adds payments, reminders, and a booking page built for coaches, consultants, and creators."
         image={ogCard('lp-calendly-alternative')}
         canonical={`${SITE_URL}/lp/calendly-alternative`}
+        jsonLd={comparisonGraphJsonLd({
+          canonical: `${SITE_URL}/lp/calendly-alternative`,
+          name: "The Best Calendly Alternative for Creators — Book A Sloth",
+          description: "Book A Sloth adds payments, reminders, and a booking page built for coaches, consultants, and creators — a Calendly alternative.",
+          breadcrumbName: "Calendly Alternative",
+        })}
       />
       {/* ══════ HEADER ══════ */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
