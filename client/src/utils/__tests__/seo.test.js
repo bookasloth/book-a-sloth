@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, professionGraphJsonLd, comparisonGraphJsonLd, toolAppJsonLd, cityForSeo } from '../seo';
+import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd, professionGraphJsonLd, comparisonGraphJsonLd, toolAppJsonLd, definedTermSetJsonLd, glossaryTermJsonLd, cityForSeo } from '../seo';
 
 const SITE = 'https://bookasloth.com';
 const VENDOR = { name: 'John Doe', username: 'john-doe', profile_image: 'https://img/john.jpg' };
@@ -458,5 +458,45 @@ describe('toolAppJsonLd — one @graph for /tools calculator pages', () => {
     expect(bc.itemListElement.map((i) => i.name)).toEqual(['Home', 'Tools', 'No-Show Cost Calculator']);
     const g2 = toolAppJsonLd({ siteUrl: SITE, ...base, faqs: [] });
     expect(typesOf(g2)).not.toContain('FAQPage');
+  });
+});
+
+describe('definedTermSetJsonLd — glossary index', () => {
+  const terms = [
+    { slug: 'no-show', term: 'No-show', short: 'A client who never turns up.' },
+    { slug: 'booking-page', term: 'Booking page', short: 'Where clients book you.' },
+  ];
+
+  test('DefinedTermSet with one DefinedTerm per entry, each linking to its term page', () => {
+    const g = definedTermSetJsonLd({ siteUrl: SITE, url: '/glossary', name: 'Glossary', terms });
+    expect(g['@type']).toBe('DefinedTermSet');
+    expect(g['@id']).toBe('https://bookasloth.com/glossary#termset');
+    expect(g.hasDefinedTerm).toHaveLength(2);
+    expect(g.hasDefinedTerm[0]).toMatchObject({
+      '@type': 'DefinedTerm', name: 'No-show', url: 'https://bookasloth.com/glossary/no-show',
+      inDefinedTermSet: 'https://bookasloth.com/glossary#termset',
+    });
+  });
+});
+
+describe('glossaryTermJsonLd — single term page', () => {
+  const base = { siteUrl: SITE, slug: 'no-show', term: 'No-show', definition: 'A client who books but never turns up.' };
+  const typesOf = (g) => g['@graph'].map((n) => n['@type']);
+
+  test('one @graph: WebSite, Organization, WebPage, DefinedTerm, BreadcrumbList', () => {
+    const g = glossaryTermJsonLd(base);
+    for (const t of ['WebSite', 'Organization', 'WebPage', 'DefinedTerm', 'BreadcrumbList']) {
+      expect(typesOf(g).filter((x) => x === t)).toHaveLength(1);
+    }
+  });
+
+  test('DefinedTerm carries the definition and sits in the glossary set; breadcrumb Home → Glossary → term', () => {
+    const g = glossaryTermJsonLd(base);
+    const term = g['@graph'].find((n) => n['@type'] === 'DefinedTerm');
+    expect(term.name).toBe('No-show');
+    expect(term.description).toBe(base.definition);
+    expect(term.inDefinedTermSet['@id']).toBe('https://bookasloth.com/glossary#termset');
+    const bc = g['@graph'].find((n) => n['@type'] === 'BreadcrumbList');
+    expect(bc.itemListElement.map((i) => i.name)).toEqual(['Home', 'Glossary', 'No-show']);
   });
 });

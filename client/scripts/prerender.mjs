@@ -19,6 +19,7 @@ import { loadEnv } from 'vite';
 import { FEATURES } from '../src/pages/features/featureData.js';
 import { HELP_SLUGS } from '../src/content/helpDocsList.js';
 import { MOMENTS } from '../src/data/moments.js';
+import { GLOSSARY_SLUGS } from '../src/data/glossaryData.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '..', 'dist');
@@ -78,6 +79,10 @@ const PRERENDER_ROUTES = [
   '/tools',
   '/tools/no-show-cost-calculator',
   '/tools/gst-calculator',
+  '/glossary',
+  ...GLOSSARY_SLUGS.map((s) => `/glossary/${s}`),
+  '/press',
+  '/stats',
   '/wall-of-love',
   // SEO discovery hubs — crawlable directories that link every /for/* profession
   // page and /lp/* competitor page (which hide the global nav). Prerender so the

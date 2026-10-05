@@ -792,6 +792,88 @@ export const toolAppJsonLd = ({
   return { '@context': 'https://schema.org', '@graph': graph };
 };
 
+// Glossary index → DefinedTermSet with each entry as a DefinedTerm. `terms` is
+// [{ slug, term, short }]; the set and every term carry a stable @id so the
+// per-term pages (glossaryTermJsonLd) reference the same set.
+export const definedTermSetJsonLd = ({ siteUrl = SITE_URL, url = '/glossary', name, description, terms = [] } = {}) => {
+  const site = trimSlash(siteUrl);
+  const setUrl = /^https?:/i.test(url) ? url : `${site}${url.startsWith('/') ? '' : '/'}${url}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'DefinedTermSet',
+    '@id': `${setUrl}#termset`,
+    name,
+    description: description || undefined,
+    url: setUrl,
+    hasDefinedTerm: (terms || [])
+      .filter((t) => t && t.slug && t.term)
+      .map((t) => ({
+        '@type': 'DefinedTerm',
+        '@id': `${site}/glossary/${t.slug}#term`,
+        name: t.term,
+        description: t.short || undefined,
+        url: `${site}/glossary/${t.slug}`,
+        inDefinedTermSet: `${setUrl}#termset`,
+      })),
+  };
+};
+
+// Single glossary term page → one @graph: WebSite, Organization, WebPage
+// (+speakable), the DefinedTerm itself (in the glossary DefinedTermSet), and a
+// BreadcrumbList Home → Glossary → term.
+export const glossaryTermJsonLd = ({ siteUrl = SITE_URL, slug, term, definition, breadcrumbName } = {}) => {
+  const site = trimSlash(siteUrl);
+  const pageUrl = `${site}/glossary/${slug}`;
+  const id = {
+    website: `${site}/#website`,
+    org: `${site}/#organization`,
+    webpage: `${pageUrl}#webpage`,
+    term: `${pageUrl}#term`,
+    breadcrumb: `${pageUrl}#breadcrumb`,
+  };
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'WebSite', '@id': id.website, url: `${site}/`, name: 'Book A Sloth', publisher: { '@id': id.org }, inLanguage: 'en-IN' },
+      orgNode(site),
+      {
+        '@type': 'WebPage',
+        '@id': id.webpage,
+        url: pageUrl,
+        name: `${term} — booking glossary`,
+        description: definition || undefined,
+        isPartOf: { '@id': id.website },
+        breadcrumb: { '@id': id.breadcrumb },
+        inLanguage: 'en-IN',
+        speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '#definition'] },
+        mainEntity: { '@id': id.term },
+      },
+      {
+        '@type': 'DefinedTerm',
+        '@id': id.term,
+        name: term,
+        description: definition,
+        url: pageUrl,
+        inDefinedTermSet: {
+          '@type': 'DefinedTermSet',
+          '@id': `${site}/glossary#termset`,
+          name: 'Book A Sloth booking & scheduling glossary',
+          url: `${site}/glossary`,
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': id.breadcrumb,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${site}/` },
+          { '@type': 'ListItem', position: 2, name: 'Glossary', item: `${site}/glossary` },
+          { '@type': 'ListItem', position: 3, name: breadcrumbName || term, item: pageUrl },
+        ],
+      },
+    ],
+  };
+};
+
 // ContactPage node with the support contact point.
 export const contactPageJsonLd = ({ siteUrl = SITE_URL, email = 'bolt@bookasloth.in' } = {}) => {
   const site = trimSlash(siteUrl);
