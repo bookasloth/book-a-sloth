@@ -266,6 +266,27 @@ export const ORG_SAME_AS = [
   'https://x.com/bookasloth',
 ];
 
+// Registered legal entity + office and a support contact point. Source of truth
+// is the company's own published legal pages (/privacy, /terms — Timewheel
+// Internet Private Limited). Added to the Organization node for NAP consistency
+// and entity disambiguation (Google knowledge panel + GEO). Keep in sync with
+// the legal pages if the registered office ever changes.
+export const ORG_LEGAL_NAME = 'Timewheel Internet Private Limited';
+export const ORG_ADDRESS = {
+  '@type': 'PostalAddress',
+  streetAddress: 'Ground Floor, Holding No-55, Ward No-19, Natapada, Jajpur Road, Byasanagar',
+  addressLocality: 'Jajpur',
+  addressRegion: 'Odisha',
+  postalCode: '755019',
+  addressCountry: 'IN',
+};
+export const ORG_CONTACT_POINT = {
+  '@type': 'ContactPoint',
+  contactType: 'customer support',
+  email: 'bolt@bookasloth.in',
+  availableLanguage: ['en', 'hi'],
+};
+
 // Canonical Organization node. Pages that need it inline it into their JSON-LD
 // so the brand entity is consistent everywhere (never hand-roll a second one).
 export const organizationJsonLd = ({ siteUrl = SITE_URL } = {}) => {
@@ -274,9 +295,16 @@ export const organizationJsonLd = ({ siteUrl = SITE_URL } = {}) => {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Book A Sloth',
+    legalName: ORG_LEGAL_NAME,
     url: `${site}/`,
-    logo: `${site}/logo-512.png`,
+    // On-domain 512x512 brand mark. Was /logo-512.png — a file that does not
+    // exist in client/public (dead 404 on every page that inlines this node),
+    // so Google silently dropped the Organization logo. web-app-manifest-512x512.png
+    // is a real, shipped, genuinely-512px asset.
+    logo: `${site}/web-app-manifest-512x512.png`,
     description: 'Online booking and appointment scheduling platform for coaches, consultants, therapists, and small businesses.',
+    address: ORG_ADDRESS,
+    contactPoint: ORG_CONTACT_POINT,
     sameAs: ORG_SAME_AS,
   };
 };
@@ -341,14 +369,19 @@ export const faqJsonLd = ({ faqs = [] } = {}) => ({
 // Organization as a @graph node (with a stable @id and an ImageObject logo), for
 // pages that build a single @graph and reference the org by @id. The standalone
 // organizationJsonLd above stays as-is for pages that inline the org directly.
-const LOGO_URL = (site) => `${site}/logo-512.png`;
+// On-domain, real 512x512 asset (see organizationJsonLd note) — /logo-512.png
+// never existed, so the @graph logo ImageObject 404'd everywhere it was used.
+const LOGO_URL = (site) => `${site}/web-app-manifest-512x512.png`;
 const orgNode = (site) => ({
   '@type': 'Organization',
   '@id': `${site}/#organization`,
   name: 'Book A Sloth',
+  legalName: ORG_LEGAL_NAME,
   url: `${site}/`,
   logo: { '@type': 'ImageObject', '@id': `${site}/#logo`, url: LOGO_URL(site), contentUrl: LOGO_URL(site), width: 512, height: 512 },
   description: 'Online booking and appointment scheduling platform for coaches, consultants, therapists, and small businesses.',
+  address: ORG_ADDRESS,
+  contactPoint: ORG_CONTACT_POINT,
   sameAs: ORG_SAME_AS,
 });
 
@@ -588,6 +621,257 @@ export const professionGraphJsonLd = ({
   });
 
   return { '@context': 'https://schema.org', '@graph': graph };
+};
+
+/**
+ * comparisonGraphJsonLd — the ONE structured-data object a /lp competitor page
+ * emits ("<competitor> alternative" / "vs <competitor>"). A single `@graph`:
+ * WebSite, Organization (canonical orgNode + logo + sameAs + address), WebPage
+ * (+ speakable h1/#faq), SoftwareApplication (Book A Sloth, free-tier Offer), an
+ * optional FAQPage (only when the page actually shows the Q&A it's built from),
+ * and a BreadcrumbList under the /compare hub.
+ *
+ * These pages hid the global nav and emitted NO JSON-LD at all despite being the
+ * highest commercial-intent pages on the site. Honesty rules mirror
+ * professionGraphJsonLd: NO aggregateRating (platform rating lives only on the
+ * homepage node), and the FAQPage appears only when real faqs are passed.
+ */
+export const comparisonGraphJsonLd = ({
+  siteUrl = SITE_URL,
+  canonical,
+  name,              // page headline / meta title
+  description,
+  breadcrumbName,    // e.g. 'Calendly Alternative'
+  faqs = [],         // [{ q, a }] → FAQPage (only when the page shows them)
+} = {}) => {
+  const site = trimSlash(siteUrl);
+  const pageUrl = canonical || `${site}/`;
+
+  const id = {
+    website: `${site}/#website`,
+    org: `${site}/#organization`,
+    webpage: `${pageUrl}#webpage`,
+    software: `${pageUrl}#software`,
+    faq: `${pageUrl}#faq`,
+    breadcrumb: `${pageUrl}#breadcrumb`,
+  };
+
+  const graph = [
+    { '@type': 'WebSite', '@id': id.website, url: `${site}/`, name: 'Book A Sloth', publisher: { '@id': id.org }, inLanguage: 'en-IN' },
+    orgNode(site),
+    {
+      '@type': 'WebPage',
+      '@id': id.webpage,
+      url: pageUrl,
+      name,
+      description: description || undefined,
+      isPartOf: { '@id': id.website },
+      breadcrumb: { '@id': id.breadcrumb },
+      inLanguage: 'en-IN',
+      // Answer-engine hint: the headline + FAQ are the spoken-answer candidates.
+      speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '#faq'] },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': id.software,
+      name: 'Book A Sloth',
+      applicationCategory: 'BusinessApplication',
+      applicationSubCategory: 'Appointment Scheduling Software',
+      operatingSystem: 'Web',
+      url: pageUrl,
+      description: description || undefined,
+      publisher: { '@id': id.org },
+      // Free Starter plan — mirrors the homepage SoftwareApplication Offer.
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      // No aggregateRating — platform rating lives only on the homepage node.
+    },
+  ];
+
+  if (Array.isArray(faqs) && faqs.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': id.faq,
+      mainEntity: faqs
+        .filter((f) => f && f.q && f.a)
+        .map((f) => ({ '@type': 'Question', name: String(f.q), acceptedAnswer: { '@type': 'Answer', text: String(f.a) } })),
+    });
+  }
+
+  graph.push({
+    '@type': 'BreadcrumbList',
+    '@id': id.breadcrumb,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${site}/` },
+      { '@type': 'ListItem', position: 2, name: 'Compare', item: `${site}/compare` },
+      { '@type': 'ListItem', position: 3, name: breadcrumbName || name, item: pageUrl },
+    ],
+  });
+
+  return { '@context': 'https://schema.org', '@graph': graph };
+};
+
+/**
+ * toolAppJsonLd — the ONE structured-data object a /tools/<calculator> page emits.
+ * A single `@graph`: WebSite, canonical Organization (orgNode), WebPage (+speakable
+ * h1/#faq), a WebApplication for the free calculator itself (isAccessibleForFree,
+ * ₹0 Offer, publisher = org), an optional FAQPage (only when the page shows the Q&A),
+ * and a BreadcrumbList under the /tools hub.
+ *
+ * WebApplication (not SoftwareApplication) is the right type for an in-page tool.
+ * No aggregateRating — a utility page has no reviews of its own.
+ */
+export const toolAppJsonLd = ({
+  siteUrl = SITE_URL,
+  canonical,
+  name,                 // the tool's name, e.g. 'No-Show Cost Calculator'
+  description,
+  category = 'FinanceApplication',
+  breadcrumbName,       // breadcrumb label for the tool
+  faqs = [],            // [{ q, a }] → FAQPage (only when the page shows them)
+} = {}) => {
+  const site = trimSlash(siteUrl);
+  const pageUrl = canonical || `${site}/`;
+
+  const id = {
+    website: `${site}/#website`,
+    org: `${site}/#organization`,
+    webpage: `${pageUrl}#webpage`,
+    app: `${pageUrl}#app`,
+    faq: `${pageUrl}#faq`,
+    breadcrumb: `${pageUrl}#breadcrumb`,
+  };
+
+  const graph = [
+    { '@type': 'WebSite', '@id': id.website, url: `${site}/`, name: 'Book A Sloth', publisher: { '@id': id.org }, inLanguage: 'en-IN' },
+    orgNode(site),
+    {
+      '@type': 'WebPage',
+      '@id': id.webpage,
+      url: pageUrl,
+      name,
+      description: description || undefined,
+      isPartOf: { '@id': id.website },
+      breadcrumb: { '@id': id.breadcrumb },
+      inLanguage: 'en-IN',
+      speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '#faq'] },
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': id.app,
+      name,
+      applicationCategory: category,
+      operatingSystem: 'Web',
+      url: pageUrl,
+      description: description || undefined,
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      publisher: { '@id': id.org },
+    },
+  ];
+
+  if (Array.isArray(faqs) && faqs.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': id.faq,
+      mainEntity: faqs
+        .filter((f) => f && f.q && f.a)
+        .map((f) => ({ '@type': 'Question', name: String(f.q), acceptedAnswer: { '@type': 'Answer', text: String(f.a) } })),
+    });
+  }
+
+  graph.push({
+    '@type': 'BreadcrumbList',
+    '@id': id.breadcrumb,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${site}/` },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: `${site}/tools` },
+      { '@type': 'ListItem', position: 3, name: breadcrumbName || name, item: pageUrl },
+    ],
+  });
+
+  return { '@context': 'https://schema.org', '@graph': graph };
+};
+
+// Glossary index → DefinedTermSet with each entry as a DefinedTerm. `terms` is
+// [{ slug, term, short }]; the set and every term carry a stable @id so the
+// per-term pages (glossaryTermJsonLd) reference the same set.
+export const definedTermSetJsonLd = ({ siteUrl = SITE_URL, url = '/glossary', name, description, terms = [] } = {}) => {
+  const site = trimSlash(siteUrl);
+  const setUrl = /^https?:/i.test(url) ? url : `${site}${url.startsWith('/') ? '' : '/'}${url}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'DefinedTermSet',
+    '@id': `${setUrl}#termset`,
+    name,
+    description: description || undefined,
+    url: setUrl,
+    hasDefinedTerm: (terms || [])
+      .filter((t) => t && t.slug && t.term)
+      .map((t) => ({
+        '@type': 'DefinedTerm',
+        '@id': `${site}/glossary/${t.slug}#term`,
+        name: t.term,
+        description: t.short || undefined,
+        url: `${site}/glossary/${t.slug}`,
+        inDefinedTermSet: `${setUrl}#termset`,
+      })),
+  };
+};
+
+// Single glossary term page → one @graph: WebSite, Organization, WebPage
+// (+speakable), the DefinedTerm itself (in the glossary DefinedTermSet), and a
+// BreadcrumbList Home → Glossary → term.
+export const glossaryTermJsonLd = ({ siteUrl = SITE_URL, slug, term, definition, breadcrumbName } = {}) => {
+  const site = trimSlash(siteUrl);
+  const pageUrl = `${site}/glossary/${slug}`;
+  const id = {
+    website: `${site}/#website`,
+    org: `${site}/#organization`,
+    webpage: `${pageUrl}#webpage`,
+    term: `${pageUrl}#term`,
+    breadcrumb: `${pageUrl}#breadcrumb`,
+  };
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'WebSite', '@id': id.website, url: `${site}/`, name: 'Book A Sloth', publisher: { '@id': id.org }, inLanguage: 'en-IN' },
+      orgNode(site),
+      {
+        '@type': 'WebPage',
+        '@id': id.webpage,
+        url: pageUrl,
+        name: `${term} — booking glossary`,
+        description: definition || undefined,
+        isPartOf: { '@id': id.website },
+        breadcrumb: { '@id': id.breadcrumb },
+        inLanguage: 'en-IN',
+        speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '#definition'] },
+        mainEntity: { '@id': id.term },
+      },
+      {
+        '@type': 'DefinedTerm',
+        '@id': id.term,
+        name: term,
+        description: definition,
+        url: pageUrl,
+        inDefinedTermSet: {
+          '@type': 'DefinedTermSet',
+          '@id': `${site}/glossary#termset`,
+          name: 'Book A Sloth booking & scheduling glossary',
+          url: `${site}/glossary`,
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': id.breadcrumb,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${site}/` },
+          { '@type': 'ListItem', position: 2, name: 'Glossary', item: `${site}/glossary` },
+          { '@type': 'ListItem', position: 3, name: breadcrumbName || term, item: pageUrl },
+        ],
+      },
+    ],
+  };
 };
 
 // ContactPage node with the support contact point.

@@ -5,7 +5,8 @@ import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import Seo from "../../components/common/Seo";
 import { ogCard } from "../../config/ogImages";
-import { SITE_URL } from "../../utils/seo";
+import { SITE_URL, comparisonGraphJsonLd } from "../../utils/seo";
+import { FAQ as TOPMATE_FAQ } from "../../components/lp/lpData";
 
 import { CtaButton } from "../../components/lp/LpKit";
 import LpHero from "../../components/lp/LpHero";
@@ -48,6 +49,13 @@ const TopmateVsBookASloth = () => {
         description="Compare Book A Sloth and Topmate for creators and consultants. See pricing, payouts, reminders, and booking features side by side."
         image={ogCard('lp-topmate-vs-bookasloth')}
         canonical={`${SITE_URL}/lp/topmate-vs-bookasloth`}
+        jsonLd={comparisonGraphJsonLd({
+          canonical: `${SITE_URL}/lp/topmate-vs-bookasloth`,
+          name: "Book A Sloth vs Topmate — A Better Way to Get Booked",
+          description: "Compare Book A Sloth and Topmate for creators and consultants — pricing, payouts, reminders, and booking features side by side.",
+          breadcrumbName: "Book A Sloth vs Topmate",
+          faqs: TOPMATE_FAQ,
+        })}
       />
       {/* ───── Minimal header (no nav links = no exit) ───── */}
       <header className="sticky top-0 z-40 border-b border-black/5 bg-canvas/90 backdrop-blur">

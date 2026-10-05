@@ -15,7 +15,7 @@ import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import Seo from "../../components/common/Seo";
 import { ogCard } from "../../config/ogImages";
-import { SITE_URL } from "../../utils/seo";
+import { SITE_URL, comparisonGraphJsonLd } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
 import { ALL_PLANS } from "../../data/plans";
@@ -205,6 +205,13 @@ const SetmoreAlternative = () => {
         description="Looking for a Setmore alternative? Book A Sloth adds UPI payments, WhatsApp reminders, GST invoices, and a booking page built for Indian professionals."
         image={ogCard('lp-setmore-alternative')}
         canonical={`${SITE_URL}/lp/setmore-alternative`}
+        jsonLd={comparisonGraphJsonLd({
+          canonical: `${SITE_URL}/lp/setmore-alternative`,
+          name: "The Best Setmore Alternative for Indian Professionals — Book A Sloth",
+          description: "Book A Sloth adds UPI payments, WhatsApp reminders, GST invoices, and a booking page built for Indian professionals — a Setmore alternative.",
+          breadcrumbName: "Setmore Alternative",
+          faqs: FAQ,
+        })}
       />
 
       {/* ══════ HEADER ══════ */}

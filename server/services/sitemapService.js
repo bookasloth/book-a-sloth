@@ -56,6 +56,16 @@ const HELP_DOC_SLUGS = [
   'troubleshooting-and-errors', 'contact-support',
 ];
 
+// Glossary terms (/glossary/:slug). KEEP IN SYNC with
+// client/src/data/glossaryData.js (GLOSSARY_SLUGS) — same ESM/CJS constraint as above.
+const GLOSSARY_SLUGS = [
+  'booking-page', 'booking-link', 'no-show', 'advance-payment', 'availability',
+  'double-booking', 'buffer-time', 'lead-time', 'cancellation-policy', 'reschedule',
+  'reminder', 'whatsapp-reminder', 'upi', 'gst-invoice', 'payment-gateway',
+  'payout', 'commission', 'platform-fee', 'google-calendar-sync', 'round-robin',
+  'intake-form', 'digital-product', 'meeting-link',
+];
+
 // Open roles (/careers/:jobSlug). KEEP IN SYNC with
 // client/src/components/careers/careersContent.js (same ESM/CJS constraint).
 const JOB_SLUGS = ['digital-marketeer', 'mern-stack-developer', 'sales-associate'];
@@ -91,6 +101,13 @@ const STATIC_ROUTES = [
   { path: '/host-agreement',           changefreq: 'yearly',  priority: '0.3' },
   { path: '/host-fees',                changefreq: 'yearly',  priority: '0.3' },
   { path: '/earnings-calculator',      changefreq: 'monthly', priority: '0.6' },
+  { path: '/tools',                    changefreq: 'monthly', priority: '0.5' },
+  { path: '/tools/no-show-cost-calculator', changefreq: 'monthly', priority: '0.6' },
+  { path: '/tools/gst-calculator',     changefreq: 'monthly', priority: '0.6' },
+  { path: '/glossary',                 changefreq: 'monthly', priority: '0.5' },
+  ...GLOSSARY_SLUGS.map((s) => ({ path: `/glossary/${s}`, changefreq: 'monthly', priority: '0.4' })),
+  { path: '/press',                    changefreq: 'monthly', priority: '0.4' },
+  { path: '/stats',                    changefreq: 'monthly', priority: '0.4' },
   { path: '/wall-of-love',             changefreq: 'weekly',  priority: '0.5' },
   { path: '/moments',                  changefreq: 'weekly',  priority: '0.5' },
   ...MOMENT_SLUGS.map((s) => ({ path: `/moments/${s}`, changefreq: 'monthly', priority: '0.5' })),
@@ -103,6 +120,13 @@ const STATIC_ROUTES = [
   { path: '/lp/acuity-alternative',    changefreq: 'monthly', priority: '0.7' },
   { path: '/lp/simplybook-alternative', changefreq: 'monthly', priority: '0.7' },
   { path: '/lp/zoho-bookings-alternative', changefreq: 'monthly', priority: '0.7' },
+  // These 5 are live, prerendered /for pages (client/scripts/prerender.mjs)
+  // that were missing from the sitemap — crawlable only via internal links.
+  { path: '/for/astrologers',          changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/architects',           changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/dentists',             changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/sports-turf',          changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/chartered-accountants', changefreq: 'monthly', priority: '0.8' },
   { path: '/for/lawyers',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors-india',        changefreq: 'monthly', priority: '0.8' },
