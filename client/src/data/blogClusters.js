@@ -6,6 +6,10 @@
 
 // Per-post keyword tags. Every published slug MUST appear (enforced by test).
 export const POST_TAGS = {
+  // October 2026 product-update posts: isolated tag + own cluster (orphan gate).
+  'product-otp-and-verification-badges': ['product-update-oct-2026'],
+  'landing-pages-for-your-profession': ['product-update-oct-2026'],
+  'october-2026-small-fixes': ['product-update-oct-2026'],
   // Marketing batch (Sep–Oct 2026): isolated unique tags so the batch self-links
   // in its own clusters instead of displacing existing posts (orphan gate).
   '30-minute-call-setup': ['scheduling-guide'],
@@ -224,4 +228,10 @@ export const BLOG_CLUSTERS = [
     tags: ['india-service'], priority: 55,
     description: 'India-specific guides: payments for consultants, finding local professionals.',
     priorityLinks: ['best-psychologists-therapists-hyderabad'] },
+  // October 2026 product-update posts — isolated, self-covering (member pillar +
+  // priorityLinks give each the needed incoming link without touching other clusters).
+  { key: 'oct-2026-updates', keyword: 'October 2026 product updates', pillar: 'product-otp-and-verification-badges',
+    tags: ['product-update-oct-2026'], priority: 55,
+    description: 'October 2026 shipped updates: product OTP + verification badges, profession pages, fixes.',
+    priorityLinks: ['landing-pages-for-your-profession', 'october-2026-small-fixes'] },
 ];
