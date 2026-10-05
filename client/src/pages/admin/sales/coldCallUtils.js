@@ -57,6 +57,16 @@ export const REASON_LABEL = {
   whatsapp_suppressed: 'they opted out of WhatsApp',
 };
 
+// Toast for one channel's follow-up result. `queued` with a reason = provider failed, retry pending.
+export function sendResultMessage(channel, r = {}) {
+  const ch = channel === 'email' ? 'Email' : 'WhatsApp';
+  if (r.status === 'sent') return { kind: 'success', text: `${ch} sent` };
+  if (r.status === 'already_sent') return { kind: 'info', text: `${ch} already sent earlier today` };
+  if (r.status === 'queued' && !r.reason) return { kind: 'success', text: `${ch} queued` };
+  if (r.status === 'queued') return { kind: 'error', text: `${ch} not sent yet (retrying): ${REASON_LABEL[r.reason] || r.reason}` };
+  return { kind: 'error', text: `${ch} not sent: ${REASON_LABEL[r.reason] || r.reason || r.status}` };
+}
+
 export function callbackPresets(now = new Date()) {
   const at = (days, hour) => { const x = new Date(now); x.setDate(x.getDate() + days); x.setHours(hour, 0, 0, 0); return x; };
   const toMon = ((8 - now.getDay()) % 7) || 7;

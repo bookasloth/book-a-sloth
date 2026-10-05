@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest';
 import { parseCsv } from '../../../utils/parseCsv';
-import { guessFields, mapRows, callbackPresets, countdown, formatPhone, fmtTimer, isTypingTarget, OUTCOMES } from '../sales/coldCallUtils';
+import { guessFields, mapRows, callbackPresets, countdown, formatPhone, fmtTimer, isTypingTarget, OUTCOMES, sendResultMessage } from '../sales/coldCallUtils';
 
 const CSV = 'Day,Priority,Business,Category,Locality,Phone,WhatsApp,Email,Fit,Website,Talking Point\n'
   + '"Day 1","1","Test Clinic","Dental clinic","Area","08888700000","https://wa.me/918888700000","a@b.co","99","https://x.in","Pitch, with comma"\n'
@@ -39,4 +39,12 @@ test('formatting helpers', () => {
   expect(isTypingTarget({ tagName: 'TEXTAREA' })).toBe(true);
   expect(isTypingTarget({ tagName: 'DIV', isContentEditable: false })).toBe(false);
   expect(OUTCOMES.map((o) => o.hotkey)).toEqual(['1', '2', '3', '4', '5', '6', '7']);
+});
+
+test('send results: queued-with-error is a retry, not a success; already_sent is info', () => {
+  expect(sendResultMessage('email', { status: 'sent' })).toEqual({ kind: 'success', text: 'Email sent' });
+  expect(sendResultMessage('whatsapp', { status: 'queued', reason: null })).toEqual({ kind: 'success', text: 'WhatsApp queued' });
+  expect(sendResultMessage('email', { status: 'queued', reason: 'timeout' })).toEqual({ kind: 'error', text: 'Email not sent yet (retrying): timeout' });
+  expect(sendResultMessage('email', { status: 'already_sent' })).toEqual({ kind: 'info', text: 'Email already sent earlier today' });
+  expect(sendResultMessage('whatsapp', { status: 'skipped', reason: 'pending_aisensy' }).text).toBe('WhatsApp not sent: WhatsApp template not approved in AiSensy yet');
 });

@@ -40,6 +40,7 @@ export default function SalesColdCalling() {
   useEffect(() => { loadLists(); }, [loadLists]);
 
   const loadQueue = useCallback(async () => {
+    if (document.hidden) return;              // a tab left open all day must not poll (Render/Supabase egress)
     setNow(new Date());
     if (!listId) { setQueue(null); return; }
     try { const { data } = await crmColdCallQueue(listId); setQueue(data); }
@@ -48,7 +49,9 @@ export default function SalesColdCalling() {
   useEffect(() => {
     loadQueue();
     const t = setInterval(loadQueue, POLL_MS);
-    return () => clearInterval(t);
+    const onVisible = () => { if (!document.hidden) loadQueue(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVisible); };
   }, [loadQueue]);
   useEffect(() => { try { if (listId) localStorage.setItem(LIST_KEY, listId); } catch { /* private mode */ } }, [listId]);
 
@@ -69,6 +72,9 @@ export default function SalesColdCalling() {
 
   const ordered = useMemo(() => (queue ? [...queue.callbacksDue, ...queue.retries, ...queue.fresh, ...queue.upcoming].map((i) => i.lead) : []), [queue]);
   const current = ordered.find((l) => l.id === selectedId) || ordered[0] || null;
+  // Pin the lead on screen: a poll that reorders the queue (a callback falls due) must
+  // not swap the card mid-call and wipe the notes/outcome/timer.
+  useEffect(() => { if (current && current.id !== selectedId) setSelectedId(current.id); }, [current, selectedId]);
 
   const onDone = (doneId) => {
     const idx = ordered.findIndex((l) => l.id === doneId);

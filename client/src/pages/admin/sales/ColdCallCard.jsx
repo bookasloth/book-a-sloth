@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Card, Btn, Badge } from '../../../components/admin/ui';
 import { crmColdCallOutcome, crmColdCallRemind, crmLeadTimeline, crmUpdateTemplate } from '../../../services/api';
-import { OUTCOMES, OBJECTIONS, REASON_LABEL, callbackPresets, formatPhone, fmtTimer, isTypingTarget } from './coldCallUtils';
+import { OUTCOMES, OBJECTIONS, sendResultMessage, callbackPresets, formatPhone, fmtTimer, isTypingTarget } from './coldCallUtils';
 
 const toLocalInput = (d) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
 
@@ -67,8 +67,8 @@ export default function ColdCallCard({ lead, templates, onDone, onChanged }) {
         email: email && email !== lead.email ? email : undefined,
       });
       for (const [ch, r] of Object.entries(data?.sends || {})) {
-        if (r.status === 'sent' || r.status === 'queued') toast.success(`${ch === 'email' ? 'Email' : 'WhatsApp'} sent`);
-        else toast.error(`${ch === 'email' ? 'Email' : 'WhatsApp'} not sent: ${REASON_LABEL[r.reason] || r.reason || r.status}`);
+        const m = sendResultMessage(ch, r);
+        if (m.kind === 'success') toast.success(m.text); else if (m.kind === 'info') toast(m.text); else toast.error(m.text);
       }
       for (const w of data?.warnings || []) toast(w);
       onDone(lead.id);
