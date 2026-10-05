@@ -6,6 +6,19 @@
 
 // Per-post keyword tags. Every published slug MUST appear (enforced by test).
 export const POST_TAGS = {
+  // Marketing batch (Sep–Oct 2026): isolated unique tags so the batch self-links
+  // in its own clusters instead of displacing existing posts (orphan gate).
+  '30-minute-call-setup': ['scheduling-guide'],
+  'scheduling-terms-glossary': ['scheduling-guide'],
+  'scheduling-poll-group-meeting': ['scheduling-guide'],
+  'meeting-notice-format': ['scheduling-guide'],
+  'iim-resume-template': ['career-guide'],
+  'welcome-message-new-employee': ['career-guide'],
+  'how-to-make-money-from-home-india': ['earn-online'],
+  'how-to-become-freelance-personal-trainer': ['earn-online'],
+  'how-to-list-property-on-airbnb': ['earn-online'],
+  'payment-aggregators-india-consultants': ['india-service'],
+  'best-psychologists-therapists-hyderabad': ['india-service'],
   'how-to-sell-digital-products-online': ['sell-your-time', 'digital-products', 'money', 'growth', 'digital-selling'],
   'how-to-become-paid-mentor': ['sell-your-time', 'growth'],
   'how-to-ask-client-for-payment-politely': ['sell-your-time', 'money'],
@@ -191,4 +204,24 @@ export const BLOG_CLUSTERS = [
     tags: ['incident'], priority: 110,
     description: 'Postmortems and reliability write-ups.',
     priorityLinks: ['the-confirmation-that-didnt-confirm', 'the-vanity-links'] },
+  // ── Marketing batch (Sep–Oct 2026) — four isolated, self-covering clusters.
+  // Each uses a unique tag + a batch member as pillar so every post earns an
+  // incoming internal link without touching existing clusters. See
+  // blog-relatedposts-orphan-fragility.
+  { key: 'scheduling-guides', keyword: 'scheduling & meeting guides', pillar: '30-minute-call-setup',
+    tags: ['scheduling-guide'], priority: 55,
+    description: 'How-to guides for setting up calls, polls and meeting notices.',
+    priorityLinks: ['scheduling-terms-glossary', 'scheduling-poll-group-meeting', 'meeting-notice-format'] },
+  { key: 'career-guides', keyword: 'career document templates', pillar: 'iim-resume-template',
+    tags: ['career-guide'], priority: 55,
+    description: 'Resume and workplace-message templates.',
+    priorityLinks: ['welcome-message-new-employee'] },
+  { key: 'earn-online', keyword: 'ways to earn online', pillar: 'how-to-make-money-from-home-india',
+    tags: ['earn-online'], priority: 55,
+    description: 'Realistic ways to earn from home: freelancing, hosting, selling your time.',
+    priorityLinks: ['how-to-become-freelance-personal-trainer', 'how-to-list-property-on-airbnb'] },
+  { key: 'india-services', keyword: 'booking services in India', pillar: 'payment-aggregators-india-consultants',
+    tags: ['india-service'], priority: 55,
+    description: 'India-specific guides: payments for consultants, finding local professionals.',
+    priorityLinks: ['best-psychologists-therapists-hyderabad'] },
 ];
