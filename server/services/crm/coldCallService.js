@@ -17,7 +17,7 @@ const followUpService = require('./followUpService');
 const messageService = require('./messageService');
 const listService = require('./listService');
 const rules = require('./coldCallRules');
-const { rankOf } = require('./lifecycleRules');
+const { rankOf, MONEY } = require('./lifecycleRules');
 
 const SENDER = 'shubham';             // founder persona — plain, hand-typed email layout
 const MAX_ROWS = 50;                  // per import request; the client batches
@@ -41,20 +41,27 @@ async function importRows({ rows = [], listId = null, listName = '', createdBy =
     if (!phone) { skipped++; continue; }
     const wa = rules.waPhone10(r.whatsapp) || phone;
     try {
+      // Identify by phone only: scraped lists share one email across branches/agencies,
+      // and upsertLead's email match would merge distinct businesses.
       const { lead, created: isNew } = await leadService.upsertLead({
-        name: r.name || '', phone, whatsapp_phone: `91${wa}`, email: r.email || '',
+        name: r.name || '', phone, whatsapp_phone: `91${wa}`,
         business_name: r.business || '', profession: r.category || '', website: r.website || '',
         city: r.city || '', status: 'list', list_id: listId, tags: ['cold-call'],
       }, { source: 'cold_call', createdBy, skipMetaLead: true });
       const attrs = lead.attributes || {};
+      const prev = attrs.cold_call || {};
       const coldCall = {
-        ...(attrs.cold_call || {}),          // keeps attempts / last_outcome / closed on re-import
-        list_id: listId, day: r.day || null, priority: r.priority || null, fit: r.fit || null,
-        locality: r.locality || null, pitch: r.pitch || null,
+        ...prev,                             // keeps attempts / last_outcome / closed on re-import
+        list_id: listId, day: r.day || prev.day || null, priority: r.priority || prev.priority || null,
+        fit: r.fit || prev.fit || null, locality: r.locality || prev.locality || null, pitch: r.pitch || prev.pitch || null,
       };
-      await supabaseAdmin.from('leads')
-        .update({ attributes: { ...attrs, cold_call: coldCall }, updated_at: new Date().toISOString() })
-        .eq('id', lead.id);
+      const patch = { attributes: { ...attrs, cold_call: coldCall }, updated_at: new Date().toISOString() };
+      if (r.email && !lead.email) {
+        const { data: holder } = await supabaseAdmin.from('leads').select('id').eq('email', r.email).maybeSingle();
+        if (!holder) patch.email = r.email;
+      }
+      const { error: upErr } = await supabaseAdmin.from('leads').update(patch).eq('id', lead.id);
+      if (upErr) throw upErr;
       if (isNew) created++; else merged++;
     } catch (e) {
       console.warn('[cold-call] import row skipped:', e.message);
@@ -104,11 +111,16 @@ async function sendFollowUp(lead, channel, category, outcome, callbackAt, now, c
     const fill = (s) => String(s || '').replace(/\{\{\s*callback_time\s*\}\}/g, when);
     const base = {
       leadId: lead.id, channel, immediate: true, createdBy,
-      idempotencyKey: `cold:${lead.id}:${outcome}:${channel}:${rules.istDate(now)}`,
+      // A second callback the same day carries a new time, so it gets its own key.
+      idempotencyKey: `cold:${lead.id}:${outcome}:${channel}:${rules.istDate(now)}${callbackAt ? `:${callbackAt}` : ''}`,
     };
     const row = channel === 'email'
       ? await messageService.enqueue({ ...base, subject: fill(tpl.subject), variables: { html: fill(tpl.body) }, senderKey: SENDER })
       : await messageService.enqueue({ ...base, templateKey: tpl.name, variables: { params: (tpl.variables || []).map((v) => fill(`{{${v.key}}}`)) } });
+    // enqueue returns the EXISTING row on an idempotency hit — don't report it as a fresh send.
+    if (row?.created_at && new Date(row.created_at).getTime() < now.getTime() - 60 * 1000) {
+      return { status: 'already_sent', reason: null };
+    }
     return { status: row?.status || 'queued', reason: row?.error || null };
   } catch (e) {
     return { status: 'failed', reason: e.message };
@@ -142,21 +154,26 @@ async function recordOutcome(leadId, body = {}, actorAdminId = null, now = new D
     .update({ attributes: { ...(lead.attributes || {}), cold_call: step.cold_call }, updated_at: nowIso })
     .eq('id', leadId);
 
-  // 4. A call happened → close open callbacks; open the new one if asked.
-  const open = await followUpService.listOpen({ leadId });
-  for (const f of open.filter((x) => String(x.title || '').startsWith(rules.CALLBACK_PREFIX))) {
-    await followUpService.complete(f.id, actorAdminId);
-  }
-  if (step.callbackAt) {
-    await followUpService.create({
-      leadId, ownerAdminId: actorAdminId, title: `${rules.CALLBACK_PREFIX} ${String(note).trim() || 'call back'}`,
-      dueAt: step.callbackAt, remind: false, createdBy: 'cold_call',
-    });
-  }
+  // 4. A call happened → close open callbacks; open the new one if asked. A failure here
+  // is a warning (the call is already logged; cold_call.retry_at is the safety net).
+  try {
+    const open = await followUpService.listOpen({ leadId });
+    for (const f of open.filter((x) => String(x.title || '').startsWith(rules.CALLBACK_PREFIX))) {
+      await followUpService.complete(f.id, actorAdminId);
+    }
+    if (step.callbackAt) {
+      await followUpService.create({
+        leadId, ownerAdminId: actorAdminId, title: `${rules.CALLBACK_PREFIX} ${String(note).trim() || 'call back'}`,
+        dueAt: step.callbackAt, remind: false, createdBy: 'cold_call',
+      });
+    }
+  } catch (e) { warnings.push(`callback task: ${e.message}`); }
 
   // 5. Pipeline move — never regress a lead already further along; failures are warnings.
   try {
-    if (step.dnc) await leadService.setDnc(leadId, true, actorAdminId);
+    // setDnc rewrites status → do_not_contact; never do that to a paying customer.
+    if (step.dnc && MONEY.has(lead.status)) warnings.push('lead is a paying customer — not marked do-not-contact');
+    else if (step.dnc) await leadService.setDnc(leadId, true, actorAdminId);
     else if (step.status && rankOf(lead.status) < rankOf(step.status)) {
       await leadService.changeStatus(leadId, step.status, actorAdminId, { via: 'cold_call' });
     }

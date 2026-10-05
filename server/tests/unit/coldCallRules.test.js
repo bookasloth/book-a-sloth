@@ -39,7 +39,8 @@ describe('nextStep', () => {
     expect(() => r.nextStep('callback', {}, NOW)).toThrow('callbackAt required');
     const s = r.nextStep('callback', {}, NOW, '2026-10-06T11:30:00Z');
     expect(s.callbackAt).toBe('2026-10-06T11:30:00.000Z');
-    expect(s.cold_call.retry_at).toBeNull();
+    // safety net: if the Callback task is closed elsewhere, the lead resurfaces as a retry
+    expect(s.cold_call.retry_at).toBe('2026-10-06T11:30:00.000Z');
     expect(s.cold_call.closed).toBe(false);
   });
   test('no_answer retries next day; third no-answer closes as unreachable', () => {

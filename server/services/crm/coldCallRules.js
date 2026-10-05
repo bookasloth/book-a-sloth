@@ -51,6 +51,10 @@ function nextStep(outcome, coldCall = {}, now = new Date(), callbackAt = null) {
   let closedReason = rule.close ? outcome : null;
   let retryAt = rule.retryDays ? new Date(now.getTime() + rule.retryDays * DAY_MS).toISOString() : null;
   if (outcome === 'no_answer' && noAnswers >= MAX_NO_ANSWER) { closed = true; closedReason = 'unreachable'; retryAt = null; }
+  // Safety net: if the Callback task is closed elsewhere (Follow-ups page), the lead
+  // resurfaces as a retry at the callback time instead of vanishing. buildQueue keeps
+  // a lead with an open Callback out of retries, so it never shows twice.
+  if (rule.needsCallbackAt) retryAt = new Date(callbackAt).toISOString();
   return {
     cold_call: {
       ...coldCall, attempts, no_answers: noAnswers, last_outcome: outcome,

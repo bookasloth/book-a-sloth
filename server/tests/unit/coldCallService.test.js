@@ -40,6 +40,7 @@ beforeEach(() => {
   followUpService.listOpen.mockResolvedValue([]);
   messageService.enqueue.mockResolvedValue({ status: 'sent', error: null });
   leadService.changeStatus.mockResolvedValue(undefined);
+  followUpService.create.mockResolvedValue({ id: 'f' });
 });
 
 function withTemplates(email = TPL.email, whatsapp = TPL.whatsapp) {
@@ -87,6 +88,26 @@ describe('importRows', () => {
   test('rejects missing list and oversized batches', async () => {
     await expect(svc.importRows({ rows: [] })).rejects.toMatchObject({ status: 400 });
     await expect(svc.importRows({ listId: 'L', rows: new Array(51).fill({ phone: '8888705552' }) })).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('importRows — review fixes', () => {
+  test('identifies by phone only; fills email only when blank and unclaimed', async () => {
+    leadService.upsertLead.mockResolvedValue({ lead: { id: 'A', email: null, attributes: null }, created: true });
+    await svc.importRows({ listId: 'L1', rows: [{ phone: '8888705552', email: 'shared@chain.in' }] });
+    expect(leadService.upsertLead.mock.calls[0][0]).not.toHaveProperty('email');
+    expect(mockUpdates.find((u) => u.table === 'leads').p.email).toBe('shared@chain.in');
+  });
+  test('does not take an email another lead already holds', async () => {
+    mockTableData.leads = { data: { id: 'OTHER' }, error: null };
+    leadService.upsertLead.mockResolvedValue({ lead: { id: 'A', email: null, attributes: null }, created: true });
+    await svc.importRows({ listId: 'L1', rows: [{ phone: '8888705552', email: 'shared@chain.in' }] });
+    expect(mockUpdates.find((u) => u.table === 'leads').p).not.toHaveProperty('email');
+  });
+  test('re-import without plan columns keeps stored day/priority/pitch', async () => {
+    leadService.upsertLead.mockResolvedValue({ lead: { id: 'A', attributes: { cold_call: { day: 'Day 3', priority: '7', pitch: 'old' } } }, created: false });
+    await svc.importRows({ listId: 'L1', rows: [{ phone: '8888705552' }] });
+    expect(mockUpdates.find((u) => u.table === 'leads').p.attributes.cold_call).toMatchObject({ day: 'Day 3', priority: '7', pitch: 'old' });
   });
 });
 
@@ -181,6 +202,43 @@ describe('recordOutcome', () => {
     await expect(svc.recordOutcome('nope', { outcome: 'interested' }, 'a', NOW)).rejects.toMatchObject({ status: 404 });
     leadService.getLead.mockResolvedValue({ ...baseLead });
     await expect(svc.recordOutcome('L1', { outcome: 'maybe' }, 'a', NOW)).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('recordOutcome — review fixes', () => {
+  const baseLead = { id: 'L1', status: 'list', email: 'a@b.co', business_name: 'Clinic', attributes: { cold_call: {} } };
+
+  test('not_interested on a paying customer keeps their status (no DNC) and warns', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead, status: 'paid' });
+    const out = await svc.recordOutcome('L1', { outcome: 'not_interested', send: {} }, 'admin1', NOW);
+    expect(leadService.setDnc).not.toHaveBeenCalled();
+    expect(out.warnings.join(' ')).toMatch(/paying customer/);
+  });
+
+  test('a failing callback task becomes a warning, not a 500 after the call was logged', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    followUpService.create.mockRejectedValue(new Error('db down'));
+    const out = await svc.recordOutcome('L1', { outcome: 'callback', callbackAt: '2026-10-06T11:30:00Z', send: {} }, 'admin1', NOW);
+    expect(out.ok).toBe(true);
+    expect(out.warnings).toEqual(['callback task: db down']);
+  });
+
+  test('a second callback the same day gets its own idempotency key (new time is sent)', async () => {
+    withTemplates({ ...TPL.email, category: 'cold_call_callback' });
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    await svc.recordOutcome('L1', { outcome: 'callback', callbackAt: '2026-10-07T11:30:00Z', send: { email: true } }, 'admin1', NOW);
+    expect(messageService.enqueue.mock.calls[0][0].idempotencyKey).toBe('cold:L1:callback:email:2026-10-06:2026-10-07T11:30:00.000Z');
+  });
+
+  test('an already-sent follow-up is reported as already_sent, not sent', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    const old = new Date(NOW.getTime() - 60 * 60 * 1000).toISOString();
+    messageService.enqueue.mockResolvedValue({ status: 'sent', error: null, created_at: old });
+    const out = await svc.recordOutcome('L1', { outcome: 'interested', send: { email: true } }, 'admin1', NOW);
+    expect(out.sends.email).toEqual({ status: 'already_sent', reason: null });
   });
 });
 
