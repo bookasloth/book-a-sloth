@@ -1,0 +1,198 @@
+'use strict';
+
+// Chainable supabase stub: per-table result, records update() payloads.
+const mockUpdates = [];
+let mockTableData = {};
+function mockChain(table) {
+  const o = {};
+  for (const m of ['select', 'eq', 'in', 'gte', 'like', 'order', 'limit', 'maybeSingle', 'single']) o[m] = jest.fn(() => o);
+  o.update = jest.fn((p) => { mockUpdates.push({ table, p }); return o; });
+  o.then = (res) => Promise.resolve(mockTableData[table] || { data: null, error: null }).then(res);
+  return o;
+}
+jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn((t) => mockChain(t)) } }));
+jest.mock('../../services/crm/leadService', () => ({
+  upsertLead: jest.fn(), getLead: jest.fn(), logCall: jest.fn(), addNote: jest.fn(),
+  changeStatus: jest.fn(), setDnc: jest.fn(), addTag: jest.fn(),
+}));
+jest.mock('../../services/crm/followUpService', () => ({ listOpen: jest.fn(), complete: jest.fn(), create: jest.fn() }));
+jest.mock('../../services/crm/messageService', () => ({ enqueue: jest.fn() }));
+jest.mock('../../services/crm/listService', () => ({ createList: jest.fn() }));
+
+const leadService = require('../../services/crm/leadService');
+const followUpService = require('../../services/crm/followUpService');
+const messageService = require('../../services/crm/messageService');
+const listService = require('../../services/crm/listService');
+const svc = require('../../services/crm/coldCallService');
+
+const NOW = new Date('2026-10-06T06:00:00Z');
+const TPL = {
+  email: { id: 't1', channel: 'email', name: 'cold_call_interested', category: 'cold_call_interested', subject: 'Hi {{business_name}}', body: '<p>link</p>', variables: [], is_active: true },
+  whatsapp: { id: 't2', channel: 'whatsapp', name: 'cold_call_interested_wa', category: 'cold_call_interested', variables: [{ key: 'business_name' }], is_active: false },
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUpdates.length = 0;
+  mockTableData = {};
+  const { supabaseAdmin } = require('../../config/supabase');
+  supabaseAdmin.from.mockImplementation((t) => mockChain(t));
+  followUpService.listOpen.mockResolvedValue([]);
+  messageService.enqueue.mockResolvedValue({ status: 'sent', error: null });
+  leadService.changeStatus.mockResolvedValue(undefined);
+});
+
+function withTemplates(email = TPL.email, whatsapp = TPL.whatsapp) {
+  // sendFollowUp reads one template per channel via .eq('channel').eq('category').maybeSingle()
+  const { supabaseAdmin } = require('../../config/supabase');
+  supabaseAdmin.from.mockImplementation((t) => {
+    const o = mockChain(t);
+    if (t === 'crm_templates') {
+      let ch = null;
+      o.eq = jest.fn((col, v) => { if (col === 'channel') ch = v; return o; });
+      o.then = (res) => Promise.resolve({ data: ch === 'email' ? email : whatsapp, error: null }).then(res);
+    }
+    return o;
+  });
+}
+
+describe('importRows', () => {
+  test('normalises phones, parses WhatsApp, keeps call history on re-import', async () => {
+    leadService.upsertLead
+      .mockResolvedValueOnce({ lead: { id: 'A', attributes: { cold_call: { attempts: 2, last_outcome: 'no_answer', day: 'Day 1' } } }, created: false })
+      .mockResolvedValueOnce({ lead: { id: 'B', attributes: null }, created: true });
+    const out = await svc.importRows({
+      listId: 'L1',
+      rows: [
+        { business: 'Clinic A', phone: '08888705552', whatsapp: 'https://wa.me/919822176677', day: 'Day 2', priority: '3', pitch: 'p' },
+        { business: 'Clinic B', phone: '9922256169' },
+        { business: 'No phone', phone: '123' },
+      ],
+    });
+    expect(out).toEqual({ created: 1, merged: 1, skipped: 1, listId: 'L1' });
+    const [patchA, optsA] = leadService.upsertLead.mock.calls[0];
+    expect(patchA).toMatchObject({ phone: '8888705552', whatsapp_phone: '919822176677', business_name: 'Clinic A', status: 'list', list_id: 'L1' });
+    expect(optsA).toMatchObject({ source: 'cold_call', skipMetaLead: true });
+    expect(leadService.upsertLead.mock.calls[1][0].whatsapp_phone).toBe('919922256169'); // fallback = phone
+    const ccA = mockUpdates.find((u) => u.table === 'leads').p.attributes.cold_call;
+    expect(ccA).toMatchObject({ list_id: 'L1', attempts: 2, last_outcome: 'no_answer', day: 'Day 2', priority: '3', pitch: 'p' });
+  });
+  test('creates the list when only listName is given', async () => {
+    listService.createList.mockResolvedValue({ id: 'NEW' });
+    leadService.upsertLead.mockResolvedValue({ lead: { id: 'A', attributes: {} }, created: true });
+    const out = await svc.importRows({ listName: 'Nagpur', rows: [{ phone: '8888705552' }] });
+    expect(listService.createList).toHaveBeenCalledWith(expect.objectContaining({ name: 'Nagpur', source: 'cold_call' }));
+    expect(out.listId).toBe('NEW');
+  });
+  test('rejects missing list and oversized batches', async () => {
+    await expect(svc.importRows({ rows: [] })).rejects.toMatchObject({ status: 400 });
+    await expect(svc.importRows({ listId: 'L', rows: new Array(51).fill({ phone: '8888705552' }) })).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('recordOutcome', () => {
+  const baseLead = { id: 'L1', status: 'list', email: 'a@b.co', business_name: 'Clinic', attributes: { cold_call: { list_id: 'X', day: 'Day 1' } } };
+
+  test('interested: logs call first, moves to qualified, sends email, skips pending WhatsApp, idempotent key', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    const order = [];
+    leadService.logCall.mockImplementation(async () => { order.push('call'); });
+    messageService.enqueue.mockImplementation(async () => { order.push('send'); return { status: 'sent', error: null }; });
+    const out = await svc.recordOutcome('L1', { outcome: 'interested', note: 'loved it', durationSec: 95, send: { email: true, whatsapp: true } }, 'admin1', NOW);
+    expect(order).toEqual(['call', 'send']);
+    expect(leadService.logCall).toHaveBeenCalledWith('L1', { outcome: 'interested', durationMin: 2, body: 'loved it' }, 'admin1');
+    expect(leadService.addNote).toHaveBeenCalledWith('L1', 'loved it', 'admin1');
+    expect(leadService.changeStatus).toHaveBeenCalledWith('L1', 'qualified', 'admin1', { via: 'cold_call' });
+    expect(messageService.enqueue).toHaveBeenCalledTimes(1);
+    expect(messageService.enqueue.mock.calls[0][0]).toMatchObject({
+      leadId: 'L1', channel: 'email', senderKey: 'shubham', immediate: true,
+      idempotencyKey: 'cold:L1:interested:email:2026-10-06',
+    });
+    expect(out.sends).toEqual({ email: { status: 'sent', reason: null }, whatsapp: { status: 'skipped', reason: 'pending_aisensy' } });
+    expect(mockUpdates.find((u) => u.table === 'leads').p.attributes.cold_call).toMatchObject({ attempts: 1, last_outcome: 'interested', closed: true, day: 'Day 1' });
+  });
+
+  test('a throwing send never loses the call log', async () => {
+    withTemplates(TPL.email, { ...TPL.whatsapp, is_active: true });
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    messageService.enqueue.mockRejectedValue(new Error('aisensy down'));
+    const out = await svc.recordOutcome('L1', { outcome: 'interested', send: { email: true, whatsapp: true } }, 'admin1', NOW);
+    expect(leadService.logCall).toHaveBeenCalled();
+    expect(out.sends.email).toEqual({ status: 'failed', reason: 'aisensy down' });
+    expect(out.sends.whatsapp).toEqual({ status: 'failed', reason: 'aisensy down' });
+  });
+
+  test('never regresses a lead already further in the pipeline', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead, status: 'paid' });
+    await svc.recordOutcome('L1', { outcome: 'details', send: {} }, 'admin1', NOW);
+    expect(leadService.changeStatus).not.toHaveBeenCalled();
+  });
+
+  test('status-move failure becomes a warning, not an error', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    leadService.changeStatus.mockRejectedValue(new Error('reason required'));
+    const out = await svc.recordOutcome('L1', { outcome: 'details', send: {} }, 'admin1', NOW);
+    expect(out.ok).toBe(true);
+    expect(out.warnings).toEqual(['status: reason required']);
+  });
+
+  test('callback: requires time, completes old callback, opens a new one without email reminder', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    await expect(svc.recordOutcome('L1', { outcome: 'callback' }, 'admin1', NOW)).rejects.toMatchObject({ status: 400 });
+    followUpService.listOpen.mockResolvedValue([{ id: 'old', title: 'Callback: morning' }, { id: 'other', title: 'Send deck' }]);
+    await svc.recordOutcome('L1', { outcome: 'callback', note: 'after OPD', callbackAt: '2026-10-06T11:30:00Z', send: {} }, 'admin1', NOW);
+    expect(followUpService.complete).toHaveBeenCalledTimes(1);
+    expect(followUpService.complete).toHaveBeenCalledWith('old', 'admin1');
+    expect(followUpService.create).toHaveBeenCalledWith(expect.objectContaining({
+      leadId: 'L1', title: 'Callback: after OPD', dueAt: '2026-10-06T11:30:00.000Z', remind: false,
+    }));
+  });
+
+  test('callback email fills {{callback_time}} before enqueue', async () => {
+    withTemplates({ ...TPL.email, category: 'cold_call_callback', subject: 'Talk {{callback_time}}', body: '<p>{{callback_time}} {{business_name}}</p>' });
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    await svc.recordOutcome('L1', { outcome: 'callback', callbackAt: '2026-10-07T11:30:00Z', send: { email: true } }, 'admin1', NOW);
+    const arg = messageService.enqueue.mock.calls[0][0];
+    expect(arg.subject).toMatch(/7 Oct/);
+    expect(arg.variables.html).toMatch(/\{\{business_name\}\}/); // lead tokens still rendered later by messageService
+  });
+
+  test('not_interested marks DNC and sends nothing', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    await svc.recordOutcome('L1', { outcome: 'not_interested', send: { email: true } }, 'admin1', NOW);
+    expect(leadService.setDnc).toHaveBeenCalledWith('L1', true, 'admin1');
+    expect(messageService.enqueue).not.toHaveBeenCalled();
+  });
+
+  test('email captured on the call is saved before sending', async () => {
+    withTemplates();
+    leadService.getLead.mockResolvedValue({ ...baseLead, email: null });
+    await svc.recordOutcome('L1', { outcome: 'interested', email: ' New@Clinic.in ', send: { email: true } }, 'admin1', NOW);
+    expect(mockUpdates.find((u) => u.table === 'leads' && u.p.email).p.email).toBe('new@clinic.in');
+  });
+
+  test('unknown lead → 404, unknown outcome → 400', async () => {
+    leadService.getLead.mockResolvedValue(null);
+    await expect(svc.recordOutcome('nope', { outcome: 'interested' }, 'a', NOW)).rejects.toMatchObject({ status: 404 });
+    leadService.getLead.mockResolvedValue({ ...baseLead });
+    await expect(svc.recordOutcome('L1', { outcome: 'maybe' }, 'a', NOW)).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('remind', () => {
+  test('creates a Callback follow-up with no email reminder', async () => {
+    leadService.getLead.mockResolvedValue({ id: 'L1' });
+    await svc.remind('L1', { at: '2026-10-07T05:30:00Z', note: 'ask for Dr. G' }, 'admin1');
+    expect(followUpService.create).toHaveBeenCalledWith(expect.objectContaining({
+      leadId: 'L1', title: 'Callback: ask for Dr. G', dueAt: '2026-10-07T05:30:00.000Z', remind: false,
+    }));
+  });
+  test('bad date → 400', async () => {
+    await expect(svc.remind('L1', { at: 'soon' }, 'a')).rejects.toMatchObject({ status: 400 });
+  });
+});
