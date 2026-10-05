@@ -117,7 +117,9 @@ All routes: `requireAdmin('leads.view')` for GET, `leads.manage` for POST; mount
 - **WhatsApp** — `name` = AiSensy campaign name (`cold_call_interested_wa`, …), params
   `[business_name]`. Founder creates + gets Meta approval in AiSensy; message texts are
   supplied in the PR. Rows seed `is_active=false`; the WhatsApp tickbox shows
-  "pending AiSensy" until the row is activated on the Templates page.
+  "pending AiSensy" with a **Mark approved** button (sets `is_active=true` via the
+  existing template PATCH) — the Templates page lists only active rows, so approval
+  happens in the Cold Calling tab.
 
 Seeded by `server/scripts/seedColdCallTemplates.js` (upsert by name) — run on BOTH DBs.
 
