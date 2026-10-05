@@ -6,7 +6,8 @@
  *
  * Email: founder voice, sent as persona `shubham` (plain layout). Lead tokens
  * ({{business_name}}) are rendered by messageService; {{callback_time}} is filled
- * by coldCallService. WhatsApp: `name` is the AiSensy campaign name; the founder
+ * by coldCallService. WhatsApp: `name` is the AiSensy API CAMPAIGN name ("Purpose - Audience", the
+ * Communication-page convention), not the template name; the founder
  * must create + get Meta approval for each, then mark it approved in the tab
  * (is_active=true). Until then sends are skipped with reason "pending_aisensy".
  */
@@ -58,7 +59,7 @@ ${SIGN}`,
 ${SIGN}`,
   },
   {
-    channel: 'whatsapp', name: 'cold_call_interested_wa', label: 'Cold call · Interested → signup link (WA)', category: 'cold_call_interested', variables: BIZ, is_active: false, subject: null,
+    channel: 'whatsapp', name: 'Cold Call Interested - Vendor', label: 'Cold call · Interested → signup link (WA)', category: 'cold_call_interested', variables: BIZ, is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for your time today!
 You can create your free booking page here:
 ${SIGNUP}
@@ -66,7 +67,7 @@ Clients can book, pay, and get reminders automatically. Setup takes about 3 minu
 Reply here if you want me to help you set it up.`,
   },
   {
-    channel: 'whatsapp', name: 'cold_call_details_wa', label: 'Cold call · Wants details → info pack (WA)', category: 'cold_call_details', variables: BIZ, is_active: false, subject: null,
+    channel: 'whatsapp', name: 'Cold Call Details - Vendor', label: 'Cold call · Wants details → info pack (WA)', category: 'cold_call_details', variables: BIZ, is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. As discussed, here’s the quick overview:
 • Online booking page
 • Online payments
@@ -77,14 +78,14 @@ Pricing: ${PRICING}
 I’ll check in with you in a few days. Feel free to message me anytime.`,
   },
   {
-    channel: 'whatsapp', name: 'cold_call_callback_wa', label: 'Cold call · Busy → callback reminder (WA)', category: 'cold_call_callback',
+    channel: 'whatsapp', name: 'Cold Call Callback - Vendor', label: 'Cold call · Busy → callback reminder (WA)', category: 'cold_call_callback',
     variables: [...BIZ, { key: 'callback_time', label: 'Callback time', example: 'Tue, 7 Oct, 5:00 pm' }], is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for taking my call!
 As discussed, I’ll call you on {{2}}.
 Talk soon!`,
   },
   {
-    channel: 'whatsapp', name: 'cold_call_nurture_wa', label: 'Cold call · Not now → soft nurture (WA)', category: 'cold_call_nurture', variables: BIZ, is_active: false, subject: null,
+    channel: 'whatsapp', name: 'Cold Call Nurture - Vendor', label: 'Cold call · Not now → soft nurture (WA)', category: 'cold_call_nurture', variables: BIZ, is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for your time today.
 Whenever you're ready, you can create your free booking page here:
 ${SIGNUP}
