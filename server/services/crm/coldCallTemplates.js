@@ -64,7 +64,7 @@ ${SIGN}`,
     body: `<p>Hi {{business_name}} team,</p>
 <p>Thanks for your time today. No rush at all. Whenever you want to stop managing bookings over phone and WhatsApp, your free booking page is a 3-minute setup:</p>
 <p><a href="${SIGNUP}">Create your free booking page</a></p>
-<p>Whenever you'd like, you can also ${CALL('book a call with me')} and we'll set it up together.</p>
+<p>If it's easier, ${CALL('book a call with me')} and we'll set it up together.</p>
 ${SIGN}`,
   },
   {
