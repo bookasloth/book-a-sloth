@@ -172,7 +172,7 @@ export default function ColdCallCard({ lead, templates, onDone, onChanged }) {
             const noEmail = ch === 'email' && !(email || lead.email);
             return (
               <label key={ch} className="flex items-center gap-2">
-                <input type="checkbox" disabled={!tpl || pending || noEmail} checked={!!send[ch]} onChange={(e) => setSend((s) => ({ ...s, [ch]: e.target.checked }))} />
+                <input type="checkbox" className="!w-4 !h-4 !min-h-0 !p-0 accent-[#FE5100] shrink-0" disabled={!tpl || pending || noEmail} checked={!!send[ch]} onChange={(e) => setSend((s) => ({ ...s, [ch]: e.target.checked }))} />
                 <span className="adm-t2">{ch === 'email' ? 'Email' : 'WhatsApp'} — {tpl?.label || 'no template'}</span>
                 {pending && <><Badge tone="warn">pending AiSensy</Badge><Btn size="sm" variant="ghost" onClick={() => approve(tpl)}>Mark approved</Btn></>}
                 {noEmail && <Badge tone="neutral">no email</Badge>}

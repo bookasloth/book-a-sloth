@@ -62,3 +62,20 @@ test('does not poll while the tab is hidden', async () => {
   await vi.advanceTimersByTimeAsync(61000);
   expect(queueCalls).toBe(before);
 });
+
+test('first load and post-save refresh still run in a hidden tab (only the 60s poll pauses)', async () => {
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+  render(<SalesColdCalling />);
+  await waitFor(() => expect(screen.getAllByText('Test Clinic').length).toBeGreaterThan(0));
+  const before = queueCalls;
+  fireEvent.keyDown(window, { key: '6' });
+  fireEvent.keyDown(window, { key: 'Enter' });
+  await waitFor(() => expect(queueCalls).toBeGreaterThan(before));
+});
+
+test('follow-up checkboxes are not stretched by the global input style', async () => {
+  render(<SalesColdCalling />);
+  await waitFor(() => expect(screen.getAllByText('Test Clinic').length).toBeGreaterThan(0));
+  fireEvent.keyDown(window, { key: '1' });
+  for (const cb of screen.getAllByRole('checkbox')) expect(cb.getAttribute('class')).toContain('!w-4');
+});
