@@ -59,20 +59,37 @@ ${SIGN}`,
   },
   {
     channel: 'whatsapp', name: 'cold_call_interested_wa', label: 'Cold call · Interested → signup link (WA)', category: 'cold_call_interested', variables: BIZ, is_active: false, subject: null,
-    body: `Hi {{1}} team, this is Shubham from Book A Sloth. Thanks for the call! Here's the link to create your free online booking page: ${SIGNUP} . It takes about 10 minutes. Reply here if you'd like me to set it up with you.`,
+    body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for your time today!
+You can create your free booking page here:
+${SIGNUP}
+Clients can book, pay, and get reminders automatically. Setup takes about 3 minutes.
+Reply here if you want me to help you set it up.`,
   },
   {
     channel: 'whatsapp', name: 'cold_call_details_wa', label: 'Cold call · Wants details → info pack (WA)', category: 'cold_call_details', variables: BIZ, is_active: false, subject: null,
-    body: `Hi {{1}} team, Shubham from Book A Sloth here. As discussed: your own online booking page with online payments and automatic reminders, free to start. Pricing: ${PRICING} . I'll call you in a few days for any questions.`,
+    body: `Hi {{1}} team, Shubham from Book A Sloth here. As discussed, here’s the quick overview:
+• Online booking page
+• Online payments
+• Automatic reminders
+• Less admin work
+Free to start.
+Pricing: ${PRICING}
+I’ll check in with you in a few days. Feel free to message me anytime.`,
   },
   {
     channel: 'whatsapp', name: 'cold_call_callback_wa', label: 'Cold call · Busy → callback reminder (WA)', category: 'cold_call_callback',
     variables: [...BIZ, { key: 'callback_time', label: 'Callback time', example: 'Tue, 7 Oct, 5:00 pm' }], is_active: false, subject: null,
-    body: 'Hi {{1}} team, Shubham from Book A Sloth. As discussed, I\'ll call you on {{2}}. Talk soon!',
+    body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for taking my call!
+As discussed, I’ll call you on {{2}}.
+Talk soon!`,
   },
   {
     channel: 'whatsapp', name: 'cold_call_nurture_wa', label: 'Cold call · Not now → soft nurture (WA)', category: 'cold_call_nurture', variables: BIZ, is_active: false, subject: null,
-    body: `Hi {{1}} team, Shubham from Book A Sloth. Thanks for your time today. Whenever you're ready, your free booking page takes 10 minutes: ${SIGNUP}`,
+    body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for your time today.
+Whenever you're ready, you can create your free booking page here:
+${SIGNUP}
+It takes about 10 minutes, and I’m happy to help you set it up.
+Just reply here whenever you’re ready.`,
   },
 ];
 
