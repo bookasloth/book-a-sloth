@@ -1647,17 +1647,7 @@ export const BLOG_POSTS = [
     "search",
     "users"
   ],
-  "author": {
-    "name": "Shubham N Datarkar",
-    "url": "https://bookasloth.com/sndatarkar",
-    "jobTitle": "Founder, Book A Sloth",
-    "image": "https://company-assets.bookasloth.in/images/about/shubham-datarkar.jpg",
-    "sameAs": [
-      "https://x.com/sndatarkar",
-      "https://www.instagram.com/sndatarkar",
-      "https://shubhamdatarkar.com"
-    ]
-  },
+  "author": "Shubham N Datarkar",
   "readMins": 5,
   "category": "Product",
   "image": null,
