@@ -266,6 +266,7 @@ const SalesPipeline   = lazy(() => import('./pages/admin/sales/SalesPipeline'));
 const SalesReports    = lazy(() => import('./pages/admin/sales/SalesReports'));
 const CustomerDetail  = lazy(() => import('./pages/admin/sales/CustomerDetail'));
 const SalesTemplates  = lazy(() => import('./pages/admin/sales/SalesTemplates'));
+const SalesColdCalling = lazy(() => import('./pages/admin/sales/SalesColdCalling'));
 const SalesSequences  = lazy(() => import('./pages/admin/sales/SalesSequences'));
 
 // Admin — Finance (P1: double-entry ledger)
@@ -656,6 +657,7 @@ function App() {
           <Route path="/admin/customer/:leadId" element={<AdminWrapper><CustomerDetail /></AdminWrapper>} />
           <Route path="/admin/sales/pipeline" element={<AdminWrapper><SalesPipeline /></AdminWrapper>} />
           <Route path="/admin/sales/templates" element={<AdminWrapper><SalesTemplates /></AdminWrapper>} />
+          <Route path="/admin/sales/cold-calling" element={<AdminWrapper><SalesColdCalling /></AdminWrapper>} />
           {/* Sequences, split by audience (v3.160): host lifecycle → Growth, cold acquisition → Marketing. */}
           <Route path="/admin/growth/sequences" element={<AdminWrapper><SalesSequences audience="customer" title="Lifecycle Sequences" subtitle="Post-signup host journeys — onboarding, activation, win-back. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />
           <Route path="/admin/marketing/sequences" element={<AdminWrapper><SalesSequences audience="lead" title="Acquisition Sequences" subtitle="Automated cold-lead nurture. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />

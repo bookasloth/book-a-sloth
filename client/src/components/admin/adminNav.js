@@ -95,7 +95,7 @@ export const PATH_LABELS = {
   categories:'Categories', featured:'Featured',
   staff:'Staff & Roles', system:'System', audit:'Audit Logs', reserved:'Reserved Slugs',
   features:'Feature Status',
-  sales:'Sales', leads:'Leads', lists:'Lists', pipeline:'Pipeline', 'follow-ups':'Follow-ups', reports:'Reports', templates:'Templates',
+  sales:'Sales', leads:'Leads', lists:'Lists', pipeline:'Pipeline', 'follow-ups':'Follow-ups', reports:'Reports', templates:'Templates', 'cold-calling':'Cold Calling',
   desk:'Desk', sequences:'Sequences', growth:'Growth',
   security:'Security', 'blocked-ips':'Blocked IPs',
   dept:'Department', cxo:'CXO', marketing:'Marketing', operation:'Operation', engineering:'Engineering', 'sloth-house':'Sloth House',
@@ -191,6 +191,7 @@ export const NAV = [
     { label:'Follow-ups',         icon:'clock',     to:'/admin/sales/follow-ups', perm:'leads.view' },
     { label:'Desk',               icon:'grid',      to:'/admin/sales/desk', perm:'leads.view' },
     { label:'Lists',              icon:'layers',    to:'/admin/sales/lists', perm:'leads.view' },
+    { label:'Cold Calling',       icon:'send',      to:'/admin/sales/cold-calling', perm:'leads.view' },
     { label:'Reports',            icon:'layout2',   to:'/admin/sales/reports', perm:'leads.view' },
   ]},
   { key:'marketing', label:'Marketing', icon:'mail', color:'#6366f1', children:[

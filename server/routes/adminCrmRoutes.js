@@ -86,4 +86,10 @@ router.post('/recommendations/:id/done', manage, c.completeRecommendation);
 router.post('/recommendations/:id/snooze', manage, c.snoozeRecommendation);
 router.post('/recommendations/:id/dismiss', manage, c.dismissRecommendation);
 
+// Cold Calling — call queue, outcomes (+ one-click follow-ups), reminders.
+router.get('/cold-calls/queue', view, c.coldCallQueue);
+router.post('/cold-calls/import', manage, c.coldCallImport);
+router.post('/cold-calls/:leadId/outcome', manage, c.coldCallOutcome);
+router.post('/cold-calls/:leadId/remind', manage, c.coldCallRemind);
+
 module.exports = router;

@@ -18,6 +18,7 @@ const attribution = require('../services/crm/attribution');
 const deskService = require('../services/crm/deskService');
 const reportService = require('../services/crm/reportService');
 const touchRecommendationService = require('../services/crm/touchRecommendationService');
+const coldCallService = require('../services/crm/coldCallService');
 
 const actor = (req) => req.admin?.id || null;
 
@@ -529,6 +530,31 @@ const refreshAttribution = async (req, res) => {
   try { res.json(await attribution.run()); } catch (e) { safeError(res, e); }
 };
 
+// ── Cold Calling (call queue + outcomes) ─────────────────────
+// Service errors carry .status (400/404) with a safe, user-facing message.
+const coldCallError = (res, e) => (e?.status ? res.status(e.status).json({ message: e.message }) : safeError(res, e));
+
+const coldCallQueue = async (req, res) => {
+  try { res.json(await coldCallService.getQueue(req.query.listId)); } catch (e) { coldCallError(res, e); }
+};
+
+const coldCallImport = async (req, res) => {
+  try {
+    const rows = (Array.isArray(req.body?.rows) ? req.body.rows : []).map((r) => ({ ...r, email: cleanEmail(r?.email) }));
+    res.json(await coldCallService.importRows({
+      rows, listId: req.body?.listId || null, listName: req.body?.listName || '', createdBy: actor(req) || '',
+    }));
+  } catch (e) { coldCallError(res, e); }
+};
+
+const coldCallOutcome = async (req, res) => {
+  try { res.json(await coldCallService.recordOutcome(req.params.leadId, req.body || {}, actor(req))); } catch (e) { coldCallError(res, e); }
+};
+
+const coldCallRemind = async (req, res) => {
+  try { res.json(await coldCallService.remind(req.params.leadId, req.body || {}, actor(req))); } catch (e) { coldCallError(res, e); }
+};
+
 module.exports = {
   dashboard, pipeline, reports, getDesk,
   listLeads, createLead, getLead, updateLead, getTimeline, leadMessages,
@@ -542,4 +568,5 @@ module.exports = {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   listTags, createTag, updateTag, deleteTag,
   listViews, createView, deleteView,
+  coldCallQueue, coldCallImport, coldCallOutcome, coldCallRemind,
 };

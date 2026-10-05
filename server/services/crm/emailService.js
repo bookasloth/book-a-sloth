@@ -45,6 +45,11 @@ function plainBody(html) {
   const linked = String(html || '').replace(
     /<a\s+([^>]*?)href="([^"]*)"([^>]*?)>([\s\S]*?)<\/a>/gi,
     (_m, pre, href, post, label) => {
+      // A `class="inline"` link is a brand-orange underlined text link (a secondary link
+      // in the copy) — still not a button, so the email keeps ONE call to action.
+      if (/\bclass="[^"]*\binline\b[^"]*"/i.test(pre + post)) {
+        return `<a href="${href}" style="color:${BRAND};text-decoration:underline;">${label}</a>`;
+      }
       // A `class="sig"` link (the founder's signature name) stays an inline text link;
       // any other link (the CTA) becomes an orange filled button.
       if (/\bclass="[^"]*\bsig\b[^"]*"/i.test(pre + post)) {
@@ -102,4 +107,4 @@ async function send({ lead, subject, html, text, category, previewText, fromName
   }
 }
 
-module.exports = { send, styleBody };
+module.exports = { send, styleBody, plainBody };
