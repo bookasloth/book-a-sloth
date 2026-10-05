@@ -22,7 +22,7 @@ const COLD_CALL_TEMPLATES = [
     body: `<p>Hi {{business_name}} team,</p>
 <p>Thanks for your time on the call just now. As promised, here's the link to set up your online booking page:</p>
 <p><a href="${SIGNUP}">Create your free booking page</a></p>
-<p>It takes about 10 minutes: add your services and timings, and clients can book and pay online. They get automatic reminders, so fewer no-shows.</p>
+<p>It takes about 3 minutes: add your services and timings, and clients can book and pay online. They get automatic reminders, so fewer no-shows.</p>
 <p>If you get stuck anywhere, just reply to this email and I'll set it up with you.</p>
 ${SIGN}`,
   },
@@ -34,7 +34,7 @@ ${SIGN}`,
 <ul>
 <li><b>What it is:</b> your own online booking page. Clients pick a service and a time slot, pay online, and get automatic reminders.</li>
 <li><b>Pricing:</b> free to start. Plans are here: <a href="${PRICING}">bookasloth.com/pricing</a></li>
-<li><b>Setup:</b> about 10 minutes, and I can do it with you on a call.</li>
+<li><b>Setup:</b> about 3 minutes, and I can do it with you on a call.</li>
 </ul>
 <p>When you're ready, you can create your page here: <a href="${SIGNUP}">bookasloth.com</a></p>
 <p>I'll call you in a few days in case you have questions.</p>
@@ -52,7 +52,7 @@ ${SIGN}`,
     channel: 'email', name: 'cold_call_nurture_email', label: 'Cold call · Not now → soft nurture', category: 'cold_call_nurture', variables: [], is_active: true,
     subject: "Whenever you're ready",
     body: `<p>Hi {{business_name}} team,</p>
-<p>Thanks for your time today. No rush at all. Whenever you want to stop managing bookings over phone and WhatsApp, your free booking page is a 10-minute setup:</p>
+<p>Thanks for your time today. No rush at all. Whenever you want to stop managing bookings over phone and WhatsApp, your free booking page is a 3-minute setup:</p>
 <p><a href="${SIGNUP}">Create your free booking page</a></p>
 <p>Just reply here if you ever want help setting it up.</p>
 ${SIGN}`,
@@ -88,7 +88,7 @@ Talk soon!`,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for your time today.
 Whenever you're ready, you can create your free booking page here:
 ${SIGNUP}
-It takes about 10 minutes, and I’m happy to help you set it up.
+It takes about 3 minutes, and I’m happy to help you set it up.
 Just reply here whenever you’re ready.`,
   },
 ];
