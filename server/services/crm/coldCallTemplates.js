@@ -55,7 +55,7 @@ ${SIGN}`,
     subject: "I'll call you on {{callback_time}}",
     body: `<p>Hi {{business_name}} team,</p>
 <p>Thanks for picking up, I know it was a busy moment. As discussed, I'll call you on <b>{{callback_time}}</b>.</p>
-<p>In the meantime, here's a quick look at what we do: <a href="${SIGNUP}">bookasloth.com</a>, an online booking page with payments and automatic reminders for clinics and salons.</p>
+<p>In the meantime, have a quick look: <a href="${SIGNUP}">bookasloth.com</a>. Your clients pick a slot and pay online on their own, and get reminded automatically, so you're not answering booking calls in the middle of work.</p>
 ${SIGN}`,
   },
   {
