@@ -1,0 +1,119 @@
+// Cold Calling — work a call queue: call, log the outcome + notes, send the
+// follow-up in one click, get reminded of callbacks. Spec: docs/superpowers/specs/2026-10-05-cold-calling-design.md
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { PageHeader, Card, Btn, Skeleton } from '../../../components/admin/ui';
+import { crmListLists, crmColdCallQueue } from '../../../services/api';
+import ColdCallQueue from './ColdCallQueue';
+import ColdCallCard from './ColdCallCard';
+import ColdCallUpload from './ColdCallUpload';
+
+const POLL_MS = 60 * 1000;
+const LIST_KEY = 'bas.coldCall.listId';
+
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    o.frequency.value = 880; o.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.25);
+  } catch { /* audio unavailable */ }
+}
+
+function Stat({ label, value }) {
+  return <div><div className="text-[18px] font-bold adm-t1">{value}</div><div className="text-[11.5px] adm-t3">{label}</div></div>;
+}
+
+export default function SalesColdCalling() {
+  const [lists, setLists] = useState(null);
+  const [listId, setListId] = useState(() => { try { return localStorage.getItem(LIST_KEY) || ''; } catch { return ''; } });
+  const [queue, setQueue] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [showUpload, setShowUpload] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+  const notified = useRef(new Set());
+
+  const loadLists = useCallback(() => crmListLists().then(({ data }) => {
+    const all = Array.isArray(data) ? data : [];
+    setLists(all);
+    setListId((cur) => (cur && all.some((l) => l.id === cur) ? cur : (all.find((l) => l.source === 'cold_call')?.id || '')));
+  }).catch(() => setLists([])), []);
+  useEffect(() => { loadLists(); }, [loadLists]);
+
+  const loadQueue = useCallback(async () => {
+    setNow(new Date());
+    if (!listId) { setQueue(null); return; }
+    try { const { data } = await crmColdCallQueue(listId); setQueue(data); }
+    catch (e) { toast.error(e.response?.data?.message || 'Could not load the call queue'); }
+  }, [listId]);
+  useEffect(() => {
+    loadQueue();
+    const t = setInterval(loadQueue, POLL_MS);
+    return () => clearInterval(t);
+  }, [loadQueue]);
+  useEffect(() => { try { if (listId) localStorage.setItem(LIST_KEY, listId); } catch { /* private mode */ } }, [listId]);
+
+  // Callback reminders: ask once, then popup + beep when one becomes due.
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
+  }, []);
+  useEffect(() => {
+    for (const c of queue?.callbacksDue || []) {
+      if (notified.current.has(c.followUp.id) || new Date(c.dueAt) > new Date()) continue;
+      notified.current.add(c.followUp.id);
+      beep();
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Callback due', { body: c.lead.business_name || c.lead.name || 'Lead' });
+      }
+    }
+  }, [queue]);
+
+  const ordered = useMemo(() => (queue ? [...queue.callbacksDue, ...queue.retries, ...queue.fresh, ...queue.upcoming].map((i) => i.lead) : []), [queue]);
+  const current = ordered.find((l) => l.id === selectedId) || ordered[0] || null;
+
+  const onDone = (doneId) => {
+    const idx = ordered.findIndex((l) => l.id === doneId);
+    setSelectedId(ordered[idx + 1]?.id || null);
+    loadQueue();
+  };
+
+  const t = queue?.today; const tot = queue?.totals;
+  return (
+    <div className="p-4 sm:p-6">
+      <PageHeader title="Cold Calling" subtitle="Call, log the outcome, send the follow-up. Keys: 1–7 outcome · Enter save & next · T timer."
+        actions={<>
+          <select className="fb-input text-sm" aria-label="Calling list" value={listId} onChange={(e) => { setListId(e.target.value); setSelectedId(null); }}>
+            <option value="">Choose a list…</option>
+            {(lists || []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+          <Btn size="sm" onClick={() => setShowUpload(true)}>Upload CSV</Btn>
+        </>} />
+
+      {queue && (
+        <Card className="mb-4 flex flex-wrap gap-6">
+          <Stat label="Called today" value={t.calls} />
+          <Stat label="Connected" value={t.connected} />
+          <Stat label="Interested" value={t.interested} />
+          <Stat label="Follow-ups sent" value={t.followUpsSent} />
+          <Stat label="Left to call" value={tot.fresh} />
+          <Stat label="Signed up" value={tot.signedUp} />
+        </Card>
+      )}
+
+      {lists === null || (listId && !queue) ? <Skeleton className="h-64 rounded-2xl" />
+        : !listId ? <Card className="p-10 text-center adm-t3">Upload a CSV to start a calling list.</Card>
+        : (
+          <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+            <ColdCallQueue queue={queue} currentId={current?.id} onSelect={setSelectedId} now={now} />
+            {current
+              ? <ColdCallCard key={current.id} lead={current} templates={queue.templates} onDone={onDone} onChanged={loadQueue} />
+              : <Card className="p-10 text-center adm-t3">Nothing to call right now. Upcoming callbacks will appear here when due.</Card>}
+          </div>
+        )}
+
+      {showUpload && (
+        <ColdCallUpload lists={lists || []} onClose={() => setShowUpload(false)}
+          onImported={(id) => { setShowUpload(false); loadLists(); setListId(id); setSelectedId(null); }} />
+      )}
+    </div>
+  );
+}
