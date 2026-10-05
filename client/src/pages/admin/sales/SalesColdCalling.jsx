@@ -39,8 +39,11 @@ export default function SalesColdCalling() {
   }).catch(() => setLists([])), []);
   useEffect(() => { loadLists(); }, [loadLists]);
 
-  const loadQueue = useCallback(async () => {
-    if (document.hidden) return;              // a tab left open all day must not poll (Render/Supabase egress)
+  // `poll` = the 60s background refresh: skipped while the tab is hidden (a tab left open
+  // all day must not burn Render/Supabase egress). First load, post-save and post-import
+  // refreshes always run — a tab opened in the background must not sit on a skeleton.
+  const loadQueue = useCallback(async ({ poll = false } = {}) => {
+    if (poll && document.hidden) return;
     setNow(new Date());
     if (!listId) { setQueue(null); return; }
     try { const { data } = await crmColdCallQueue(listId); setQueue(data); }
@@ -48,7 +51,7 @@ export default function SalesColdCalling() {
   }, [listId]);
   useEffect(() => {
     loadQueue();
-    const t = setInterval(loadQueue, POLL_MS);
+    const t = setInterval(() => loadQueue({ poll: true }), POLL_MS);
     const onVisible = () => { if (!document.hidden) loadQueue(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVisible); };
