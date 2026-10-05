@@ -11,7 +11,10 @@
  * must create + get Meta approval for each, then mark it approved in the tab
  * (is_active=true). Until then sends are skipped with reason "pending_aisensy".
  */
-const SIGNUP = 'https://bookasloth.com/login-as-vendor';
+// Founder's Refer & Earn link: ?ref is stashed on landing and credited at host signup.
+const SIGNUP = 'https://bookasloth.com/?ref=sndatarkar';
+// WhatsApp previews must match the texts submitted to Meta/AiSensy (no ?ref there).
+const WA_SIGNUP = 'https://bookasloth.com/login-as-vendor';
 const PRICING = 'https://bookasloth.com/pricing';
 // Founder's own Book A Sloth demo page — booking it IS the product experience.
 const DEMO = 'https://bookasloth.com/sndatarkar/book-a-sloth-app-online-demo-30-min-advisory-session';
@@ -52,7 +55,7 @@ ${SIGN}`,
     subject: "I'll call you on {{callback_time}}",
     body: `<p>Hi {{business_name}} team,</p>
 <p>Thanks for picking up, I know it was a busy moment. As discussed, I'll call you on <b>{{callback_time}}</b>.</p>
-<p>In the meantime, here's a quick look at what we do: <a href="https://bookasloth.com">bookasloth.com</a>, an online booking page with payments and automatic reminders for clinics and salons.</p>
+<p>In the meantime, here's a quick look at what we do: <a href="${SIGNUP}">bookasloth.com</a>, an online booking page with payments and automatic reminders for clinics and salons.</p>
 ${SIGN}`,
   },
   {
@@ -68,7 +71,7 @@ ${SIGN}`,
     channel: 'whatsapp', name: 'Cold Call Interested - Vendor', label: 'Cold call · Interested → signup link (WA)', category: 'cold_call_interested', variables: BIZ, is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for your time today!
 You can create your free booking page here:
-${SIGNUP}
+${WA_SIGNUP}
 Clients can book, pay, and get reminders automatically. Setup takes about 3 minutes.
 Reply here if you want me to help you set it up.`,
   },
@@ -94,7 +97,7 @@ Talk soon!`,
     channel: 'whatsapp', name: 'Cold Call Nurture - Vendor', label: 'Cold call · Not now → soft nurture (WA)', category: 'cold_call_nurture', variables: BIZ, is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for your time today.
 Whenever you're ready, you can create your free booking page here:
-${SIGNUP}
+${WA_SIGNUP}
 It takes about 3 minutes, and I’m happy to help you set it up.
 Just reply here whenever you’re ready.`,
   },
