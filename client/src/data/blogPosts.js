@@ -1525,6 +1525,337 @@ export const BLOG_POSTS = [
   ]
 },
 {
+  "slug": "product-otp-and-verification-badges",
+  "title": "Product OTP and Automatic Verification Badges",
+  "date": "Oct 5, 2026",
+  "icons": [
+    "shield",
+    "key",
+    "lightning"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 4,
+  "category": "Feature Update",
+  "image": null,
+  "excerpt": "Product buyers now verify by WhatsApp OTP so the code actually arrives, and connected Google or LinkedIn accounts show as automatic trust badges on your profile.",
+  "body": [
+    {
+      "p": "Two trust fixes shipped this week. Digital-product buyers now receive their one-time code over WhatsApp instead of hitting a dead end at checkout, and a connected Google or LinkedIn account now appears as an automatic verification badge on your public Book A Sloth profile. Both do the same job: they make trust work without adding a single step for you or the buyer."
+    },
+    {
+      "h2": "Product OTP now arrives on WhatsApp"
+    },
+    {
+      "p": "Buying a digital product now verifies the same way the rest of Book A Sloth does: with a one-time code sent to the buyer's WhatsApp. Previously the product checkout had a quiet mismatch. The code was issued phone-first, but the product paths checked email only, so a buyer who entered a phone number got an \"invalid or expired code\" error and could not finish the purchase."
+    },
+    {
+      "p": "We fixed the mismatch and made the number on the product page a required WhatsApp field, so the code is issued and delivered on WhatsApp every time. That removes a real leak at the last step: fewer dead ends, more completed purchases. If you sell downloads or templates, see [how to sell digital products online](/blog/how-to-sell-digital-products-online) for the full picture on pricing and delivering files."
+    },
+    {
+      "h2": "Google and LinkedIn as automatic trust badges"
+    },
+    {
+      "p": "If you signed in with Google or connected LinkedIn, that now shows as a verification badge on your public profile automatically. You do not request it or upload anything. The badge reflects an account you already connected, so it stays honest."
+    },
+    {
+      "p": "Trust is most of the booking decision for a stranger. A badge that reads \"verified with Google\" or \"verified with LinkedIn\" does quiet work: it tells a guest the profile belongs to a real, accountable person before they pay. Because the badge is derived from the connected account rather than a manual claim, it cannot be faked by typing a logo into a bio."
+    },
+    {
+      "p": "Independent trust signals carry real weight. In [BrightLocal's Local Consumer Review Survey](https://www.brightlocal.com/research/us-results-local-consumer-review-survey/), 49% of consumers said they trust online reviews as much as a personal recommendation from friends and family. A verification badge is a different signal, but it works the same way: a neutral, external account vouching that you are who you say you are."
+    },
+    {
+      "quote": "49% of consumers trust online reviews as much as a personal recommendation.",
+      "cite": "BrightLocal, Local Consumer Review Survey"
+    },
+    {
+      "info": {
+        "title": "Why the badge can't be faked",
+        "text": "The verification badge is generated from the OAuth account you actually connected at sign-in, not from text or an image you add to your profile. There is no \"upload a badge\" field, so a host cannot spoof one with a logo or a claim."
+      }
+    },
+    {
+      "h2": "The two fixes at a glance"
+    },
+    {
+      "table": {
+        "head": [
+          "",
+          "Before",
+          "Now"
+        ],
+        "rows": [
+          [
+            "Product checkout OTP",
+            "Code sent phone-first but verified email-only, so phone buyers saw \"invalid code\"",
+            "Product page number is a required WhatsApp field; code is issued and delivered on WhatsApp"
+          ],
+          [
+            "Google / LinkedIn verification",
+            "No profile signal from a connected account",
+            "Automatic badge derived from the connected account, cannot be faked"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "How to get your verification badge"
+    },
+    {
+      "steps": [
+        "Sign in to Book A Sloth with Google, or connect your LinkedIn account.",
+        "Open your public profile. The verification badge appears automatically from the connected account.",
+        "Nothing to apply for, upload, or wait on. Disconnect the account and the badge goes with it."
+      ]
+    },
+    {
+      "h2": "Why these two shipped together"
+    },
+    {
+      "p": "Both are trust mechanics. One makes sure a buyer can prove it is them and get their file; the other makes sure a guest can see, at a glance, that you are a verified person. Neither adds a step for you to manage. The OTP just works, and the badges appear from accounts you already linked. This sits alongside the identity and payout verification we already do: [KYC only after you earn](/blog/kyc-only-after-you-earn) explains why we verify late, and [what happens to your Aadhaar](/blog/what-happens-to-your-aadhaar) covers how sensitive identity data is handled."
+    },
+    {
+      "p": "For everything else that shipped recently, the [September update](/blog/september-2026-product-update) has the two-plan pricing and the Build-with-Bolt page builder. Setting up now? Connect Google when you sign in and your badge is handled for you. [Start your page](/be-a-sloth). The craft is yours. The machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "Why wasn't my product OTP working before?",
+          "a": "The code was sent phone-first but the product checkout verified email-only, so buyers who entered a phone number got an \"invalid or expired code\" error. The product page number is now a required WhatsApp field and verification matches how the code is sent, so the code arrives and works."
+        },
+        {
+          "q": "Do I have to request a verification badge?",
+          "a": "No. If you signed in with Google or connected LinkedIn, the badge appears on your profile automatically. It reflects the connected account, so there is nothing to apply for or upload."
+        },
+        {
+          "q": "Can someone fake a verification badge?",
+          "a": "No. The badge is derived from an account you actually connected at sign-in, not from text you type into your bio, so it cannot be spoofed with a logo or a claim."
+        },
+        {
+          "q": "Does the WhatsApp OTP cost the buyer anything?",
+          "a": "No. The one-time code is delivered to the buyer's WhatsApp at no cost to them. They enter it to confirm the purchase and get their download."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "landing-pages-for-your-profession",
+  "title": "Landing Pages Built for Your Profession",
+  "date": "Oct 5, 2026",
+  "icons": [
+    "target",
+    "search",
+    "users"
+  ],
+  "author": {
+    "name": "Shubham N Datarkar",
+    "url": "https://bookasloth.com/sndatarkar",
+    "jobTitle": "Founder, Book A Sloth",
+    "image": "https://company-assets.bookasloth.in/images/about/shubham-datarkar.jpg",
+    "sameAs": [
+      "https://x.com/sndatarkar",
+      "https://www.instagram.com/sndatarkar",
+      "https://shubhamdatarkar.com"
+    ]
+  },
+  "readMins": 5,
+  "category": "Product",
+  "image": null,
+  "excerpt": "Book A Sloth now has a dedicated landing page for each profession — consultants, doctors, salons, lawyers, coaches and more — with a real demo link.",
+  "body": [
+    {
+      "p": "Book A Sloth now has a dedicated landing page for each profession it serves, so a consultant, a dermatologist, a salon owner or a lawyer lands on a page that speaks their language instead of a generic pitch. Each page carries profession-specific copy, its own mascot hero art, a real \"Book a Demo\" link, and machine-readable structured data so AI search engines can understand and cite it. Here is what shipped in this October update, and why it matters."
+    },
+    {
+      "h2": "One page per profession, not one page for everyone"
+    },
+    {
+      "p": "A generic homepage asks every visitor to translate \"booking platform\" into their own world. A profession page does that translation for them. We built bespoke /for pages across professions — including business consultants, dermatologists, ENT specialists, ophthalmologists, gynecologists, pediatricians, salons, life coaches, lawyers, chartered accountants and architects — with more being added over time."
+    },
+    {
+      "p": "Each page leads with the jobs that profession actually books — a consultation, a skin review, a follow-up, a hearing — and shows the plan and pricing in that context. A dermatologist can open [the dermatologists page](/for/dermatologists); a lawyer can open [the lawyers page](/for/lawyers). If you have ever sent someone a link and wished it opened on something that looked made for them, this is that link."
+    },
+    {
+      "h2": "A real \"Book a Demo\", clearer heroes, profession artwork"
+    },
+    {
+      "p": "The \"Book a Demo\" button on these pages now points to a real demo booking, not a placeholder, so a curious visitor can experience the booking flow as a guest — pick a slot, see the confirmation — before they ever sign up. Every page also got its own mascot hero art, and we stripped the small uppercase \"eyebrow\" labels from the heroes and sections so the headline is the first thing you read, not a label above it. The hero cards were repositioned in the same pass."
+    },
+    {
+      "p": "The result is a page that reads like a brochure made for one kind of person — because it is. If you are new here, the fastest way to see your own version is to [onboard a host in 60 seconds](/blog/onboarding-a-host-in-60-seconds) and go live."
+    },
+    {
+      "h2": "Built to be read by AI search, not just people"
+    },
+    {
+      "p": "Behind the design, each page now emits one connected entity graph — the website, the Book A Sloth organisation, the page itself, and the software, all cross-linked — plus step-by-step HowTo data describing how booking works. Structured data is how a page communicates facts directly to machines: a [guide from Yoast](https://yoast.com/structured-data-schema-ultimate-guide/) describes schema markup as the way to help search engines, large language models and AI assistants understand content quickly and accurately."
+    },
+    {
+      "p": "This matters more every quarter. Google's AI Overviews reached roughly 2 billion monthly users by mid-2025, with its deeper AI Mode drawing around 100 million users in the US and India alone ([TechCrunch](https://techcrunch.com/2025/07/23/googles-ai-overviews-have-2b-monthly-users-ai-mode-100m-in-the-us-and-india)). When someone asks an assistant \"what should a dermatologist use to take bookings in India,\" a page with one clean entity graph can actually be resolved and cited, instead of read as four disconnected fragments."
+    },
+    {
+      "h2": "What's on every /for page"
+    },
+    {
+      "table": {
+        "head": [
+          "Element",
+          "What it does"
+        ],
+        "rows": [
+          [
+            "Profession-specific copy",
+            "Leads with the appointments that profession books, in its own words"
+          ],
+          [
+            "Mascot hero art",
+            "A distinct illustration per page, with no uppercase eyebrow label above the headline"
+          ],
+          [
+            "Real \"Book a Demo\" link",
+            "Opens an actual booking so a visitor walks the guest flow before signing up"
+          ],
+          [
+            "Entity @graph + HowTo JSON-LD",
+            "Cross-links the site, organisation, page and software so AI search can resolve and cite the page"
+          ]
+        ]
+      }
+    },
+    {
+      "quote": "“A page built for one profession converts because it stops asking the reader to translate a generic pitch into their own world.”",
+      "cite": "Shubham N Datarkar, Founder, Book A Sloth"
+    },
+    {
+      "h2": "What this means for you"
+    },
+    {
+      "p": "Pick the page that matches what you do, send it to a peer, or use it to decide if Book A Sloth fits your work. More professions are on the way, and the schema work means the right people — and the right assistants — can find them. For the trust side of this release, see [product OTP and verification badges](/blog/product-otp-and-verification-badges)."
+    },
+    {
+      "p": "[Find your profession's page](/be-a-sloth) or compare [pricing](/pricing). The craft is yours. The machinery is ours."
+    },
+    {
+      "h2": "Frequently asked questions"
+    },
+    {
+      "faq": [
+        {
+          "q": "Which professions have a dedicated page on Book A Sloth?",
+          "a": "Pages exist for professions including business consultants, dermatologists, ENT specialists, ophthalmologists, gynecologists, pediatricians, salons, life coaches, lawyers, chartered accountants and architects, with more added over time. If your profession is not listed yet, the main product page works for any field."
+        },
+        {
+          "q": "What does the \"Book a Demo\" link on a profession page do?",
+          "a": "It opens a real booking, not a placeholder. You go through the guest flow yourself — pick a slot and see the confirmation — so you experience exactly what your own clients would before you create your page."
+        },
+        {
+          "q": "Why does structured data on these pages matter for AI search?",
+          "a": "Each page emits one connected entity graph plus step-by-step HowTo data. That lets AI search engines resolve Book A Sloth as a single linked entity and read the booking instructions, which makes the page eligible to be cited when someone asks an assistant for a booking tool in a given field."
+        },
+        {
+          "q": "Is there a page if my profession is not listed?",
+          "a": "Yes. The main Book A Sloth product page works for any profession; the dedicated /for pages are tailored extras, not a gate. You can start from Book A Sloth regardless of your field, then switch to a profession page if one launches for your work."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "october-2026-small-fixes",
+  "title": "October Fixes: Calendar, Onboarding and Polish",
+  "date": "Oct 5, 2026",
+  "icons": [
+    "calendar",
+    "rocket",
+    "palette"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 3,
+  "category": "Feature Update",
+  "image": null,
+  "excerpt": "October's changelog: your Google Calendar stops marking you 'awaiting' on your bookings, the onboarding skip now confirms, and 19 profession pages got cleaner.",
+  "body": [
+    {
+      "p": "Not every update is a headline feature. This is the small-print changelog for the early-October 2026 release, and it is three fixes: your Google Calendar no longer shows you as \"awaiting\" on your own bookings, the onboarding \"skip\" now asks before it leaves you with an empty page, and the profession landing pages got visually cleaner. None are glamorous. All of them remove friction."
+    },
+    {
+      "h2": "Your calendar stops showing you as \"awaiting\""
+    },
+    {
+      "p": "When a guest booked you, the event landed on your Google Calendar but showed you as \"awaiting\" with no checkmark, as if you had not responded to your own booking. We now mark the host attendee as accepted when the event is created, so it shows confirmed on your side immediately. This was a Google behaviour change, not a regression in our code: Google used to auto-accept the event organiser and quietly stopped, which is why the attendee [responseStatus](https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events) now has to be set explicitly. The guest still shows as \"awaiting\" until they respond, which is correct, since they are the one being invited. For how the integration is meant to work end to end, see [payments and calendars on autopilot](/blog/payments-and-calendars-on-autopilot)."
+    },
+    {
+      "h2": "Onboarding won't let you skip the one step that counts"
+    },
+    {
+      "p": "The biggest leak in getting a new host live was the one-tap \"skip\" on the go-live screen. Most hosts who finished onboarding with zero services had used it, some of them on a paid plan, and a booking page with no service is a shop with empty shelves. So the skip now asks first. Instead of leaving on one tap, it opens a confirmation, \"Leave without a service?\", with the primary action pointing you back to add one and \"Skip anyway\" demoted to a quieter secondary. Nobody is forced to add a service, but nobody skips it by accident either. If you are setting up now, [onboarding a host in 60 seconds](/blog/onboarding-a-host-in-60-seconds) walks through adding that first service."
+    },
+    {
+      "h2": "The profession pages got cleaner"
+    },
+    {
+      "p": "We removed the small uppercase \"eyebrow\" labels from the top of all 19 [profession landing pages](/blog/landing-pages-for-your-profession) and their sections, so the headline is the first thing you read instead of a label floating above it. A few pages also had their hero cards repositioned so the mascot and the floating \"booked\" and \"reminder\" cards sit cleanly instead of overlapping. Small stuff, but it is the difference between a page that looks considered and one that looks busy. The copy, plans and booking flow on each page are unchanged."
+    },
+    {
+      "h2": "Every fix in this October release"
+    },
+    {
+      "table": {
+        "head": [
+          "Area",
+          "What changed",
+          "What you'll notice"
+        ],
+        "rows": [
+          [
+            "Google Calendar",
+            "Host attendee set to accepted when a booked event is created",
+            "Your own bookings show confirmed instead of \"awaiting\""
+          ],
+          [
+            "Onboarding",
+            "One-tap skip replaced with a \"Leave without a service?\" confirmation",
+            "Fewer new hosts go live with an empty booking page"
+          ],
+          [
+            "Profession (/for) pages",
+            "Removed uppercase eyebrow labels across all 19 pages; repositioned some hero cards",
+            "Cleaner heroes; headline reads first (visual only)"
+          ]
+        ]
+      }
+    },
+    {
+      "info": {
+        "title": "What this release is not",
+        "text": "These are shipped fixes, not new features. The calendar change corrects display of your own attendance only; it does not alter guest confirmations. The onboarding change adds a confirmation step, not a hard requirement. The /for page work is purely visual."
+      }
+    },
+    {
+      "h2": "Why we write these down"
+    },
+    {
+      "p": "Shipping is not just features; it is the hundred small corrections that make the product feel calm. Writing the boring fixes down keeps us honest and gives you a real record of what changed. For the bigger October items, see [product OTP and verification badges](/blog/product-otp-and-verification-badges). Ready to put it to use? [Set up your page](/be-a-sloth). The craft is yours; the machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "Why did my Google Calendar show \"awaiting\" on my own bookings?",
+          "a": "Google stopped auto-accepting the event organiser, so the host appeared as not-yet-responded. Book A Sloth now sets the host attendee as accepted when the booked event is created, so it shows confirmed on your side right away. The guest still shows \"awaiting\" until they respond, which is correct."
+        },
+        {
+          "q": "Can I still skip adding a service during onboarding?",
+          "a": "Yes. The skip now opens a short \"Leave without a service?\" confirmation instead of leaving on one tap, so you can still skip deliberately, it just no longer happens by accident. Adding one service is what makes your page bookable."
+        },
+        {
+          "q": "Did the profession (/for) pages change what they offer?",
+          "a": "No. The October change was visual only: cleaner heroes and repositioned cards. The copy, plans and booking flow on each page are unchanged."
+        }
+      ]
+    }
+  ]
+},
+{
   "slug": "30-minute-call-setup",
   "title": "30 Minute Call: How to Set One Up and Run It Well",
   "date": "Oct 3, 2026",
