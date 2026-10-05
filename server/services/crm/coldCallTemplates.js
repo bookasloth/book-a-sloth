@@ -13,6 +13,10 @@
  */
 const SIGNUP = 'https://bookasloth.com/login-as-vendor';
 const PRICING = 'https://bookasloth.com/pricing';
+// Founder's own Book A Sloth demo page — booking it IS the product experience.
+const DEMO = 'https://bookasloth.com/sndatarkar/book-a-sloth-app-online-demo-30-min-advisory-session';
+// class="sig" keeps a link inline (emailService.plainBody) so each email has ONE orange button.
+const CALL = (text) => `<a class="sig" href="${DEMO}">${text}</a>`;
 const SIGN = '<p>Shubham<br>Founder, Book A Sloth</p>';
 const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Dental' }];
 
@@ -24,7 +28,8 @@ const COLD_CALL_TEMPLATES = [
 <p>Thanks for your time on the call just now. As promised, here's the link to set up your online booking page:</p>
 <p><a href="${SIGNUP}">Create your free booking page</a></p>
 <p>It takes about 3 minutes: add your services and timings, and clients can book and pay online. They get automatic reminders, so fewer no-shows.</p>
-<p>If you get stuck anywhere, just reply to this email and I'll set it up with you.</p>
+<p>Prefer to set it up together? ${CALL('Book a 30-minute call with me')} and you'll see exactly how your clients will book you.</p>
+<p>If you get stuck anywhere, just reply to this email.</p>
 ${SIGN}`,
   },
   {
@@ -34,10 +39,11 @@ ${SIGN}`,
 <p>Thanks for speaking with me. Here are the details you asked for:</p>
 <ul>
 <li><b>What it is:</b> your own online booking page. Clients pick a service and a time slot, pay online, and get automatic reminders.</li>
-<li><b>Pricing:</b> free to start. Plans are here: <a href="${PRICING}">bookasloth.com/pricing</a></li>
+<li><b>Pricing:</b> free to start. Plans are here: <a class="sig" href="${PRICING}">bookasloth.com/pricing</a></li>
 <li><b>Setup:</b> about 3 minutes, and I can do it with you on a call.</li>
 </ul>
 <p>When you're ready, you can create your page here: <a href="${SIGNUP}">bookasloth.com</a></p>
+<p>Easier to see it live? ${CALL('Book a 30-minute demo with me')}. You'll book it through Book A Sloth itself, so you'll see exactly what your clients experience.</p>
 <p>I'll call you in a few days in case you have questions.</p>
 ${SIGN}`,
   },
@@ -55,7 +61,7 @@ ${SIGN}`,
     body: `<p>Hi {{business_name}} team,</p>
 <p>Thanks for your time today. No rush at all. Whenever you want to stop managing bookings over phone and WhatsApp, your free booking page is a 3-minute setup:</p>
 <p><a href="${SIGNUP}">Create your free booking page</a></p>
-<p>Just reply here if you ever want help setting it up.</p>
+<p>Whenever you'd like, you can also ${CALL('book a call with me')} and we'll set it up together.</p>
 ${SIGN}`,
   },
   {
