@@ -78,7 +78,7 @@ export default function ColdCallingLayout() {
       <PageHeader title="Cold Calling" subtitle="Open a lead, call, update the details, log the outcome, send the follow-up, move on."
         actions={<div className="flex flex-wrap items-center gap-2">
           <ColdCallSearch onPick={(lead) => navigate(`/admin/sales/cold-calling/lead/${lead.id}`)} />
-          <select className="fb-input text-sm" aria-label="Calling list" value={listId} onChange={(e) => setListId(e.target.value)}>
+          <select className="fb-input text-sm !w-auto max-w-[260px]" aria-label="Calling list" value={listId} onChange={(e) => setListId(e.target.value)}>
             <option value="">Choose a list…</option>
             {(lists || []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>

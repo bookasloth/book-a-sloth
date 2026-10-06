@@ -371,7 +371,9 @@ export default function ColdCallLead() {
   useEffect(() => {
     let alive = true;
     setLead(null); setMissing(false);
-    crmGetLead(leadId).then(({ data }) => { if (alive) setLead(data); }).catch(() => { if (alive) setMissing(true); });
+    // GET /leads/:id answers { lead, notes, followUps }.
+    crmGetLead(leadId).then(({ data }) => { if (alive) setLead(data?.lead || null); if (alive && !data?.lead) setMissing(true); })
+      .catch(() => { if (alive) setMissing(true); });
     return () => { alive = false; };
   }, [leadId]);
 
