@@ -163,16 +163,16 @@ You can continue here: ${WA_SIGNUP}`,
 
 Hi {{1}} team,
 
-Shubham from Book A Sloth here. Here's your invite to create your free booking page, as we discussed.
+Shubham from Book A Sloth here. Here's your link to create your free booking page, as we discussed:
+{{3}}
 
-Your invite code: *{{2}}*
-Create your page: {{3}}
+Invite Code: {{2}}
 
 Clients can book, pay, and get reminders automatically.
 
 *Setup takes about 3 minutes.*
 
-Reply here if you'd like me to help you set it up.`,
+If you'd like help setting it up, just reply here and I'll help you get started.`,
   },
   {
     // Sent by the reminder cron ~15 min before a promised callback — no call-outcome button.
