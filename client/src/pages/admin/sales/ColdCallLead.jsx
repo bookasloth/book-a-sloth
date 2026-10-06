@@ -10,7 +10,7 @@ import { TabBar, TodayStrip, HEADING } from './ccUi';
 import ColdCallCommunicate from './ColdCallCommunicate';
 import {
   OUTCOMES, OBJECTIONS, callbackPresets, formatPhone, fmtTimer, isTypingTarget, pendingPlan, nextLeadId,
-  messageFor, fitReasons, safeUrl, outcomeLabel, NOTE_CHIPS, addChip, categoryPitch, ago,
+  messageFor, preferTracked, fitReasons, safeUrl, outcomeLabel, NOTE_CHIPS, addChip, categoryPitch, ago,
 } from './coldCallUtils';
 
 const BASE = '/admin/sales/cold-calling';
@@ -106,7 +106,7 @@ function LeadCall({ initial, plan, queue, reload }) {
       for (const w of data?.warnings || []) toast(w);
       setRunning(false);
       reload();
-      const category = messageFor(outcome, data?.coldCall || {});
+      const category = preferTracked(messageFor(outcome, data?.coldCall || {}), queue.templates);
       if (category) setComm({ category, callbackAt: outcome === 'callback' ? nextAt : null, savedOutcome: outcome, afterSave: thenNext });
       else { toast.success('Call saved'); if (thenNext) goNext(); else resetCall(); }
     } catch (e) {
@@ -188,7 +188,7 @@ function LeadCall({ initial, plan, queue, reload }) {
               <Btn size="sm" variant="ghost" onClick={() => copy(formatPhone(lead.phone).replace(/\s/g, ''))}>Copy</Btn>
               <span className="text-[12px] adm-t3 mr-auto">{form.alt_phone ? `Alt: ${form.alt_phone}` : ''}</span>
               <a href={`tel:+${digits}`} onClick={() => setRunning(true)} className="inline-flex items-center rounded-lg px-3 py-1.5 text-[13px] font-semibold bg-[#FE5100] text-white hover:bg-[#e54900]">Open in dialer</a>
-              <Btn size="sm" variant="outline" onClick={() => setComm({ category: messageFor(cc.last_outcome, cc) || 'cold_call_interested', callbackAt: null, savedOutcome: null, afterSave: false })}>✉ Communicate</Btn>
+              <Btn size="sm" variant="outline" onClick={() => setComm({ category: preferTracked(messageFor(cc.last_outcome, cc) || 'cold_call_interested', queue.templates), callbackAt: null, savedOutcome: null, afterSave: false })}>✉ Communicate</Btn>
             </div>
           </Card>
 
