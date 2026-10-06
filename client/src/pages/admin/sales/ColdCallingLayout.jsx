@@ -2,14 +2,23 @@
 // search, CSV upload, today's numbers, and the call queue every page reads
 // (via <Outlet context>). Spec: docs/superpowers/specs/2026-10-05-cold-calling-design.md
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Outlet, useMatch, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { PageHeader, Btn, Skeleton, Card } from '../../../components/admin/ui';
+import { Btn, Skeleton, Card } from '../../../components/admin/ui';
+import { TodayStrip, HEADING } from './ccUi';
 import { crmListLists, crmColdCallQueue } from '../../../services/api';
 import ColdCallUpload from './ColdCallUpload';
 import ColdCallSearch from './ColdCallSearch';
 
 const POLL_MS = 60 * 1000;
+const PAGES = {
+  '': ['Overview', 'Today at a glance. Every card opens its page.'],
+  today: ["Today's Calls", 'Callbacks at their time, retries, then new leads up to the daily target.'],
+  'follow-ups': ['Follow-ups', 'Never miss a promised call. Everyone who needs another call, in one place.'],
+  history: ['Call History', 'Every call you logged, newest first.'],
+  lists: ['Lists', 'Your calling lists and how far each one has got.'],
+  reports: ['Reports', 'What works: results by category and area.'],
+};
 const LIST_KEY = 'bas.coldCall.listId';
 
 function beep() {
@@ -24,6 +33,8 @@ export default function ColdCallingLayout() {
   const navigate = useNavigate();
   // The lead page is a focused calling screen: no page title / controls above it.
   const onLead = !!useMatch('/admin/sales/cold-calling/lead/:leadId');
+  const seg = useLocation().pathname.split('/cold-calling')[1]?.split('/')[1] || '';
+  const [title, subtitle] = PAGES[seg] || PAGES[''];
   const [lists, setLists] = useState(null);
   const [listId, setListId] = useState(() => { try { return localStorage.getItem(LIST_KEY) || ''; } catch { return ''; } });
   const [queue, setQueue] = useState(null);
@@ -72,12 +83,37 @@ export default function ColdCallingLayout() {
     }
   }, [queue]);
 
+  // A lead clicks a link or signs up while you're calling → toast + beep. The first
+  // load only records what's already there, so opening the page doesn't ping.
+  const signals = useRef(null);
+  useEffect(() => {
+    if (!queue) return;
+    const items = [
+      ...Object.keys(queue.hot || {}).map((id) => [`hot:${id}`, id, '🔥 Clicked your link']),
+      ...(queue.setup || []).map((x) => [`setup:${x.lead.id}`, x.lead.id, '✓ Signed up', x.lead]),
+    ];
+    if (!signals.current) { signals.current = new Set(items.map(([k]) => k)); return; }
+    for (const [k, id, what, lead] of items) {
+      if (signals.current.has(k)) continue;
+      signals.current.add(k);
+      beep();
+      toast(`${what}${lead ? ` — ${lead.business_name || lead.name || ''}` : ''}`, { icon: '🔔', duration: 8000, id: k });
+      if ('Notification' in window && Notification.permission === 'granted') new Notification(what, { body: lead?.business_name || 'Open Cold Calling', tag: id });
+    }
+  }, [queue]);
+
   return (
-    <div className="p-4 sm:p-6">
+    <div className={onLead ? '-mt-3 md:-mt-5' : ''}>
       {!onLead && (
         <>
-          <PageHeader title="Cold Calling" subtitle="Open a lead, call, update the details, log the outcome, send the follow-up, move on." />
-          <div className="grid grid-cols-1 sm:grid-cols-[10fr_7fr_3fr] gap-2 -mt-3 mb-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div className="min-w-0">
+              <h1 className="text-[22px] leading-7 font-bold adm-t1 tracking-tight" style={HEADING}>{title}</h1>
+              <p className="text-[12.5px] adm-t3">{subtitle}</p>
+            </div>
+            <TodayStrip today={queue?.today} totals={queue?.totals} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[10fr_7fr_3fr] gap-2 mb-4">
             <ColdCallSearch onPick={(lead) => navigate(`/admin/sales/cold-calling/lead/${lead.id}`)} />
             <select className="fb-input text-sm !w-full" aria-label="Calling list" value={listId} onChange={(e) => setListId(e.target.value)}>
               <option value="">Choose a list…</option>
@@ -90,7 +126,7 @@ export default function ColdCallingLayout() {
 
       {lists === null || (listId && !queue) ? <Skeleton className="h-64 rounded-2xl" />
         : !listId ? <Card className="p-10 text-center adm-t3">Upload a CSV to start a calling list.</Card>
-        : <Outlet context={{ queue, listId, setListId, lists, reload: loadQueue, now }} />}
+        : <Outlet context={{ queue, listId, setListId, lists, reload: loadQueue, now, openUpload: () => setShowUpload(true) }} />}
 
       {showUpload && (
         <ColdCallUpload lists={lists || []} onClose={() => setShowUpload(false)}

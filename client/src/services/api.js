@@ -729,6 +729,7 @@ export const crmRecommendationSnooze = (id, until) => API.post(`/admin/crm/recom
 export const crmRecommendationDismiss = (id)     => API.post(`/admin/crm/recommendations/${id}/dismiss`);
 // Public intent-event sink — fire on identified buying-intent (has email/phone).
 export const trackIntent         = (data)        => API.post('/events/intent', data);
+export const trackLinkClick      = (code)        => API.post(`/events/link/${encodeURIComponent(code)}`);
 export const crmListLeads        = (params)      => API.get('/admin/crm/leads', { params });
 export const crmCreateLead       = (data)        => API.post('/admin/crm/leads', data);
 export const crmGetLead          = (id)          => API.get(`/admin/crm/leads/${id}`);
@@ -774,6 +775,10 @@ export const crmGetList          = (id)          => API.get(`/admin/crm/lists/${
 // Cold Calling tab — call queue, batched CSV import, outcome (+ follow-ups), reminders.
 export const crmColdCallQueue    = (listId)      => API.get('/admin/crm/cold-calls/queue', { params: { listId } });
 export const crmColdCallStats    = (days = 7)    => API.get('/admin/crm/cold-calls/stats', { params: { days } });
+export const crmColdCallFollowUps = (params)    => API.get('/admin/crm/cold-calls/follow-ups', { params });
+export const crmColdCallSetFollowUp = (leadId, data) => API.post(`/admin/crm/cold-calls/${leadId}/follow-up`, data);
+export const crmColdCallHistory  = (params)      => API.get('/admin/crm/cold-calls/history', { params });
+export const crmColdCallReports  = (params)      => API.get('/admin/crm/cold-calls/reports', { params });
 export const crmColdCallSearch   = (q)           => API.get('/admin/crm/cold-calls/search', { params: { q } });
 export const crmColdCallImport   = (rows, listId, listName) =>
   batchedImport((body) => API.post('/admin/crm/cold-calls/import', { ...body, listName }), rows, listId);

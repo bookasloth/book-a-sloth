@@ -262,7 +262,7 @@ describe('getQueue — daily slice', () => {
       o.select = jest.fn((_c, opts) => { if (opts?.head) kind = 'count'; return o; });
       o.in = jest.fn(() => { kind = 'cb'; return o; });
       o.lte = jest.fn(() => { kind = 'retry'; return o; });
-      o.order = jest.fn((col) => { kind = 'fresh'; seen.freshOrder = col; seen.freshQueried = true; return o; });
+      o.order = jest.fn((col) => { if (t !== 'leads') return o; kind = 'fresh'; seen.freshOrder = col; seen.freshQueried = true; return o; });
       o.limit = jest.fn((n) => { if (kind === 'fresh') seen.freshLimit = n; return o; });
       o.then = (res) => {
         const data = {

@@ -389,6 +389,13 @@ setInterval(async () => {
   } catch (err) { console.error('CRM follow-up reminder error:', err.message); }
 }, CRM_FOLLOWUP_INTERVAL_MIN * 60 * 1000);
 
+// Cold calling: WhatsApp the lead ~15 min before a promised callback (no-op until
+// the AiSensy template is approved).
+setInterval(async () => {
+  try { await runLocked('cold-call-reminders', () => require('./services/crm/coldCallService').callbackReminders(), { leaseMs: 10 * 60 * 1000 }); }
+  catch (err) { console.error('Cold-call reminder cron error:', err.message); }
+}, 5 * 60 * 1000);
+
 // ══ F4: LONG-interval crons (≥15 min) driven off a PERSISTED schedule (job_runs),
 // checked on a short SCHEDULER_TICK so pod churn can't starve them. Before this, a
 // setInterval whose first tick lands after a FULL interval was reset on every Render
@@ -442,11 +449,14 @@ const SCHEDULED_JOBS = [
   { name: 'rate-limit-cleanup', min: 60, run: async () => { const n = await cleanupRateLimitHits(); if (n > 0) console.log(`Rate-limit store: pruned ${n} expired rows`); } },
   { name: 'ip-block-prune', min: 60, run: async () => { const n = await ipBlocklist.pruneExpired(); if (n > 0) console.log(`IP blocklist: pruned ${n} expired bans`); } },
   { name: 'seo-crawl', min: Number(process.env.SEO_CRAWL_INTERVAL_MIN) || 24 * 60, run: () => require('./services/seo/seoCrawler').run({ trigger: 'nightly' }) },
+  // 6 pm IST cold-calling recap to the founder (`when` gates the hour; 20h interval = once a day).
+  { name: 'cold-call-recap', min: 20 * 60, when: () => require('./services/crm/coldCallRules').istHour() === 18, run: () => require('./services/crm/coldCallService').dailyRecap() },
   { name: 'gsc-sync', min: Number(process.env.GSC_SYNC_INTERVAL_MIN) || 24 * 60, run: () => require('./services/seo/gscSync').run() },
 ];
 const SCHEDULER_TICK_MIN = Number(process.env.SCHEDULER_TICK_MIN) || 5;
 setInterval(async () => {
   for (const job of SCHEDULED_JOBS) {
+    if (job.when && !job.when()) continue;
     try { await runIfDue(job.name, job.min * 60 * 1000, job.run); }
     catch (err) { console.error(`Scheduled job ${job.name} error:`, err.message); }
   }

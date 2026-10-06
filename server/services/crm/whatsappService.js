@@ -42,7 +42,7 @@ async function getApiKey() {
  * @param {string} [p.userName]      recipient display name
  * @returns {{success:boolean, skipped?:boolean, reason?:string, providerMessageId?:string, error?:string, response?:object}}
  */
-async function send({ lead, templateKey, templateParams = [], userName, automated = false }) {
+async function send({ lead, templateKey, templateParams = [], buttonParams = [], userName, automated = false }) {
   const gate = await canSend(lead, 'whatsapp', { automated });
   if (!gate.ok) return { success: false, skipped: true, reason: gate.reason, defer: gate.defer };
 
@@ -57,6 +57,7 @@ async function send({ lead, templateKey, templateParams = [], userName, automate
     destination: lead.whatsapp_phone || lead.phone,
     userName: userName || lead.name || 'there',
     templateParams: (templateParams || []).map(String),
+    buttonParams,
   });
 
   if (!res.success) return { success: false, error: res.error, response: res.response };

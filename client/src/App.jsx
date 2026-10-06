@@ -86,6 +86,7 @@ const ZohoBookingsAlternative = lazy(() => import('./pages/lp/ZohoBookingsAltern
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
 const InviteLanding  = lazy(() => import('./pages/InviteLanding'));
+const TrackLink      = lazy(() => import('./pages/TrackLink'));
 const HostLogin      = lazy(() => import('./pages/HostLogin'));
 const Changelog      = lazy(() => import('./pages/Changelog'));
 const Pricing        = lazy(() => import('./pages/Pricing'));
@@ -268,6 +269,10 @@ const CustomerDetail  = lazy(() => import('./pages/admin/sales/CustomerDetail'))
 const SalesTemplates  = lazy(() => import('./pages/admin/sales/SalesTemplates'));
 const ColdCallingLayout = lazy(() => import('./pages/admin/sales/ColdCallingLayout'));
 const ColdCallOverview = lazy(() => import('./pages/admin/sales/ColdCallOverview'));
+const ColdCallFollowUps = lazy(() => import('./pages/admin/sales/ColdCallFollowUps'));
+const ColdCallHistory = lazy(() => import('./pages/admin/sales/ColdCallHistory'));
+const ColdCallLists = lazy(() => import('./pages/admin/sales/ColdCallLists'));
+const ColdCallReports = lazy(() => import('./pages/admin/sales/ColdCallReports'));
 const ColdCallToday = lazy(() => import('./pages/admin/sales/ColdCallToday'));
 const ColdCallLead = lazy(() => import('./pages/admin/sales/ColdCallLead'));
 const SalesSequences  = lazy(() => import('./pages/admin/sales/SalesSequences'));
@@ -440,6 +445,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/invite/:slug" element={<InviteLanding />} />
+          <Route path="/r/:code" element={<TrackLink />} />
           <Route path="/help" element={<Help />} />
           <Route path="/help/docs" element={<HelpDocs />} />
           <Route path="/help/docs/:slug" element={<HelpDoc />} />
@@ -664,6 +670,10 @@ function App() {
             <Route index element={<ColdCallOverview />} />
             <Route path="today" element={<ColdCallToday />} />
             <Route path="lead/:leadId" element={<ColdCallLead />} />
+            <Route path="follow-ups" element={<ColdCallFollowUps />} />
+            <Route path="history" element={<ColdCallHistory />} />
+            <Route path="lists" element={<ColdCallLists />} />
+            <Route path="reports" element={<ColdCallReports />} />
           </Route>
           {/* Sequences, split by audience (v3.160): host lifecycle → Growth, cold acquisition → Marketing. */}
           <Route path="/admin/growth/sequences" element={<AdminWrapper><SalesSequences audience="customer" title="Lifecycle Sequences" subtitle="Post-signup host journeys — onboarding, activation, win-back. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />

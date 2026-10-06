@@ -14,4 +14,11 @@ async function recordIntent(req, res) {
   return res.status(202).json({ ok: !!r.stored });
 }
 
-module.exports = { recordIntent };
+// Cold-call WhatsApp link button (bookasloth.com/r/<code>): log the click on the lead.
+// Always 202 — never reveals whether a code matched.
+async function recordLinkClick(req, res) {
+  try { await require('../services/crm/coldCallService').trackClick(req.params.code); } catch (_) { /* best-effort */ }
+  return res.status(202).json({ ok: true });
+}
+
+module.exports = { recordIntent, recordLinkClick };

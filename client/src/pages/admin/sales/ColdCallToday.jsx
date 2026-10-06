@@ -5,13 +5,14 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Table, Badge, Btn } from '../../../components/admin/ui';
 import { Chips } from './ccUi';
-import { pendingPlan, outcomeLabel, outcomeTone, fmtTime, countdown } from './coldCallUtils';
+import { pendingPlan, outcomeLabel, outcomeTone, fmtTime, countdown, ago } from './coldCallUtils';
 
 const WHY = {
   callback: (p, now) => ({ tone: p.overdue ? 'danger' : 'warn', text: `Callback ${fmtTime(p.dueAt)}`, sub: countdown(p.dueAt, now) }),
   later: (p, now) => ({ tone: 'neutral', text: `Callback ${fmtTime(p.dueAt)}`, sub: countdown(p.dueAt, now) }),
   retry: (p) => ({ tone: 'info', text: `Retry ${(p.lead.attributes?.cold_call?.attempts || 0) + 1}`, sub: outcomeLabel(p.lead.attributes?.cold_call?.last_outcome) }),
   new: () => ({ tone: 'neutral', text: 'New', sub: '' }),
+  setup: (p) => ({ tone: 'ok', text: 'Setup call', sub: `Signed up · ${p.left} step${p.left > 1 ? 's' : ''} left` }),
 };
 
 export default function ColdCallToday() {
@@ -44,7 +45,7 @@ export default function ColdCallToday() {
     ) },
     { key: 'biz', label: 'Business', render: (r) => {
       const cc = r.lead.attributes?.cold_call || {};
-      return (<div className="min-w-0"><div className="font-semibold adm-t1 truncate">{r.lead.business_name || r.lead.name || 'Lead'}</div>
+      return (<div className="min-w-0"><div className="font-semibold adm-t1 truncate">{r.lead.business_name || r.lead.name || 'Lead'}{queue.hot?.[r.lead.id] && <span className="ml-2 text-[11px] font-semibold text-red-600" title={`Clicked a link ${ago(queue.hot[r.lead.id], now)}`}>🔥 clicked</span>}</div>
         <div className="text-[12px] adm-t3 truncate">{[r.lead.profession, cc.locality].filter(Boolean).join(' · ')}</div></div>);
     } },
     { key: 'why', label: 'Why today', render: (r) => {
