@@ -2,8 +2,10 @@
 /**
  * coldCallService.js — admin Cold Calling tab (/api/admin/crm/cold-calls).
  *
- * Import a calling list, serve the call queue, record a call outcome (+ the
- * one-click email/WhatsApp follow-up) and set callback reminders. Built on the
+ * Import a calling list, serve today's call queue (DAILY_TARGET calls, sliced in
+ * the DB so a 10k-lead pool never loads whole), search any lead (inbound callbacks),
+ * record a call outcome (+ the one-click email/WhatsApp follow-up) and set
+ * callback reminders. Built on the
  * Sales CRM: leads / lead_activities / lead_follow_ups / crm_messages.
  *
  * Calling state lives in leads.attributes.cold_call — NOT next_action_at, which
@@ -21,6 +23,8 @@ const { rankOf, MONEY } = require('./lifecycleRules');
 
 const SENDER = 'shubham';             // founder persona — plain, hand-typed email layout
 const MAX_ROWS = 50;                  // per import request; the client batches
+const LEAD_COLS = 'id,name,business_name,phone,whatsapp_phone,email,website,city,profession,status,do_not_contact,profile_id,attributes,tags';
+const CC = 'attributes->cold_call->>';
 const VALID_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const httpErr = (status, message) => Object.assign(new Error(message), { status });
@@ -55,6 +59,7 @@ async function importRows({ rows = [], listId = null, listName = '', createdBy =
         list_id: listId, day: r.day || prev.day || null, priority: r.priority || prev.priority || null,
         fit: r.fit || prev.fit || null, locality: r.locality || prev.locality || null, pitch: r.pitch || prev.pitch || null,
       };
+      coldCall.sort_key = rules.sortKey(coldCall);   // the queue ORDERs BY this in the DB
       const patch = { attributes: { ...attrs, cold_call: coldCall }, updated_at: new Date().toISOString() };
       if (r.email && !lead.email) {
         const { data: holder } = await supabaseAdmin.from('leads').select('id').eq('email', r.email).maybeSingle();
@@ -72,30 +77,72 @@ async function importRows({ rows = [], listId = null, listName = '', createdBy =
 }
 
 // ── Queue ─────────────────────────────────────────────────────
+// Callbacks come from EVERY list (a promised call is never hidden by the list
+// picker); retries and fresh leads come from the chosen list. Fresh leads only fill
+// what's left of today's target, fetched in sort_key order with a LIMIT — a 10k pool
+// is never loaded whole.
 async function getQueue(listId, now = new Date()) {
   if (!listId) throw httpErr(400, 'listId required');
-  const { data: leads, error } = await supabaseAdmin.from('leads')
-    .select('id,name,business_name,phone,whatsapp_phone,email,website,city,profession,status,do_not_contact,profile_id,attributes,tags')
-    .eq('attributes->cold_call->>list_id', listId)
-    .limit(2000);
-  if (error) throw error;
-  const ids = new Set((leads || []).map((l) => l.id));
+  const db = supabaseAdmin;
   const since = rules.istDayStart(now);
-  // Filter by lead in JS — an .in() over hundreds of ids overflows the request URL.
-  const [fu, calls, msgs, tpls] = await Promise.all([
-    supabaseAdmin.from('lead_follow_ups').select('id,lead_id,title,due_at').eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`),
-    supabaseAdmin.from('lead_activities').select('lead_id,meta').eq('type', 'call_logged').gte('occurred_at', since),
-    supabaseAdmin.from('crm_messages').select('lead_id,status').like('idempotency_key', 'cold:%').gte('created_at', since),
-    supabaseAdmin.from('crm_templates').select('id,channel,name,label,category,subject,body,variables,is_active').like('category', 'cold_call_%'),
+  const inList = (q) => q.eq(`${CC}list_id`, listId);
+  const counter = () => inList(db.from('leads').select('id', { count: 'exact', head: true }));
+  const [fu, calls, msgs, tpls, retryRes, left, signed] = await Promise.all([
+    db.from('lead_follow_ups').select('id,lead_id,title,due_at').eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`),
+    db.from('lead_activities').select('lead_id,meta').eq('type', 'call_logged').gte('occurred_at', since),
+    db.from('crm_messages').select('lead_id,status').like('idempotency_key', 'cold:%').gte('created_at', since),
+    db.from('crm_templates').select('id,channel,name,label,category,subject,body,variables,is_active').like('category', 'cold_call_%'),
+    inList(db.from('leads').select(LEAD_COLS)).lte(`${CC}retry_at`, now.toISOString()).eq(`${CC}closed`, 'false').limit(300),
+    counter().is(`${CC}attempts`, null).not('do_not_contact', 'is', true),
+    counter().not('profile_id', 'is', null),
   ]);
-  const mine = (rows) => (rows || []).filter((x) => ids.has(x.lead_id));
-  const outcomes = mine(calls.data).map((c) => c.meta?.outcome || null);
+  if (retryRes.error) throw retryRes.error;
+  const followUps = fu.data || [];
+  // Open callbacks are a handful, so this .in() stays far below the URL limit.
+  const cbIds = [...new Set(followUps.map((f) => f.lead_id))];
+  const cbLeads = cbIds.length ? ((await db.from('leads').select(LEAD_COLS).in('id', cbIds)).data || []) : [];
+  const base = rules.buildQueue([...cbLeads, ...(retryRes.data || [])], followUps, now);
+
+  // Cold-call outcomes only — other CRM call logs don't count toward the target.
+  const outcomes = (calls.data || []).map((c) => c.meta?.outcome).filter((o) => o && rules.OUTCOMES[o]);
+  const dayEnd = new Date(rules.istDayEnd(now)).getTime();
+  const callbacksToday = base.callbacksDue.length + base.upcoming.filter((c) => new Date(c.dueAt).getTime() < dayEnd).length;
+  const slots = rules.freshSlots({ callsToday: outcomes.length, callbacksToday, retries: base.retries.length });
+  let fresh = [];
+  if (slots > 0) {
+    const { data, error } = await inList(db.from('leads').select(LEAD_COLS))
+      .is(`${CC}attempts`, null).not('do_not_contact', 'is', true).neq('status', 'do_not_contact')
+      .order(`${CC}sort_key`, { ascending: true, nullsFirst: false })
+      .limit(slots + 10);   // slack for the rare fresh lead that already holds a callback
+    if (error) throw error;
+    fresh = rules.buildQueue(data || [], followUps, now).fresh.slice(0, slots);
+  }
   return {
-    ...rules.buildQueue(leads || [], mine(fu.data), now),
-    today: { ...rules.todayStats(outcomes), followUpsSent: mine(msgs.data).filter((m) => m.status === 'sent').length },
-    totals: rules.listTotals(leads || []),
+    callbacksDue: base.callbacksDue, retries: base.retries, fresh, upcoming: base.upcoming,
+    today: {
+      ...rules.todayStats(outcomes), target: rules.DAILY_TARGET,
+      followUpsSent: (msgs.data || []).filter((m) => m.status === 'sent').length,
+    },
+    totals: { fresh: left.count || 0, signedUp: signed.count || 0 },
     templates: tpls.data || [],
   };
+}
+
+// ── Search (inbound callbacks) ────────────────────────────────
+// Any lead by name / business / email, or by phone in any format (+91, 0-prefix,
+// spaces) — matched on the last 10 digits against phone and WhatsApp.
+async function search(q) {
+  const s = String(q || '').replace(/[%,()*"\\]/g, ' ').trim();
+  if (s.length < 3) return [];
+  const arms = [`name.ilike.%${s}%`, `business_name.ilike.%${s}%`, `email.ilike.%${s}%`];
+  const digits = s.replace(/\D/g, '');
+  if (digits.length >= 5) {
+    const d = digits.slice(-10);
+    arms.push(`phone.ilike.%${d}%`, `whatsapp_phone.ilike.%${d}%`);
+  }
+  const { data, error } = await supabaseAdmin.from('leads').select(LEAD_COLS).or(arms.join(',')).limit(10);
+  if (error) throw error;
+  return data || [];
 }
 
 // ── Outcome ───────────────────────────────────────────────────
@@ -201,4 +248,4 @@ async function remind(leadId, { at, note = '' } = {}, actorAdminId = null) {
   });
 }
 
-module.exports = { importRows, getQueue, recordOutcome, remind };
+module.exports = { importRows, getQueue, search, recordOutcome, remind };

@@ -7,6 +7,7 @@ import { crmListLists, crmColdCallQueue } from '../../../services/api';
 import ColdCallQueue from './ColdCallQueue';
 import ColdCallCard from './ColdCallCard';
 import ColdCallUpload from './ColdCallUpload';
+import ColdCallSearch from './ColdCallSearch';
 
 const POLL_MS = 60 * 1000;
 const LIST_KEY = 'bas.coldCall.listId';
@@ -28,6 +29,7 @@ export default function SalesColdCalling() {
   const [listId, setListId] = useState(() => { try { return localStorage.getItem(LIST_KEY) || ''; } catch { return ''; } });
   const [queue, setQueue] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [pinned, setPinned] = useState(null);       // a lead opened from search (inbound callback)
   const [showUpload, setShowUpload] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const notified = useRef(new Set());
@@ -74,12 +76,14 @@ export default function SalesColdCalling() {
   }, [queue]);
 
   const ordered = useMemo(() => (queue ? [...queue.callbacksDue, ...queue.retries, ...queue.fresh, ...queue.upcoming].map((i) => i.lead) : []), [queue]);
-  const current = ordered.find((l) => l.id === selectedId) || ordered[0] || null;
+  const current = pinned || ordered.find((l) => l.id === selectedId) || ordered[0] || null;
   // Pin the lead on screen: a poll that reorders the queue (a callback falls due) must
   // not swap the card mid-call and wipe the notes/outcome/timer.
   useEffect(() => { if (current && current.id !== selectedId) setSelectedId(current.id); }, [current, selectedId]);
 
+  const select = (id) => { setPinned(null); setSelectedId(id); };
   const onDone = (doneId) => {
+    setPinned(null);
     const idx = ordered.findIndex((l) => l.id === doneId);
     setSelectedId(ordered[idx + 1]?.id || null);
     loadQueue();
@@ -88,9 +92,10 @@ export default function SalesColdCalling() {
   const t = queue?.today; const tot = queue?.totals;
   return (
     <div className="p-4 sm:p-6">
-      <PageHeader title="Cold Calling" subtitle="Call, log the outcome, send the follow-up. Keys: 1–7 outcome · Enter save & next · T timer."
+      <PageHeader title="Cold Calling" subtitle="Today's calls: callbacks at their time, retries, then fresh leads up to the daily target. Keys: 1–7 outcome · Enter save & next · T timer."
         actions={<>
-          <select className="fb-input text-sm" aria-label="Calling list" value={listId} onChange={(e) => { setListId(e.target.value); setSelectedId(null); }}>
+          <ColdCallSearch onPick={setPinned} />
+          <select className="fb-input text-sm" aria-label="Calling list" value={listId} onChange={(e) => { setListId(e.target.value); select(null); }}>
             <option value="">Choose a list…</option>
             {(lists || []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
@@ -99,7 +104,7 @@ export default function SalesColdCalling() {
 
       {queue && (
         <Card className="mb-4 flex flex-wrap gap-6">
-          <Stat label="Called today" value={t.calls} />
+          <Stat label="Called today" value={`${t.calls} / ${t.target}`} />
           <Stat label="Connected" value={t.connected} />
           <Stat label="Interested" value={t.interested} />
           <Stat label="Follow-ups sent" value={t.followUpsSent} />
@@ -112,16 +117,16 @@ export default function SalesColdCalling() {
         : !listId ? <Card className="p-10 text-center adm-t3">Upload a CSV to start a calling list.</Card>
         : (
           <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-            <ColdCallQueue queue={queue} currentId={current?.id} onSelect={setSelectedId} now={now} />
+            <ColdCallQueue queue={queue} currentId={current?.id} onSelect={select} now={now} />
             {current
               ? <ColdCallCard key={current.id} lead={current} templates={queue.templates} onDone={onDone} onChanged={loadQueue} />
-              : <Card className="p-10 text-center adm-t3">Nothing to call right now. Upcoming callbacks will appear here when due.</Card>}
+              : <Card className="p-10 text-center adm-t3">{t.calls >= t.target ? `Today's ${t.target} calls are done.` : 'Nothing to call right now.'} Callbacks still pop up when due.</Card>}
           </div>
         )}
 
       {showUpload && (
         <ColdCallUpload lists={lists || []} onClose={() => setShowUpload(false)}
-          onImported={(id) => { setShowUpload(false); loadLists(); setListId(id); setSelectedId(null); }} />
+          onImported={(id) => { setShowUpload(false); loadLists(); setListId(id); select(null); }} />
       )}
     </div>
   );

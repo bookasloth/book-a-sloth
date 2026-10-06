@@ -11,11 +11,12 @@ vi.mock('../../../services/api', () => ({
     callbacksDue: queueCalls > 1 ? [{ lead: mkLead('Z', 'Urgent Callback Co'), followUp: { id: 'fz' }, dueAt: '2000-01-01T00:00:00Z', overdue: true }] : [],
     retries: [], upcoming: [],
     fresh: [{ lead: { id: 'A', business_name: 'Test Clinic', phone: '918888700000', whatsapp_phone: '918888700000', email: 'a@b.co', profession: 'Dental clinic', attributes: { cold_call: { day: 'Day 1', priority: '1', fit: '99', locality: 'Area', pitch: 'Pitch text' } } } }],
-    today: { calls: 0, connected: 0, interested: 0, followUpsSent: 0 },
+    today: { calls: 0, connected: 0, interested: 0, followUpsSent: 0, target: 60 },
     totals: { total: 1, fresh: 1, called: 0, signedUp: 0, byOutcome: {} },
     templates: [],
   } }); },
   crmLeadTimeline: () => Promise.resolve({ data: [] }),
+  crmColdCallSearch: (q) => Promise.resolve({ data: q.includes('98220') ? [mkLead('S', 'Inbound Salon')] : [] }),
   crmColdCallOutcome: (...a) => outcome(...a),
   crmColdCallRemind: vi.fn(), crmColdCallImport: vi.fn(), crmUpdateTemplate: vi.fn(),
 }));
@@ -78,4 +79,16 @@ test('follow-up checkboxes are not stretched by the global input style', async (
   await waitFor(() => expect(screen.getAllByText('Test Clinic').length).toBeGreaterThan(0));
   fireEvent.keyDown(window, { key: '1' });
   for (const cb of screen.getAllByRole('checkbox')) expect(cb.getAttribute('class')).toContain('!w-4');
+});
+
+test('search by phone opens the lead in the call card; saving returns to the queue', async () => {
+  render(<SalesColdCalling />);
+  await waitFor(() => expect(screen.getAllByText('Test Clinic').length).toBeGreaterThan(0));
+  expect(screen.getByText('0 / 60')).toBeTruthy();
+  fireEvent.change(screen.getByLabelText('Search leads'), { target: { value: '+91 98220 11111' } });
+  fireEvent.click(await screen.findByRole('button', { name: /Inbound Salon/ }));
+  fireEvent.keyDown(window, { key: '1' });
+  fireEvent.keyDown(window, { key: 'Enter' });
+  await waitFor(() => expect(outcome).toHaveBeenCalled());
+  expect(outcome.mock.calls.at(-1)[0]).toBe('S');
 });

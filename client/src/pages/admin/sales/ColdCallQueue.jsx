@@ -32,7 +32,8 @@ export default function ColdCallQueue({ queue, currentId, onSelect, now }) {
     <Card className="p-2 max-h-[calc(100vh-220px)] overflow-y-auto">
       <Group title="Callbacks due" items={queue.callbacksDue} currentId={currentId} onSelect={onSelect} right={cb} empty="None due" />
       <Group title="Retries" items={queue.retries} currentId={currentId} onSelect={onSelect} empty="None due" />
-      <Group title="Fresh" items={queue.fresh} currentId={currentId} onSelect={onSelect} empty="Everyone has been called" />
+      <Group title="Fresh today" items={queue.fresh} currentId={currentId} onSelect={onSelect}
+        empty={queue.totals?.fresh > 0 ? "Today's target is reached" : 'Everyone has been called'} />
       {queue.upcoming.length > 0 && (
         <Group title="Later callbacks" items={queue.upcoming} currentId={currentId} onSelect={onSelect}
           right={(it) => <Badge tone="neutral">{countdown(it.dueAt, now)}</Badge>} />

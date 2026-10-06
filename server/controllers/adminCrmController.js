@@ -538,6 +538,10 @@ const coldCallQueue = async (req, res) => {
   try { res.json(await coldCallService.getQueue(req.query.listId)); } catch (e) { coldCallError(res, e); }
 };
 
+const coldCallSearch = async (req, res) => {
+  try { res.json(await coldCallService.search(req.query.q)); } catch (e) { coldCallError(res, e); }
+};
+
 const coldCallImport = async (req, res) => {
   try {
     const rows = (Array.isArray(req.body?.rows) ? req.body.rows : []).map((r) => ({ ...r, email: cleanEmail(r?.email) }));
@@ -568,5 +572,5 @@ module.exports = {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   listTags, createTag, updateTag, deleteTag,
   listViews, createView, deleteView,
-  coldCallQueue, coldCallImport, coldCallOutcome, coldCallRemind,
+  coldCallQueue, coldCallSearch, coldCallImport, coldCallOutcome, coldCallRemind,
 };

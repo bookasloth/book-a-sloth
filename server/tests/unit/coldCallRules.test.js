@@ -98,13 +98,37 @@ describe('buildQueue', () => {
   });
 });
 
+describe('daily plan', () => {
+  test('sortKey orders Day → Priority (P1 or rank) → Fit desc, missing last', () => {
+    const keys = [
+      r.sortKey({ day: 'Day 10', priority: '1' }),
+      r.sortKey({ priority: 'P1', fit: '85' }),
+      r.sortKey({ day: 'Day 2', priority: '5' }),
+      r.sortKey({ priority: 'P2', fit: '99' }),
+      r.sortKey({ priority: 'P1', fit: '99' }),
+      r.sortKey({ day: 'Day 2', priority: '1' }),
+      r.sortKey({}),
+    ].sort();
+    expect(keys).toEqual([
+      r.sortKey({ day: 'Day 2', priority: '1' }), r.sortKey({ day: 'Day 2', priority: '5' }), r.sortKey({ day: 'Day 10', priority: '1' }),
+      r.sortKey({ priority: 'P1', fit: '99' }), r.sortKey({ priority: 'P1', fit: '85' }), r.sortKey({ priority: 'P2', fit: '99' }), r.sortKey({}),
+    ]);
+    expect(r.sortKey({ day: 'Day 1', priority: 'P1', fit: '9' })).toBe('001.0001.091');
+  });
+  test('freshSlots fills what is left of the 60 after calls, callbacks and retries', () => {
+    expect(r.DAILY_TARGET).toBe(60);
+    expect(r.freshSlots({})).toBe(60);
+    expect(r.freshSlots({ callsToday: 20, callbacksToday: 5, retries: 10 })).toBe(25);
+    expect(r.freshSlots({ callsToday: 58, callbacksToday: 4 })).toBe(0);
+  });
+});
+
 describe('stats + dates', () => {
   test('todayStats counts connected and interested', () => {
     expect(r.todayStats(['interested', 'no_answer', 'details', 'wrong_number', null])).toEqual({ calls: 5, connected: 2, interested: 1 });
   });
-  test('listTotals', () => {
-    const t = r.listTotals([lead('a'), lead('b', { attempts: 1, last_outcome: 'interested', closed: true }, { profile_id: 'p' }), lead('c', { attempts: 2, last_outcome: 'no_answer' })]);
-    expect(t).toEqual({ total: 3, fresh: 1, called: 2, signedUp: 1, byOutcome: { interested: 1, no_answer: 1 } });
+  test('istDayEnd is the next IST midnight', () => {
+    expect(r.istDayEnd(new Date('2026-10-05T20:00:00Z'))).toBe('2026-10-06T18:30:00.000Z');
   });
   test('IST day helpers', () => {
     const late = new Date('2026-10-05T20:00:00Z'); // 01:30 IST on Oct 6
