@@ -58,6 +58,9 @@ async function importRows({ rows = [], listId = null, listName = '', createdBy =
         ...prev,                             // keeps attempts / last_outcome / closed on re-import
         list_id: listId, day: r.day || prev.day || null, priority: r.priority || prev.priority || null,
         fit: r.fit || prev.fit || null, locality: r.locality || prev.locality || null, pitch: r.pitch || prev.pitch || null,
+        // Google listing facts shown on the call screen (rating, reviews, address, Maps link).
+        rating: r.rating || prev.rating || null, reviews: r.reviews || prev.reviews || null,
+        address: r.address || prev.address || null, maps_url: r.maps_url || prev.maps_url || null,
       };
       coldCall.sort_key = rules.sortKey(coldCall);   // the queue ORDERs BY this in the DB
       const patch = { attributes: { ...attrs, cold_call: coldCall }, updated_at: new Date().toISOString() };
@@ -89,7 +92,7 @@ async function getQueue(listId, now = new Date()) {
   const counter = () => inList(db.from('leads').select('id', { count: 'exact', head: true }));
   const [fu, calls, msgs, tpls, retryRes, left, signed] = await Promise.all([
     db.from('lead_follow_ups').select('id,lead_id,title,due_at').eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`),
-    db.from('lead_activities').select('lead_id,meta').eq('type', 'call_logged').gte('occurred_at', since),
+    db.from('lead_activities').select('lead_id,meta,occurred_at').eq('type', 'call_logged').gte('occurred_at', since),
     db.from('crm_messages').select('lead_id,status').like('idempotency_key', 'cold:%').gte('created_at', since),
     db.from('crm_templates').select('id,channel,name,label,category,subject,body,variables,is_active').like('category', 'cold_call_%'),
     inList(db.from('leads').select(LEAD_COLS)).lte(`${CC}retry_at`, now.toISOString()).eq(`${CC}closed`, 'false').limit(300),
@@ -100,11 +103,19 @@ async function getQueue(listId, now = new Date()) {
   const followUps = fu.data || [];
   // Open callbacks are a handful, so this .in() stays far below the URL limit.
   const cbIds = [...new Set(followUps.map((f) => f.lead_id))];
-  const cbLeads = cbIds.length ? ((await db.from('leads').select(LEAD_COLS).in('id', cbIds)).data || []) : [];
+  // Cold-call outcomes only — other CRM call logs don't count toward the target.
+  const doneCalls = (calls.data || []).filter((c) => c.meta?.outcome && rules.OUTCOMES[c.meta.outcome]);
+  const doneIds = [...new Set(doneCalls.map((c) => c.lead_id))];
+  // Both id sets are a day's worth (≤ ~100), far below the URL limit.
+  const [cbRes, doneRes] = await Promise.all([
+    cbIds.length ? db.from('leads').select(LEAD_COLS).in('id', cbIds) : { data: [] },
+    doneIds.length ? db.from('leads').select(LEAD_COLS).in('id', doneIds) : { data: [] },
+  ]);
+  const cbLeads = cbRes.data || [];
+  const doneById = new Map((doneRes.data || []).map((l) => [l.id, l]));
   const base = rules.buildQueue([...cbLeads, ...(retryRes.data || [])], followUps, now);
 
-  // Cold-call outcomes only — other CRM call logs don't count toward the target.
-  const outcomes = (calls.data || []).map((c) => c.meta?.outcome).filter((o) => o && rules.OUTCOMES[o]);
+  const outcomes = doneCalls.map((c) => c.meta.outcome);
   const dayEnd = new Date(rules.istDayEnd(now)).getTime();
   const callbacksToday = base.callbacksDue.length + base.upcoming.filter((c) => new Date(c.dueAt).getTime() < dayEnd).length;
   const slots = rules.freshSlots({ callsToday: outcomes.length, callbacksToday, retries: base.retries.length });
@@ -119,6 +130,11 @@ async function getQueue(listId, now = new Date()) {
   }
   return {
     callbacksDue: base.callbacksDue, retries: base.retries, fresh, upcoming: base.upcoming,
+    // Today's finished calls, oldest first — Today's Calls shows them as Done.
+    done: doneCalls
+      .filter((c) => doneById.has(c.lead_id))
+      .sort((a, b) => new Date(a.occurred_at) - new Date(b.occurred_at))
+      .map((c) => ({ lead: doneById.get(c.lead_id), outcome: c.meta.outcome, at: c.occurred_at })),
     today: {
       ...rules.todayStats(outcomes), target: rules.DAILY_TARGET,
       followUpsSent: (msgs.data || []).filter((m) => m.status === 'sent').length,
@@ -237,6 +253,57 @@ async function recordOutcome(leadId, body = {}, actorAdminId = null, now = new D
   return { ok: true, coldCall: step.cold_call, sends, warnings };
 }
 
+// ── Send (the follow-up window) ───────────────────────────────
+// After a call (or any time) the caller picks a message set per channel:
+// body { email: { category } | null, whatsapp: { category } | null, callbackAt?, toEmail? }.
+// Each channel's result is returned, never thrown — same as recordOutcome's sends.
+const CATEGORY = /^cold_call_[a-z_]+$/;
+async function send(leadId, body = {}, actorAdminId = null, now = new Date()) {
+  const lead = await leadService.getLead(leadId);
+  if (!lead) throw httpErr(404, 'lead not found');
+  const mail = String(body.toEmail || '').trim().toLowerCase();   // typed in the window
+  if (mail && VALID_EMAIL.test(mail) && mail !== lead.email) {
+    await supabaseAdmin.from('leads').update({ email: mail, updated_at: now.toISOString() }).eq('id', leadId);
+    lead.email = mail;
+  }
+  const callbackAt = validDate(body.callbackAt) ? new Date(body.callbackAt).toISOString() : null;
+  const sends = {};
+  for (const ch of ['email', 'whatsapp']) {
+    const category = body[ch]?.category;
+    if (!category) continue;
+    if (!CATEGORY.test(category)) throw httpErr(400, `bad category for ${ch}`);
+    sends[ch] = await sendFollowUp(lead, ch, category, category, callbackAt, now, actorAdminId || 'cold_call');
+  }
+  if (!Object.keys(sends).length) throw httpErr(400, 'pick at least one channel');
+  return { ok: true, sends };
+}
+
+// ── Lead details captured on the call ─────────────────────────
+// Lead columns + call-only extras (role, alternate number, hours, address) that
+// live in attributes.cold_call. Blank strings clear a field; absent keys are kept.
+const DETAIL_COLUMNS = ['name', 'business_name', 'profession', 'website', 'instagram'];
+const DETAIL_EXTRAS = ['role', 'alt_phone', 'hours', 'address'];
+async function updateDetails(leadId, body = {}, now = new Date()) {
+  const lead = await leadService.getLead(leadId);
+  if (!lead) throw httpErr(404, 'lead not found');
+  const patch = {};
+  for (const k of DETAIL_COLUMNS) if (k in body) patch[k] = String(body[k] ?? '').trim() || null;
+  if ('email' in body) {
+    const mail = String(body.email || '').trim().toLowerCase();
+    if (mail && !VALID_EMAIL.test(mail)) throw httpErr(400, 'invalid email');
+    patch.email = mail || null;
+  }
+  const cc = { ...(lead.attributes?.cold_call || {}) };
+  let extras = false;
+  for (const k of DETAIL_EXTRAS) if (k in body) { cc[k] = String(body[k] ?? '').trim() || null; extras = true; }
+  if (extras) patch.attributes = { ...(lead.attributes || {}), cold_call: cc };
+  if (!Object.keys(patch).length) throw httpErr(400, 'nothing to update');
+  patch.updated_at = now.toISOString();
+  const { data, error } = await supabaseAdmin.from('leads').update(patch).eq('id', leadId).select(LEAD_COLS).single();
+  if (error) throw error;
+  return data;
+}
+
 // ── Remind me ─────────────────────────────────────────────────
 async function remind(leadId, { at, note = '' } = {}, actorAdminId = null) {
   if (!validDate(at)) throw httpErr(400, 'valid "at" date required');
@@ -248,4 +315,4 @@ async function remind(leadId, { at, note = '' } = {}, actorAdminId = null) {
   });
 }
 
-module.exports = { importRows, getQueue, search, recordOutcome, remind };
+module.exports = { importRows, getQueue, search, recordOutcome, send, updateDetails, remind };

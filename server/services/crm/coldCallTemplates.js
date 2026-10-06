@@ -1,7 +1,7 @@
 'use strict';
 /**
- * coldCallTemplates.js — the 8 follow-up templates the Cold Calling tab sends
- * after a call (4 outcomes × email + WhatsApp). Seeded into crm_templates by
+ * coldCallTemplates.js — the 12 follow-up templates the Cold Calling tab sends
+ * after a call (6 message sets × email + WhatsApp: 4 outcomes + missed call + setup help). Seeded into crm_templates by
  * scripts/seedColdCallTemplates.js; editable afterwards on /admin/sales/templates.
  *
  * Email: founder voice, sent as persona `shubham` (plain layout). Lead tokens
@@ -68,6 +68,26 @@ ${SIGN}`,
 ${SIGN}`,
   },
   {
+    channel: 'email', name: 'cold_call_missed_email', label: 'Cold call · No answer → missed call', category: 'cold_call_missed', variables: [], is_active: true,
+    subject: 'Tried calling you today',
+    body: `<p>Hi {{business_name}} team,</p>
+<p>I tried calling you today but couldn't get through. I'm Shubham, founder of Book A Sloth.</p>
+<p>We help businesses like yours take bookings and payments online, with automatic reminders so fewer clients miss their appointments. It's free to start and setup takes about 3 minutes:</p>
+<p><a href="${SIGNUP}">Create your free booking page</a></p>
+<p>Rather talk first? ${CALL('Pick a time that suits you')} and I'll call you then.</p>
+${SIGN}`,
+  },
+  {
+    channel: 'email', name: 'cold_call_setup_help_email', label: 'Cold call · Setup help (interested, not signed up)', category: 'cold_call_setup_help', variables: [], is_active: true,
+    subject: 'Need a hand setting up your booking page?',
+    body: `<p>Hi {{business_name}} team,</p>
+<p>Just checking in: were you able to set up your booking page?</p>
+<p>If you got stuck anywhere, reply to this email and I'll help you finish it in a few minutes. You can pick up where you left off here:</p>
+<p><a href="${SIGNUP}">Continue setting up</a></p>
+<p>Prefer to do it together? ${CALL('Book a 30-minute call with me')}.</p>
+${SIGN}`,
+  },
+  {
     channel: 'whatsapp', name: 'Cold Call Interested - Vendor', label: 'Cold call · Interested → signup link (WA)', category: 'cold_call_interested', variables: BIZ, is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Thanks for your time today!
 You can create your free booking page here:
@@ -100,6 +120,19 @@ Whenever you're ready, you can create your free booking page here:
 ${WA_SIGNUP}
 It takes about 3 minutes, and I’m happy to help you set it up.
 Just reply here whenever you’re ready.`,
+  },
+  {
+    channel: 'whatsapp', name: 'Cold Call Missed - Vendor', label: 'Cold call · No answer → missed call (WA)', category: 'cold_call_missed', variables: BIZ, is_active: false, subject: null,
+    body: `Hi {{1}} team, Shubham from Book A Sloth here. I tried calling you today but couldn't reach you.
+We help businesses like yours take bookings and payments online, with automatic reminders. It's free to start and setup takes about 3 minutes.
+Have a look: ${WA_SIGNUP}
+Reply here with a good time and I'll call you back.`,
+  },
+  {
+    channel: 'whatsapp', name: 'Cold Call Setup Help - Vendor', label: 'Cold call · Setup help (WA)', category: 'cold_call_setup_help', variables: BIZ, is_active: false, subject: null,
+    body: `Hi {{1}} team, Shubham from Book A Sloth here. Just checking in: were you able to set up your booking page?
+If you got stuck anywhere, reply here and I'll help you finish it in a few minutes.
+You can continue here: ${WA_SIGNUP}`,
   },
 ];
 

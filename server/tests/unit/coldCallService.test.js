@@ -292,6 +292,12 @@ describe('getQueue — daily slice', () => {
     expect(q.totals).toEqual({ fresh: 42, signedUp: 42 });
   });
 
+  test('finished calls today come back as done, with their outcome', async () => {
+    queueDb({ calls: 2, cbLeads: [L('x', { attempts: 1 })] });   // both calls are on lead x (no_answer)
+    const q = await svc.getQueue('L1', NOW);
+    expect(q.done.map((d) => [d.lead.id, d.outcome])).toEqual([['x', 'no_answer'], ['x', 'no_answer']]);
+  });
+
   test('target reached → no fresh query at all', async () => {
     const seen = queueDb({ calls: 60, fresh: [L('F')] });
     const q = await svc.getQueue('L1', NOW);
@@ -313,6 +319,46 @@ describe('search', () => {
     expect(orArg).toContain('name.ilike.%Smile   Dental%');                 // , ( ) stripped — can't break the or()
     expect(orArg).not.toContain('phone.ilike');                             // no digits → no phone arm
     expect(await svc.search('ab')).toEqual([]);
+  });
+});
+
+describe('send (follow-up window)', () => {
+  test('sends the picked message set per channel with a category idempotency key', async () => {
+    leadService.getLead.mockResolvedValue({ id: 'A', email: 'a@b.co', attributes: {} });
+    withTemplates(TPL.email, { ...TPL.whatsapp, is_active: true, name: 'Cold Call Missed - Vendor' });
+    const out = await svc.send('A', { email: { category: 'cold_call_missed' }, whatsapp: { category: 'cold_call_missed' } }, 'adm', NOW);
+    expect(out.sends.email.status).toBe('sent');
+    expect(out.sends.whatsapp.status).toBe('sent');
+    const keys = messageService.enqueue.mock.calls.map(([a]) => a.idempotencyKey);
+    expect(keys).toEqual(['cold:A:cold_call_missed:email:2026-10-06', 'cold:A:cold_call_missed:whatsapp:2026-10-06']);
+    expect(messageService.enqueue.mock.calls[1][0].templateKey).toBe('Cold Call Missed - Vendor');
+  });
+  test('saves a typed email first; only ticked channels go; bad input → 400/404', async () => {
+    leadService.getLead.mockResolvedValue({ id: 'A', email: null, attributes: {} });
+    withTemplates();
+    await svc.send('A', { email: { category: 'cold_call_interested' }, whatsapp: null, toEmail: 'New@Lead.co' }, 'adm', NOW);
+    expect(mockUpdates.find((u) => u.table === 'leads').p.email).toBe('new@lead.co');
+    expect(messageService.enqueue).toHaveBeenCalledTimes(1);
+    await expect(svc.send('A', {}, 'adm', NOW)).rejects.toMatchObject({ status: 400 });
+    await expect(svc.send('A', { email: { category: 'x; drop' } }, 'adm', NOW)).rejects.toMatchObject({ status: 400 });
+    leadService.getLead.mockResolvedValue(null);
+    await expect(svc.send('Z', { email: { category: 'cold_call_interested' } })).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe('updateDetails', () => {
+  test('writes lead columns and call-only extras; blank clears; absent kept', async () => {
+    leadService.getLead.mockResolvedValue({ id: 'A', attributes: { cold_call: { list_id: 'L1', hours: '9-5' } } });
+    mockTableData = { leads: { data: { id: 'A' }, error: null } };
+    await svc.updateDetails('A', { name: ' Priya ', email: 'PRIYA@Bloom.co', role: 'Owner', alt_phone: '', website: '' }, NOW);
+    const p = mockUpdates.find((u) => u.table === 'leads').p;
+    expect(p).toMatchObject({ name: 'Priya', email: 'priya@bloom.co', website: null });
+    expect(p.attributes.cold_call).toEqual({ list_id: 'L1', hours: '9-5', role: 'Owner', alt_phone: null });
+  });
+  test('invalid email and empty body → 400', async () => {
+    leadService.getLead.mockResolvedValue({ id: 'A', attributes: {} });
+    await expect(svc.updateDetails('A', { email: 'nope' })).rejects.toMatchObject({ status: 400 });
+    await expect(svc.updateDetails('A', {})).rejects.toMatchObject({ status: 400 });
   });
 });
 
