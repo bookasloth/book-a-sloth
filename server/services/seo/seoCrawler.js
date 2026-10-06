@@ -61,6 +61,8 @@ async function crawlPrerendered(seed) {
     // bodyCrawled:false and the top-level parsed fields empty so the EXISTING rule
     // engine's behaviour for host/service pages is unchanged (no new orphan/broken-
     // link noise); the v2 scorer reads raw_signals.contentModel directly instead.
+    // wordCount is the exception: every rule that reads it is gated on bodyCrawled,
+    // so persisting the real count (seo_crawl_pages.word_count) adds no rule noise.
     const contentModel = require('./pageContentModel').build(seed.pageType, m.payload);
     return {
       url: seed.url, pageType: seed.pageType, inSitemap: seed.inSitemap,
@@ -70,7 +72,7 @@ async function crawlPrerendered(seed) {
       title: args.title || null, metaDescription: args.description || null, canonical: args.canonical || null,
       robots, h1: [], headings: [],
       links: { internal: [], external: [] }, images: [], jsonLd: args.jsonLd ? [args.jsonLd] : [],
-      wordCount: 0, viewport: 'width=device-width,initial-scale=1', bodyCrawled: false, contentModel,
+      wordCount: contentModel?.wordCount || 0, viewport: 'width=device-width,initial-scale=1', bodyCrawled: false, contentModel,
       indexable: m.status === 200 && !(robots && robots.includes('noindex')), fetchError: null,
     };
   } catch (err) {
