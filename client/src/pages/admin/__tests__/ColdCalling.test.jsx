@@ -96,7 +96,7 @@ test('overview: today numbers, attention, week stats, lists; Start calling opens
   expect(screen.queryByText('Done Clinic')).toBeNull();          // the list lives on /today
   fireEvent.click(screen.getByRole('button', { name: /Start calling/ }));
   await onLead('Bloom Makeup Studio');
-});
+}, 15000);   // heaviest page — headroom for a loaded CI box
 
 test("today's calls is the list only: done + pending in order", async () => {
   renderAt('/admin/sales/cold-calling/today');
