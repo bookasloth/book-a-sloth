@@ -5,7 +5,7 @@ const mockUpdates = [];
 let mockTableData = {};
 function mockChain(table) {
   const o = {};
-  for (const m of ['select', 'eq', 'in', 'gte', 'like', 'order', 'limit', 'maybeSingle', 'single']) o[m] = jest.fn(() => o);
+  for (const m of ['select', 'eq', 'in', 'gte', 'lte', 'is', 'not', 'neq', 'or', 'like', 'order', 'limit', 'maybeSingle', 'single']) o[m] = jest.fn(() => o);
   o.update = jest.fn((p) => { mockUpdates.push({ table, p }); return o; });
   o.then = (res) => Promise.resolve(mockTableData[table] || { data: null, error: null }).then(res);
   return o;
@@ -76,7 +76,7 @@ describe('importRows', () => {
     expect(optsA).toMatchObject({ source: 'cold_call', skipMetaLead: true });
     expect(leadService.upsertLead.mock.calls[1][0].whatsapp_phone).toBe('919922256169'); // fallback = phone
     const ccA = mockUpdates.find((u) => u.table === 'leads').p.attributes.cold_call;
-    expect(ccA).toMatchObject({ list_id: 'L1', attempts: 2, last_outcome: 'no_answer', day: 'Day 2', priority: '3', pitch: 'p' });
+    expect(ccA).toMatchObject({ list_id: 'L1', attempts: 2, last_outcome: 'no_answer', day: 'Day 2', priority: '3', pitch: 'p', sort_key: '002.0003.100' });
   });
   test('creates the list when only listName is given', async () => {
     listService.createList.mockResolvedValue({ id: 'NEW' });
@@ -239,6 +239,80 @@ describe('recordOutcome — review fixes', () => {
     messageService.enqueue.mockResolvedValue({ status: 'sent', error: null, created_at: old });
     const out = await svc.recordOutcome('L1', { outcome: 'interested', send: { email: true } }, 'admin1', NOW);
     expect(out.sends.email).toEqual({ status: 'already_sent', reason: null });
+  });
+});
+
+describe('getQueue — daily slice', () => {
+  const L = (id, cc = {}) => ({ id, status: 'list', do_not_contact: false, attributes: { cold_call: { list_id: 'L1', ...cc } } });
+  // leads queries are told apart by shape: count head / .in (callback leads) / .lte (retries) / .order (fresh).
+  function queueDb({ calls = 0, followUps = [], cbLeads = [], retries = [], fresh = [] }) {
+    const seen = { freshLimit: null, freshOrder: null, freshQueried: false };
+    const { supabaseAdmin } = require('../../config/supabase');
+    supabaseAdmin.from.mockImplementation((t) => {
+      const o = mockChain(t);
+      let kind = 'other';
+      o.select = jest.fn((_c, opts) => { if (opts?.head) kind = 'count'; return o; });
+      o.in = jest.fn(() => { kind = 'cb'; return o; });
+      o.lte = jest.fn(() => { kind = 'retry'; return o; });
+      o.order = jest.fn((col) => { kind = 'fresh'; seen.freshOrder = col; seen.freshQueried = true; return o; });
+      o.limit = jest.fn((n) => { if (kind === 'fresh') seen.freshLimit = n; return o; });
+      o.then = (res) => {
+        const data = {
+          lead_follow_ups: { data: followUps },
+          lead_activities: { data: Array.from({ length: calls }, () => ({ lead_id: 'x', meta: { outcome: 'no_answer' } })) },
+          crm_messages: { data: [{ status: 'sent' }, { status: 'failed' }] },
+          crm_templates: { data: [] },
+        }[t] || ({ count: { count: 42 }, cb: { data: cbLeads }, retry: { data: retries }, fresh: { data: fresh } }[kind] || { data: [] });
+        return Promise.resolve({ error: null, ...data }).then(res);
+      };
+      return o;
+    });
+    return seen;
+  }
+
+  test('fresh fills only what is left of the 60, ordered by sort_key in the DB', async () => {
+    const seen = queueDb({
+      calls: 40,
+      followUps: [
+        { id: 'f1', lead_id: 'CB', title: 'Callback: x', due_at: '2026-10-06T05:00:00Z' },      // due now
+        { id: 'f2', lead_id: 'CB2', title: 'Callback: y', due_at: '2026-10-06T12:00:00Z' },     // later today
+      ],
+      cbLeads: [L('CB', { attempts: 1 }), { ...L('CB2', { attempts: 1 }), attributes: { cold_call: { list_id: 'OTHER', attempts: 1 } } }],
+      retries: [L('R1', { attempts: 1, retry_at: '2026-10-06T00:00:00Z', closed: false })],
+      fresh: Array.from({ length: 30 }, (_, i) => L(`F${i}`)),
+    });
+    const q = await svc.getQueue('L1', NOW);
+    expect(q.callbacksDue.map((i) => i.lead.id)).toEqual(['CB']);
+    expect(q.upcoming.map((i) => i.lead.id)).toEqual(['CB2']);           // callback from another list still shows
+    expect(q.retries.map((i) => i.lead.id)).toEqual(['R1']);
+    expect(q.fresh).toHaveLength(60 - 40 - 2 - 1);                         // 17
+    expect(seen.freshOrder).toBe('attributes->cold_call->>sort_key');
+    expect(seen.freshLimit).toBe(17 + 10);
+    expect(q.today).toMatchObject({ calls: 40, target: 60, followUpsSent: 1 });
+    expect(q.totals).toEqual({ fresh: 42, signedUp: 42 });
+  });
+
+  test('target reached → no fresh query at all', async () => {
+    const seen = queueDb({ calls: 60, fresh: [L('F')] });
+    const q = await svc.getQueue('L1', NOW);
+    expect(q.fresh).toEqual([]);
+    expect(seen.freshQueried).toBe(false);
+  });
+});
+
+describe('search', () => {
+  test('phone in any format matches the last 10 digits; short queries return nothing', async () => {
+    const { supabaseAdmin } = require('../../config/supabase');
+    let orArg = null;
+    supabaseAdmin.from.mockImplementation((t) => { const o = mockChain(t); o.or = jest.fn((a) => { orArg = a; return o; }); return o; });
+    mockTableData = { leads: { data: [{ id: 'A' }], error: null } };
+    expect(await svc.search('+91 88887-05552')).toEqual([{ id: 'A' }]);
+    expect(orArg).toContain('phone.ilike.%8888705552%');
+    expect(orArg).toContain('whatsapp_phone.ilike.%8888705552%');
+    await svc.search('Smile, (Dental)');
+    expect(orArg).toContain('name.ilike.%Smile   Dental%');                 // , ( ) stripped — can't break the or()
+    expect(orArg).not.toContain('phone.ilike');                             // no digits → no phone arm
+    expect(await svc.search('ab')).toEqual([]);
   });
 });
 

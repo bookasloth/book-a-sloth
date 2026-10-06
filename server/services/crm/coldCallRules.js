@@ -3,7 +3,8 @@
  * coldCallRules.js — pure rules for the admin Cold Calling tab (no I/O).
  *
  * Phone parsing for scraped calling lists, the outcome → next-step table, and
- * the call-queue order (callbacks due → retries due → fresh by Day/Priority).
+ * the call-queue order (callbacks due → retries due → fresh by sort_key), and the
+ * daily plan (DAILY_TARGET calls/day including callbacks and retries).
  * Calling state lives in leads.attributes.cold_call; callbacks are open
  * lead_follow_ups rows titled "Callback: …".
  */
@@ -13,6 +14,8 @@ const DUE_SOON_MS = 15 * 60 * 1000;        // a callback within 15 min is "due"
 const MAX_NO_ANSWER = 3;                   // 3rd no-answer → unreachable, leaves the queue
 const CALLBACK_PREFIX = 'Callback:';
 const NOT_CONNECTED = new Set(['no_answer', 'wrong_number']);
+// ponytail: one caller, fixed target — make it a setting when a team calls.
+const DAILY_TARGET = 60;
 
 const OUTCOMES = {
   interested:     { template: 'cold_call_interested', status: 'qualified', close: true },
@@ -68,8 +71,26 @@ function nextStep(outcome, coldCall = {}, now = new Date(), callbackAt = null) {
   };
 }
 
-const num = (v) => { const n = parseInt(String(v ?? '').replace(/\D/g, ''), 10); return Number.isFinite(n) ? n : 9999; };
+const num = (v, miss) => { const n = parseInt(String(v ?? '').replace(/\D/g, ''), 10); return Number.isFinite(n) ? n : miss; };
 const cc = (l) => l.attributes?.cold_call || {};
+const pad = (n, w) => String(n).padStart(w, '0');
+
+// Text-sortable call order, stored at import so the DB can ORDER BY it and fetch
+// only today's slice: Day asc → Priority asc ('P1' → 1) → Fit desc. Missing → last.
+function sortKey({ day, priority, fit } = {}) {
+  return [
+    pad(Math.min(num(day, 999), 999), 3),
+    pad(Math.min(num(priority, 9999), 9999), 4),
+    pad(100 - Math.min(num(fit, 0), 100), 3),
+  ].join('.');
+}
+
+// Fresh leads to serve today: what's left of the target after today's calls,
+// the callbacks still due today and the retries due now. Never negative.
+function freshSlots({ target = DAILY_TARGET, callsToday = 0, callbacksToday = 0, retries = 0 } = {}) {
+  return Math.max(0, target - callsToday - callbacksToday - retries);
+}
+
 const eligible = (l) => !!l && !l.do_not_contact && l.status !== 'do_not_contact';
 
 function buildQueue(leads = [], followUps = [], now = new Date()) {
@@ -93,7 +114,7 @@ function buildQueue(leads = [], followUps = [], now = new Date()) {
     .map((lead) => ({ lead }));
   const fresh = open
     .filter((l) => !(cc(l).attempts > 0))
-    .sort((a, b) => (num(cc(a).day) - num(cc(b).day)) || (num(cc(a).priority) - num(cc(b).priority)))
+    .sort((a, b) => sortKey(cc(a)).localeCompare(sortKey(cc(b))))
     .map((lead) => ({ lead }));
   const byDue = (a, b) => new Date(a.dueAt) - new Date(b.dueAt);
   return { callbacksDue: callbacksDue.sort(byDue), retries, fresh, upcoming: upcoming.sort(byDue) };
@@ -107,28 +128,17 @@ function todayStats(outcomes = []) {
   };
 }
 
-function listTotals(leads = []) {
-  const byOutcome = {};
-  let fresh = 0, called = 0, signedUp = 0;
-  for (const l of leads) {
-    const c = cc(l);
-    if (c.attempts > 0) called++; else if (!c.closed) fresh++;
-    if (c.last_outcome) byOutcome[c.last_outcome] = (byOutcome[c.last_outcome] || 0) + 1;
-    if (l.profile_id) signedUp++;
-  }
-  return { total: leads.length, fresh, called, signedUp, byOutcome };
-}
-
 const istDate = (now = new Date()) => new Date(now.getTime() + IST_MS).toISOString().slice(0, 10);
 function istDayStart(now = new Date()) {
   const t = now.getTime() + IST_MS;
   return new Date(t - (t % DAY_MS) - IST_MS).toISOString();
 }
+const istDayEnd = (now = new Date()) => new Date(new Date(istDayStart(now)).getTime() + DAY_MS).toISOString();
 const formatIst = (iso) => new Intl.DateTimeFormat('en-IN', {
   timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
 }).format(new Date(iso));
 
 module.exports = {
-  OUTCOMES, CALLBACK_PREFIX, MAX_NO_ANSWER,
-  phone10, waPhone10, nextStep, buildQueue, todayStats, listTotals, istDate, istDayStart, formatIst,
+  OUTCOMES, CALLBACK_PREFIX, MAX_NO_ANSWER, DAILY_TARGET,
+  phone10, waPhone10, nextStep, sortKey, freshSlots, buildQueue, todayStats, istDate, istDayStart, istDayEnd, formatIst,
 };
