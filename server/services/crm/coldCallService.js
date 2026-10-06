@@ -192,6 +192,7 @@ async function sendFollowUp(lead, channel, category, outcome, callbackAt, now, c
 
 async function recordOutcome(leadId, body = {}, actorAdminId = null, now = new Date()) {
   const { outcome, note = '', durationSec = null, callbackAt = null, send = {}, email = null } = body;
+  const objection = String(body.objection || '').trim().slice(0, 80) || null;
   const lead = await leadService.getLead(leadId);
   if (!lead) throw httpErr(404, 'lead not found');
   let step;
@@ -209,7 +210,7 @@ async function recordOutcome(leadId, body = {}, actorAdminId = null, now = new D
 
   // 2. The call log comes first — a later send failure must never lose it.
   const durationMin = durationSec ? Math.max(1, Math.round(durationSec / 60)) : null;
-  await leadService.logCall(leadId, { outcome, durationMin, body: note }, actorAdminId);
+  await leadService.logCall(leadId, { outcome, durationMin, body: note, objection }, actorAdminId);
   if (String(note).trim()) await leadService.addNote(leadId, note, actorAdminId);
 
   // 3. Calling state.

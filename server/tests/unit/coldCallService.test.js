@@ -122,7 +122,7 @@ describe('recordOutcome', () => {
     messageService.enqueue.mockImplementation(async () => { order.push('send'); return { status: 'sent', error: null }; });
     const out = await svc.recordOutcome('L1', { outcome: 'interested', note: 'loved it', durationSec: 95, send: { email: true, whatsapp: true } }, 'admin1', NOW);
     expect(order).toEqual(['call', 'send']);
-    expect(leadService.logCall).toHaveBeenCalledWith('L1', { outcome: 'interested', durationMin: 2, body: 'loved it' }, 'admin1');
+    expect(leadService.logCall).toHaveBeenCalledWith('L1', { outcome: 'interested', durationMin: 2, body: 'loved it', objection: null }, 'admin1');
     expect(leadService.addNote).toHaveBeenCalledWith('L1', 'loved it', 'admin1');
     expect(leadService.changeStatus).toHaveBeenCalledWith('L1', 'qualified', 'admin1', { via: 'cold_call' });
     expect(messageService.enqueue).toHaveBeenCalledTimes(1);
@@ -202,6 +202,14 @@ describe('recordOutcome', () => {
     await expect(svc.recordOutcome('nope', { outcome: 'interested' }, 'a', NOW)).rejects.toMatchObject({ status: 404 });
     leadService.getLead.mockResolvedValue({ ...baseLead });
     await expect(svc.recordOutcome('L1', { outcome: 'maybe' }, 'a', NOW)).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('recordOutcome — objection', () => {
+  test('the objection raised on the call is stored on the call log (trimmed, capped)', async () => {
+    leadService.getLead.mockResolvedValue({ id: 'L1', status: 'list', attributes: { cold_call: {} } });
+    await svc.recordOutcome('L1', { outcome: 'not_now', objection: '  Already use software  ' }, 'admin1', NOW);
+    expect(leadService.logCall.mock.calls[0][1].objection).toBe('Already use software');
   });
 });
 

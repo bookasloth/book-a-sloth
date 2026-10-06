@@ -48,3 +48,42 @@ test('send results: queued-with-error is a retry, not a success; already_sent is
   expect(sendResultMessage('email', { status: 'already_sent' })).toEqual({ kind: 'info', text: 'Email already sent earlier today' });
   expect(sendResultMessage('whatsapp', { status: 'skipped', reason: 'pending_aisensy' }).text).toBe('WhatsApp not sent: WhatsApp template not approved in AiSensy yet');
 });
+
+import { messageFor, previewText, safeUrl, pendingPlan, nextLeadId, fitReasons } from '../sales/coldCallUtils';
+
+test('messageFor: outcome → follow-up set; missed-call message only on the first miss', () => {
+  expect(messageFor('interested')).toBe('cold_call_interested');
+  expect(messageFor('callback')).toBe('cold_call_callback');
+  expect(messageFor('not_interested')).toBeNull();
+  expect(messageFor('wrong_number')).toBeNull();
+  expect(messageFor('no_answer', { no_answers: 1 })).toBe('cold_call_missed');
+  expect(messageFor('no_answer', { no_answers: 2 })).toBeNull();
+});
+
+test('previewText fills tokens and flattens HTML (links shown as label + url)', () => {
+  expect(previewText('Hi {{1}} team, call on {{2}}', { business: 'Bloom', callbackTime: 'Tue 5 pm' })).toBe('Hi Bloom team, call on Tue 5 pm');
+  expect(previewText('<p>Hi {{business_name}},</p><p><a href="https://x.in">Go</a></p><ul><li>One</li></ul>', { business: 'Bloom' }))
+    .toBe('Hi Bloom,\nGo (https://x.in)\n• One');
+});
+
+test('safeUrl only allows http(s)', () => {
+  expect(safeUrl('javascript:alert(1)')).toBeNull();
+  expect(safeUrl('bloom.in')).toBe('https://bloom.in/');
+  expect(safeUrl('https://maps.google.com/?cid=1')).toBe('https://maps.google.com/?cid=1');
+  expect(safeUrl('')).toBeNull();
+});
+
+test('pendingPlan orders callbacks → retries → new → later, de-duplicated; nextLeadId walks it', () => {
+  const L = (id) => ({ lead: { id } });
+  const plan = pendingPlan({ callbacksDue: [{ ...L('c'), dueAt: 'x' }], retries: [L('r'), L('c')], fresh: [L('n1'), L('n2')], upcoming: [L('u')] });
+  expect(plan.map((p) => `${p.kind}:${p.lead.id}`)).toEqual(['callback:c', 'retry:r', 'new:n1', 'new:n2', 'later:u']);
+  expect(nextLeadId(plan, 'r')).toBe('n1');
+  expect(nextLeadId(plan, 'u')).toBe('c');
+  expect(nextLeadId(plan, 'search-only')).toBe('c');
+});
+
+test('fitReasons only states facts we hold', () => {
+  const r = fitReasons({ profession: 'Dental clinic', website: '', attributes: { cold_call: { rating: '4.5', reviews: '98', priority: 'P1' } } });
+  expect(r).toEqual(['4.5★ with 98 Google reviews', 'Appointment-based business', 'No website: the booking page can be their web page', 'Top priority (P1)']);
+  expect(fitReasons({ profession: 'Pet store', website: 'x.in', attributes: { cold_call: { rating: '3.9', reviews: '5' } } })).toEqual(['Has a website: add a "Book now" link to it']);
+});

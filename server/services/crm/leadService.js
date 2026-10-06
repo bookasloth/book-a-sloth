@@ -526,10 +526,12 @@ async function addNote(id, body, authorAdminId) {
   return data;
 }
 
-async function logCall(id, { outcome, durationMin, body } = {}, actorAdminId) {
+async function logCall(id, { outcome, durationMin, body, objection } = {}, actorAdminId) {
   await logActivity(id, 'call_logged', {
     actorAdminId, title: `Call logged${outcome ? ` — ${outcome}` : ''}`,
-    body: body || '', meta: { outcome: outcome || null, duration_min: durationMin || null },
+    body: body || '',
+    // objection: what the lead pushed back with (cold-call tab) — feeds "Top objections".
+    meta: { outcome: outcome || null, duration_min: durationMin || null, ...(objection ? { objection } : {}) },
   });
   return getLead(id);
 }

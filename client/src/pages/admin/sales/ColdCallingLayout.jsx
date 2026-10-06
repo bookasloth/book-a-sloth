@@ -1,11 +1,11 @@
-// Cold Calling — work a call queue: call, log the outcome + notes, send the
-// follow-up in one click, get reminded of callbacks. Spec: docs/superpowers/specs/2026-10-05-cold-calling-design.md
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// Cold Calling — shared frame for /admin/sales/cold-calling/*: list picker, lead
+// search, CSV upload, today's numbers, and the call queue every page reads
+// (via <Outlet context>). Spec: docs/superpowers/specs/2026-10-05-cold-calling-design.md
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { PageHeader, Card, Btn, Skeleton } from '../../../components/admin/ui';
+import { PageHeader, StatCard, Btn, Skeleton, Card } from '../../../components/admin/ui';
 import { crmListLists, crmColdCallQueue } from '../../../services/api';
-import ColdCallQueue from './ColdCallQueue';
-import ColdCallCard from './ColdCallCard';
 import ColdCallUpload from './ColdCallUpload';
 import ColdCallSearch from './ColdCallSearch';
 
@@ -20,16 +20,11 @@ function beep() {
   } catch { /* audio unavailable */ }
 }
 
-function Stat({ label, value }) {
-  return <div><div className="text-[18px] font-bold adm-t1">{value}</div><div className="text-[11.5px] adm-t3">{label}</div></div>;
-}
-
-export default function SalesColdCalling() {
+export default function ColdCallingLayout() {
+  const navigate = useNavigate();
   const [lists, setLists] = useState(null);
   const [listId, setListId] = useState(() => { try { return localStorage.getItem(LIST_KEY) || ''; } catch { return ''; } });
   const [queue, setQueue] = useState(null);
-  const [selectedId, setSelectedId] = useState(null);
-  const [pinned, setPinned] = useState(null);       // a lead opened from search (inbound callback)
   const [showUpload, setShowUpload] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const notified = useRef(new Set());
@@ -75,58 +70,39 @@ export default function SalesColdCalling() {
     }
   }, [queue]);
 
-  const ordered = useMemo(() => (queue ? [...queue.callbacksDue, ...queue.retries, ...queue.fresh, ...queue.upcoming].map((i) => i.lead) : []), [queue]);
-  const current = pinned || ordered.find((l) => l.id === selectedId) || ordered[0] || null;
-  // Pin the lead on screen: a poll that reorders the queue (a callback falls due) must
-  // not swap the card mid-call and wipe the notes/outcome/timer.
-  useEffect(() => { if (current && current.id !== selectedId) setSelectedId(current.id); }, [current, selectedId]);
-
-  const select = (id) => { setPinned(null); setSelectedId(id); };
-  const onDone = (doneId) => {
-    setPinned(null);
-    const idx = ordered.findIndex((l) => l.id === doneId);
-    setSelectedId(ordered[idx + 1]?.id || null);
-    loadQueue();
-  };
-
-  const t = queue?.today; const tot = queue?.totals;
+  const t = queue?.today;
+  const tot = queue?.totals;
+  const rate = t?.calls ? Math.round((t.connected / t.calls) * 100) : 0;
   return (
     <div className="p-4 sm:p-6">
-      <PageHeader title="Cold Calling" subtitle="Today's calls: callbacks at their time, retries, then fresh leads up to the daily target. Keys: 1–7 outcome · Enter save & next · T timer."
-        actions={<>
-          <ColdCallSearch onPick={setPinned} />
-          <select className="fb-input text-sm" aria-label="Calling list" value={listId} onChange={(e) => { setListId(e.target.value); select(null); }}>
+      <PageHeader title="Cold Calling" subtitle="Open a lead, call, update the details, log the outcome, send the follow-up, move on."
+        actions={<div className="flex flex-wrap items-center gap-2">
+          <ColdCallSearch onPick={(lead) => navigate(`/admin/sales/cold-calling/lead/${lead.id}`)} />
+          <select className="fb-input text-sm" aria-label="Calling list" value={listId} onChange={(e) => setListId(e.target.value)}>
             <option value="">Choose a list…</option>
             {(lists || []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
-          <Btn size="sm" onClick={() => setShowUpload(true)}>Upload CSV</Btn>
-        </>} />
+          <Btn size="sm" variant="outline" onClick={() => setShowUpload(true)}>Upload CSV</Btn>
+        </div>} />
 
-      {queue && (
-        <Card className="mb-4 flex flex-wrap gap-6">
-          <Stat label="Called today" value={`${t.calls} / ${t.target}`} />
-          <Stat label="Connected" value={t.connected} />
-          <Stat label="Interested" value={t.interested} />
-          <Stat label="Follow-ups sent" value={t.followUpsSent} />
-          <Stat label="Left to call" value={tot.fresh} />
-          <Stat label="Signed up" value={tot.signedUp} />
-        </Card>
+      {t && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
+          <StatCard compact label="Called today" value={`${t.calls} / ${t.target}`} icon="phone" iconColor="bg-[#FE5100]" />
+          <StatCard compact label="Connected" value={`${t.connected}${t.calls ? ` · ${rate}%` : ''}`} icon="users" iconColor="bg-sky-500" />
+          <StatCard compact label="Interested" value={t.interested} icon="star" iconColor="bg-emerald-500" />
+          <StatCard compact label="Follow-ups sent" value={t.followUpsSent} icon="send" iconColor="bg-violet-500" />
+          <StatCard compact label="Left to call" value={(tot?.fresh ?? 0).toLocaleString('en-IN')} icon="layers" iconColor="bg-gray-500" />
+          <StatCard compact label="Signed up" value={tot?.signedUp ?? 0} icon="userCheck" iconColor="bg-amber-500" />
+        </div>
       )}
 
       {lists === null || (listId && !queue) ? <Skeleton className="h-64 rounded-2xl" />
         : !listId ? <Card className="p-10 text-center adm-t3">Upload a CSV to start a calling list.</Card>
-        : (
-          <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-            <ColdCallQueue queue={queue} currentId={current?.id} onSelect={select} now={now} />
-            {current
-              ? <ColdCallCard key={current.id} lead={current} templates={queue.templates} onDone={onDone} onChanged={loadQueue} />
-              : <Card className="p-10 text-center adm-t3">{t.calls >= t.target ? `Today's ${t.target} calls are done.` : 'Nothing to call right now.'} Callbacks still pop up when due.</Card>}
-          </div>
-        )}
+        : <Outlet context={{ queue, listId, lists, reload: loadQueue, now }} />}
 
       {showUpload && (
         <ColdCallUpload lists={lists || []} onClose={() => setShowUpload(false)}
-          onImported={(id) => { setShowUpload(false); loadLists(); setListId(id); select(null); }} />
+          onImported={(id) => { setShowUpload(false); loadLists(); setListId(id); }} />
       )}
     </div>
   );
