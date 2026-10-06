@@ -219,17 +219,12 @@ function hourMix(calls = []) {
   return hours.filter((h) => h.calls);
 }
 
-// Per-lead tracking code for the WhatsApp link button (bookasloth.com/r/<code>): the
-// first 12 hex digits of the lead id. refRange turns it back into an id range so the
-// lookup uses the primary-key index — no extra column.
-// ponytail: 48-bit prefix; collisions are ~0 below a million leads.
-const refCode = (leadId) => String(leadId || '').replace(/-/g, '').slice(0, 12).toLowerCase();
-function refRange(code) {
-  const c = String(code || '').toLowerCase();
-  if (!/^[0-9a-f]{12}$/.test(c)) return null;
-  const id = (hex) => `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-  return [id(c + '0'.repeat(20)), id(c + 'f'.repeat(20))];
-}
+// Per-lead invite code in the tracked WhatsApp link (bookasloth.com/r/CX12): 4 chars,
+// capital letters + digits (36^4 ≈ 1.68M). Random, stored on the lead the first time it's
+// sent (attributes.cold_call.ref_code); coldCallService checks it's unused.
+const REF_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const newRefCode = (rand = Math.random) => Array.from({ length: 4 }, () => REF_CHARS[Math.floor(rand() * REF_CHARS.length)]).join('');
+const cleanRefCode = (code) => { const c = String(code || '').trim().toUpperCase(); return /^[A-Z0-9]{4}$/.test(c) ? c : null; };
 
 // Signed-up lead → what's left before they can take a booking.
 function setupSteps({ profile = {}, services = 0, bookings = 0 } = {}) {
@@ -247,6 +242,6 @@ const istHour = (now = new Date()) => new Date(now.getTime() + IST_MS).getUTCHou
 module.exports = {
   OUTCOMES, CALLBACK_PREFIX, MAX_NO_ANSWER, DAILY_TARGET,
   phone10, waPhone10, nextStep, sortKey, freshSlots, buildQueue, todayStats, outcomeMix, followUpBuckets,
-  followUpRanges, groupReport, wasSent, hourMix, refCode, refRange, setupSteps, istHour,
+  followUpRanges, groupReport, wasSent, hourMix, newRefCode, cleanRefCode, setupSteps, istHour,
   istDate, istDayStart, istDayEnd, formatIst,
 };

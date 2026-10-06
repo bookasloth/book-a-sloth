@@ -24,8 +24,8 @@ const CALL = (text) => `<a class="sig" href="${DEMO}">${text}</a>`;
 const SIGN = '<p>Shubham<br>Founder, Book A Sloth</p>';
 const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Dental' }];
 // Body param {{2}} inside https://bookasloth.com/r/{{2}}: coldCallService fills each lead's
-// tracking code (rules.refCode), so a tap on the link shows up on that lead.
-const LINK_CODE = { key: 'link_code', label: 'Tracking code in bookasloth.com/r/{{2}}', example: '40e43eb52511', ref: true };
+// 4-char invite code (e.g. CX12), so a tap on the link shows up on that lead.
+const LINK_CODE = { key: 'link_code', label: 'Invite code in bookasloth.com/r/{{2}}', example: 'CX12', ref: true };
 
 const COLD_CALL_TEMPLATES = [
   {
