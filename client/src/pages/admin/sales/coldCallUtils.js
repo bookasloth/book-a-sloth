@@ -41,13 +41,21 @@ export const outcomeTone = (k) => OUTCOMES.find((o) => o.key === k)?.tone || 'ne
 // The message sets the follow-up window offers (crm_templates.category).
 export const MESSAGE_SETS = [
   { category: 'cold_call_interested', label: 'Interested' },
+  { category: 'cold_call_link', label: 'Interested · tracked link (see who taps it)' },
   { category: 'cold_call_details', label: 'Wants details' },
   { category: 'cold_call_callback', label: 'Call back' },
   { category: 'cold_call_nurture', label: 'Not now' },
   { category: 'cold_call_missed', label: 'Missed call' },
   { category: 'cold_call_setup_help', label: 'Setup help' },
-  { category: 'cold_call_link', label: 'Booking link (tracked click)' },
 ];
+
+// Interested leads get the tracked-link set once its WhatsApp template is approved —
+// a tap on its button shows that lead as 🔥 — else the plain Interested set.
+export function preferTracked(category, templates = []) {
+  if (category !== 'cold_call_interested') return category;
+  const live = templates.some((t) => t.channel === 'whatsapp' && t.category === 'cold_call_link' && t.is_active);
+  return live ? 'cold_call_link' : category;
+}
 
 // Which set to open after saving. A missed call only gets a message on the FIRST
 // miss — retries 2 and 3 stay silent so a lead isn't messaged every day.

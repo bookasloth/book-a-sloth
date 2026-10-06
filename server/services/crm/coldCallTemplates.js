@@ -1,6 +1,6 @@
 'use strict';
 /**
- * coldCallTemplates.js — the 14 follow-up templates the Cold Calling tab sends
+ * coldCallTemplates.js — the 15 follow-up templates the Cold Calling tab sends
  * after a call (6 message sets × email + WhatsApp: 4 outcomes + missed call + setup help, plus the
  * automatic WhatsApp callback reminder and the tracked-link WhatsApp). Seeded into crm_templates by
  * scripts/seedColdCallTemplates.js; editable afterwards on /admin/sales/templates.
@@ -28,6 +28,17 @@ const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Den
 const LINK_BUTTON = { key: 'link_code', label: 'Visit website button → bookasloth.com/r/{{1}}', example: '40e43eb52511', button: true };
 
 const COLD_CALL_TEMPLATES = [
+  {
+    channel: 'email', name: 'cold_call_link_email', label: 'Cold call · Interested → signup link (tracked set)', category: 'cold_call_link', variables: [], is_active: true,
+    subject: 'Your booking page — as discussed',
+    body: `<p>Hi {{business_name}} team,</p>
+<p>Thanks for your time on the call just now. As promised, here's the link to set up your online booking page:</p>
+<p><a href="${SIGNUP}">Create your free booking page</a></p>
+<p>It takes about 3 minutes: add your services and timings, and clients can book and pay online. They get automatic reminders, so fewer no-shows.</p>
+<p>Prefer to set it up together? ${CALL('Book a 30-minute call with me')} and you'll see exactly how your clients will book you.</p>
+<p>If you get stuck anywhere, just reply to this email.</p>
+${SIGN}`,
+  },
   {
     channel: 'email', name: 'cold_call_interested_email', label: 'Cold call · Interested → signup link', category: 'cold_call_interested', variables: [], is_active: true,
     subject: 'Your booking page — as discussed',

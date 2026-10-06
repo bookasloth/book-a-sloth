@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest';
 import { parseCsv } from '../../../utils/parseCsv';
-import { guessFields, mapRows, callbackPresets, countdown, formatPhone, fmtTimer, isTypingTarget, OUTCOMES, sendResultMessage, pendingPlan as plan2, addChip, categoryPitch, ago } from '../sales/coldCallUtils';
+import { guessFields, mapRows, callbackPresets, countdown, formatPhone, fmtTimer, isTypingTarget, OUTCOMES, sendResultMessage, preferTracked, pendingPlan as plan2, addChip, categoryPitch, ago } from '../sales/coldCallUtils';
 
 const CSV = 'Day,Priority,Business,Category,Locality,Phone,WhatsApp,Email,Fit,Website,Talking Point\n'
   + '"Day 1","1","Test Clinic","Dental clinic","Area","08888700000","https://wa.me/918888700000","a@b.co","99","https://x.in","Pitch, with comma"\n'
@@ -104,4 +104,12 @@ test('note chips append; pitch by category; ago', () => {
   const now = new Date('2026-10-06T12:00:00Z');
   expect(ago('2026-10-06T11:50:00Z', now)).toBe('10 min ago');
   expect(ago('2026-10-06T09:00:00Z', now)).toBe('3 h ago');
+});
+
+test('interested uses the tracked-link set only once its WhatsApp is approved', () => {
+  const wa = (is_active) => [{ channel: 'whatsapp', category: 'cold_call_link', is_active }];
+  expect(preferTracked('cold_call_interested', wa(false))).toBe('cold_call_interested');
+  expect(preferTracked('cold_call_interested', wa(true))).toBe('cold_call_link');
+  expect(preferTracked('cold_call_details', wa(true))).toBe('cold_call_details');
+  expect(preferTracked(null, wa(true))).toBeNull();
 });
