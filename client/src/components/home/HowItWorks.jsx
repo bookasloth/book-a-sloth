@@ -77,7 +77,7 @@ export const STEPS = [
  * the component reads on either surface — dark landing pages keep the glass
  * look; the light homepage section gets white cards on the canvas.
  */
-export default function HowItWorks({ theme = "dark" }) {
+export default function HowItWorks({ theme = "dark", lift = true }) {
   const light = theme === "light";
   return (
     <div className="relative mt-16">
@@ -99,7 +99,7 @@ export default function HowItWorks({ theme = "dark" }) {
       <div className="grid gap-12 md:grid-cols-3 md:gap-16">
         {STEPS.map((s, i) => (
           <Reveal key={s.title} delay={i * 0.12}>
-            <div className={`group relative flex h-full flex-col items-center rounded-[6px] p-8 text-center transition-all duration-300 hover:-translate-y-1.5 ${light ? "border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.04)] hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)]" : "border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]"}`}>
+            <div className={`group relative flex h-full flex-col items-center rounded-[6px] p-8 text-center transition-all duration-300 ${lift ? "hover:-translate-y-1.5" : ""} ${light ? "border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.04)] hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)]" : "border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]"}`}>
               {/* Vertical connector to the next step (mobile) */}
               {i < STEPS.length - 1 && (
                 <span
