@@ -729,7 +729,6 @@ export const crmRecommendationSnooze = (id, until) => API.post(`/admin/crm/recom
 export const crmRecommendationDismiss = (id)     => API.post(`/admin/crm/recommendations/${id}/dismiss`);
 // Public intent-event sink — fire on identified buying-intent (has email/phone).
 export const trackIntent         = (data)        => API.post('/events/intent', data);
-export const trackLinkClick      = (code)        => API.post(`/events/link/${encodeURIComponent(code)}`);
 export const crmListLeads        = (params)      => API.get('/admin/crm/leads', { params });
 export const crmCreateLead       = (data)        => API.post('/admin/crm/leads', data);
 export const crmGetLead          = (id)          => API.get(`/admin/crm/leads/${id}`);

@@ -5,9 +5,8 @@
  */
 const router = require('express').Router();
 const { newsletterIpLimiter } = require('../middleware/security');
-const { recordIntent, recordLinkClick } = require('../controllers/eventsController');
+const { recordIntent } = require('../controllers/eventsController');
 
 router.post('/intent', newsletterIpLimiter, recordIntent);
-router.post('/link/:code', newsletterIpLimiter, recordLinkClick);
 
 module.exports = router;

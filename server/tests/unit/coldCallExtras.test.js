@@ -35,13 +35,13 @@ beforeEach(() => {
 });
 
 describe('rules', () => {
-  test('refCode ↔ refRange round-trips to an id range that contains the lead', () => {
-    const code = r.refCode(LEAD.id);
-    expect(code).toBe('40e43eb52511');
-    const [lo, hi] = r.refRange(code);
-    expect(lo <= LEAD.id && LEAD.id <= hi).toBe(true);
-    expect(r.refRange('nope')).toBeNull();
-    expect(r.refRange("40e43eb5251'")).toBeNull();
+  test('invite codes are 4 capital letters / digits; input is normalised', () => {
+    for (let i = 0; i < 200; i++) expect(r.newRefCode()).toMatch(/^[A-Z0-9]{4}$/);
+    expect(r.newRefCode(() => 0)).toBe('AAAA');
+    expect(r.newRefCode(() => 0.999)).toBe('9999');
+    expect(r.cleanRefCode(' cx12 ')).toBe('CX12');
+    expect(r.cleanRefCode('CX1')).toBeNull();
+    expect(r.cleanRefCode("CX1'")).toBeNull();
   });
   test('hourMix buckets calls by IST hour, connected excludes no-answer', () => {
     expect(r.hourMix([
@@ -63,23 +63,42 @@ describe('trackClick', () => {
     expect(await svc.trackClick('../etc')).toBe(false);
     expect(mockCalls).toHaveLength(0);
   });
-  test('logs link_clicked on the lead found by id range', async () => {
+  test('logs link_clicked on the lead holding that invite code (any case)', async () => {
     mockData = { leads: { data: { id: LEAD.id }, error: null } };
-    expect(await svc.trackClick('40e43eb52511')).toBe(true);
-    expect(mockCalls[0]._ops).toEqual(expect.arrayContaining([['gte', 'id', '40e43eb5-2511-0000-0000-000000000000'], ['lte', 'id', '40e43eb5-2511-ffff-ffff-ffffffffffff']]));
+    expect(await svc.trackClick('cx12')).toBe(true);
+    expect(mockCalls[0]._ops).toEqual(expect.arrayContaining([['eq', 'attributes->cold_call->>ref_code', 'CX12']]));
     expect(logActivity).toHaveBeenCalledWith(LEAD.id, 'link_clicked', expect.any(Object));
   });
 });
 
 describe('WhatsApp tracking link', () => {
-  test('a ref variable is filled with the lead code as a body param', async () => {
+  test('a ref variable is filled with the lead invite code as a body param', async () => {
     leadService.getLead.mockResolvedValue(LEAD);
-    mockData = { crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Missed - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'link_code', ref: true }] } } };
+    mockData = { leads: { data: { attributes: { cold_call: { ref_code: 'CX12' } } } }, crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Missed - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'link_code', ref: true }] } } };
     await svc.send(LEAD.id, { whatsapp: { category: 'cold_call_missed' } }, 'adm', NOW);
     expect(messageService.enqueue).toHaveBeenCalledWith(expect.objectContaining({
       templateKey: 'Cold Call Missed - Vendor',
-      variables: { params: ['{{business_name}}', '40e43eb52511'] },
+      variables: { params: ['{{business_name}}', 'CX12'] },
     }));
+  });
+  test('first send mints an unused code, skipping one already taken, and keeps other attributes', async () => {
+    leadService.getLead.mockResolvedValue(LEAD);
+    let n = 0;
+    mockData = {
+      leads: (o) => {
+        if (o._ops.some(([m]) => m === 'update')) return { data: null, error: null };
+        if (o._ops.some(([m, , opts]) => m === 'select' && opts?.head)) return { count: n++ === 0 ? 1 : 0, error: null };   // 1st code taken
+        return { data: { attributes: { source: 'x', cold_call: { list_id: 'L' } } }, error: null };
+      },
+      crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Link - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'link_code', ref: true }] } },
+    };
+    await svc.send(LEAD.id, { whatsapp: { category: 'cold_call_link' } }, 'adm', NOW);
+    const upd = mockCalls.find((c) => c._ops.some(([m]) => m === 'update'))._ops.find(([m]) => m === 'update')[1];
+    expect(upd.attributes.source).toBe('x');
+    expect(upd.attributes.cold_call.list_id).toBe('L');
+    expect(upd.attributes.cold_call.ref_code).toMatch(/^[A-Z0-9]{4}$/);
+    expect(messageService.enqueue.mock.calls[0][0].variables.params[1]).toBe(upd.attributes.cold_call.ref_code);
+    expect(n).toBe(2);
   });
 });
 
@@ -130,5 +149,30 @@ describe('reports', () => {
     mockData = { lead_activities: { data: [{ lead_id: 'A', meta: { outcome: 'interested' }, occurred_at: '2026-10-06T05:40:00Z' }], error: null } };
     const out = await svc.reports({ days: 7 }, NOW);
     expect(out.byHour).toEqual([{ hour: 11, calls: 1, connected: 1 }]);
+  });
+});
+
+describe('invite link (bookasloth.com/invite/<code>)', () => {
+  test('code and link params are filled from the lead invite code', async () => {
+    leadService.getLead.mockResolvedValue(LEAD);
+    mockData = {
+      leads: { data: { attributes: { cold_call: { ref_code: 'CX12' } } } },
+      crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Link - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'invite_code', ref: 'code' }, { key: 'invite_link', ref: 'link' }] } },
+    };
+    await svc.send(LEAD.id, { whatsapp: { category: 'cold_call_link' } }, 'adm', NOW);
+    expect(messageService.enqueue.mock.calls[0][0].variables.params).toEqual(['{{business_name}}', 'CX12', 'https://bookasloth.com/invite/CX12']);
+  });
+  test('signup from the invite links the account to that lead, never re-pointing a linked one', async () => {
+    mockData = { leads: (o) => (o._ops.some(([m]) => m === 'update') ? { data: null } : { data: { id: 'A', profile_id: null } }) };
+    expect(await svc.claimSignup('cx12', 'p1')).toBe(true);
+    const upd = mockCalls.find((c) => c._ops.some(([m]) => m === 'update'));
+    expect(upd._ops).toEqual(expect.arrayContaining([['update', expect.objectContaining({ profile_id: 'p1' })], ['eq', 'id', 'A'], ['is', 'profile_id', null]]));
+    expect(logActivity).toHaveBeenCalledWith('A', 'host_signup', expect.any(Object));
+
+    jest.clearAllMocks(); mockCalls.length = 0;
+    mockData = { leads: { data: { id: 'A', profile_id: 'other' } } };
+    expect(await svc.claimSignup('CX12', 'p1')).toBe(false);
+    expect(mockCalls.some((c) => c._ops.some(([m]) => m === 'update'))).toBe(false);
+    expect(await svc.claimSignup('not-a-code', 'p1')).toBe(false);
   });
 });

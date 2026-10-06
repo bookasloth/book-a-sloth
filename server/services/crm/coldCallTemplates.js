@@ -23,9 +23,10 @@ const DEMO = 'https://bookasloth.com/sndatarkar/book-a-sloth-app-online-demo-30-
 const CALL = (text) => `<a class="sig" href="${DEMO}">${text}</a>`;
 const SIGN = '<p>Shubham<br>Founder, Book A Sloth</p>';
 const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Dental' }];
-// Body param {{2}} inside https://bookasloth.com/r/{{2}}: coldCallService fills each lead's
-// tracking code (rules.refCode), so a tap on the link shows up on that lead.
-const LINK_CODE = { key: 'link_code', label: 'Tracking code in bookasloth.com/r/{{2}}', example: '40e43eb52511', ref: true };
+// Tracked-link param, filled per lead by coldCallService: https://bookasloth.com/invite/<code>
+// with the lead's 4-char invite code (e.g. CX12) — the invite landing page, which logs the
+// tap on the lead and carries the code through Google signup. ({ ref: 'code' } = bare code.)
+const INVITE_LINK = { key: 'invite_link', label: 'Invite link', example: 'https://bookasloth.com/invite/CX12', ref: 'link' };
 
 const COLD_CALL_TEMPLATES = [
   {
@@ -150,23 +151,22 @@ If you got stuck anywhere, reply here and I'll help you finish it in a few minut
 You can continue here: ${WA_SIGNUP}`,
   },
   {
-    // The one tracked message: its link opens bookasloth.com/r/<lead code>, so a tap
+    // The one tracked message: its link opens bookasloth.com/invite/<lead code>, so a tap
     // shows up on that lead (🔥). WhatsApp only — email clicks are tracked by Resend.
     channel: 'whatsapp', name: 'Cold Call Link - Vendor', label: 'Cold call · Booking link, tracked (WA)', category: 'cold_call_link',
-    // Text as submitted to Meta (header 'Knock Knock!' shown first for the preview).
-    variables: [...BIZ, LINK_CODE], is_active: false, subject: null,
-    body: `Knock Knock!
-
-Hi {{1}} team,
+    // Text exactly as submitted to Meta.
+    variables: [...BIZ, INVITE_LINK], is_active: false, subject: null,
+    body: `Hi {{1}} team,
 
 Shubham from Book A Sloth here. Here's your link to create your free booking page, as we discussed:
-https://bookasloth.com/r/{{2}}
+{{2}}
+
 
 Clients can book, pay, and get reminders automatically.
 
 *Setup takes about 3 minutes.*
 
-Reply here if you'd like me to help you set it up.`,
+If you'd like help setting it up, just reply here and I'll help you get started.`,
   },
   {
     // Sent by the reminder cron ~15 min before a promised callback — no call-outcome button.

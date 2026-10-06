@@ -55,8 +55,7 @@ export default function ColdCallCommunicate({ lead, templates, initialCategory, 
   }, [onClose]);
 
   const business = lead.business_name || lead.name || '';
-  // The tracked-link template's {{2}} is the lead's own code, not a time.
-  const ctx = { business, callbackTime: (waTpl?.variables || []).some((v) => v.ref) ? '<their code>' : whenText(callbackAt) };
+  const ctx = { business, callbackTime: whenText(callbackAt) };
   const count = (sendEmail && emailReady ? 1 : 0) + (sendWa && waReady ? 1 : 0);
   const options = MESSAGE_SETS.filter((m) => templates.some((t) => t.category === m.category));
 
@@ -98,7 +97,11 @@ export default function ColdCallCommunicate({ lead, templates, initialCategory, 
     </div>
   );
 
-  const preview = open === 'whatsapp' ? previewText(waTpl?.body, ctx)
+  // Tracked-link params ({ ref }) are the lead's own invite code / link, filled at send.
+  const waBody = (waTpl?.variables || []).reduce((body, v, i) => (v.ref
+    ? body.replace(new RegExp(`\\{\\{\\s*${i + 1}\\s*\\}\\}`, 'g'), v.ref === 'link' ? 'https://bookasloth.com/invite/CODE' : 'CODE')
+    : body), String(waTpl?.body || ''));
+  const preview = open === 'whatsapp' ? previewText(waBody, ctx)
     : open === 'email' && emailTpl ? `${previewText(emailTpl.subject, ctx)}\n\n${previewText(emailTpl.body, ctx)}` : '';
 
   return (
