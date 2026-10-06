@@ -64,6 +64,26 @@ export default function ColdCallReports() {
                 ))}
             </Card>
           </div>
+          <Card className="!p-5">
+            <SectionTitle>Best time to call</SectionTitle>
+            {!(r.byHour || []).length ? <div className="text-[12.5px] adm-t3">No calls in this period.</div> : (
+              <>
+                <div className="flex items-end gap-1.5 h-32">
+                  {r.byHour.map((h) => {
+                    const rate = pct(h.connected, h.calls);
+                    return (
+                      <div key={h.hour} className="flex-1 min-w-[22px] flex flex-col items-center justify-end h-full" title={`${h.connected} of ${h.calls} connected`}>
+                        <span className="text-[10.5px] font-semibold adm-t2">{rate}%</span>
+                        <div className="w-full rounded-t-md bg-[#FE5100]" style={{ height: `${Math.max(rate, 3)}%`, opacity: h.calls < 5 ? 0.45 : 1 }} />
+                        <span className="text-[10.5px] adm-t3 mt-1">{h.hour % 12 || 12}{h.hour < 12 ? 'a' : 'p'}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="text-[11.5px] adm-t3 mt-2">Connect rate by hour you called. Faded bars have fewer than 5 calls, so don't trust them yet.</div>
+              </>
+            )}
+          </Card>
           <div className="grid gap-4 xl:grid-cols-2">
             <div><SectionTitle>By category</SectionTitle>
               <Table columns={columns('Category')} rows={r.byCategory} rowKey={(x) => x.key} empty={<div className="p-8 text-center adm-t3 text-[13px]">No calls in this period.</div>} /></div>

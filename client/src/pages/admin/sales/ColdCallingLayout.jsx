@@ -83,6 +83,25 @@ export default function ColdCallingLayout() {
     }
   }, [queue]);
 
+  // A lead clicks a link or signs up while you're calling → toast + beep. The first
+  // load only records what's already there, so opening the page doesn't ping.
+  const signals = useRef(null);
+  useEffect(() => {
+    if (!queue) return;
+    const items = [
+      ...Object.keys(queue.hot || {}).map((id) => [`hot:${id}`, id, '🔥 Clicked your link']),
+      ...(queue.setup || []).map((x) => [`setup:${x.lead.id}`, x.lead.id, '✓ Signed up', x.lead]),
+    ];
+    if (!signals.current) { signals.current = new Set(items.map(([k]) => k)); return; }
+    for (const [k, id, what, lead] of items) {
+      if (signals.current.has(k)) continue;
+      signals.current.add(k);
+      beep();
+      toast(`${what}${lead ? ` — ${lead.business_name || lead.name || ''}` : ''}`, { icon: '🔔', duration: 8000, id: k });
+      if ('Notification' in window && Notification.permission === 'granted') new Notification(what, { body: lead?.business_name || 'Open Cold Calling', tag: id });
+    }
+  }, [queue]);
+
   return (
     <div className={onLead ? '-mt-3 md:-mt-5' : ''}>
       {!onLead && (

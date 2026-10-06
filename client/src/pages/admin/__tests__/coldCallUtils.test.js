@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest';
 import { parseCsv } from '../../../utils/parseCsv';
-import { guessFields, mapRows, callbackPresets, countdown, formatPhone, fmtTimer, isTypingTarget, OUTCOMES, sendResultMessage } from '../sales/coldCallUtils';
+import { guessFields, mapRows, callbackPresets, countdown, formatPhone, fmtTimer, isTypingTarget, OUTCOMES, sendResultMessage, pendingPlan as plan2, addChip, categoryPitch, ago } from '../sales/coldCallUtils';
 
 const CSV = 'Day,Priority,Business,Category,Locality,Phone,WhatsApp,Email,Fit,Website,Talking Point\n'
   + '"Day 1","1","Test Clinic","Dental clinic","Area","08888700000","https://wa.me/918888700000","a@b.co","99","https://x.in","Pitch, with comma"\n'
@@ -86,4 +86,22 @@ test('fitReasons only states facts we hold', () => {
   const r = fitReasons({ profession: 'Dental clinic', website: '', attributes: { cold_call: { rating: '4.5', reviews: '98', priority: 'P1' } } });
   expect(r).toEqual(['4.5★ with 98 Google reviews', 'Appointment-based business', 'No website: the booking page can be their web page', 'Top priority (P1)']);
   expect(fitReasons({ profession: 'Pet store', website: 'x.in', attributes: { cold_call: { rating: '3.9', reviews: '5' } } })).toEqual(['Has a website: add a "Book now" link to it']);
+});
+
+test('setup calls go right after due callbacks; only due ones', () => {
+  const L = (id) => ({ lead: { id } });
+  const p = plan2({ callbacksDue: [L('c')], setup: [{ ...L('s1'), due: true }, { ...L('s2'), due: false }], retries: [L('r')], fresh: [L('n')] });
+  expect(p.map((x) => `${x.kind}:${x.lead.id}`)).toEqual(['callback:c', 'setup:s1', 'retry:r', 'new:n']);
+});
+
+test('note chips append; pitch by category; ago', () => {
+  expect(addChip('', 'Asked price')).toBe('Asked price');
+  expect(addChip('owner busy.', 'Call after 5')).toBe('owner busy; Call after 5');
+  expect(categoryPitch('Dental clinic').title).toBe('Dental');
+  expect(categoryPitch('Unisex Salon').title).toBe('Salon & beauty');
+  expect(categoryPitch('Box cricket turf').title).toBe('Turf & sports');
+  expect(categoryPitch('Hardware shop')).toBeNull();
+  const now = new Date('2026-10-06T12:00:00Z');
+  expect(ago('2026-10-06T11:50:00Z', now)).toBe('10 min ago');
+  expect(ago('2026-10-06T09:00:00Z', now)).toBe('3 h ago');
 });

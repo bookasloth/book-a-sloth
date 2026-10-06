@@ -106,6 +106,8 @@ export function pendingPlan(queue) {
     .map((i) => ({ ...i, kind }));
   return [
     ...add(queue.callbacksDue, 'callback'),
+    // Signed up but not live yet → help them finish (server marks which are due).
+    ...add((queue.setup || []).filter((s) => s.due), 'setup'),
     ...add(queue.retries, 'retry'),
     ...add(queue.fresh, 'new'),
     ...add(queue.upcoming, 'later'),
@@ -180,3 +182,28 @@ export const fmtTimer = (sec) => `${Math.floor(sec / 60)}:${String(sec % 60).pad
 
 export const isTypingTarget = (el) =>
   !!el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || !!el.isContentEditable);
+
+// One-tap notes for what comes up on most calls.
+export const NOTE_CHIPS = ['Owner not in', 'Call after 5', 'Uses Practo', 'Asked price', 'Sent on WhatsApp', 'Wants a demo'];
+export const addChip = (note, chip) => (note.trim() ? `${note.trim().replace(/[.;,]$/, '')}; ${chip}` : chip);
+
+// Pitch angle by business type — matched on the lead's category.
+const PITCHES = [
+  [/dent|ortho/i, 'Dental', ['No-shows cost a chair hour — automatic WhatsApp reminders cut them.', 'Take an advance for root canals / implants when they book.', 'Patients book after hours from Google and Instagram.']],
+  [/salon|beauty|spa|parlou?r|makeup|nail|hair/i, 'Salon & beauty', ['Bridal and party bookings with an advance, no back-and-forth on WhatsApp.', 'Clients pick the stylist and slot themselves.', 'Reminders stop last-minute no-shows on busy weekends.']],
+  [/gym|fitness|yoga|zumba|crossfit|pilates/i, 'Fitness', ['Trial classes and PT sessions booked and paid online.', 'Batch slots fill without phone calls.', 'Reminders keep members turning up.']],
+  [/turf|sport|box cricket|badminton|futsal|court/i, 'Turf & sports', ['Slots booked and paid upfront — no more "bhai 7 baje free hai?" calls.', 'No double bookings; the calendar blocks a taken slot.', 'Share one link in WhatsApp groups.']],
+  [/clinic|doctor|physio|derma|skin|hospital|pediatric|gyn|ent|eye/i, 'Clinic', ['Patients book a slot instead of waiting in the queue.', 'Consultation fee collected online, reminders the day before.', 'Your own page to share on Google Maps and WhatsApp.']],
+  [/tutor|coach|class|academy|teacher|consult|counsel|therap|psycho/i, 'Coaching & consulting', ['Sessions booked and paid in advance — no chasing fees.', 'Online or in person, with the meeting link sent automatically.', 'Clients reschedule themselves within your rules.']],
+];
+export function categoryPitch(profession = '') {
+  const hit = PITCHES.find(([re]) => re.test(profession || ''));
+  return hit ? { title: hit[1], points: hit[2] } : null;
+}
+
+export function ago(iso, now = new Date()) {
+  const min = Math.max(0, Math.round((now - new Date(iso)) / 60000));
+  if (min < 60) return `${min} min ago`;
+  const h = Math.round(min / 60);
+  return h < 24 ? `${h} h ago` : `${Math.round(h / 24)} d ago`;
+}

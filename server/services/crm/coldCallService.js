@@ -120,7 +120,10 @@ async function setupList(now = new Date()) {
     .map((l) => {
       const profile = byPid.get(l.profile_id);
       const steps = rules.setupSteps({ profile, services: nSvc.get(l.profile_id) || 0, bookings: nBk.get(l.profile_id) || 0 });
-      return { lead: l, signedUpAt: profile.created_at, username: profile.username || null, steps, left: steps.filter((x) => !x.done).length };
+      // Due for a setup call: not called since they signed up, or 3+ days since the last call.
+      const last = new Date(l.attributes?.cold_call?.last_called_at || 0).getTime();
+      const due = last < new Date(profile.created_at).getTime() || now.getTime() - last > 3 * 24 * 60 * 60 * 1000;
+      return { lead: l, signedUpAt: profile.created_at, username: profile.username || null, steps, left: steps.filter((x) => !x.done).length, due };
     })
     .filter((x) => x.left > 0)
     .sort((a, b) => new Date(b.signedUpAt) - new Date(a.signedUpAt));

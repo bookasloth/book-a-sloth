@@ -86,6 +86,7 @@ const ZohoBookingsAlternative = lazy(() => import('./pages/lp/ZohoBookingsAltern
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
 const InviteLanding  = lazy(() => import('./pages/InviteLanding'));
+const TrackLink      = lazy(() => import('./pages/TrackLink'));
 const HostLogin      = lazy(() => import('./pages/HostLogin'));
 const Changelog      = lazy(() => import('./pages/Changelog'));
 const Pricing        = lazy(() => import('./pages/Pricing'));
@@ -444,6 +445,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/invite/:slug" element={<InviteLanding />} />
+          <Route path="/r/:code" element={<TrackLink />} />
           <Route path="/help" element={<Help />} />
           <Route path="/help/docs" element={<HelpDocs />} />
           <Route path="/help/docs/:slug" element={<HelpDoc />} />

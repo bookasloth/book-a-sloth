@@ -8,7 +8,7 @@ import { Card, Btn, Badge, Skeleton } from '../../../components/admin/ui';
 import { crmColdCallFollowUps, crmColdCallSetFollowUp, crmColdCallStats } from '../../../services/api';
 import Drawer from '../../../components/admin/seo/Drawer';
 import { Kpi, HEADING } from './ccUi';
-import { OUTCOMES, outcomeLabel, outcomeTone, formatPhone, countdown, safeUrl } from './coldCallUtils';
+import { OUTCOMES, outcomeLabel, outcomeTone, formatPhone, countdown, safeUrl, ago } from './coldCallUtils';
 
 const BASE = '/admin/sales/cold-calling';
 const BUCKETS = [
@@ -144,7 +144,7 @@ export default function ColdCallFollowUps() {
                       <tr key={r.lead.id} onClick={() => setPicked(r)} className={`cursor-pointer adm-hoverable ${on ? 'bg-[#FE5100]/[0.06]' : ''}`}>
                         <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}><input type="checkbox" aria-label="Select" className="!w-4 !h-4 !min-h-0 !p-0 accent-[#FE5100]" checked={checked.has(r.lead.id)}
                           onChange={(e) => setChecked((s) => { const n = new Set(s); if (e.target.checked) n.add(r.lead.id); else n.delete(r.lead.id); return n; })} /></td>
-                        <td className="px-3 py-2.5"><div className="text-[13px] font-semibold adm-t1 truncate max-w-[220px]">{r.lead.business_name || r.lead.name || 'Lead'}</div><div className="text-[11.5px] adm-t3 truncate max-w-[220px]">{[r.lead.profession, cc.locality].filter(Boolean).join(' · ')}</div></td>
+                        <td className="px-3 py-2.5"><div className="text-[13px] font-semibold adm-t1 truncate max-w-[220px]">{r.lead.business_name || r.lead.name || 'Lead'}</div>{r.hotAt && <div className="text-[11px] font-semibold text-red-600">🔥 Clicked link {ago(r.hotAt, now)}</div>}{r.lead.profile_id && <div className="text-[11px] font-semibold text-emerald-700">✓ Signed up</div>}<div className="text-[11.5px] adm-t3 truncate max-w-[220px]">{[r.lead.profession, cc.locality].filter(Boolean).join(' · ')}</div></td>
                         <td className="px-3 py-2.5 text-[12.5px] adm-t2 whitespace-nowrap">{fmt(r.lastCallAt)}</td>
                         <td className="px-3 py-2.5"><Badge tone={outcomeTone(cc.last_outcome)}>{outcomeLabel(cc.last_outcome) || '—'}</Badge>{r.lastNote && <div className="text-[11px] adm-t3 mt-1 truncate max-w-[200px]" title={r.lastNote}>{r.lastNote}</div>}</td>
                         <td className="px-3 py-2.5 whitespace-nowrap">{editing === r.lead.id

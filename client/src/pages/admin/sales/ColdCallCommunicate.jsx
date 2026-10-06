@@ -97,7 +97,7 @@ export default function ColdCallCommunicate({ lead, templates, initialCategory, 
     </div>
   );
 
-  const preview = open === 'whatsapp' ? previewText(waTpl?.body, ctx)
+  const preview = open === 'whatsapp' ? previewText(waTpl?.body, ctx) + ((waTpl?.variables || []).some((v) => v.button) ? '\n\n[ Visit website ]  → their own tracking link' : '')
     : open === 'email' && emailTpl ? `${previewText(emailTpl.subject, ctx)}\n\n${previewText(emailTpl.body, ctx)}` : '';
 
   return (

@@ -3,10 +3,12 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { vi, test, expect, afterEach } from 'vitest';
 
 let queueCalls = 0;
+let extra = {};   // per-test additions to the queue (hot clicks, setup calls)
 const cc = (x = {}) => ({ cold_call: { list_id: 'L1', priority: 'P1', fit: '91', locality: 'Dhantoli', ...x } });
 const LEADS = {
   A: { id: 'A', business_name: 'Bloom Makeup Studio', phone: '918888700001', whatsapp_phone: '918888700001', email: null, profession: 'Make-up artist', attributes: cc({ rating: '4.6', reviews: '212', maps_url: 'javascript:alert(1)' }) },
   B: { id: 'B', business_name: 'Sunrise Dental Care', phone: '918888700002', whatsapp_phone: '918888700002', email: 'dr@sun.co', profession: 'Dental clinic', attributes: cc() },
+  S: { id: 'S', business_name: 'Smile Studio', phone: '918888700004', whatsapp_phone: '918888700004', profile_id: 'p1', profession: 'Dental clinic', attributes: cc() },
   D: { id: 'D', business_name: 'Done Clinic', phone: '918888700003', whatsapp_phone: '918888700003', profession: 'Clinic', attributes: cc({ attempts: 1, last_outcome: 'interested' }) },
 };
 const TPL = [
@@ -28,6 +30,7 @@ vi.mock('../../../services/api', () => ({
     today: { calls: 1, connected: 1, interested: 1, followUpsSent: 0, target: 60 },
     totals: { fresh: 8948, signedUp: 0 },
     templates: TPL,
+    ...extra,
   } }); },
   crmGetLead: (id) => Promise.resolve({ data: { lead: LEADS[id], notes: [], followUps: [] } }),   // real API shape
   crmLeadTimeline: () => Promise.resolve({ data: [] }),
@@ -51,6 +54,7 @@ vi.mock('../../../services/api', () => ({
   crmColdCallReports: () => Promise.resolve({ data: {
     days: 30, totals: { calls: 10, connected: 4, interested: 2, byOutcome: { interested: 2, no_answer: 6 }, objections: [] },
     byCategory: [{ key: 'Dental clinic', calls: 6, connected: 3, interested: 2, signedUp: 1 }], byArea: [{ key: 'Dhantoli', calls: 4, connected: 1, interested: 0, signedUp: 0 }],
+    byHour: [{ hour: 11, calls: 6, connected: 3 }, { hour: 17, calls: 2, connected: 2 }],
   } }),
   crmColdCallRemind: vi.fn(() => Promise.resolve({ data: {} })), crmColdCallImport: vi.fn(), crmUpdateTemplate: vi.fn(),
 }));
@@ -81,7 +85,7 @@ const renderAt = (path) => render(
 );
 const onLead = (name) => waitFor(() => expect(screen.getByRole('heading', { name })).toBeTruthy());
 
-afterEach(() => { vi.useRealTimers(); queueCalls = 0; vi.clearAllMocks(); Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); });
+afterEach(() => { vi.useRealTimers(); queueCalls = 0; extra = {}; vi.clearAllMocks(); Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); });
 
 test('overview: today numbers, attention, week stats, lists; Start calling opens the first lead', async () => {
   renderAt('/admin/sales/cold-calling');
@@ -185,4 +189,43 @@ test('history, lists and reports pages render their data', async () => {
   renderAt('/admin/sales/cold-calling/reports');
   await waitFor(() => expect(screen.getByText('Dental clinic')).toBeTruthy());
   expect(screen.getByText('Dhantoli')).toBeTruthy();
+});
+
+test('signals: clicked + signed-up leads, setup call first, checklist, note chips, auto timer, category pitch', async () => {
+  extra = {
+    hot: { A: new Date(Date.now() - 10 * 60000).toISOString() },
+    setup: [{ lead: LEADS.S, due: true, left: 2, signedUpAt: '2026-10-05T10:00:00Z', username: 'smile', steps: [
+      { key: 'account', label: 'Account created', done: true }, { key: 'service', label: 'Published a service', done: false }, { key: 'booking', label: 'First booking', done: false },
+    ] }],
+  };
+  const t = renderAt('/admin/sales/cold-calling/today');
+  await waitFor(() => expect(screen.getByText('Setup call')).toBeTruthy());
+  expect(screen.getByText('🔥 clicked')).toBeTruthy();
+  t.unmount();
+
+  renderAt('/admin/sales/cold-calling/lead/S');
+  await onLead('Smile Studio');
+  expect(screen.getByText('✓ Signed up')).toBeTruthy();
+  expect(screen.getByText('Get them live · 2 left')).toBeTruthy();
+  expect(screen.getByText('Open their page ↗').getAttribute('href')).toBe('/smile');
+  expect(screen.getByText(/Lead 1 of .* · Setup call/)).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: '+ Owner not in' }));
+  fireEvent.click(screen.getByRole('button', { name: '+ Call after 5' }));
+  expect(screen.getByLabelText('Call notes').value).toBe('Owner not in; Call after 5');
+
+  fireEvent.click(screen.getByText('Open in dialer'));
+  expect(screen.getByText('● On call')).toBeTruthy();
+  fireEvent.keyDown(window, { key: '1' });
+  expect(screen.queryByText('● On call')).toBeNull();          // picking an outcome stops the timer
+
+  fireEvent.click(screen.getByRole('tab', { name: 'Pitch & script' }));
+  expect(screen.getByText('Dental angle')).toBeTruthy();
+});
+
+test('reports show the best time to call', async () => {
+  renderAt('/admin/sales/cold-calling/reports');
+  await waitFor(() => expect(screen.getByText('Best time to call')).toBeTruthy());
+  expect(screen.getByText('11a')).toBeTruthy();
+  expect(screen.getByText('100%')).toBeTruthy();
 });

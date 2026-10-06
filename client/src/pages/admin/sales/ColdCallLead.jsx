@@ -10,12 +10,15 @@ import { TabBar, TodayStrip, HEADING } from './ccUi';
 import ColdCallCommunicate from './ColdCallCommunicate';
 import {
   OUTCOMES, OBJECTIONS, callbackPresets, formatPhone, fmtTimer, isTypingTarget, pendingPlan, nextLeadId,
-  messageFor, fitReasons, safeUrl, outcomeLabel,
+  messageFor, fitReasons, safeUrl, outcomeLabel, NOTE_CHIPS, addChip, categoryPitch, ago,
 } from './coldCallUtils';
 
 const BASE = '/admin/sales/cold-calling';
 const NO_FOLLOW_UP = new Set(['not_interested', 'wrong_number']);
 const toLocalInput = (d) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
+// Next lead, fetched while you're on the call so Save → next opens instantly. Each
+// entry is used once, so revisiting a lead always loads it fresh.
+const prefetched = new Map();
 const when = (iso) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 const SCRIPT = [
@@ -70,6 +73,7 @@ function LeadCall({ initial, plan, queue, reload }) {
 
   const idx = plan.findIndex((p) => p.lead.id === lead.id);
   const planItem = plan[idx];
+  const pick = (key) => { setOutcome(key); setRunning(false); };   // picking an outcome ends the call timer
   const goTo = (id) => navigate(id ? `${BASE}/lead/${id}` : `${BASE}/today`);
   const goNext = () => goTo(nextLeadId(plan, lead.id));
   const resetCall = () => { setOutcome(null); setNote(''); setObjection(''); setNextAt(null); loadHistory(); };
@@ -115,7 +119,7 @@ function LeadCall({ initial, plan, queue, reload }) {
     const onKey = (e) => {
       if (comm || isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
       const o = OUTCOMES.find((x) => x.hotkey === e.key);
-      if (o) { e.preventDefault(); setOutcome(o.key); return; }
+      if (o) { e.preventDefault(); pick(o.key); return; }
       if (e.key === 'Enter') { e.preventDefault(); saveRef.current?.(true); return; }
       if (e.key === 't' || e.key === 'T') { e.preventDefault(); setRunning((r) => !r); }
     };
@@ -131,7 +135,10 @@ function LeadCall({ initial, plan, queue, reload }) {
   const copy = (text) => navigator.clipboard?.writeText(text).then(() => toast.success('Copied')).catch(() => {});
   const status = cc.attempts > 0 ? `${outcomeLabel(cc.last_outcome)} · call ${cc.attempts + 1}` : 'Not called yet';
   const isCallback = outcome === 'callback';
-  const kindLabel = planItem ? ({ new: 'New', retry: 'Retry', callback: 'Callback', later: 'Callback' })[planItem.kind] : null;
+  const hotAt = queue.hot?.[lead.id];
+  const setup = (queue.setup || []).find((x) => x.lead.id === lead.id);
+  const pitch = categoryPitch(lead.profession);
+  const kindLabel = planItem ? ({ new: 'New', retry: 'Retry', callback: 'Callback', later: 'Callback', setup: 'Setup call' })[planItem.kind] : null;
 
   return (
     <div className="space-y-3">
@@ -171,11 +178,13 @@ function LeadCall({ initial, plan, queue, reload }) {
                 {cc.fit && <Badge tone="ok">High fit · {cc.fit}</Badge>}
                 {cc.priority && <Badge tone="warn">{/^p/i.test(cc.priority) ? cc.priority : `#${cc.priority}`}</Badge>}
                 <Badge tone={cc.attempts > 0 ? 'info' : 'neutral'}>{status}</Badge>
+                {hotAt && <Badge tone="danger">🔥 Clicked link {ago(hotAt)}</Badge>}
+                {lead.profile_id && <Badge tone="ok">✓ Signed up</Badge>}
                 {lead.do_not_contact && <Badge tone="danger">Do not contact</Badge>}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t adm-border">
-              <a href={`tel:+${digits}`} className="text-[24px] font-extrabold adm-t1 tracking-wide whitespace-nowrap mr-1" style={HEADING}>{formatPhone(lead.phone)}</a>
+              <a href={`tel:+${digits}`} onClick={() => setRunning(true)} className="text-[24px] font-extrabold adm-t1 tracking-wide whitespace-nowrap mr-1" style={HEADING}>{formatPhone(lead.phone)}</a>
               <Btn size="sm" variant="ghost" onClick={() => copy(formatPhone(lead.phone).replace(/\s/g, ''))}>Copy</Btn>
               <span className="text-[12px] adm-t3 mr-auto">{form.alt_phone ? `Alt: ${form.alt_phone}` : ''}</span>
               <a href={`tel:+${digits}`} onClick={() => setRunning(true)} className="inline-flex items-center rounded-lg px-3 py-1.5 text-[13px] font-semibold bg-[#FE5100] text-white hover:bg-[#e54900]">Open in dialer</a>
@@ -216,10 +225,18 @@ function LeadCall({ initial, plan, queue, reload }) {
                       </div>
                     ))}
                 </Card>
-                <Card className="!p-4">
-                  <h3 className="text-[14px] font-bold adm-t1 mb-2" style={HEADING}>Why good fit</h3>
-                  <ul className="space-y-1 text-[12.5px] adm-t2">{fitReasons(lead).map((r) => <li key={r}>✓ {r}</li>)}</ul>
-                </Card>
+                {setup ? (
+                  <Card className="!p-4">
+                    <h3 className="text-[14px] font-bold adm-t1 mb-2" style={HEADING}>Get them live · {setup.left} left</h3>
+                    <ul className="space-y-1 text-[12.5px]">{setup.steps.map((x) => <li key={x.key} className={x.done ? 'adm-t3 line-through' : 'adm-t1 font-semibold'}>{x.done ? '✓' : '○'} {x.label}</li>)}</ul>
+                    {setup.username && <a href={`/${setup.username}`} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[12px] font-semibold text-[#FE5100]">Open their page ↗</a>}
+                  </Card>
+                ) : (
+                  <Card className="!p-4">
+                    <h3 className="text-[14px] font-bold adm-t1 mb-2" style={HEADING}>Why good fit</h3>
+                    <ul className="space-y-1 text-[12.5px] adm-t2">{fitReasons(lead).map((r) => <li key={r}>✓ {r}</li>)}</ul>
+                  </Card>
+                )}
               </div>
             </div>
           )}
@@ -227,6 +244,12 @@ function LeadCall({ initial, plan, queue, reload }) {
           {tab === 'pitch' && (
             <Card className="!p-4 space-y-3">
               {cc.pitch && <div className="rounded-xl bg-[#FE5100]/[0.07] p-3 text-[13px] adm-t1"><b>For this lead: </b>{cc.pitch}</div>}
+              {pitch && (
+                <div className="rounded-xl border adm-border p-3">
+                  <div className="text-[12px] font-bold uppercase tracking-wide text-[#FE5100] mb-1">{pitch.title} angle</div>
+                  <ul className="space-y-1 text-[13px] adm-t1">{pitch.points.map((p) => <li key={p}>• {p}</li>)}</ul>
+                </div>
+              )}
               <ol className="space-y-2">
                 {SCRIPT.map(([step, text], i) => (
                   <li key={step} className="flex gap-3 text-[13px]"><span className="w-6 h-6 rounded-lg bg-[#FE5100] text-white text-[12px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
@@ -273,7 +296,7 @@ function LeadCall({ initial, plan, queue, reload }) {
               {OUTCOMES.map((o) => {
                 const on = outcome === o.key;
                 return (
-                  <button key={o.key} type="button" onClick={() => setOutcome(o.key)}
+                  <button key={o.key} type="button" onClick={() => pick(o.key)}
                     className={`!min-h-0 flex items-center gap-2 h-8 px-2 rounded-lg border text-[12.5px] text-left transition-colors ${o.key === 'wrong_number' ? 'col-span-2' : ''} ${on ? 'border-[#FE5100] bg-[#FE5100]/[0.08] text-[#c2410c] font-semibold' : 'adm-border adm-t1 adm-hoverable'}`}>
                     <span className={`w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center shrink-0 ${on ? 'bg-[#FE5100] text-white' : 'adm-chip'}`}>{o.hotkey}</span>
                     <span className="truncate">{o.key === 'callback' ? 'Call back' : o.label}</span>
@@ -297,6 +320,12 @@ function LeadCall({ initial, plan, queue, reload }) {
               {nextAt && <button type="button" className="!min-h-0 text-[11.5px] adm-t3" onClick={() => setNextAt(null)}>Clear</button>}
             </div>
             <textarea className="fb-input text-[13px] !w-full !min-h-0" rows={2} placeholder="Call notes…" aria-label="Call notes" value={note} onChange={(e) => setNote(e.target.value)} />
+            <div className="flex gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none]" aria-label="Quick notes">
+              {NOTE_CHIPS.map((c) => (
+                <button key={c} type="button" onClick={() => setNote((n) => addChip(n, c))}
+                  className="!min-h-0 px-1.5 py-0.5 rounded-md text-[11px] font-semibold border adm-border adm-t2 adm-hoverable">+ {c}</button>
+              ))}
+            </div>
           </Card>
 
           <div className="grid grid-cols-[1fr_auto] gap-2">
@@ -327,10 +356,21 @@ export default function ColdCallLead() {
     let alive = true;
     setLead(null); setMissing(false);
     // GET /leads/:id answers { lead, notes, followUps }.
-    crmGetLead(leadId).then(({ data }) => { if (alive) setLead(data?.lead || null); if (alive && !data?.lead) setMissing(true); })
+    const hit = prefetched.get(leadId);
+    prefetched.delete(leadId);
+    (hit || crmGetLead(leadId)).then(({ data }) => { if (alive) setLead(data?.lead || null); if (alive && !data?.lead) setMissing(true); })
       .catch(() => { if (alive) setMissing(true); });
     return () => { alive = false; };
   }, [leadId]);
+
+  // Fetch the next lead in the background while this call happens.
+  const nextId = nextLeadId(plan, leadId);
+  useEffect(() => {
+    if (!nextId || nextId === leadId || prefetched.has(nextId)) return;
+    const p = crmGetLead(nextId);
+    p.catch(() => prefetched.delete(nextId));
+    prefetched.set(nextId, p);
+  }, [nextId, leadId]);
 
   if (missing) return <Card className="p-10 text-center adm-t3">Lead not found. <Link to={`${BASE}/today`} className="text-[#FE5100] font-semibold">Back to today's calls</Link></Card>;
   if (!lead) return <Skeleton className="h-96 rounded-2xl" />;

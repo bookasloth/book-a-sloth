@@ -24,6 +24,7 @@ export const RESERVED_FIRST_SEGMENTS = [
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'manage-booking', 'lp', 'for', 'invite',
   // /og/blog/:slug — render target for the OG card generator (see pages/OgCard.jsx).
   'og',
+  'r', // /r/:code — cold-call WhatsApp tracking link (pages/TrackLink.jsx)
   'my-bookings', 'profile', 'reviews', 'loyalty', 'sitemap', 'robots', 'health',
   'search', 'wall-of-love', 'moments', 'opening', 'inaugurators',
   'presentation', // full-screen product pitch deck (pages/presentation/)

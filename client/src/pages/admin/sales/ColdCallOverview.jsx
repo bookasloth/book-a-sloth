@@ -6,7 +6,7 @@ import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { Card, Btn, Badge, Skeleton } from '../../../components/admin/ui';
 import { crmColdCallStats } from '../../../services/api';
 import { SectionTitle, Kpi, Bar, pct, delta } from './ccUi';
-import { pendingPlan, outcomeLabel, countdown, fmtTime, OUTCOMES } from './coldCallUtils';
+import { pendingPlan, outcomeLabel, countdown, fmtTime, ago, OUTCOMES } from './coldCallUtils';
 
 const BASE = '/admin/sales/cold-calling';
 const OUTCOME_COLOR = {
@@ -34,7 +34,7 @@ export default function ColdCallOverview() {
   const { queue, lists, listId, setListId, now } = useOutletContext();
   const navigate = useNavigate();
   const [s, setS] = useState(null);
-  useEffect(() => { crmColdCallStats(7).then(({ data }) => setS(data)).catch(() => setS(false)); }, []);
+  useEffect(() => { crmColdCallStats(7).then(({ data }) => setS({ hot: [], setup: [], ...data })).catch(() => setS(false)); }, []);
 
   const plan = useMemo(() => pendingPlan(queue), [queue]);
   const t = queue.today;
@@ -46,6 +46,8 @@ export default function ColdCallOverview() {
   const waPending = (queue.templates || []).filter((x) => x.channel === 'whatsapp' && !x.is_active).length;
 
   const attention = [
+    s && s.hot.length > 0 && { tone: 'danger', title: `🔥 ${s.hot.length} lead${s.hot.length > 1 ? 's' : ''} clicked your link`, sub: `${s.hot[0].name} · ${ago(s.hot[0].at, now)}. Call while they're looking.`, cta: 'Call', to: `${BASE}/lead/${s.hot[0].leadId}` },
+    s && s.setup.length > 0 && { tone: 'ok', title: `${s.setup.length} signed up, not live yet`, sub: `${s.setup[0].name} · ${s.setup[0].left} step${s.setup[0].left > 1 ? 's' : ''} left`, cta: 'Help', to: `${BASE}/lead/${s.setup[0].leadId}` },
     s && s.followUps.overdue > 0 && { tone: 'danger', title: `${s.followUps.overdue} overdue callback${s.followUps.overdue > 1 ? 's' : ''}`, sub: 'You promised these calls. Call them first.', cta: 'Open', to: `${BASE}/today` },
     count('new') > 0 && { tone: 'warn', title: `${count('new')} new leads planned for today`, sub: listName ? `From ${listName}, best fit first` : 'Best fit first', cta: 'Call', to: firstPending ? `${BASE}/lead/${firstPending.lead.id}` : `${BASE}/today` },
     s && s.followUps.today > 0 && { tone: 'info', title: `${s.followUps.today} callback${s.followUps.today > 1 ? 's' : ''} later today`, sub: s.followUps.next[0] ? `Next: ${s.followUps.next[0].name}` : '', cta: 'See', to: `${BASE}/today` },
@@ -96,6 +98,28 @@ export default function ColdCallOverview() {
             ))}
         </Card>
       </div>
+
+      {s && (s.hot.length > 0 || s.setup.length > 0) && (
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Card className="p-5">
+            <SectionTitle>🔥 Clicked a link · last 48h</SectionTitle>
+            {s.hot.length === 0 ? <div className="text-[13px] adm-t3">No clicks yet.</div> : s.hot.map((h) => (
+              <Link key={h.leadId} to={`${BASE}/lead/${h.leadId}`} className="flex items-center justify-between gap-3 py-2 border-t adm-border first:border-0 adm-hoverable rounded-lg px-1">
+                <span className="text-[13px] font-semibold adm-t1 truncate">{h.name}</span><span className="text-[12px] font-semibold text-red-600 whitespace-nowrap">{ago(h.at, now)}</span>
+              </Link>
+            ))}
+          </Card>
+          <Card className="p-5">
+            <SectionTitle>Signed up · get them live</SectionTitle>
+            {s.setup.length === 0 ? <div className="text-[13px] adm-t3">Nobody waiting.</div> : s.setup.map((x) => (
+              <Link key={x.leadId} to={`${BASE}/lead/${x.leadId}`} className="flex items-center justify-between gap-3 py-2 border-t adm-border first:border-0 adm-hoverable rounded-lg px-1">
+                <div className="min-w-0"><div className="text-[13px] font-semibold adm-t1 truncate">{x.name}</div><div className="text-[11.5px] adm-t3 truncate">Next: {x.steps.find((st) => !st.done)?.label}</div></div>
+                <Badge tone="ok">{x.left} left</Badge>
+              </Link>
+            ))}
+          </Card>
+        </div>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-3">
         <Card className="p-5">
