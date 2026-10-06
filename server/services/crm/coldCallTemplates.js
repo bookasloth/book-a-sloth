@@ -23,9 +23,9 @@ const DEMO = 'https://bookasloth.com/sndatarkar/book-a-sloth-app-online-demo-30-
 const CALL = (text) => `<a class="sig" href="${DEMO}">${text}</a>`;
 const SIGN = '<p>Shubham<br>Founder, Book A Sloth</p>';
 const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Dental' }];
-// Dynamic-URL button 'Visit website' → https://bookasloth.com/r/{{1}}: coldCallService fills
-// each lead's tracking code (rules.refCode) so a click shows up on that lead. Not a body param.
-const LINK_BUTTON = { key: 'link_code', label: 'Visit website button → bookasloth.com/r/{{1}}', example: '40e43eb52511', button: true };
+// Body param {{2}} inside https://bookasloth.com/r/{{2}}: coldCallService fills each lead's
+// tracking code (rules.refCode), so a tap on the link shows up on that lead.
+const LINK_CODE = { key: 'link_code', label: 'Tracking code in bookasloth.com/r/{{2}}', example: '40e43eb52511', ref: true };
 
 const COLD_CALL_TEMPLATES = [
   {
@@ -150,12 +150,22 @@ If you got stuck anywhere, reply here and I'll help you finish it in a few minut
 You can continue here: ${WA_SIGNUP}`,
   },
   {
-    // The one tracked message: its button opens bookasloth.com/r/<lead code>, so a click
+    // The one tracked message: its link opens bookasloth.com/r/<lead code>, so a tap
     // shows up on that lead (🔥). WhatsApp only — email clicks are tracked by Resend.
     channel: 'whatsapp', name: 'Cold Call Link - Vendor', label: 'Cold call · Booking link, tracked (WA)', category: 'cold_call_link',
-    variables: [...BIZ, LINK_BUTTON], is_active: false, subject: null,
-    body: `Hi {{1}} team, Shubham from Book A Sloth here. Here's the link to create your free booking page, as we discussed.
-Clients can book, pay, and get reminders automatically. Setup takes about 3 minutes.
+    // Text as submitted to Meta (header 'Knock Knock!' shown first for the preview).
+    variables: [...BIZ, LINK_CODE], is_active: false, subject: null,
+    body: `Knock Knock!
+
+Hi {{1}} team,
+
+Shubham from Book A Sloth here. Here's your link to create your free booking page, as we discussed:
+https://bookasloth.com/r/{{2}}
+
+Clients can book, pay, and get reminders automatically.
+
+*Setup takes about 3 minutes.*
+
 Reply here if you'd like me to help you set it up.`,
   },
   {

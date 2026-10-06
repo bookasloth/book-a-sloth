@@ -71,14 +71,14 @@ describe('trackClick', () => {
   });
 });
 
-describe('WhatsApp link button', () => {
-  test('a template with a button variable sends the lead code as buttonParams, not a body param', async () => {
+describe('WhatsApp tracking link', () => {
+  test('a ref variable is filled with the lead code as a body param', async () => {
     leadService.getLead.mockResolvedValue(LEAD);
-    mockData = { crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Missed - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'link_code', button: true }] } } };
+    mockData = { crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Missed - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'link_code', ref: true }] } } };
     await svc.send(LEAD.id, { whatsapp: { category: 'cold_call_missed' } }, 'adm', NOW);
     expect(messageService.enqueue).toHaveBeenCalledWith(expect.objectContaining({
       templateKey: 'Cold Call Missed - Vendor',
-      variables: { params: ['{{business_name}}'], buttonParams: ['40e43eb52511'] },
+      variables: { params: ['{{business_name}}', '40e43eb52511'] },
     }));
   });
 });

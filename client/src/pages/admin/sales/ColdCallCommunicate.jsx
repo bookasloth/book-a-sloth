@@ -55,7 +55,8 @@ export default function ColdCallCommunicate({ lead, templates, initialCategory, 
   }, [onClose]);
 
   const business = lead.business_name || lead.name || '';
-  const ctx = { business, callbackTime: whenText(callbackAt) };
+  // The tracked-link template's {{2}} is the lead's own code, not a time.
+  const ctx = { business, callbackTime: (waTpl?.variables || []).some((v) => v.ref) ? '<their code>' : whenText(callbackAt) };
   const count = (sendEmail && emailReady ? 1 : 0) + (sendWa && waReady ? 1 : 0);
   const options = MESSAGE_SETS.filter((m) => templates.some((t) => t.category === m.category));
 
@@ -97,7 +98,7 @@ export default function ColdCallCommunicate({ lead, templates, initialCategory, 
     </div>
   );
 
-  const preview = open === 'whatsapp' ? previewText(waTpl?.body, ctx) + ((waTpl?.variables || []).some((v) => v.button) ? '\n\n[ Visit website ]  → their own tracking link' : '')
+  const preview = open === 'whatsapp' ? previewText(waTpl?.body, ctx)
     : open === 'email' && emailTpl ? `${previewText(emailTpl.subject, ctx)}\n\n${previewText(emailTpl.body, ctx)}` : '';
 
   return (
