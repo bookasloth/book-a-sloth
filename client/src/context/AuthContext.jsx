@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { analytics, EVENTS } from '../services/analytics';
-import { registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost, cancelHosting as apiCancelHosting } from '../services/api';
+import { registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, recordInviteVisit, getMe, becomeHost as apiBecomeHost, cancelHosting as apiCancelHosting } from '../services/api';
+import { readInvite, stashInvite, inviteCodeFromUrl } from '../utils/inviteStash';
 import { getSupabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
@@ -61,6 +62,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const ref = new URLSearchParams(window.location.search).get('ref');
       if (ref && !localStorage.getItem('bas_ref')) localStorage.setItem('bas_ref', ref.slice(0, 40));
+      // Cold-call tracked link (?i=CX12): log the visit on the lead + keep the code for signup.
+      const code = inviteCodeFromUrl(window.location.search);
+      if (code) { stashInvite(code); recordInviteVisit(code).catch(() => {}); }
     } catch { /* non-fatal */ }
 
     const stored = localStorage.getItem('user');
@@ -194,7 +198,8 @@ export const AuthProvider = ({ children }) => {
     // only intent==='signup' fires it. (Previously this fired on the slug-claim step,
     // i.e. AFTER OAuth already succeeded — missing every pre-OAuth abandon.)
     if (intent === 'signup') analytics.track(EVENTS.SIGNUP_STARTED, {});
-    const { data } = await getVendorGoogleUrl(intent);
+    // A live invite stash rides along; the server stamps it only on a brand-new profile.
+    const { data } = await getVendorGoogleUrl(intent, readInvite() || undefined);
     window.location.href = data.url;
   };
 

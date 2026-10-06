@@ -152,7 +152,7 @@ describe('reports', () => {
   });
 });
 
-describe('invite link (bookasloth.com/invite/<code>)', () => {
+describe('invite link (category page + ?i=<code>)', () => {
   test('code and link params are filled from the lead invite code', async () => {
     leadService.getLead.mockResolvedValue(LEAD);
     mockData = {
@@ -160,7 +160,7 @@ describe('invite link (bookasloth.com/invite/<code>)', () => {
       crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Link - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'invite_code', ref: 'code' }, { key: 'invite_link', ref: 'link' }] } },
     };
     await svc.send(LEAD.id, { whatsapp: { category: 'cold_call_link' } }, 'adm', NOW);
-    expect(messageService.enqueue.mock.calls[0][0].variables.params).toEqual(['{{business_name}}', 'CX12', 'https://bookasloth.com/invite/CX12']);
+    expect(messageService.enqueue.mock.calls[0][0].variables.params).toEqual(['{{business_name}}', 'CX12', 'https://bookasloth.com/?i=CX12']);
   });
   test('signup from the invite links the account to that lead, never re-pointing a linked one', async () => {
     mockData = { leads: (o) => (o._ops.some(([m]) => m === 'update') ? { data: null } : { data: { id: 'A', profile_id: null } }) };
@@ -175,4 +175,27 @@ describe('invite link (bookasloth.com/invite/<code>)', () => {
     expect(mockCalls.some((c) => c._ops.some(([m]) => m === 'update'))).toBe(false);
     expect(await svc.claimSignup('not-a-code', 'p1')).toBe(false);
   });
+});
+
+describe('landingPath', () => {
+  test.each([
+    ['Dental clinic', '/for/dentists'], ['Pediatric dentist', '/for/dentists'], ['Skin care clinic', '/for/dermatologists'],
+    ["Children's hospital", '/for/pediatricians'], ['Obstetrician-gynecologist', '/for/gynecologists'], ['ENT Specialist', '/for/ent-specialists'],
+    ['Eye care center', '/for/ophthalmologists'], ['Physiotherapy Center', '/for/physiotherapists'], ['Hospital', '/for/doctors'],
+    ['Beauty Parlour', '/for/salon'], ['Make-up artist', '/for/salon'], ['Day spa', '/for/spa'], ['Makerspace', '/'],
+    ['Gym', '/for/fitness'], ['Box cricket turf', '/for/sports-turf'], ['Chartered accountant', '/for/chartered-accountants'],
+    ['Legal services', '/for/lawyers'], ['Interior designer', '/for/architects'], ['Astrologer', '/for/astrologers'],
+    ['Coaching Center', '/for/tutors'], ['Software company', '/for/agencies'], ['Psychologist', '/for/life-coaches'],
+    ['Pharmacy', '/'], ['', '/'], [null, '/'],
+  ])('%s → %s', (p, path) => expect(r.landingPath(p)).toBe(path));
+});
+
+test('the tracked link goes to the lead category page with ?i=<code>', async () => {
+  leadService.getLead.mockResolvedValue({ ...LEAD, profession: 'Dental clinic' });
+  mockData = {
+    leads: { data: { attributes: { cold_call: { ref_code: 'CX12' } } } },
+    crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Link - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'invite_link', ref: 'link' }] } },
+  };
+  await svc.send(LEAD.id, { whatsapp: { category: 'cold_call_link' } }, 'adm', NOW);
+  expect(messageService.enqueue.mock.calls[0][0].variables.params).toEqual(['{{business_name}}', 'https://bookasloth.com/for/dentists?i=CX12']);
 });

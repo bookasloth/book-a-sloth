@@ -23,10 +23,10 @@ const DEMO = 'https://bookasloth.com/sndatarkar/book-a-sloth-app-online-demo-30-
 const CALL = (text) => `<a class="sig" href="${DEMO}">${text}</a>`;
 const SIGN = '<p>Shubham<br>Founder, Book A Sloth</p>';
 const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Dental' }];
-// Tracked-link param, filled per lead by coldCallService: https://bookasloth.com/invite/<code>
-// with the lead's 4-char invite code (e.g. CX12) — the invite landing page, which logs the
-// tap on the lead and carries the code through Google signup. ({ ref: 'code' } = bare code.)
-const INVITE_LINK = { key: 'invite_link', label: 'Invite link', example: 'https://bookasloth.com/invite/CX12', ref: 'link' };
+// Tracked-link param, filled per lead by coldCallService: the lead's category landing page
+// (or homepage) + ?i=<4-char invite code>, e.g. https://bookasloth.com/for/dentists?i=CX12 —
+// the visit logs a tap on the lead and the code rides Google signup. ({ ref: 'code' } = bare code.)
+const INVITE_LINK = { key: 'invite_link', label: 'Invite link', example: 'https://bookasloth.com/for/dentists?i=CX12', ref: 'link' };
 
 const COLD_CALL_TEMPLATES = [
   {
@@ -151,7 +151,7 @@ If you got stuck anywhere, reply here and I'll help you finish it in a few minut
 You can continue here: ${WA_SIGNUP}`,
   },
   {
-    // The one tracked message: its link opens bookasloth.com/invite/<lead code>, so a tap
+    // The one tracked message: its link opens the lead's category page with ?i=<code>, so a tap
     // shows up on that lead (🔥). WhatsApp only — email clicks are tracked by Resend.
     channel: 'whatsapp', name: 'Cold Call Link - Vendor', label: 'Cold call · Booking link, tracked (WA)', category: 'cold_call_link',
     // Text exactly as submitted to Meta.

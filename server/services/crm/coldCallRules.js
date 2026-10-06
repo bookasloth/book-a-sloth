@@ -226,6 +226,39 @@ const REF_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const newRefCode = (rand = Math.random) => Array.from({ length: 4 }, () => REF_CHARS[Math.floor(rand() * REF_CHARS.length)]).join('');
 const cleanRefCode = (code) => { const c = String(code || '').trim().toUpperCase(); return /^[A-Z0-9]{4}$/.test(c) ? c : null; };
 
+// Lead category → its /for/ landing page (first match wins, so specialists come before
+// the general doctors page); no match → homepage. Covers ~93% of the Nagpur pool.
+const LANDINGS = [
+  [/dental|dentist|orthodont|periodont|endodont|prosthodont|oral (and maxillofacial )?surgeon/i, 'dentists'],
+  [/derma|skin care|hair transplant|hair replacement|cosmetic surgeon|plastic surg/i, 'dermatologists'],
+  [/pediatric|child(ren)?'?s hospital|child health|children policlinic/i, 'pediatricians'],
+  [/gyn|obstet|maternity|fertility|pregnancy|women's health/i, 'gynecologists'],
+  [/^ent |otolaryng|speech & hearing/i, 'ent-specialists'],
+  [/ophthalm|eye care|optician|optometr|lasik/i, 'ophthalmologists'],
+  [/physio|rehabilitation|occupational therapist|chiropract/i, 'physiotherapists'],
+  [/nutrition|dietitian|weight loss/i, 'nutritionists'],
+  [/veterin|animal hospital|pet groom|pet boarding|\bdog/i, 'veterinarians'],
+  [/astrolog|numerolog|vastu|pujari|priest|fortune|ritual/i, 'astrologers'],
+  [/architect|interior|landscape|building designer/i, 'architects'],
+  [/chartered accountant|accountant|accounting|^tax |tax (consultant|preparation|attorney)|auditor|bookkeep|income tax/i, 'chartered-accountants'],
+  [/lawyer|legal|law firm|attorney|notary/i, 'lawyers'],
+  [/sport|turf|cricket|badminton|futsal|pickleball|football|soccer|tennis|basketball|pool hall|billard|skating/i, 'sports-turf'],
+  [/\bgym|fitness|yoga|pilates|zumba|martial|karate/i, 'fitness'],
+  [/\bspas?\b|massage|wellness|reiki|meditation|aromatherapy/i, 'spa'],
+  [/salon|parlou?r|beaut|make-?up|hairdresser|hair care|barber|nail|eyelash|stylist/i, 'salon'],
+  [/doctor|clinic|hospital|medical|physician|practitioner|surgeon|diagnostic|patholog|laborator|homeopath|ayurved|psychiatr|cardiolog|neurolog|diabet|pulmonolog|urolog|gastro|oncolog|nephrolog|rheumatolog|endocrin|radiolog|nursing home|\bmri\b|x-ray|blood test|acupuncture|naturopath|sexolog|health counselor|health consultant|anesthes|hematolog|intensivist|proctolog/i, 'doctors'],
+  [/life coach|counsel|psycholog|psychotherap|mental health|hypnotherap/i, 'life-coaches'],
+  [/consult|business|financial|investment|\bhr\b|human resource|stock broker|loan|insurance/i, 'business-consultant'],
+  [/coaching|tutor|education|training|institute|school|academy|class|preschool|learning|college|kindergarten|career/i, 'tutors'],
+  [/agency|marketing|advertising|branding|website designer|software|design/i, 'agencies'],
+  [/photograph/i, 'photographers'],
+  [/event|wedding|banquet/i, 'events'],
+];
+function landingPath(profession = '') {
+  const hit = LANDINGS.find(([re]) => re.test(String(profession || '').trim()));
+  return hit ? `/for/${hit[1]}` : '/';
+}
+
 // Signed-up lead → what's left before they can take a booking.
 function setupSteps({ profile = {}, services = 0, bookings = 0 } = {}) {
   return [
@@ -242,6 +275,6 @@ const istHour = (now = new Date()) => new Date(now.getTime() + IST_MS).getUTCHou
 module.exports = {
   OUTCOMES, CALLBACK_PREFIX, MAX_NO_ANSWER, DAILY_TARGET,
   phone10, waPhone10, nextStep, sortKey, freshSlots, buildQueue, todayStats, outcomeMix, followUpBuckets,
-  followUpRanges, groupReport, wasSent, hourMix, newRefCode, cleanRefCode, setupSteps, istHour,
+  followUpRanges, groupReport, wasSent, hourMix, newRefCode, cleanRefCode, landingPath, setupSteps, istHour,
   istDate, istDayStart, istDayEnd, formatIst,
 };
