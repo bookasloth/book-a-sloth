@@ -70,6 +70,2487 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "iim-resume-template",
+  "title": "IIM Resume Template: The One-Page Format That Works",
+  "date": "Oct 15, 2026",
+  "icons": [
+    "clipboard",
+    "target",
+    "star"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "An IIM resume is one page with a number on every bullet. The section-by-section template, the impact-bullet formula, do's and don'ts, and a resume review.",
+  "body": [
+    {
+      "p": "An IIM resume is one page, structured in fixed sections, with every bullet carrying a number. That is the whole format. What separates a shortlist from a reject is not design — it is how tightly you quantify what you did. This guide lays out the IIM student resume section by section, gives you the impact-bullet formula, and flags the mistakes that get resumes binned before anyone reads them."
+    },
+    {
+      "p": "Keep it to a single page. Recruiters screen fast, and depth beats decoration every time."
+    },
+    {
+      "h2": "What an IIM resume template looks like"
+    },
+    {
+      "p": "An IIM resume follows a fixed order: header, education, work experience, positions of responsibility, achievements, and skills — all on one page. The order shifts slightly with experience, but the sections stay the same."
+    },
+    {
+      "p": "Here is the standard one-page MBA resume format, section by section:"
+    },
+    {
+      "table": {
+        "head": [
+          "Section",
+          "What goes here",
+          "Rough space"
+        ],
+        "rows": [
+          [
+            "Header",
+            "Name, phone, email, LinkedIn",
+            "1 line"
+          ],
+          [
+            "Education",
+            "IIM, undergrad, class 12/10, scores",
+            "15–20%"
+          ],
+          [
+            "Work experience",
+            "Roles, impact bullets",
+            "40–50%"
+          ],
+          [
+            "Positions of responsibility",
+            "Clubs, committees, leadership",
+            "15%"
+          ],
+          [
+            "Achievements",
+            "Awards, ranks, competitions",
+            "10%"
+          ],
+          [
+            "Skills & interests",
+            "Tools, certifications, hobbies",
+            "5–10%"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Freshers lead with education; those with work experience lead with the job. A structured, one-page format matters because [recruiters spend about six seconds on the first pass of a resume](https://www.recruiter.com/recruiting/theladders-reveals-research-reporting-that-resumes-spend-six-seconds-with-a-recruiter/) before deciding whether to keep reading. You are writing for a six-second scan, and most resumes are screened out before anyone reads them closely."
+    },
+    {
+      "h2": "Header: keep it to one clean line"
+    },
+    {
+      "p": "Your header is your name and three ways to reach you — nothing more. No photo, no address, no date of birth, no marital status."
+    },
+    {
+      "p": "Put your full name in the largest font on the page. Below it: phone, a professional email, and your LinkedIn URL. That is it. Recruiters do not need your home address, and Indian resume norms have moved away from personal details that invite bias. Save the space for impact."
+    },
+    {
+      "h2": "Education: numbers first, top to bottom"
+    },
+    {
+      "p": "List education in reverse order — IIM first — with the score beside each entry. Percentages and CGPA are what recruiters scan for here. Format each line as institution, degree or programme, year, and score. For example:"
+    },
+    {
+      "ul": [
+        "IIM [Campus] — MBA/PGP, 2024–2026, CGPA 3.4/4.3",
+        "[College], [University] — B.Tech Mechanical, 2019–2023, 8.7 CGPA",
+        "Class 12 (CBSE) — 2019, 94.2%",
+        "Class 10 (CBSE) — 2017, 95.6%"
+      ]
+    },
+    {
+      "p": "If you have a strong academic record, this section does heavy lifting. If your scores are average, keep it tight and let work experience carry the resume."
+    },
+    {
+      "h2": "Work experience: the impact-bullet formula"
+    },
+    {
+      "p": "Every work-experience bullet follows one formula: action verb + task + measurable result. If a bullet has no number, it is not finished."
+    },
+    {
+      "info": {
+        "title": "The impact-bullet formula",
+        "text": "Action verb + what you did + the quantified outcome. Percentages, rupees, team size, time saved, or rankings — pick whatever proves scale."
+      }
+    },
+    {
+      "ul": [
+        "Led a 6-member team on a ₹15Cr project; delivered 3 weeks ahead of schedule.",
+        "Identified cost-reduction opportunities worth ₹150Cr annually across three plants.",
+        "Reduced system downtime by 40% through proactive monitoring.",
+        "Conducted 15+ stakeholder interviews to build an operational roadmap."
+      ]
+    },
+    {
+      "p": "Notice the pattern: a strong verb, a specific task, a number. Credible MBA resume guidance is blunt about honesty here — [quantify achievements only with results you can defend](https://novoresume.com/career-blog/mba-resume), because most interview questions come straight off your resume. Do not invent numbers you cannot support."
+    },
+    {
+      "p": "Use three to four bullets per role. Start each with a fresh action verb: Led, Built, Drove, Cut, Launched, Negotiated, Scaled. Never repeat the same verb twice."
+    },
+    {
+      "h2": "Positions of responsibility and achievements"
+    },
+    {
+      "p": "This is where IIM resumes are won or lost — it shows leadership beyond the classroom. Treat positions-of-responsibility bullets like work bullets: quantified and specific."
+    },
+    {
+      "p": "Positions of responsibility — clubs, committees, fests, student government. Show scale and outcome:"
+    },
+    {
+      "ul": [
+        "Coordinator, Finance Club — grew membership from 40 to 180 in one term.",
+        "Led a 12-person team to organise a fest with a ₹8L budget and 2,000+ attendees."
+      ]
+    },
+    {
+      "p": "Achievements — ranks, awards, competitions, scholarships:"
+    },
+    {
+      "ul": [
+        "Winner, [National Case Competition] 2025 — top 1 of 400+ teams.",
+        "AIR 312 in [entrance exam], top 0.3 percentile."
+      ]
+    },
+    {
+      "p": "Numbers turn a vague \"leadership\" claim into proof. Few candidates bother to quantify these sections, so doing it well makes you stand out immediately."
+    },
+    {
+      "h2": "Do's and don'ts"
+    },
+    {
+      "p": "Do quantify everything and keep to one page; don't use photos, paragraphs, or fancy fonts. Here is the fast checklist."
+    },
+    {
+      "table": {
+        "head": [
+          "Do",
+          "Don't"
+        ],
+        "rows": [
+          [
+            "Fit everything on one page",
+            "Exceed a single page for any profile"
+          ],
+          [
+            "Start every bullet with an action verb",
+            "Write full sentences with periods"
+          ],
+          [
+            "Quantify every bullet with a number",
+            "Use generic buzzwords with no evidence"
+          ],
+          [
+            "Use a clean 10–11pt font, one family",
+            "Mix fonts or add colour and graphics"
+          ],
+          [
+            "Keep 0.5–0.75\" margins",
+            "Add a photo, address, DOB, or marital status"
+          ],
+          [
+            "Export a clean PDF",
+            "Send a .doc or an image file"
+          ],
+          [
+            "Limit 3–4 bullets per role",
+            "Pad with irrelevant roles"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Consistency signals care. Same date format everywhere, same tense within a section, aligned columns. Recruiters read carelessness as a preview of your work."
+    },
+    {
+      "h2": "Fix these three things this week"
+    },
+    {
+      "p": "The highest-leverage move is not a new template — it is putting a number on every bullet you already have. Most resumes fail because they describe activity, not impact. Fix that and you are ahead of most of your batch."
+    },
+    {
+      "ol": [
+        "Add a number to every bullet. If you cannot, rewrite the bullet around what you actually moved.",
+        "Cut to one page. Delete the weakest 20%, ruthlessly.",
+        "Get a human to tear it apart. You cannot see your own blind spots."
+      ]
+    },
+    {
+      "p": "That last one matters most. Want a human to review your resume before you send it? You can [book a 30-minute resume review](/blog/how-to-book-an-appointment-online) with a mentor who has read hundreds of them — one link, one slot, done. If you are the mentor on the other side, here is [how to become a paid mentor](/blog/how-to-become-paid-mentor) and run tidy [30-minute review calls](/blog/30-minute-call-setup) without drowning in scheduling. Your craft is the feedback; let the [booking machinery](/be-a-sloth) handle the rest."
+    },
+    {
+      "h2": "Frequently asked questions"
+    },
+    {
+      "faq": [
+        {
+          "q": "How long should an IIM resume be?",
+          "a": "One page, always. Screening takes seconds and a second page rarely gets read. If you cannot fit it on one page, you are including too much — cut the weakest roles and tighten every bullet."
+        },
+        {
+          "q": "Should I use a resume template or build from scratch?",
+          "a": "Use a simple, single-column template as a skeleton, then fill it with your own quantified content. The structure is standard across IIMs; your bullets are what differentiate you."
+        },
+        {
+          "q": "What font and size should I use on an IIM resume?",
+          "a": "A clean, single font family at 10–11pt, with 0.5–0.75 inch margins. Avoid decorative or coloured fonts. Readability beats style on a six-second scan."
+        },
+        {
+          "q": "Do I need work experience for a strong MBA resume?",
+          "a": "No. Freshers lead with education, academic projects, internships, and positions of responsibility. Quantify leadership and results the same way and the resume reads just as strong."
+        },
+        {
+          "q": "How many bullets should each role have?",
+          "a": "Three to four. Each should start with a different action verb and end with a measurable result. More than four dilutes your best points."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "meeting-notice-format",
+  "title": "Meeting Notice Format: Samples for Office & RWA",
+  "date": "Oct 15, 2026",
+  "icons": [
+    "clipboard",
+    "calendar",
+    "users"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "The correct meeting notice format with copy-paste samples: a formal office notice, a minutes-of-meeting mail, and an apartment association meeting notice.",
+  "body": [
+    {
+      "p": "A meeting notice is a formal message that tells members a meeting is being held, giving the date, time, place, and agenda so everyone can attend and prepare. The correct format is a header, the notice line, the details block, the agenda, and a sign-off from the person calling it. Below is that structure with copy-paste samples for an office, an apartment association, and a minutes-of-meeting mail."
+    },
+    {
+      "p": "A notice isn't an invitation to be charming. It's a record. Keep it plain, dated, and complete."
+    },
+    {
+      "h2": "What a meeting notice must include"
+    },
+    {
+      "p": "A proper meeting notice includes eight parts: the organization name, the words \"Notice of Meeting,\" the date it's issued, the meeting's date and time, the venue or link, the purpose, the agenda, and the signature of the convener. Leaving any of these out can make the notice invalid for official or legal purposes."
+    },
+    {
+      "p": "Here is the standard order:"
+    },
+    {
+      "ol": [
+        "Organization / body name — at the top, as a header.",
+        "Title — \"Notice of Meeting\" or \"Notice of [Annual General] Meeting.\"",
+        "Date of issue — when the notice went out.",
+        "Meeting date, time, and duration — be exact.",
+        "Venue or platform — room, address, or video link.",
+        "Purpose — one line on why the meeting is called.",
+        "Agenda — numbered items in order.",
+        "Signature — name and role of the person calling the meeting."
+      ]
+    },
+    {
+      "p": "A [notice of meeting should also flag preparation materials and an RSVP method](https://www.wudpecker.io/blog/how-to-write-the-notice-of-meeting-with-template) so members arrive ready instead of asking questions at the door."
+    },
+    {
+      "h2": "Standard meeting notice format (template)"
+    },
+    {
+      "p": "The standard meeting notice format is a header, a dated notice line, a details block, a numbered agenda, and a signed sign-off. Use this skeleton for almost any formal meeting."
+    },
+    {
+      "info": {
+        "title": "Standard meeting notice — template",
+        "text": "[ORGANIZATION NAME]\nNOTICE OF MEETING\n\nDate: [date of issue]\n\nNotice is hereby given that a [type] meeting of [group] will be held as follows:\n\nDate: [day, date]\nTime: [start–end, with time zone]\nVenue: [room / address / video link]\n\nAgenda\n1. Confirmation of previous minutes\n2. [Agenda item]\n3. [Agenda item]\n4. Any other business\n\nMembers are requested to attend on time. Kindly confirm attendance by [date].\n\n[Name]\n[Role, e.g. Secretary]"
+      }
+    },
+    {
+      "h2": "Formal office meeting notice sample"
+    },
+    {
+      "p": "A formal office meeting notice names the department, states the purpose in one line, and lists the agenda in the order it will be discussed. Use it for internal reviews, department meetings, and staff briefings."
+    },
+    {
+      "info": {
+        "title": "Office meeting notice — sample",
+        "text": "[Company Name] — Operations Department\nNOTICE OF MEETING\n\nDate: 10 September 2026\n\nA meeting of the Operations team will be held to review the September delivery targets and plan October staffing.\n\nDate: Monday, 15 September 2026\nTime: 11:00 AM – 12:00 PM IST\nVenue: Conference Room 2 / Google Meet\n\nAgenda\n1. Review of September targets\n2. Pending client escalations\n3. October staffing and leave plan\n4. Any other business\n\nAll team leads are required to attend. Please confirm by 12 September.\n\n[Name], Operations Manager"
+      }
+    },
+    {
+      "h2": "Apartment association meeting notice sample"
+    },
+    {
+      "p": "An apartment association meeting notice must name the society, state whether it's a general or committee meeting, and give members enough notice to attend — usually set by your society's bye-laws. Post it on the notice board and share it on the residents' group."
+    },
+    {
+      "info": {
+        "title": "Apartment association (RWA) notice — sample",
+        "text": "[Society Name] Residents' Welfare Association\nNOTICE OF GENERAL BODY MEETING\n\nDate: 10 September 2026\n\nNotice is hereby given that the General Body Meeting of [Society Name] will be held as follows:\n\nDate: Sunday, 21 September 2026\nTime: 6:00 PM\nVenue: Community Hall, [Block/Wing]\n\nAgenda\n1. Reading and approval of last meeting's minutes\n2. Maintenance dues and collection status\n3. Lift and water tank repair quotes\n4. Security contract renewal\n5. Any other matter with the Chair's permission\n\nMembers are requested to attend. If quorum is not met, the meeting will reconvene after 30 minutes at the same venue.\n\n[Name], Honorary Secretary"
+      }
+    },
+    {
+      "h2": "Minutes of meeting mail (sample)"
+    },
+    {
+      "p": "A minutes of meeting mail is sent after the meeting and records who attended, what was decided, and who owns each action item with a deadline. It's not a transcript — it's the decisions and the next steps."
+    },
+    {
+      "info": {
+        "title": "Minutes of meeting mail — sample",
+        "text": "Subject: Minutes — Ops meeting, 15 Sep 2026\n\nHi all,\n\nThanks for joining today. Summary below.\n\nPresent: [names] · Absent: [names]\n\nDecisions\n- Approved the October staffing plan.\n- Client [X] escalation to be closed by Friday.\n\nNext meeting: Monday, 22 September, 11 AM.\n\n[Your name]"
+      }
+    },
+    {
+      "p": "List the action items in a small table so every task has a clear owner and deadline:"
+    },
+    {
+      "table": {
+        "head": [
+          "Task",
+          "Owner",
+          "Due"
+        ],
+        "rows": [
+          [
+            "Send revised delivery schedule",
+            "[Name]",
+            "17 Sep"
+          ],
+          [
+            "Confirm two new hires",
+            "[Name]",
+            "19 Sep"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "One caution: minutes often carry sensitive figures and names. Email is the usual channel, but [sending minutes by email raises the risk of a breach](https://www.diligent.com/resources/blog/meeting-minutes-email) because phishing and account hacks are common — send to a known list, not a forwarded chain."
+    },
+    {
+      "h2": "Notice vs invitation: what's the difference"
+    },
+    {
+      "p": "A notice is formal and on the record; an invitation is a request to attend. Both can carry the same details, but the tone and the obligation differ."
+    },
+    {
+      "table": {
+        "head": [
+          "",
+          "Meeting notice",
+          "Meeting invitation"
+        ],
+        "rows": [
+          [
+            "Purpose",
+            "Official record that a meeting is called",
+            "Request someone to attend"
+          ],
+          [
+            "Tone",
+            "Formal, plain",
+            "Warm, can be casual"
+          ],
+          [
+            "Used by",
+            "Companies, RWAs, boards",
+            "Anyone"
+          ],
+          [
+            "Confirmation",
+            "Sometimes required by bye-laws",
+            "Nice to have"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "If your meeting is less formal, you may just want an [invitation template instead of a notice](/blog/meeting-invitation-templates) — same details, friendlier tone."
+    },
+    {
+      "h2": "Stop chasing confirmations: let people book the slot"
+    },
+    {
+      "p": "The tedious part of any meeting isn't the notice — it's the back-and-forth to lock a time everyone can make. A notice fixes one time and hopes it works. A booking link flips it: you offer the open slots and people claim one."
+    },
+    {
+      "p": "That's the calmer way, and it's what I built [Book A Sloth](/be-a-sloth) for — one link that lets people book, with email and WhatsApp reminders sent automatically so you're not the one chasing. For recurring committee or team meetings, learning [how to book an appointment online](/blog/how-to-book-an-appointment-online) can replace the confirmation thread entirely. And when you're wrangling a group's availability, a [scheduling poll](/blog/scheduling-poll-group-meeting) beats a wall of \"I'm free Tuesday\" replies."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is the correct format for a meeting notice?",
+          "a": "Header with the organization name, the title \"Notice of Meeting,\" the date of issue, the meeting's date, time, and venue, a one-line purpose, a numbered agenda, and the convener's signature."
+        },
+        {
+          "q": "How much notice is required for a meeting?",
+          "a": "It depends on the body. Companies and housing societies usually set a minimum notice period in their bye-laws or statute — often 7 to 21 days for a general meeting. Check yours before you send."
+        },
+        {
+          "q": "What should a minutes of meeting mail include?",
+          "a": "Attendees and absentees, the decisions made, action items with an owner and a due date, and the next meeting date. Keep it to decisions and next steps, not a full transcript."
+        },
+        {
+          "q": "Is a meeting notice the same as an invitation?",
+          "a": "No. A notice is a formal record that a meeting has been called and is often required by rules. An invitation is a friendlier request to attend and carries no legal weight."
+        },
+        {
+          "q": "How do I write an apartment association meeting notice?",
+          "a": "Name the society, state it's a general or committee meeting, give the date, time, and venue, list the agenda, and mention the quorum rule. Post it on the board and share it in the residents' group."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "welcome-message-new-employee",
+  "title": "Short Welcome Message for New Employee: 30+ Samples",
+  "date": "Oct 15, 2026",
+  "icons": [
+    "users",
+    "star",
+    "bell"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Copy-paste short welcome messages for a new employee — from the manager, team, email, Slack and WhatsApp, plus the small rules that make a welcome land.",
+  "body": [
+    {
+      "p": "A short welcome message for a new employee should do three things: say you are genuinely glad they joined, name them personally, and point them to a friendly face. That is it. Below are copy-paste messages for every channel — manager, team, email, Slack, and WhatsApp — plus the small rules that make a welcome feel real instead of generic. Steal the ones that fit, swap in the name, and send."
+    },
+    {
+      "p": "A warm first message is not a nicety. It is the start of whether someone stays."
+    },
+    {
+      "h2": "Why a welcome message actually matters"
+    },
+    {
+      "p": "A good welcome message shapes a new hire's decision to stay, and that decision comes fast. First impressions in the first days do real work."
+    },
+    {
+      "p": "The numbers are stark. Research finds that [86% of new hires decide how long they will stay within their first six months, and structured onboarding improves retention by around 82% and productivity by over 70%](https://aihr.com/blog/employee-onboarding-statistics). Yet most companies still onboard poorly. A friendly message will not fix a broken onboarding, but it is the cheapest, fastest signal you can send that a person is wanted. Silence on day one says the opposite."
+    },
+    {
+      "h2": "Short welcome messages from the manager"
+    },
+    {
+      "p": "A manager's welcome should feel personal and open the door — warm, specific, and low-pressure. This is the message a new hire remembers."
+    },
+    {
+      "ol": [
+        "\"Welcome aboard, [Name]! I'm genuinely glad you said yes. My door — and my DMs — are always open.\"",
+        "\"Hi [Name], welcome to the team. I picked you for a reason, and I'm looking forward to seeing you do your thing.\"",
+        "\"So happy to have you with us, [Name]. Take your first week to settle in — questions are more than welcome, they're expected.\"",
+        "\"Welcome, [Name]! No one expects you to have the answers yet. Ask anything. We were all new once.\"",
+        "\"[Name], welcome to the team. Let's grab a coffee this week so I can hear what you're excited about.\""
+      ]
+    },
+    {
+      "p": "Keep it short. A manager's warmth counts more than a manager's word count."
+    },
+    {
+      "h2": "Welcome message from the team"
+    },
+    {
+      "p": "A team welcome should make the new person feel they already have allies. Short, friendly, and a little human."
+    },
+    {
+      "ol": [
+        "\"Hey [Name], welcome aboard! Ping any of us anytime — no question is too small.\"",
+        "\"Welcome to the crew, [Name]! We've been looking forward to this. Coffee's on us on day one.\"",
+        "\"So glad you're here, [Name]. Fair warning: we're a chatty bunch and we're happy about it.\"",
+        "\"Welcome, [Name]! Your ideas matter here — don't wait for permission to share them.\"",
+        "\"Great to have you, [Name]. If you get lost — physically or in the Slack channels — just shout.\""
+      ]
+    },
+    {
+      "p": "Diversify the senders. A note from the manager, the team, and HR lands better than [one generic message from a single source](https://www.aihr.com/blog/welcome-to-the-team/)."
+    },
+    {
+      "h2": "Welcome email to a new joinee"
+    },
+    {
+      "p": "A welcome email should combine a warm greeting with the practical details of day one. This is the message that reduces first-day nerves."
+    },
+    {
+      "quote": "Subject: Welcome to [Company], [Name]! Here's your day one — Hi [Name], we're thrilled you're joining [Company] as [Role]. The whole team has been looking forward to it. A few quick details for your first day: When — [Date], [Time]. Where — [Office / video link]. Who to ask for — [Buddy/Manager name]. Bring — [ID / documents, if any]. Your first week is about settling in and meeting people — no pressure to perform yet. [Buddy name] will be your go-to for anything at all. Welcome aboard. We're glad you're here.",
+      "cite": "Copy-paste welcome email template"
+    },
+    {
+      "p": "Keep logistics tight and the tone warm. Don't bury a welcome under a wall of policy links."
+    },
+    {
+      "h2": "Welcome message for Slack or WhatsApp"
+    },
+    {
+      "p": "A chat welcome should be short, upbeat, and easy for others to pile onto. This is where the team says hello in public."
+    },
+    {
+      "p": "Slack or Teams channel:"
+    },
+    {
+      "ul": [
+        "\"Everyone, please welcome [Name] to the team as our new [Role]! Say hi 👋\"",
+        "\"New face alert! Welcome [Name] — drop a wave and tell them your favourite lunch spot.\"",
+        "\"Welcome [Name]! We're stoked to have you. React with a 👋 so they feel the love.\""
+      ]
+    },
+    {
+      "p": "WhatsApp (short and casual):"
+    },
+    {
+      "ul": [
+        "\"Welcome to the team, [Name]! 🙌 So glad to have you with us.\"",
+        "\"Hey [Name], welcome aboard! Ping me anytime you need anything this week.\"",
+        "\"Great to have you, [Name]! Can't wait to work together. 🎉\""
+      ]
+    },
+    {
+      "p": "Public welcomes work because they invite others to join in. One \"welcome!\" quickly becomes twenty, and the new hire feels the room turn toward them."
+    },
+    {
+      "h2": "How to welcome a new team member well"
+    },
+    {
+      "p": "The best welcomes are personal, timely, and light on logistics. Follow a few simple rules and any of the messages above will land."
+    },
+    {
+      "steps": [
+        "Use their name and one specific detail — their role, a skill, or something from the interview. Generic reads as a mail-merge.",
+        "Time it right. Reach out after they accept, again a few days before day one, and once more on the morning they start.",
+        "Keep it warm, not heavy. A welcome is not the place for the leave policy or the compensation breakdown.",
+        "Spread the senders. Manager, team, and HR each sending a short note beats one long one.",
+        "Point to a person. Always name someone they can turn to. Belonging beats information on day one."
+      ]
+    },
+    {
+      "p": "Do these five and you have covered what most companies miss."
+    },
+    {
+      "table": {
+        "head": [
+          "Channel",
+          "Best for",
+          "Keep it"
+        ],
+        "rows": [
+          [
+            "Manager message",
+            "Setting the tone, one-to-one warmth",
+            "Two sentences, personal"
+          ],
+          [
+            "Team message",
+            "Making the hire feel they have allies",
+            "Casual, one per teammate"
+          ],
+          [
+            "Welcome email",
+            "Day-one logistics plus a warm greeting",
+            "Tight on details, warm on tone"
+          ],
+          [
+            "Slack / WhatsApp",
+            "A public hello others can pile onto",
+            "Short, upbeat, taggable"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Make the first click as warm as the first message"
+    },
+    {
+      "p": "The highest-leverage thing you can do is remove friction from a new hire's first week — starting with how they meet people. A warm message plus an easy way to actually connect beats a beautiful welcome that leads nowhere."
+    },
+    {
+      "p": "Three things to do this week:"
+    },
+    {
+      "ol": [
+        "Save these templates so a welcome takes 30 seconds, not 30 minutes.",
+        "Line up a buddy and name them in the very first message.",
+        "Make the 1:1s effortless. Don't email around to schedule five intro chats."
+      ]
+    },
+    {
+      "p": "That last one is where onboarding usually stalls. Instead of a scheduling thread, let a new hire book their intro 1:1s with the team in one click — see [how one-click appointment booking works](/blog/how-to-book-an-appointment-online) and set up tidy [30-minute intro calls](/blog/30-minute-call-setup) with reminders that actually arrive. Pair it with clean [meeting invitations](/blog/meeting-invitation-templates) and the whole first week runs itself. The welcome is yours; let the [scheduling machinery be ours](/be-a-sloth)."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is a good short welcome message for a new employee?",
+          "a": "\"Welcome aboard, [Name]! I'm genuinely glad you're here. Ask anything this week — that's exactly what your first days are for.\" It is personal, warm, and it points the new hire to help, which is all a short welcome needs to do."
+        },
+        {
+          "q": "How do you welcome a new team member on Slack?",
+          "a": "Post a short, upbeat message tagging the person and their role, and invite others to react or reply. \"Welcome [Name], our new [Role] — say hi 👋\" works well because it prompts a wave of replies and makes the hello feel public."
+        },
+        {
+          "q": "When should I send a welcome message to a new joinee?",
+          "a": "Send one shortly after they accept the offer, another a few days before their start date, and one on the morning of day one. Early, repeated contact eases nerves and signals the person was expected."
+        },
+        {
+          "q": "Should the manager or the team send the welcome message?",
+          "a": "Both. A note from the manager sets the tone, and messages from teammates make the person feel they already have allies. Multiple senders beat one generic message from a single source."
+        },
+        {
+          "q": "What should a welcome email include?",
+          "a": "A warm greeting, the person's role, and the key day-one logistics: when, where, who to ask for, and what to bring. Keep policy details for later — day one is about belonging, not paperwork."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-list-property-on-airbnb",
+  "title": "How to List Property on Airbnb: Step-by-Step",
+  "date": "Oct 11, 2026",
+  "icons": [
+    "key",
+    "rocket",
+    "money"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "List a property on Airbnb step by step: register as host, build and price the listing, add photos, set rules, and publish — plus the fees to expect.",
+  "body": [
+    {
+      "p": "To list a property on Airbnb, create a host account, add your space and location, write a clear description, upload strong photos, set your price and house rules, then publish. A basic listing takes about half an hour if your details and photos are ready. Getting it right — so it actually books — takes a bit longer."
+    },
+    {
+      "p": "This is the honest, current process. No fluff, no shortcuts that get you delisted. Just the steps in order, the fees to expect, and what separates a listing that books from one that sits empty."
+    },
+    {
+      "h2": "Before you list: check the rules"
+    },
+    {
+      "p": "Before anything else, confirm that short-term rentals are legal where your property is. This is the step people skip and regret. Many cities require registration, a permit, or a licence number, and some housing societies and rental agreements ban short lets outright."
+    },
+    {
+      "p": "Do three checks:"
+    },
+    {
+      "ul": [
+        "Local law. Search your city's short-term rental rules and any registration or permit requirement.",
+        "Your building or society. Read the bye-laws or ask the association in writing.",
+        "Your own lease. If you rent, your agreement may forbid subletting. Get written permission first."
+      ]
+    },
+    {
+      "p": "Sorting this now beats a fine or a takedown later."
+    },
+    {
+      "h2": "How to register for Airbnb as a host"
+    },
+    {
+      "p": "You register for Airbnb as a host by creating an account and choosing to become a host from the main menu. It is free to create the account and free to list. Use the same email you check often, because bookings and guest messages land there."
+    },
+    {
+      "p": "If you already book trips on Airbnb, you can host from that same account — you do not need a second one. Once you are in, look for \"Switch to hosting\" or \"Become a host\" to start your first listing."
+    },
+    {
+      "h2": "How to list on Airbnb: the step-by-step process"
+    },
+    {
+      "p": "Here is the full sequence from empty account to live listing, in order ([a fuller walk-through is here](https://www.uplisting.io/blog/a-step-by-step-guide-how-to-list-on-airbnb))."
+    },
+    {
+      "steps": [
+        "Create your host account. Sign up, verify your email and phone, and complete identity verification. Guests trust verified hosts more.",
+        "Start a new listing and pick your property type. Entire place, private room, or shared room. Be accurate — this sets guest expectations.",
+        "Set the location. Pin the exact address. Airbnb only shows guests the approximate area until they book, so precision here is safe and helps discovery.",
+        "Describe the space. Number of guests, bedrooms, beds, and bathrooms. Then list every amenity honestly — wifi, AC, kitchen, parking, washing machine. Missing amenities cost you searches; fake ones cost you reviews.",
+        "Upload strong photos. This is the single biggest lever on bookings. Airbnb asks for a handful at minimum, but more is better — aim for 20 or so, one per feature. [Professional photos are linked to up to 40% higher revenue](https://www.hometime.io/blog/how-to-list-a-property-on-airbnb), so a paid shoot often pays for itself in the first booking.",
+        "Write a clear title and description. Lead with what makes the place easy to say yes to — location, a standout feature, who it suits. Short sentences. No exaggeration.",
+        "Set your price. Start with Airbnb's suggested range, then check what similar nearby listings charge. You can adjust anytime, so begin slightly lower to earn your first reviews, then raise it.",
+        "Set house rules and a cancellation policy. Choose rules on pets, parties, smoking, and check-in times. Then pick a cancellation policy — options range from Flexible (a 24-hour window) to Strict — balancing guest comfort against your protection.",
+        "Set availability and check-in details. Sync your calendar, set minimum and maximum stays, and add check-in instructions.",
+        "Review and publish. Read the listing as a guest would, fix anything vague, and hit publish. You are live."
+      ]
+    },
+    {
+      "p": "A basic version of this takes about 30 minutes if your photos, property details, and ID are ready — so prep those first and the flow is quick."
+    },
+    {
+      "h2": "Airbnb fees: what hosting actually costs"
+    },
+    {
+      "p": "Airbnb charges hosts a service fee on each booking. As of December 2025 Airbnb moved all hosts to a single host-only fee — roughly 15% of the booking subtotal, taken straight off your payout, with no separate guest service fee ([fee breakdown here](https://www.biggerpockets.com/blog/how-much-does-airbnb-take)). The older split-fee model, where hosts paid about 3% and guests paid the rest, has been phased out."
+    },
+    {
+      "table": {
+        "head": [
+          "Fee model",
+          "What the host pays",
+          "What the guest pays",
+          "Status"
+        ],
+        "rows": [
+          [
+            "Host-only fee",
+            "About 15% per booking",
+            "No separate service fee",
+            "Standard for all hosts since Dec 2025"
+          ],
+          [
+            "Split fee",
+            "About 3% per booking",
+            "A separate guest service fee (~14%)",
+            "Retired — phased out through 2025"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Price your nightly rate with the ~15% fee in mind, plus your cleaning cost and any local taxes, so your take-home is what you expect."
+    },
+    {
+      "h2": "Apps and tools for Airbnb hosts"
+    },
+    {
+      "p": "The right tools save hosts hours once bookings pick up. You do not need them on day one, but they matter as you grow."
+    },
+    {
+      "ul": [
+        "The Airbnb host app. Manage bookings, message guests, and update your calendar from your phone.",
+        "A channel manager. If you also list on other sites, this syncs calendars so you never get a double booking.",
+        "Dynamic pricing tools. These adjust your nightly rate by demand, day of week, and local events.",
+        "A smart lock or keypad. Self check-in removes the biggest scheduling headache in hosting."
+      ]
+    },
+    {
+      "p": "Start simple. Add tools only when the manual version starts eating your evenings."
+    },
+    {
+      "h2": "What makes a listing actually book"
+    },
+    {
+      "p": "A listing books when it is easy to find, easy to trust, and easy to say yes to. The mechanics above get you live; these get you guests:"
+    },
+    {
+      "ul": [
+        "Reviews first. Price low for your opening bookings and deliver a spotless stay. Early five-star reviews compound.",
+        "Fast replies. Airbnb rewards quick responses in search. Turn on notifications.",
+        "Honest photos and descriptions. The fastest way to bad reviews is a guest arriving to something different from the listing.",
+        "Spotless cleaning. It is the thing guests mention most, good or bad."
+      ]
+    },
+    {
+      "h2": "Renting space is one way to earn. Renting your time is another."
+    },
+    {
+      "p": "Listing on Airbnb turns a spare room or a second property into income. It is real, and for the right space it works well. But it comes with cleaning, key handovers, damaged towels, and the occasional 2am message. There is upkeep in renting a place."
+    },
+    {
+      "p": "If you have a skill instead of a spare room — coaching, consulting, tutoring, design — you can rent your time the same way. Someone picks a slot, pays, and shows up. There is nothing to clean and no linen to replace. If that sounds like you, look at [how to make money from home in India](/blog/how-to-make-money-from-home-india) and set up [how to book an appointment online](/blog/how-to-book-an-appointment-online) so people can book and pay you in one link. [Become a Sloth](/be-a-sloth) and see [pricing](/pricing) — the craft is yours, the machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "Is it free to list a property on Airbnb?",
+          "a": "Yes. Creating a host account and publishing a listing costs nothing. Airbnb charges only when you get a booking — a host service fee of roughly 15% off your payout under the host-only model that applies to all hosts since December 2025."
+        },
+        {
+          "q": "How many photos should an Airbnb listing have?",
+          "a": "Airbnb requires a minimum (commonly five), but aim much higher — around 20, showing each room and key feature. Strong photography is the biggest single driver of bookings, so it is worth doing well."
+        },
+        {
+          "q": "How long does it take to list on Airbnb?",
+          "a": "A basic listing takes roughly 30 minutes if your photos, property details, and ID are ready in advance. Fully optimising the description, pricing, and rules usually takes a couple of hours more."
+        },
+        {
+          "q": "Do I need permission to list my property on Airbnb?",
+          "a": "Often, yes. Check your local short-term rental laws, your building or society bye-laws, and your own lease before listing. Some areas require a permit or registration number, and some agreements forbid short lets."
+        },
+        {
+          "q": "What cancellation policy should a new host choose?",
+          "a": "A Flexible or Moderate policy attracts more bookings when you are building reviews, since guests feel safer. Move to a stricter policy later, once demand is steady, to protect yourself against last-minute losses."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "payment-aggregators-india-consultants",
+  "title": "Payment Aggregator in India: How Consultants Get Paid",
+  "date": "Oct 11, 2026",
+  "icons": [
+    "money",
+    "wallet",
+    "shield"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 5,
+  "category": "Money",
+  "image": null,
+  "excerpt": "What a payment aggregator in India is, how it differs from a payment gateway, and how consultants and creators actually collect payments online.",
+  "body": [
+    {
+      "p": "A payment aggregator in India is a licensed service that collects money from your customers and settles it into your bank account, so you don't need your own merchant account with a bank. It pools payments from cards, UPI, wallets, and net banking into one place and passes them to you. For an independent consultant or creator, that is the whole point: you get paid without wiring up your own banking infrastructure."
+    },
+    {
+      "p": "This guide explains what an aggregator is, how it differs from a payment gateway, what the RBI requires, and — the part most articles skip — how you actually collect payments when it's just you and a client."
+    },
+    {
+      "h2": "What is a payment aggregator?"
+    },
+    {
+      "p": "A payment aggregator is a third-party provider that lets businesses accept online payments without opening their own merchant account with a bank. It sits between your customer and your bank."
+    },
+    {
+      "p": "Here's the flow: your customer pays, the aggregator collects that money into a pooled account, runs fraud and authorisation checks, and then settles the funds into your account — a multi-step journey from onboarding to settlement, all handled behind the scenes. You never touch the plumbing. You just see the money arrive."
+    },
+    {
+      "p": "The old way was applying to a bank for your own merchant ID, a process built for shops and companies, not for one person selling advice. Aggregators exist so that individuals and small businesses can accept payments in a day instead of a month."
+    },
+    {
+      "h2": "Payment aggregator vs payment gateway: the difference"
+    },
+    {
+      "p": "A payment aggregator handles the money; a payment gateway only handles the data. That is the single distinction to remember."
+    },
+    {
+      "p": "A gateway is the technology that securely passes card and payment details from the checkout to the bank. It does not hold your funds and it does not give you a merchant account — you still need your own. An aggregator does both: it provides the account and moves the money. In practice, most tools you'll use bundle a gateway inside an aggregator, so you rarely deal with a gateway alone."
+    },
+    {
+      "table": {
+        "head": [
+          "Feature",
+          "Payment aggregator",
+          "Payment gateway"
+        ],
+        "rows": [
+          [
+            "Handles your funds",
+            "Yes",
+            "No"
+          ],
+          [
+            "Gives you a merchant account",
+            "Yes (shared)",
+            "No (you need your own)"
+          ],
+          [
+            "RBI authorisation needed",
+            "Yes",
+            "Not required"
+          ],
+          [
+            "Onboarding speed",
+            "Same day to 48 hours",
+            "Slower — needs a bank account first"
+          ],
+          [
+            "Best for",
+            "Individuals, small businesses",
+            "Companies with their own banking setup"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Aggregator onboarding is fast — often same-day to a couple of days — while setting up your own merchant account through the gateway route takes longer. For a consultant, the aggregator route is the only one that makes sense."
+    },
+    {
+      "h2": "How does the RBI regulate payment aggregators?"
+    },
+    {
+      "p": "The Reserve Bank of India requires all non-bank payment aggregators to hold a licence and meet minimum net-worth rules, which is why the space is regulated rather than open to anyone."
+    },
+    {
+      "p": "The net-worth bar is deliberately high. Under the RBI's 2020 framework, a non-bank aggregator must have [₹15 crore net worth at the time of application and reach ₹25 crore by the end of its third financial year](https://rbi.org.in/Scripts/NotificationUser.aspx?Id=11822), and maintain ₹25 crore at all times after that."
+    },
+    {
+      "p": "The RBI sorts aggregators into three licence types: PA-O for online payments, PA-P for physical point-of-sale, and [PA-CB for cross-border transactions](https://treelife.in/fintech/rbi-payment-aggregator-pa-cb-authorisation/). Since September 2025 these sit under a single consolidated Master Direction rather than separate circulars."
+    },
+    {
+      "p": "Why should you, a solo consultant, care? Because it means you should only ever route your money through a licensed, PCI-DSS-compliant aggregator. When a tool collects payment on your behalf, it is relying on that licence. It is the reason your client's money is safe and yours arrives."
+    },
+    {
+      "h2": "How do independent consultants actually collect payments?"
+    },
+    {
+      "p": "Independent consultants collect payments most easily through a payment link or a UPI request tied to a booking, not by building their own checkout. The heavy infrastructure is someone else's job."
+    },
+    {
+      "p": "For a one-person operation, three things matter far more than the licensing detail above:"
+    },
+    {
+      "ol": [
+        "UPI is your default. It is instant, free for the payer, and universal in India. Most clients would rather scan a QR or tap a UPI link than type card details.",
+        "A payment link removes the awkwardness. Instead of sharing bank details and hoping, you send one link. The client pays; you both get a record.",
+        "Collect at the moment of commitment. The best time to collect is when someone books — not after the work, when you're stuck asking for money."
+      ]
+    },
+    {
+      "p": "That last point is the one people get wrong. Chasing payment after delivery is where the whole thing turns into an unpaid admin job. If you already find yourself sending \"just following up on the invoice\" messages, our guide on [how to ask a client for payment politely](/blog/how-to-ask-client-for-payment-politely) helps — but the better fix is to not be in that position at all."
+    },
+    {
+      "h2": "You don't need to wire up a payment gateway"
+    },
+    {
+      "p": "You don't need to build any of this yourself. That is the quiet truth behind all the licensing and net-worth talk. The RBI rules, the ₹25 crore net worth, the PA-O licences — that is the machinery of the companies whose job is to move money. Your job is your craft."
+    },
+    {
+      "info": {
+        "title": "How it works on Book A Sloth",
+        "text": "When a guest books a paid service, payment is collected at that moment through a licensed aggregator and UPI, and a GST invoice is generated automatically. The host never configures a gateway, net worth, or merchant account — they only see the money land and the slot fill."
+      }
+    },
+    {
+      "p": "This is the difference between selling your time and becoming your own finance department. One link books the call and collects the payment — the model behind [Book A Sloth](/be-a-sloth). If you're still figuring out the booking side, start with [how to book an appointment online](/blog/how-to-book-an-appointment-online), and if you're building an income around your expertise, [how to make money from home in India](/blog/how-to-make-money-from-home-india) puts payments in context."
+    },
+    {
+      "p": "The craft is yours. The machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is a payment aggregator in simple terms?",
+          "a": "A payment aggregator is a licensed service that collects money from your customers and deposits it into your bank account, so you don't need your own merchant account with a bank. It handles cards, UPI, wallets, and net banking in one place."
+        },
+        {
+          "q": "Is a payment aggregator the same as a payment gateway?",
+          "a": "No. An aggregator handles and settles your funds and provides a shared merchant account. A gateway only transmits payment data securely and requires you to have your own merchant account."
+        },
+        {
+          "q": "Do I need an RBI licence to collect payments as a consultant?",
+          "a": "No. You don't need the licence — the aggregator does. You collect payments by using a licensed, RBI-authorised aggregator, usually built into a booking or invoicing tool, which is the safe and legal way to accept money online."
+        },
+        {
+          "q": "What's the easiest way for a solo consultant to get paid?",
+          "a": "A payment link or UPI request tied to a booking, so payment is collected when the client commits rather than chased afterward. This avoids the awkward follow-up messages entirely."
+        },
+        {
+          "q": "Can I accept UPI payments for consulting without a company?",
+          "a": "Yes. Aggregators and booking tools let individuals accept UPI and card payments without registering a company, though you should still track income for tax and, above the threshold, GST."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-make-money-from-home-india",
+  "title": "How to Make Money From Home in India (2026): Real Ways",
+  "date": "Oct 7, 2026",
+  "icons": [
+    "wallet",
+    "chart",
+    "coins"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Growth",
+  "image": null,
+  "excerpt": "How to make money from home in India in 2026: eight realistic ways compared by effort, cost, and time to your first rupee. Start by selling your time.",
+  "body": [
+    {
+      "p": "The fastest way to make money from home in India is to sell something you already know how to do. Most people already have a skill someone will pay for. The rest of the internet's \"earn from home\" advice sends you chasing surveys and referral apps that pay in coins. This guide skips that. Below are eight realistic ways to earn from home, compared by effort, startup cost, and how long until your first rupee lands."
+    },
+    {
+      "p": "I run Book A Sloth, so I'm biased toward one method. But I've tried to be honest about all of them."
+    },
+    {
+      "h2": "What is the fastest way to make money from home in India?"
+    },
+    {
+      "p": "Selling your time and expertise is the fastest way to make money from home in India, because you already have the skill and the only thing missing is a way to get paid for it."
+    },
+    {
+      "p": "Everything else on the list needs you to build an audience, learn a new craft, or wait for an algorithm. Selling your time skips that. If people already ask you questions about your job, your subject, or your side skill, you can charge for the answer this week."
+    },
+    {
+      "p": "Freelancers in India commonly earn [₹10,000 to ₹30,000 a month once they get going](https://www.skydo.com/blog/how-much-can-freelancers-earn), and skills-based work usually pays its first rupee within one to three months. Charging directly for one-on-one time is faster than that, because there's no client pipeline to build. One person, one call, one payment."
+    },
+    {
+      "h2": "The 8 realistic ways to earn from home, compared"
+    },
+    {
+      "p": "The best way to earn from home depends on the skill you already have and how long you can wait for the first payment. Here's the honest comparison."
+    },
+    {
+      "table": {
+        "head": [
+          "Method",
+          "Effort to start",
+          "Startup cost",
+          "Time to first rupee"
+        ],
+        "rows": [
+          [
+            "Sell your time (1:1 calls, consulting)",
+            "Low",
+            "₹0",
+            "Days"
+          ],
+          [
+            "Freelancing (writing, design, dev)",
+            "Medium",
+            "₹0",
+            "1–3 months"
+          ],
+          [
+            "Online tutoring / coaching",
+            "Medium",
+            "₹0",
+            "1–4 weeks"
+          ],
+          [
+            "Selling digital products",
+            "High",
+            "Low",
+            "1–3 months"
+          ],
+          [
+            "Affiliate marketing",
+            "Medium",
+            "₹0",
+            "1–3 months"
+          ],
+          [
+            "Content creation (YouTube, blog)",
+            "High",
+            "Low",
+            "3–12 months"
+          ],
+          [
+            "Reselling products",
+            "Medium",
+            "Medium",
+            "2–6 weeks"
+          ],
+          [
+            "Surveys & micro-tasks",
+            "Low",
+            "₹0",
+            "1–4 weeks"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "A quick read of the table: the low-effort, zero-cost, fast-payout corner is where you want to start. Only selling your time sits fully in it. Surveys are low-effort too, but they pay almost nothing — a few hundred rupees a month if you grind. That's not income. That's pocket change with extra steps."
+    },
+    {
+      "h2": "Method 1: Sell your time and expertise"
+    },
+    {
+      "p": "Selling your time means charging people to book a call, a session, or a consultation with you. It's the method most people overlook because it feels too simple to be a business."
+    },
+    {
+      "p": "It isn't. A recruiter charges for a mock interview. A CA charges for a 30-minute tax question. A designer charges to review a portfolio. A fitness coach charges for a plan-and-check-in call. None of them built an audience of a million people first. They just gave the people already asking a way to book and pay."
+    },
+    {
+      "p": "You don't need a website or a course. You need three things: a skill someone wants, a price, and a link. If you're not sure how to start taking bookings, our guide on [how to book an appointment online](/blog/how-to-book-an-appointment-online) walks through it. And if your skill is knowledge — advice, feedback, guidance — read [how to become a paid mentor](/blog/how-to-become-paid-mentor). Mentoring is just selling your time with a nicer word attached."
+    },
+    {
+      "p": "The enemy here isn't finding clients. It's becoming the admin. The moment you start selling your time, you inherit a second unpaid job: chasing payments, sending reminders, making invoices, juggling your calendar. That's the part [Book A Sloth](/be-a-sloth) handles so the craft stays yours."
+    },
+    {
+      "h2": "Method 2: Freelancing"
+    },
+    {
+      "p": "Freelancing means doing project work for clients — writing, design, development, video editing, or virtual assistance. It's the most proven path, and it scales with your skill."
+    },
+    {
+      "p": "Rates climb fast with experience. Content writing in India runs from about [₹0.50 per word for beginners to ₹5 or more per word for niche experts](https://solohourly.com/rates/content-writer-rates-in-india), and skilled freelancers like [web developers charge ₹1,500 to ₹5,000 an hour](https://www.skydo.com/blog/how-much-can-freelancers-earn) once they have a portfolio. The catch is the pipeline: you need to find clients, pitch, and wait to get paid. That's why freelancing sits at one to three months for a first rupee."
+    },
+    {
+      "p": "If you freelance, keep the intake simple. A booking link for a \"discovery call\" turns a cold enquiry into a scheduled, paid conversation without the back-and-forth. Trainers do this well — see [how to become a freelance personal trainer](/blog/how-to-become-freelance-personal-trainer) for the playbook."
+    },
+    {
+      "h2": "Method 3: Tutoring, coaching, and courses"
+    },
+    {
+      "p": "Teaching what you know — live tutoring, coaching, or a recorded course — is one of the most reliable home incomes in India, because education demand never dries up."
+    },
+    {
+      "p": "Live tutoring pays sooner than a course. A course needs to be built, filmed, and marketed before anyone buys. A tutoring or coaching call pays the day someone books. Start with live sessions, learn what people actually struggle with, then package the answers into a course later. That order matters: the calls fund the course, not the other way round."
+    },
+    {
+      "h2": "Methods 4 to 8: The slower burners"
+    },
+    {
+      "p": "Affiliate marketing, content creation, digital products, reselling, and surveys can all work, but each asks you to build first and earn later."
+    },
+    {
+      "ul": [
+        "**Content creation** is the slowest. YouTube only pays once you clear its subscriber and watch-hour thresholds — months of unpaid work for most people before a single rupee arrives.",
+        "**Digital products** (templates, ebooks, presets) earn while you sleep, but only after you've built an audience to sell to.",
+        "**Affiliate marketing** pays a cut of sales you refer. No audience, no sales.",
+        "**Reselling** through platforms means buying or sourcing stock and managing delivery. Real work, real margins, real risk.",
+        "**Surveys and micro-tasks** are the honest bottom of the list: legitimate, but the pay is tiny."
+      ]
+    },
+    {
+      "p": "None of these are scams. They're just slow. If you need money this month, they're the wrong start. If you're building for next year alongside a day job, they're fine."
+    },
+    {
+      "h2": "How to avoid the work-from-home scams"
+    },
+    {
+      "p": "Any \"work from home\" offer that asks you to pay a joining fee first is a scam. Real work pays you; it doesn't charge you to start."
+    },
+    {
+      "p": "Watch for three signals: an upfront deposit \"for a starter kit,\" guaranteed earnings with no skill required, and recruiters who only message on WhatsApp and vanish when you ask specifics. Legitimate freelance and consulting work never asks for your money to begin. It asks for your skill."
+    },
+    {
+      "h2": "The 5-minute starting move"
+    },
+    {
+      "p": "If you want the fastest realistic path, here it is as five steps."
+    },
+    {
+      "steps": [
+        "**Pick one skill** people already ask you about. Not the one you wish you had — the one you already use.",
+        "**Set a price** for 30 minutes of it. Undercharging is the most common mistake; start at what feels slightly uncomfortable.",
+        "**Set up a booking page** so one link books the slot and collects [payment](/pricing). This is the whole business.",
+        "**Share the link** with the people who've already asked — DMs, your bio, a WhatsApp status.",
+        "**Show up and get paid.** Let reminders and invoices run themselves."
+      ]
+    },
+    {
+      "p": "You can set up a booking page in five minutes and let people pay for your time the moment they book. That's the calm version of \"make money from home\" — no audience to build, no funnel, no chasing. Just your craft, and a way to charge for it."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is the most realistic way to make money from home in India in 2026?",
+          "a": "Selling your time and expertise through paid one-on-one calls or consulting. You already have the skill, so the only missing piece is a way to book and get paid — which you can set up in minutes."
+        },
+        {
+          "q": "How much can a beginner realistically earn from home?",
+          "a": "Realistic beginner earnings in India are modest in the first two to three months — think low thousands a month, not lakhs, depending on the method. Skills-based work pays far more than surveys or referral apps."
+        },
+        {
+          "q": "Do I need investment to start earning from home?",
+          "a": "No. Selling your time, freelancing, tutoring, and affiliate marketing all start at zero rupees. Be suspicious of anything that asks for money upfront."
+        },
+        {
+          "q": "How long until I get my first payment?",
+          "a": "It ranges from days (selling your time) to months (content creation). The fastest methods use skills you already have and need no audience."
+        },
+        {
+          "q": "Is working from home in India taxable?",
+          "a": "Yes, home income is taxable like any other. Track your earnings from the start, and set aside a portion for tax so it isn't a shock later."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "best-psychologists-therapists-hyderabad",
+  "title": "Best Psychologist in Hyderabad: How to Find & Choose",
+  "date": "Oct 7, 2026",
+  "icons": [
+    "heart",
+    "users",
+    "search"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Finding the best psychologist in Hyderabad is about fit, not a ranked list. Check RCI credentials, compare CBT options, weigh fees, and book with confidence.",
+  "body": [
+    {
+      "p": "Finding the best psychologist in Hyderabad is less about a ranked list and more about a good fit: the right qualifications, the right kind of therapy, and someone you actually feel safe talking to. The best therapist for panic attacks may be wrong for a marriage, and vice versa. This guide shows you how to check credentials, compare approaches like CBT, understand fees, and book a first session with confidence."
+    },
+    {
+      "info": {
+        "title": "This is not medical advice",
+        "text": "This is general information to help you choose well. It is not a diagnosis or clinical advice. If you are in crisis or thinking about harming yourself, contact a local emergency service or a mental-health helpline right now."
+      }
+    },
+    {
+      "h2": "What \"best psychologist in Hyderabad\" really means"
+    },
+    {
+      "p": "The best psychologist in Hyderabad, for you, is a qualified professional whose training matches your problem and whose style you can trust. There is no single top name for everyone."
+    },
+    {
+      "p": "Three things decide fit: credentials (are they properly trained and registered), specialisation (do they treat what you have), and rapport (do you feel heard). Skip any one and progress stalls. A brilliant trauma specialist is the wrong choice for exam stress. A warm listener with no clinical training is the wrong choice for OCD."
+    },
+    {
+      "p": "Treat \"best\" as a shortlist you test, not a name you accept: two or three good candidates, one short first session each, then decide."
+    },
+    {
+      "h2": "Types of therapy and who does what"
+    },
+    {
+      "p": "Different mental-health professionals do different jobs, and the titles matter in India. Match the title to your need before you compare people."
+    },
+    {
+      "ul": [
+        "Clinical psychologist — trained to assess and treat mental-health conditions with talk therapy. Cannot prescribe medication.",
+        "Counselling psychologist / counsellor — supports stress, relationships, life transitions, and mild-to-moderate concerns.",
+        "Psychiatrist — a medical doctor (MBBS + MD/DNB) who can diagnose and prescribe medication, often alongside a psychologist.",
+        "Child psychologist — focuses on children and adolescents: behaviour, learning, attention, and family dynamics."
+      ]
+    },
+    {
+      "p": "You will also see therapy methods, which describe how the work is done rather than who does it:"
+    },
+    {
+      "ul": [
+        "CBT (Cognitive Behavioural Therapy) — structured, practical work on thoughts and behaviour. Strong for anxiety, depression, and OCD, and a common, well-evidenced starting point in Hyderabad.",
+        "DBT (Dialectical Behaviour Therapy) — skills for intense emotions and self-regulation.",
+        "Trauma-informed approaches — for grief, abuse history, and PTSD."
+      ]
+    },
+    {
+      "p": "If you are unsure which you need, a counselling psychologist can help you figure out the right path before you commit."
+    },
+    {
+      "h2": "Qualifications to check before you book"
+    },
+    {
+      "p": "Always confirm the person is registered and properly trained. In India, that starts with the Rehabilitation Council of India (RCI). It is the single most important check, and it takes two minutes."
+    },
+    {
+      "ul": [
+        "Clinical psychologists must be registered with the [Rehabilitation Council of India (RCI)](https://rehabcouncil.nic.in/) and typically hold an MPhil or a Professional Diploma in Clinical Psychology. Ask for their RCI registration number and verify it on the Central Rehabilitation Register.",
+        "Counselling psychologists usually hold an MA or MSc in Psychology plus counselling training and supervised practice.",
+        "Psychiatrists hold an MBBS with an MD or DNB in Psychiatry."
+      ]
+    },
+    {
+      "p": "Do not rely on a slick website or a large follower count. A directory badge is a start, not proof. Ask directly: \"What is your qualification, and are you RCI-registered?\" A good professional answers plainly and without offence."
+    },
+    {
+      "h2": "Typical session cost in Hyderabad"
+    },
+    {
+      "p": "Expect roughly ₹800 to ₹3,000 for a private therapy session in Hyderabad, with experienced specialists and psychiatrists charging more. Prices are not always listed publicly, so ask before you book."
+    },
+    {
+      "p": "Fees vary by qualification, setting, and session length. Independent directory data for 2025 puts clinical-psychologist telehealth sessions around [₹800 to ₹2,530, with in-person follow-ups ranging up to about ₹3,220](https://www.therapyroute.com/article/how-much-does-therapy-cost-in-hyderabad-2025-by-therapyroute); psychiatrists sit higher. Government services such as the Institute of Mental Health, Hyderabad are far cheaper or free."
+    },
+    {
+      "table": {
+        "head": [
+          "Provider",
+          "Typical range per session"
+        ],
+        "rows": [
+          [
+            "Counselling psychologist",
+            "₹800 – ₹2,000"
+          ],
+          [
+            "Clinical psychologist",
+            "₹900 – ₹3,200"
+          ],
+          [
+            "Psychiatrist (consult)",
+            "₹1,000 – ₹3,500+"
+          ],
+          [
+            "Government / IMH Hyderabad",
+            "Free to nominal"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "A quick cost checklist to raise upfront:"
+    },
+    {
+      "ol": [
+        "What is the fee per session, and how long is a session?",
+        "Do you offer a lower first-consultation rate?",
+        "What is the cancellation or reschedule policy?",
+        "Roughly how many sessions might this take?"
+      ]
+    },
+    {
+      "p": "Therapy is a series, not a one-off. Budget for a few sessions, not one."
+    },
+    {
+      "h2": "Questions to ask in the first session"
+    },
+    {
+      "p": "The first session is your interview, not just theirs, and a good therapist welcomes questions. Come with three or four and notice how they respond."
+    },
+    {
+      "ul": [
+        "What is your approach for a concern like mine (CBT, DBT, trauma-informed)?",
+        "How do you handle confidentiality and record-keeping?",
+        "What does progress look like, and how will we know it is working?",
+        "Do you coordinate with a psychiatrist if medication is ever needed?"
+      ]
+    },
+    {
+      "p": "You are also gathering a feeling. Did they listen? Did they rush you? Rapport is not a soft extra; it is one of the largest predictors of whether therapy helps. If the fit is wrong after a couple of sessions, it is fine to change. That is not failure, it is good self-advocacy."
+    },
+    {
+      "h2": "Online vs in-person therapy in Hyderabad"
+    },
+    {
+      "p": "Both work well; the right choice depends on your comfort, your schedule, and the severity of your concern. Online therapy has made good practitioners reachable across the city and beyond."
+    },
+    {
+      "table": {
+        "head": [
+          "",
+          "Online therapy",
+          "In-person therapy"
+        ],
+        "rows": [
+          [
+            "Access",
+            "Any therapist, city-wide or national",
+            "Limited to clinics near you"
+          ],
+          [
+            "Convenience",
+            "No travel; easier to keep regular",
+            "Travel time and traffic"
+          ],
+          [
+            "Privacy",
+            "Needs a quiet, private room at home",
+            "Fully private clinic setting"
+          ],
+          [
+            "Best for",
+            "Anxiety, stress, ongoing talk therapy",
+            "Complex cases, child assessments, in-person testing"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "If you go online, confirm the platform, the session length, and what happens if a crisis occurs between sessions. If you go in-person, factor Hyderabad traffic into your slot so you arrive calm, not frazzled. Many people mix both: in-person to start, online to keep it going."
+    },
+    {
+      "h2": "How to build your own shortlist"
+    },
+    {
+      "p": "We deliberately do not publish a ranked list of therapists, because a genuine recommendation should come from your own checks or a trusted referral, not a marketing page. Instead, use this template to record real, personally vetted names after two or three intro calls."
+    },
+    {
+      "table": {
+        "head": [
+          "Practitioner / clinic",
+          "Type",
+          "Approach",
+          "RCI registered?",
+          "Fee range",
+          "Online / in-person"
+        ],
+        "rows": [
+          [
+            "Add name",
+            "clinical / counselling / child",
+            "CBT, DBT, etc.",
+            "Yes / No",
+            "₹",
+            "Online / in-person"
+          ],
+          [
+            "Add name",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Add name",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Cross-check credentials on the RCI register, ask a GP or a trusted friend for a referral, and read reviews with a pinch of salt. For a wider method that applies to any professional you hire, see our guide on [how to find and book an expert online](/blog/how-to-find-book-expert-online)."
+    },
+    {
+      "h2": "A calmer way to book — for clients and practitioners"
+    },
+    {
+      "p": "Booking a first session should take one link, not five WhatsApp messages. For practitioners, that same link removes the back-and-forth that eats your evenings."
+    },
+    {
+      "p": "If you are a psychologist or therapist in Hyderabad, you can put your real availability online so a client books a slot and pays in one step. Here is [how online appointment booking works](/blog/how-to-book-an-appointment-online), and you can set up [gentle session reminders](/blog/appointment-reminder-templates) that reduce no-shows without nagging. See [what it costs](/pricing), or [start your booking page](/be-a-sloth) and stay a clinician, not an admin."
+    },
+    {
+      "quote": "The craft of therapy is yours. The scheduling machinery can be ours.",
+      "cite": "Book A Sloth"
+    },
+    {
+      "h2": "FAQ"
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I check if a psychologist in Hyderabad is qualified?",
+          "a": "Ask for their qualification and their RCI registration number, then verify it on the Rehabilitation Council of India's Central Rehabilitation Register. Clinical psychologists in India should be RCI-registered and usually hold an MPhil in Clinical Psychology."
+        },
+        {
+          "q": "What is the difference between a psychologist and a psychiatrist?",
+          "a": "A psychiatrist is a medical doctor who can prescribe medication. A clinical psychologist provides talk therapy and assessment but does not prescribe. For many concerns the two work together."
+        },
+        {
+          "q": "How much does therapy cost in Hyderabad?",
+          "a": "Roughly ₹800 to ₹3,000 per session for private practice, with experienced specialists and psychiatrists charging more, and government services such as IMH Hyderabad costing far less. Always confirm the fee and session length before booking."
+        },
+        {
+          "q": "Is online therapy as good as in-person?",
+          "a": "For many concerns like anxiety, stress, and ongoing talk therapy, yes. In-person may suit complex cases, some child assessments, and in-person psychological testing. Choose what feels private and sustainable for you."
+        },
+        {
+          "q": "How do I find a child psychologist in Hyderabad?",
+          "a": "Look for a professional who specifically works with children and adolescents, confirm their RCI registration, and ask how they involve parents. A short intro call helps you judge whether your child would feel at ease."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "product-otp-and-verification-badges",
+  "title": "Product OTP and Automatic Verification Badges",
+  "date": "Oct 5, 2026",
+  "icons": [
+    "shield",
+    "key",
+    "lightning"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 4,
+  "category": "Feature Update",
+  "image": null,
+  "excerpt": "Product buyers now verify by WhatsApp OTP so the code actually arrives, and connected Google or LinkedIn accounts show as automatic trust badges on your profile.",
+  "body": [
+    {
+      "p": "Two trust fixes shipped this week. Digital-product buyers now receive their one-time code over WhatsApp instead of hitting a dead end at checkout, and a connected Google or LinkedIn account now appears as an automatic verification badge on your public Book A Sloth profile. Both do the same job: they make trust work without adding a single step for you or the buyer."
+    },
+    {
+      "h2": "Product OTP now arrives on WhatsApp"
+    },
+    {
+      "p": "Buying a digital product now verifies the same way the rest of Book A Sloth does: with a one-time code sent to the buyer's WhatsApp. Previously the product checkout had a quiet mismatch. The code was issued phone-first, but the product paths checked email only, so a buyer who entered a phone number got an \"invalid or expired code\" error and could not finish the purchase."
+    },
+    {
+      "p": "We fixed the mismatch and made the number on the product page a required WhatsApp field, so the code is issued and delivered on WhatsApp every time. That removes a real leak at the last step: fewer dead ends, more completed purchases. If you sell downloads or templates, see [how to sell digital products online](/blog/how-to-sell-digital-products-online) for the full picture on pricing and delivering files."
+    },
+    {
+      "h2": "Google and LinkedIn as automatic trust badges"
+    },
+    {
+      "p": "If you signed in with Google or connected LinkedIn, that now shows as a verification badge on your public profile automatically. You do not request it or upload anything. The badge reflects an account you already connected, so it stays honest."
+    },
+    {
+      "p": "Trust is most of the booking decision for a stranger. A badge that reads \"verified with Google\" or \"verified with LinkedIn\" does quiet work: it tells a guest the profile belongs to a real, accountable person before they pay. Because the badge is derived from the connected account rather than a manual claim, it cannot be faked by typing a logo into a bio."
+    },
+    {
+      "p": "Independent trust signals carry real weight. In [BrightLocal's Local Consumer Review Survey](https://www.brightlocal.com/research/us-results-local-consumer-review-survey/), 49% of consumers said they trust online reviews as much as a personal recommendation from friends and family. A verification badge is a different signal, but it works the same way: a neutral, external account vouching that you are who you say you are."
+    },
+    {
+      "quote": "49% of consumers trust online reviews as much as a personal recommendation.",
+      "cite": "BrightLocal, Local Consumer Review Survey"
+    },
+    {
+      "info": {
+        "title": "Why the badge can't be faked",
+        "text": "The verification badge is generated from the OAuth account you actually connected at sign-in, not from text or an image you add to your profile. There is no \"upload a badge\" field, so a host cannot spoof one with a logo or a claim."
+      }
+    },
+    {
+      "h2": "The two fixes at a glance"
+    },
+    {
+      "table": {
+        "head": [
+          "",
+          "Before",
+          "Now"
+        ],
+        "rows": [
+          [
+            "Product checkout OTP",
+            "Code sent phone-first but verified email-only, so phone buyers saw \"invalid code\"",
+            "Product page number is a required WhatsApp field; code is issued and delivered on WhatsApp"
+          ],
+          [
+            "Google / LinkedIn verification",
+            "No profile signal from a connected account",
+            "Automatic badge derived from the connected account, cannot be faked"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "How to get your verification badge"
+    },
+    {
+      "steps": [
+        "Sign in to Book A Sloth with Google, or connect your LinkedIn account.",
+        "Open your public profile. The verification badge appears automatically from the connected account.",
+        "Nothing to apply for, upload, or wait on. Disconnect the account and the badge goes with it."
+      ]
+    },
+    {
+      "h2": "Why these two shipped together"
+    },
+    {
+      "p": "Both are trust mechanics. One makes sure a buyer can prove it is them and get their file; the other makes sure a guest can see, at a glance, that you are a verified person. Neither adds a step for you to manage. The OTP just works, and the badges appear from accounts you already linked. This sits alongside the identity and payout verification we already do: [KYC only after you earn](/blog/kyc-only-after-you-earn) explains why we verify late, and [what happens to your Aadhaar](/blog/what-happens-to-your-aadhaar) covers how sensitive identity data is handled."
+    },
+    {
+      "p": "For everything else that shipped recently, the [September update](/blog/september-2026-product-update) has the two-plan pricing and the Build-with-Bolt page builder. Setting up now? Connect Google when you sign in and your badge is handled for you. [Start your page](/be-a-sloth). The craft is yours. The machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "Why wasn't my product OTP working before?",
+          "a": "The code was sent phone-first but the product checkout verified email-only, so buyers who entered a phone number got an \"invalid or expired code\" error. The product page number is now a required WhatsApp field and verification matches how the code is sent, so the code arrives and works."
+        },
+        {
+          "q": "Do I have to request a verification badge?",
+          "a": "No. If you signed in with Google or connected LinkedIn, the badge appears on your profile automatically. It reflects the connected account, so there is nothing to apply for or upload."
+        },
+        {
+          "q": "Can someone fake a verification badge?",
+          "a": "No. The badge is derived from an account you actually connected at sign-in, not from text you type into your bio, so it cannot be spoofed with a logo or a claim."
+        },
+        {
+          "q": "Does the WhatsApp OTP cost the buyer anything?",
+          "a": "No. The one-time code is delivered to the buyer's WhatsApp at no cost to them. They enter it to confirm the purchase and get their download."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "landing-pages-for-your-profession",
+  "title": "Landing Pages Built for Your Profession",
+  "date": "Oct 5, 2026",
+  "icons": [
+    "target",
+    "search",
+    "users"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 5,
+  "category": "Product",
+  "image": null,
+  "excerpt": "Book A Sloth now has a dedicated landing page for each profession — consultants, doctors, salons, lawyers, coaches and more — with a real demo link.",
+  "body": [
+    {
+      "p": "Book A Sloth now has a dedicated landing page for each profession it serves, so a consultant, a dermatologist, a salon owner or a lawyer lands on a page that speaks their language instead of a generic pitch. Each page carries profession-specific copy, its own mascot hero art, a real \"Book a Demo\" link, and machine-readable structured data so AI search engines can understand and cite it. Here is what shipped in this October update, and why it matters."
+    },
+    {
+      "h2": "One page per profession, not one page for everyone"
+    },
+    {
+      "p": "A generic homepage asks every visitor to translate \"booking platform\" into their own world. A profession page does that translation for them. We built bespoke /for pages across professions — including business consultants, dermatologists, ENT specialists, ophthalmologists, gynecologists, pediatricians, salons, life coaches, lawyers, chartered accountants and architects — with more being added over time."
+    },
+    {
+      "p": "Each page leads with the jobs that profession actually books — a consultation, a skin review, a follow-up, a hearing — and shows the plan and pricing in that context. A dermatologist can open [the dermatologists page](/for/dermatologists); a lawyer can open [the lawyers page](/for/lawyers). If you have ever sent someone a link and wished it opened on something that looked made for them, this is that link."
+    },
+    {
+      "h2": "A real \"Book a Demo\", clearer heroes, profession artwork"
+    },
+    {
+      "p": "The \"Book a Demo\" button on these pages now points to a real demo booking, not a placeholder, so a curious visitor can experience the booking flow as a guest — pick a slot, see the confirmation — before they ever sign up. Every page also got its own mascot hero art, and we stripped the small uppercase \"eyebrow\" labels from the heroes and sections so the headline is the first thing you read, not a label above it. The hero cards were repositioned in the same pass."
+    },
+    {
+      "p": "The result is a page that reads like a brochure made for one kind of person — because it is. If you are new here, the fastest way to see your own version is to [onboard a host in 60 seconds](/blog/onboarding-a-host-in-60-seconds) and go live."
+    },
+    {
+      "h2": "Built to be read by AI search, not just people"
+    },
+    {
+      "p": "Behind the design, each page now emits one connected entity graph — the website, the Book A Sloth organisation, the page itself, and the software, all cross-linked — plus step-by-step HowTo data describing how booking works. Structured data is how a page communicates facts directly to machines: a [guide from Yoast](https://yoast.com/structured-data-schema-ultimate-guide/) describes schema markup as the way to help search engines, large language models and AI assistants understand content quickly and accurately."
+    },
+    {
+      "p": "This matters more every quarter. Google's AI Overviews reached roughly 2 billion monthly users by mid-2025, with its deeper AI Mode drawing around 100 million users in the US and India alone ([TechCrunch](https://techcrunch.com/2025/07/23/googles-ai-overviews-have-2b-monthly-users-ai-mode-100m-in-the-us-and-india)). When someone asks an assistant \"what should a dermatologist use to take bookings in India,\" a page with one clean entity graph can actually be resolved and cited, instead of read as four disconnected fragments."
+    },
+    {
+      "h2": "What's on every /for page"
+    },
+    {
+      "table": {
+        "head": [
+          "Element",
+          "What it does"
+        ],
+        "rows": [
+          [
+            "Profession-specific copy",
+            "Leads with the appointments that profession books, in its own words"
+          ],
+          [
+            "Mascot hero art",
+            "A distinct illustration per page, with no uppercase eyebrow label above the headline"
+          ],
+          [
+            "Real \"Book a Demo\" link",
+            "Opens an actual booking so a visitor walks the guest flow before signing up"
+          ],
+          [
+            "Entity @graph + HowTo JSON-LD",
+            "Cross-links the site, organisation, page and software so AI search can resolve and cite the page"
+          ]
+        ]
+      }
+    },
+    {
+      "quote": "“A page built for one profession converts because it stops asking the reader to translate a generic pitch into their own world.”",
+      "cite": "Shubham N Datarkar, Founder, Book A Sloth"
+    },
+    {
+      "h2": "What this means for you"
+    },
+    {
+      "p": "Pick the page that matches what you do, send it to a peer, or use it to decide if Book A Sloth fits your work. More professions are on the way, and the schema work means the right people — and the right assistants — can find them. For the trust side of this release, see [product OTP and verification badges](/blog/product-otp-and-verification-badges)."
+    },
+    {
+      "p": "[Find your profession's page](/be-a-sloth) or compare [pricing](/pricing). The craft is yours. The machinery is ours."
+    },
+    {
+      "h2": "Frequently asked questions"
+    },
+    {
+      "faq": [
+        {
+          "q": "Which professions have a dedicated page on Book A Sloth?",
+          "a": "Pages exist for professions including business consultants, dermatologists, ENT specialists, ophthalmologists, gynecologists, pediatricians, salons, life coaches, lawyers, chartered accountants and architects, with more added over time. If your profession is not listed yet, the main product page works for any field."
+        },
+        {
+          "q": "What does the \"Book a Demo\" link on a profession page do?",
+          "a": "It opens a real booking, not a placeholder. You go through the guest flow yourself — pick a slot and see the confirmation — so you experience exactly what your own clients would before you create your page."
+        },
+        {
+          "q": "Why does structured data on these pages matter for AI search?",
+          "a": "Each page emits one connected entity graph plus step-by-step HowTo data. That lets AI search engines resolve Book A Sloth as a single linked entity and read the booking instructions, which makes the page eligible to be cited when someone asks an assistant for a booking tool in a given field."
+        },
+        {
+          "q": "Is there a page if my profession is not listed?",
+          "a": "Yes. The main Book A Sloth product page works for any profession; the dedicated /for pages are tailored extras, not a gate. You can start from Book A Sloth regardless of your field, then switch to a profession page if one launches for your work."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "october-2026-small-fixes",
+  "title": "October Fixes: Calendar, Onboarding and Polish",
+  "date": "Oct 5, 2026",
+  "icons": [
+    "calendar",
+    "rocket",
+    "palette"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 3,
+  "category": "Feature Update",
+  "image": null,
+  "excerpt": "October's changelog: your Google Calendar stops marking you 'awaiting' on your bookings, the onboarding skip now confirms, and 19 profession pages got cleaner.",
+  "body": [
+    {
+      "p": "Not every update is a headline feature. This is the small-print changelog for the early-October 2026 release, and it is three fixes: your Google Calendar no longer shows you as \"awaiting\" on your own bookings, the onboarding \"skip\" now asks before it leaves you with an empty page, and the profession landing pages got visually cleaner. None are glamorous. All of them remove friction."
+    },
+    {
+      "h2": "Your calendar stops showing you as \"awaiting\""
+    },
+    {
+      "p": "When a guest booked you, the event landed on your Google Calendar but showed you as \"awaiting\" with no checkmark, as if you had not responded to your own booking. We now mark the host attendee as accepted when the event is created, so it shows confirmed on your side immediately. This was a Google behaviour change, not a regression in our code: Google used to auto-accept the event organiser and quietly stopped, which is why the attendee [responseStatus](https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events) now has to be set explicitly. The guest still shows as \"awaiting\" until they respond, which is correct, since they are the one being invited. For how the integration is meant to work end to end, see [payments and calendars on autopilot](/blog/payments-and-calendars-on-autopilot)."
+    },
+    {
+      "h2": "Onboarding won't let you skip the one step that counts"
+    },
+    {
+      "p": "The biggest leak in getting a new host live was the one-tap \"skip\" on the go-live screen. Most hosts who finished onboarding with zero services had used it, some of them on a paid plan, and a booking page with no service is a shop with empty shelves. So the skip now asks first. Instead of leaving on one tap, it opens a confirmation, \"Leave without a service?\", with the primary action pointing you back to add one and \"Skip anyway\" demoted to a quieter secondary. Nobody is forced to add a service, but nobody skips it by accident either. If you are setting up now, [onboarding a host in 60 seconds](/blog/onboarding-a-host-in-60-seconds) walks through adding that first service."
+    },
+    {
+      "h2": "The profession pages got cleaner"
+    },
+    {
+      "p": "We removed the small uppercase \"eyebrow\" labels from the top of all 19 [profession landing pages](/blog/landing-pages-for-your-profession) and their sections, so the headline is the first thing you read instead of a label floating above it. A few pages also had their hero cards repositioned so the mascot and the floating \"booked\" and \"reminder\" cards sit cleanly instead of overlapping. Small stuff, but it is the difference between a page that looks considered and one that looks busy. The copy, plans and booking flow on each page are unchanged."
+    },
+    {
+      "h2": "Every fix in this October release"
+    },
+    {
+      "table": {
+        "head": [
+          "Area",
+          "What changed",
+          "What you'll notice"
+        ],
+        "rows": [
+          [
+            "Google Calendar",
+            "Host attendee set to accepted when a booked event is created",
+            "Your own bookings show confirmed instead of \"awaiting\""
+          ],
+          [
+            "Onboarding",
+            "One-tap skip replaced with a \"Leave without a service?\" confirmation",
+            "Fewer new hosts go live with an empty booking page"
+          ],
+          [
+            "Profession (/for) pages",
+            "Removed uppercase eyebrow labels across all 19 pages; repositioned some hero cards",
+            "Cleaner heroes; headline reads first (visual only)"
+          ]
+        ]
+      }
+    },
+    {
+      "info": {
+        "title": "What this release is not",
+        "text": "These are shipped fixes, not new features. The calendar change corrects display of your own attendance only; it does not alter guest confirmations. The onboarding change adds a confirmation step, not a hard requirement. The /for page work is purely visual."
+      }
+    },
+    {
+      "h2": "Why we write these down"
+    },
+    {
+      "p": "Shipping is not just features; it is the hundred small corrections that make the product feel calm. Writing the boring fixes down keeps us honest and gives you a real record of what changed. For the bigger October items, see [product OTP and verification badges](/blog/product-otp-and-verification-badges). Ready to put it to use? [Set up your page](/be-a-sloth). The craft is yours; the machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "Why did my Google Calendar show \"awaiting\" on my own bookings?",
+          "a": "Google stopped auto-accepting the event organiser, so the host appeared as not-yet-responded. Book A Sloth now sets the host attendee as accepted when the booked event is created, so it shows confirmed on your side right away. The guest still shows \"awaiting\" until they respond, which is correct."
+        },
+        {
+          "q": "Can I still skip adding a service during onboarding?",
+          "a": "Yes. The skip now opens a short \"Leave without a service?\" confirmation instead of leaving on one tap, so you can still skip deliberately, it just no longer happens by accident. Adding one service is what makes your page bookable."
+        },
+        {
+          "q": "Did the profession (/for) pages change what they offer?",
+          "a": "No. The October change was visual only: cleaner heroes and repositioned cards. The copy, plans and booking flow on each page are unchanged."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "30-minute-call-setup",
+  "title": "30 Minute Call: How to Set One Up and Run It Well",
+  "date": "Oct 3, 2026",
+  "icons": [
+    "calendar",
+    "users",
+    "target"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 5,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to set up a 30 minute call and run it without waffle: a step-by-step setup, a simple agenda that fits, and better ways to say 'let's connect' and book one.",
+  "body": [
+    {
+      "p": "A 30 minute call works when someone can book a slot without asking, and when the half hour has a shape you both know going in. The setup takes five minutes once. The payoff is no more \"when are you free?\" ping-pong and calls that actually end on time. Here is how to schedule a call people can book, plus an agenda that fits inside 30 minutes."
+    },
+    {
+      "h2": "How to set up a 30 minute call"
+    },
+    {
+      "p": "To set up a 30 minute call, create a fixed 30-minute slot with a clear title, set your real availability, add buffers, connect your calendar, and share one booking link instead of trading times over email."
+    },
+    {
+      "p": "Follow these steps once and you never negotiate a time again:"
+    },
+    {
+      "steps": [
+        "Name the call for what it is. \"30-min intro call\" or \"30-min portfolio review\" tells the other person exactly what they are booking. Vague titles get vague turnout.",
+        "Set your working hours. Decide the window you actually take calls — say 11:00 to 17:00 on weekdays — so nobody books you at 8 a.m.",
+        "Add buffer time. Put a 10-minute [buffer before and after](/blog/scheduling-terms-glossary) so a call that runs long does not wreck the next one.",
+        "Connect your calendar. Link Google Calendar so booked slots disappear automatically and double-bookings become impossible.",
+        "Auto-generate the meeting link. Have Google Meet or your video tool attach a link to every booking, so no one hunts for it at 2:59.",
+        "Turn on reminders. A confirmation plus a reminder cuts no-shows hard — see the [appointment reminder templates](/blog/appointment-reminder-templates) for exact wording.",
+        "Share one link. Drop it in your bio, your email signature, and your DMs. One link replaces every \"does Tuesday work?\" thread."
+      ]
+    },
+    {
+      "p": "That is the whole setup. The point is to move the scheduling work off your plate and onto a link — so you stop being the admin and get back to the actual work."
+    },
+    {
+      "h2": "A simple 30 minute call agenda"
+    },
+    {
+      "p": "The best 30 minute call agenda splits the time into four parts: a short open, real discovery, the substance, and a clear close. Naming the parts keeps you from spending 25 minutes on introductions."
+    },
+    {
+      "p": "A clean structure, close to the [repeatable 30-minute discovery framework](https://triplesession.com/session/discovery-call-blueprint-30-minute-framework-ur8lr2l10ri) sales teams lean on, looks like this:"
+    },
+    {
+      "table": {
+        "head": [
+          "Segment",
+          "Time",
+          "What happens"
+        ],
+        "rows": [
+          [
+            "Open",
+            "5 min",
+            "Agree the agenda, skip the long life story"
+          ],
+          [
+            "Discovery",
+            "10 min",
+            "Ask questions, understand their actual problem"
+          ],
+          [
+            "Substance",
+            "10 min",
+            "Show your thinking, sample, or plan against that problem"
+          ],
+          [
+            "Close",
+            "5 min",
+            "Agree the single next step"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Two rules make this hold. First, say the agenda out loud in the first minute: \"I want to ask a few questions, then show you how I would approach it, then agree a next step — sound good?\" Second, protect discovery. If you skip the questions, the substance lands on the wrong problem and the call drifts."
+    },
+    {
+      "h2": "What to say instead of \"let's connect\""
+    },
+    {
+      "p": "Instead of \"let's connect,\" name the purpose, the length, and hand over a way to book — because \"let's connect\" gives the other person nothing to act on."
+    },
+    {
+      "p": "\"Let's connect\" and \"let's hop on a quick call\" are where scheduling goes to die. They sound friendly and commit no one. Compare:"
+    },
+    {
+      "ul": [
+        "Weak: \"We should connect sometime! Let me know when you're free.\"",
+        "Strong: \"Happy to help — grab a 30-min slot here and I'll come prepped: [your link].\""
+      ]
+    },
+    {
+      "p": "The strong version does three things: it sets the length, it signals you will prepare, and it removes the back-and-forth. When you want to schedule a call, give people a door, not a question."
+    },
+    {
+      "h2": "How to run a 30 minute call so it stays 30 minutes"
+    },
+    {
+      "p": "To keep a 30 minute call on time, state the goal early, watch the clock at the halfway mark, and end on a decision rather than a vague \"let's talk again.\""
+    },
+    {
+      "p": "A few habits do the heavy lifting:"
+    },
+    {
+      "ul": [
+        "Open with the outcome. \"By the end of this, I want us to have decided X.\" Now every tangent has something to measure against.",
+        "Glance at the time at 15 minutes. If you are still in discovery, move. Half the call is gone.",
+        "Aim for one clear next step, not a close. For an intro or discovery call, the win is usually the next meeting, not a signed deal — [reps who align on the problem before pitching tend to earn a second conversation](https://prospeo.io/s/sales-call-structure-best-practices).",
+        "End on time, on purpose. Finishing at 28 minutes tells people you respect the clock. They will book you again."
+      ]
+    },
+    {
+      "p": "If the call is a paid consult, this discipline matters even more. A tight 30 minutes that delivers one real thing is worth more than a rambling hour. And it makes the next part — [asking to be paid without the awkwardness](/blog/how-to-ask-client-for-payment-politely) — a lot easier, because the value was obvious."
+    },
+    {
+      "h2": "Book a call people can actually pay for"
+    },
+    {
+      "p": "Once your 30 minute call has a link, an agenda, and reminders, you have built a small product: a bookable, repeatable slot. That is the calm way to sell your time."
+    },
+    {
+      "p": "Stop the \"when are you free?\" thread — set up a bookable 30-min slot people pay for. With [Book A Sloth](/be-a-sloth), one link books the call, collects payment over UPI or Razorpay, and sends the invoice, so the half hour is the only thing you have to show up for. See [how to book an appointment online](/blog/how-to-book-an-appointment-online) to get the slot live. The craft is yours. The machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "How long should a 30 minute call actually be?",
+          "a": "Aim to finish at 28 minutes. Ending a couple of minutes early leaves room for a clean goodbye and signals you respect people's time, which makes them more likely to book you again."
+        },
+        {
+          "q": "What is a good agenda for a 30 minute call?",
+          "a": "Split it into four parts: 5 minutes to open and agree the agenda, 10 minutes for discovery questions, 10 minutes for your substance or plan, and 5 minutes to agree one next step."
+        },
+        {
+          "q": "What should I say instead of \"let's connect\"?",
+          "a": "Name the purpose and length, then share a booking link: \"Happy to help — grab a 30-min slot here and I'll come prepped.\" It removes the back-and-forth and sets expectations."
+        },
+        {
+          "q": "How do I stop the back-and-forth when scheduling a call?",
+          "a": "Share one booking link tied to your real availability. The other person picks a slot that suits both of you, your calendar blocks it automatically, and nobody trades \"does Tuesday work?\" emails."
+        },
+        {
+          "q": "Should a 30 minute intro call try to close a deal?",
+          "a": "Usually not. For a first call, the realistic goal is to understand the problem and agree a next conversation. Trying to close in 30 minutes tends to rush discovery and lose the room."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "scheduling-terms-glossary",
+  "title": "Buffer Time Meaning: A Scheduling Terms Glossary",
+  "date": "Oct 3, 2026",
+  "icons": [
+    "calendar",
+    "columns",
+    "clipboard"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Buffer time meaning, buffer days, placeholder and recurring meetings, 24/7 availability and availability charts — scheduling terms in plain English.",
+  "body": [
+    {
+      "p": "Buffer time is the empty gap you leave before or after a meeting so you are not sprinting from one call straight into the next. It is a cushion, not wasted time. This glossary defines buffer time and the other scheduling words that get used loosely and understood rarely — so your calendar stops running you."
+    },
+    {
+      "p": "Every term below opens with a one-line definition. Skim to the one you need."
+    },
+    {
+      "h2": "Buffer time and buffer days"
+    },
+    {
+      "p": "Buffer time is a deliberate gap between calendar events that gives you room to breathe, prep, or catch up. It sits before a meeting, after it, or both."
+    },
+    {
+      "p": "Think of it as the shock absorber for your day. Without it, a 3:00 call that runs three minutes long makes you late to your 3:30. Do that four times and you have lost the afternoon."
+    },
+    {
+      "h2": "Before buffer: prep padding"
+    },
+    {
+      "p": "A before buffer is padding added ahead of a meeting so you can prepare instead of joining flustered. Use it to read the client's last email, open the right file, or just refill your water. Ten minutes is usually enough."
+    },
+    {
+      "h2": "After buffer: wrap-up padding"
+    },
+    {
+      "p": "An after buffer is padding added at the end of a meeting for wrap-up — notes, follow-ups, and a mental reset before the next thing. Scheduling tools let you set the before and after buffers independently, so a 30-minute call can quietly own 50 minutes of your calendar. [Cal.com's guide to buffers](https://cal.com/blog/what-is-buffer-time-learn-how-to-use-buffer-times-in-scheduling) shows this: a 10:00 meeting with a 10-minute buffer on each side keeps you clear until 10:40."
+    },
+    {
+      "h2": "How much buffer time should you add between meetings?"
+    },
+    {
+      "p": "A common rule of thumb is 15 to 30 minutes between appointments, though it depends on the work. Back-to-back therapy sessions or coaching calls need more; a quick check-in needs less. [SchedulingKit suggests 15–30 minutes for longer sessions](https://www.schedulingkit.com/how-to/set-up-buffer-time) and 5–10 for short ones. Start with 15 and stretch it if you keep running late."
+    },
+    {
+      "h2": "What is a buffer day?"
+    },
+    {
+      "p": "A buffer day is a full day (or half-day) blocked off with no meetings, used as a catch-up or spillover zone. Freelancers often keep Fridays as a buffer day — no calls, just deep work and the admin that piled up. It absorbs the week's overruns so they do not bleed into the weekend."
+    },
+    {
+      "h2": "Meeting types, explained"
+    },
+    {
+      "p": "A meeting type is the category of a calendar event, defined by how many people join, whether it repeats, and what it is for. Knowing the vocabulary helps you set up the right kind fast."
+    },
+    {
+      "table": {
+        "head": [
+          "Term",
+          "One-line meaning",
+          "Repeats?"
+        ],
+        "rows": [
+          [
+            "One-on-one",
+            "A meeting between two people",
+            "No"
+          ],
+          [
+            "Recurring meeting",
+            "The same meeting repeating on a set schedule",
+            "Yes"
+          ],
+          [
+            "Standing meeting",
+            "A recurring meeting with a fixed time and agenda",
+            "Yes"
+          ],
+          [
+            "Placeholder meeting",
+            "A slot booked to reserve time before details are set",
+            "Usually no"
+          ],
+          [
+            "Group meeting",
+            "Three or more people on one invite",
+            "Either"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Recurring meeting"
+    },
+    {
+      "p": "A recurring meeting is one that repeats automatically on a fixed pattern — daily, weekly, or monthly — without you re-inviting anyone. A Monday 10:00 team sync is the classic example: set it once and it lives on everyone's calendar until you cancel the series. Handy, but audit them quarterly. Dead recurring meetings are how calendars rot."
+    },
+    {
+      "h2": "Placeholder meeting"
+    },
+    {
+      "p": "A placeholder meeting is a slot you block to hold time before the full details exist. You know you will meet a client \"sometime Thursday afternoon,\" so you drop a placeholder to protect the window, then firm up the exact time and agenda later. It stops someone else from grabbing the space first."
+    },
+    {
+      "h2": "Standing meeting"
+    },
+    {
+      "p": "A standing meeting is a recurring meeting with a set time and a repeating purpose, like a weekly review. [Lucid Meetings defines it](https://cdn.lucidmeetings.com/glossary/standing-meeting) as a meeting that repeats on a predictable basis and creates an ongoing obligation on calendars. The difference from a plain recurring meeting is intent: a standing meeting has a job it does every time. If yours does not, it is just a recurring one begging to be deleted."
+    },
+    {
+      "h2": "Availability terms: working hours to 24/7"
+    },
+    {
+      "p": "Availability is the set of times you are open to be booked. The rest of these terms describe how you define and show it."
+    },
+    {
+      "h2": "Working hours"
+    },
+    {
+      "p": "Working hours are the daily window you actually take meetings — say 10:00 to 18:00, Monday to Friday. Set them once in your booking tool and it will only offer those slots. This is the single fastest way to stop 8 a.m. calls you never agreed to."
+    },
+    {
+      "h2": "24/7 availability"
+    },
+    {
+      "p": "24/7 availability means you can be booked or reached at any hour, any day of the week. For most solo professionals, this is a trap, not a badge. Real 24/7 availability makes sense for support desks and on-call teams with rotations. For a coach or consultant, defined working hours protect the craft — being reachable at all times is how you [end up the admin instead of the expert](/be-a-sloth)."
+    },
+    {
+      "h2": "Availability chart"
+    },
+    {
+      "p": "An availability chart is a visual grid showing when a person or group is free versus busy, used to find a common slot. You have seen these in group polls — names down the side, time slots across the top, green for free. They shine when [scheduling a group meeting](/blog/scheduling-poll-group-meeting) where twelve calendars need to overlap on one hour."
+    },
+    {
+      "h2": "How these scheduling terms work together"
+    },
+    {
+      "p": "Good scheduling is these pieces stacked: working hours set the outer window, buffer time protects the gaps, recurring meetings handle the repeats, and an availability chart settles the group calls. Miss one and the whole thing wobbles. The catch is that maintaining all of it by hand is its own job — the quiet tax of selling your time, where the machinery starts eating the craft."
+    },
+    {
+      "p": "Book A Sloth handles buffers, availability, and recurring slots for you automatically, so one shareable link does the work. Set your working hours and buffers once, and it offers only the slots you actually want — [set up a bookable slot](/blog/30-minute-call-setup) or read [how to book an appointment online](/blog/how-to-book-an-appointment-online). The craft is yours; the machinery is ours."
+    },
+    {
+      "faq": [
+        {
+          "q": "What does buffer time mean in a calendar?",
+          "a": "Buffer time means a deliberate empty gap before or after a meeting. It gives you room to prepare, wrap up, or reset so appointments do not collide. Most people set 15 to 30 minutes between meetings."
+        },
+        {
+          "q": "What is the difference between a placeholder meeting and a recurring meeting?",
+          "a": "A placeholder meeting reserves a slot before the details are decided and usually happens once. A recurring meeting has full details and repeats automatically on a schedule, like every Monday."
+        },
+        {
+          "q": "Is 24/7 availability a good idea for freelancers?",
+          "a": "Rarely. 24/7 availability suits support teams with rotations, not solo professionals. Defined working hours protect your focus and set client expectations without you having to say no every evening."
+        },
+        {
+          "q": "What is an availability chart used for?",
+          "a": "An availability chart is a grid that shows when people are free versus busy. It is used to find one time slot that works across several calendars, which is why it is common in group scheduling polls."
+        },
+        {
+          "q": "How much buffer time should I put between meetings?",
+          "a": "Start with 15 minutes and adjust. Back-to-back deep sessions like therapy or coaching may need 30 minutes; quick check-ins may need less. If you keep running late, your buffer is too short."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "scheduling-poll-group-meeting",
+  "title": "Scheduling Poll: Find a Time a Group Can Meet",
+  "date": "Oct 3, 2026",
+  "icons": [
+    "calendar",
+    "users",
+    "chart"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 5,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "A scheduling poll finds the one time a whole group can meet: offer five to seven options, share one link, pick the winner — plus when a booking link wins.",
+  "body": [
+    {
+      "p": "A scheduling poll is a shared list of possible times that everyone marks their availability on, so you can pick the slot the most people can make. You propose five to seven options, share one link, watch the votes land, and lock the winner. It's the fastest way to schedule a group meeting without a thread of \"I'm free Tuesday, no wait, Thursday.\""
+    },
+    {
+      "p": "I built Book A Sloth around a simpler idea for one-on-ones, but for genuine group scheduling, a poll still earns its place. Here's how to run one well — and when to skip it."
+    },
+    {
+      "h2": "How to run a scheduling poll (step by step)"
+    },
+    {
+      "p": "Running a scheduling poll takes five steps: pick a few good time options, add time zones, share the link, track responses, and confirm the winner. Do them in order and most groups land a time in one round."
+    },
+    {
+      "steps": [
+        "Offer five to seven options, no more. [Capping options between five and seven prevents decision fatigue](https://www.surveymonkey.com/learn/survey-best-practices/online-schedule-poll/) — too many choices and people stall.",
+        "Label every option with the time zone. Write \"Tue 3 PM IST,\" not just \"Tue 3 PM.\" One remote member is enough to cause a mix-up.",
+        "Share one link. Send it by email, WhatsApp, or your team chat. One link, one place to respond.",
+        "Track responses in real time. Watch the availability chart fill in. Send exactly one reminder to non-responders — more than that is nagging.",
+        "Confirm and send the invite. Close the poll, pick the top slot, and send the calendar invite with the link."
+      ]
+    },
+    {
+      "p": "Confirm your must-have people first. If the decision-maker can only do two of the slots, the poll is really about those two."
+    },
+    {
+      "h2": "What an availability chart shows you"
+    },
+    {
+      "p": "An availability chart is a grid of people against time slots, showing at a glance which slot has the most yeses. It turns a pile of replies into one obvious answer."
+    },
+    {
+      "p": "A simple chart looks like this:"
+    },
+    {
+      "table": {
+        "head": [
+          "Time slot",
+          "Priya",
+          "Arjun",
+          "Meena",
+          "Sam",
+          "Yes count"
+        ],
+        "rows": [
+          [
+            "Tue 3 PM IST",
+            "Yes",
+            "Yes",
+            "Yes",
+            "No",
+            "3"
+          ],
+          [
+            "Wed 11 AM IST",
+            "Yes",
+            "Yes",
+            "Yes",
+            "Yes",
+            "4 (winner)"
+          ],
+          [
+            "Thu 4 PM IST",
+            "Yes",
+            "No",
+            "Yes",
+            "Yes",
+            "3"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Wednesday 11 AM wins — everyone can make it. The chart also shows you the near-misses, so if the winner falls through, you already know the backup."
+    },
+    {
+      "h2": "Poll vs booking link: which should you use"
+    },
+    {
+      "p": "Use a scheduling poll when many people must all attend the same meeting; use a booking link when people meet you one at a time. The two solve different problems, and picking the wrong one creates the exact mess you're trying to avoid."
+    },
+    {
+      "p": "A poll asks a group to converge on one shared slot. A booking link shows your open times and lets each person claim one — no group consensus needed. Here's the trade-off:"
+    },
+    {
+      "table": {
+        "head": [
+          "Factor",
+          "Scheduling poll",
+          "Booking link"
+        ],
+        "rows": [
+          [
+            "Best for",
+            "One meeting, many required attendees",
+            "Meeting people one-on-one"
+          ],
+          [
+            "How it works",
+            "Everyone votes, you pick the top slot",
+            "Each person picks any open slot"
+          ],
+          [
+            "Rounds needed",
+            "Usually one, sometimes two",
+            "Zero — instant"
+          ],
+          [
+            "Reminders",
+            "You chase non-voters",
+            "Automatic"
+          ],
+          [
+            "Falls apart when",
+            "Nobody's free at the same time",
+            "You need everyone in one room"
+          ],
+          [
+            "The 24/7 availability case",
+            "Poor — votes trickle in",
+            "Strong — book anytime, no reply"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The \"24/7 availability\" point matters for anyone selling their time. A poll needs people awake to vote; a booking link lets someone in a different time zone book you at 2 AM their time without a single reply."
+    },
+    {
+      "h2": "Why the back-and-forth costs so much"
+    },
+    {
+      "p": "The real enemy isn't the meeting — it's the coordination before it, and it scales badly with group size. Every extra person adds another calendar to reconcile and another reply to wait on."
+    },
+    {
+      "p": "The numbers back this up. In one study, [a meeting with 10–15 people took about 45 minutes to schedule with a poll tool versus 1.5 to 2 hours without one](https://doodle.com/en/resources/blog/study-reveals-time-spent-with-scheduling) — and even small meetings saved 11 to 15 minutes each. Multiply that across a week of meetings and the \"just find a time\" task quietly becomes a part-time job. That drift — from doing your work to managing the logistics around it — is exactly what I mean when I warn people against becoming the admin."
+    },
+    {
+      "h2": "How to poll a group for a meeting time without a spreadsheet"
+    },
+    {
+      "p": "The lowest-effort way to poll a group is to use a purpose-built poll tool, not a shared spreadsheet that everyone edits over each other. A spreadsheet has no time zones, no reminders, and no single \"winner\" cell — you end up tallying by hand."
+    },
+    {
+      "p": "A good poll flow is just three moves: [pick your times, share the link, and book the winner](https://calendly.com/scheduling/meeting-polls.html). That's it. If you find yourself building a grid in Google Sheets, color-coding cells, and pinging people to fill their row, you've rebuilt a worse version of a tool that already exists."
+    },
+    {
+      "p": "For the meetings that are really one-on-one — client calls, mentoring, interviews — skip the poll entirely. Send a booking link and let people self-serve. That's the calm path: [group scheduling without the spreadsheet](/blog/how-to-book-an-appointment-online) for the group case, and a [personal booking page](/be-a-sloth) for the rest. If you're weighing tools for the solo-creator version of this, our [Topmate alternative](/blog/topmate-alternative) breakdown covers the options, and a simple [30-minute call setup](/blog/30-minute-call-setup) is often all you need."
+    },
+    {
+      "h2": "Conclusion: poll for groups, link for one-on-ones"
+    },
+    {
+      "p": "Here's my honest take after building scheduling software: a poll is the right tool for exactly one job — getting several required people into the same meeting — and the wrong tool for everything else. If you're meeting people one at a time, a poll just adds a voting step nobody needs."
+    },
+    {
+      "p": "Three things you can do this week:"
+    },
+    {
+      "ul": [
+        "For your next all-hands or committee meeting, run a five-option poll instead of an email thread. One round should do it.",
+        "For your recurring one-on-ones, replace the poll with a booking link so people self-serve.",
+        "Always label time zones on every option. It's the single fix that saves the most re-scheduling."
+      ]
+    },
+    {
+      "p": "The craft is yours. The machinery — the polling, the reminders, the confirmations — should be quiet, automatic, and off your plate. Once you've paired a poll with a good [meeting invitation template](/blog/meeting-invitation-templates), the whole thing runs itself."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is a scheduling poll?",
+          "a": "A shared list of proposed meeting times that invitees mark their availability on. You then pick the slot with the most yeses. It's built to find one time a whole group can make."
+        },
+        {
+          "q": "How do I poll a group for a meeting time?",
+          "a": "Offer five to seven time options with time zones, share one link, watch responses land on an availability chart, send a single reminder to non-voters, then confirm the top slot and send the calendar invite."
+        },
+        {
+          "q": "How many time options should a scheduling poll have?",
+          "a": "Five to seven. Fewer than that and you may miss everyone's overlap; more and people stall from too much choice."
+        },
+        {
+          "q": "When should I use a booking link instead of a poll?",
+          "a": "When you meet people one at a time — clients, mentees, interviewees. A booking link lets each person claim any open slot with zero back-and-forth, including outside your working hours."
+        },
+        {
+          "q": "Is a spreadsheet good enough for group scheduling?",
+          "a": "Rarely. A spreadsheet has no time-zone handling, no reminders, and no automatic tally. A purpose-built poll or booking link does all three and won't get overwritten by the last person to edit it."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-become-freelance-personal-trainer",
+  "title": "How to Become a Freelance Personal Trainer",
+  "date": "Sep 29, 2026",
+  "icons": [
+    "heart",
+    "calendar",
+    "money"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Growth",
+  "image": null,
+  "excerpt": "How to become a freelance personal trainer in India: get certified, pick a niche, set your prices, and take bookings and payments online without the admin.",
+  "body": [
+    {
+      "p": "To become a freelance personal trainer, get a recognised certification, pick who you train and where, set clear prices, and put your booking and payment in one place so clients sign up without a back-and-forth. The training is the easy part. The business around it is what trips most trainers up."
+    },
+    {
+      "p": "I built Book A Sloth because I watched skilled people turn into their own receptionists. A trainer's job is coaching — not chasing \"you free Tuesday?\" texts. This guide gets you working, gets you paid, and keeps the admin small."
+    },
+    {
+      "h2": "What is a freelance personal trainer?"
+    },
+    {
+      "p": "A freelance personal trainer is a self-employed coach who finds their own clients, sets their own rates, and keeps what they earn after costs. You are not on a gym payroll. You rent space, train at clients' homes, or coach online, and you run the business yourself. That means more freedom and more responsibility: you choose the hours, the price, and the people — and you also handle the invoices, the reminders, and the taxes. The upside is control. The trap is becoming the admin instead of the coach."
+    },
+    {
+      "h2": "How to become a freelance personal trainer: the steps"
+    },
+    {
+      "p": "Follow these in order. Skipping the boring early ones costs you later."
+    },
+    {
+      "steps": [
+        "Get certified. A recognised qualification is the baseline — gyms, insurers, and serious clients all expect it. In India the common routes are ACE, ACSM, or K11; an [ACE personal-training certification in India runs roughly ₹60,000–₹80,000 all-inclusive](https://www.healthkart.com/connect/cms/how-to-become-a-personal-trainer-gym-training-courses-certifications/bid-4945), and specialist areas like rehabilitation or clinical exercise need their own credential.",
+        "Pick a niche. \"Personal trainer\" is crowded. \"Post-pregnancy strength\", \"desk-job back pain\", or \"beginner runners over 40\" is not. A niche makes referrals obvious and marketing cheap.",
+        "Sort the legal basics. Register as self-employed, get liability insurance, and open a separate bank account for the business. Do this before your first paid client, not after.",
+        "Decide where you train. Home visits, a rented gym slot, an outdoor spot, or online video — each has a different cost and a different price.",
+        "Set your prices. Write them down. Publish them. Guessing per client makes you undercharge.",
+        "Build a simple booking system. One link where a client picks a slot and pays. This is where most trainers leak hours.",
+        "Get your first ten clients, then ask each for a referral. Word of mouth is still the cheapest growth a trainer has."
+      ]
+    },
+    {
+      "h2": "How to get personal training clients"
+    },
+    {
+      "p": "You get personal training clients by being visible where they already are and making the first session easy to say yes to. Cold marketing rarely works for trainers; trust and proximity do. The [freelance path comes down to certify, insure, niche, price, and get visible](https://coachway.io/articles/how-to-become-a-freelance-personal-trainer/) — the last step is where most trainers stall."
+    },
+    {
+      "ul": [
+        "Your own network first. Friends, colleagues, your old gym's members. Offer a free or cheap taster session, not a hard sell.",
+        "Local presence. Post in neighbourhood groups, put a card up at the physio clinic, partner with a cafe or a yoga studio. Show real transformations, with permission — proof clients can see beats any claim.",
+        "Content that proves you know your stuff. Short form-check videos, one useful tip a day. You are teaching, not selling.",
+        "A booking link everywhere. Bio, poster QR code, WhatsApp. If someone is interested at 11pm, they should be able to book at 11pm — not wait for you to reply."
+      ]
+    },
+    {
+      "p": "The trainers who fill their calendar fastest remove friction. A curious lead who has to text, wait, negotiate a time, and figure out payment often just... doesn't. Make [booking an appointment online](/blog/how-to-book-an-appointment-online) a two-tap job and more of them stick. The same logic turns any skill into income — see [how to become a paid mentor](/blog/how-to-become-paid-mentor)."
+    },
+    {
+      "h2": "How to charge for training sessions: pricing models"
+    },
+    {
+      "p": "Charge using a model that matches how your clients buy — single sessions for triers, packages for the committed, and online for scale. Most trainers use all three. Here is how they compare."
+    },
+    {
+      "table": {
+        "head": [
+          "Pricing model",
+          "How it works",
+          "Best for",
+          "Trade-off"
+        ],
+        "rows": [
+          [
+            "Per session",
+            "One flat fee per session, paid each time",
+            "New clients, trial runs",
+            "Highest churn; unpredictable income"
+          ],
+          [
+            "Packages / blocks",
+            "5, 10, or 20 sessions paid upfront at a small discount",
+            "Committed clients",
+            "You handle refunds and expiry rules"
+          ],
+          [
+            "Monthly retainer",
+            "Fixed monthly fee for a set number of sessions",
+            "Long-term clients",
+            "Needs clear boundaries on rescheduling"
+          ],
+          [
+            "Online coaching",
+            "Programme plus check-ins, no fixed location",
+            "Scale beyond your local area",
+            "Lower price per client, higher volume"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Price to your city and your niche, not to the cheapest trainer nearby. For a baseline, [most personal trainers earn between about $19 and $33 an hour](https://nfpt.com/how-much-do-personal-trainers-make/), with specialists and online coaches well above that — in India, convert that logic to a per-session rate that fits your market, then set your package discount on top. One rule: never discount so hard that a package earns you less per hour than a single session. A discount should reward commitment, not punish you."
+    },
+    {
+      "h2": "How to take fitness bookings online"
+    },
+    {
+      "p": "Take fitness bookings online with a single link that shows your open slots, collects payment, and sends the reminders for you. This is the difference between a hobby and a business. When your calendar runs itself, you coach more and admin less."
+    },
+    {
+      "p": "A good setup does four things without you touching it:"
+    },
+    {
+      "ul": [
+        "Shows only your real availability, synced to your calendar.",
+        "Takes payment at the moment of booking — UPI, cards, whatever your client uses.",
+        "Sends the invoice automatically. In India that means a proper GST invoice, not a screenshot.",
+        "Reminds the client by email and WhatsApp so no-shows drop — [text reminders alone cut no-shows by around 38% in one study](https://www.klara.com/blog/text-message-appointment-reminders-reduce-no-shows-by-38-study-finds)."
+      ]
+    },
+    {
+      "p": "That is exactly what [Book A Sloth](/be-a-sloth) does: one link books the slot, collects the payment, and fires the reminders. UPI and Razorpay for money in, auto GST invoices, Google Calendar and Meet built in, and 0% commission on paid plans. The craft is yours. The machinery is ours."
+    },
+    {
+      "info": {
+        "title": "The quiet win: you stop asking to be paid",
+        "text": "When payment is built into the booking, the most awkward conversation in the job disappears — chasing the fee. If you still bill by hand, here is [how to ask a client for payment politely](/blog/how-to-ask-client-for-payment-politely). But the calmer fix is to collect at booking so the ask never happens."
+      }
+    },
+    {
+      "h2": "Staying calm as you grow"
+    },
+    {
+      "p": "The moment you have more than a handful of clients, the admin compounds. Reschedules, package tracking, invoices, chasing payment, remembering who is due. This is the point where good trainers quietly burn out — not from the training, but from the machinery around it."
+    },
+    {
+      "p": "Coaching people is the job. Chasing bookings should not be. Put your slots online, let clients book and pay themselves, and protect the hours that actually make you money. Start with [how to book an appointment online](/blog/how-to-book-an-appointment-online), then see [Book A Sloth's plans](/pricing) to run the whole thing from one link."
+    },
+    {
+      "faq": [
+        {
+          "q": "Do I need a certification to be a freelance personal trainer?",
+          "a": "Yes, practically speaking. Insurance providers, gyms, and most serious clients expect a recognised qualification such as ACE, ACSM, or K11, and specialist areas like rehabilitation require one. It is also your credibility on day one."
+        },
+        {
+          "q": "How much should I charge per session as a new trainer?",
+          "a": "Price to your local market, your niche, and your costs — not to the cheapest trainer nearby. Set a clear per-session rate first, then offer a small discount on multi-session packages to reward commitment, never so deep that a package earns you less per hour than a single session."
+        },
+        {
+          "q": "How do I get my first clients with no reputation?",
+          "a": "Start with your own network and offer a low-risk taster session. Ask every early client for one referral, and make your booking link visible everywhere — bio, WhatsApp, a poster QR code — so interested people can act immediately."
+        },
+        {
+          "q": "What is the easiest way to take bookings and payment?",
+          "a": "Use one booking link that shows your availability, collects payment at the time of booking, and sends reminders automatically. It removes the back-and-forth and cuts no-shows without any manual follow-up."
+        },
+        {
+          "q": "Can I train clients online instead of in person?",
+          "a": "Yes. Online coaching — a programme plus regular video check-ins — lets you work beyond your local area. It usually earns less per client but scales to far more of them, which is why most trainers run it alongside in-person sessions."
+        }
+      ]
+    }
+  ]
+},
+{
   "slug": "september-2026-product-update",
   "title": "September Update: Two Plans, AI Pages & Honest Pricing",
   "date": "Sep 28, 2026",

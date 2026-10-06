@@ -57,6 +57,13 @@ const GuestTerms     = lazy(() => import('./pages/GuestTerms'));
 const HostAgreement  = lazy(() => import('./pages/HostAgreement'));
 const HostFees       = lazy(() => import('./pages/HostFees'));
 const EarningsCalculator = lazy(() => import('./pages/EarningsCalculator'));
+const ToolsIndex = lazy(() => import('./pages/tools/ToolsIndex'));
+const NoShowCalculator = lazy(() => import('./pages/tools/NoShowCalculator'));
+const GstCalculator = lazy(() => import('./pages/tools/GstCalculator'));
+const Glossary = lazy(() => import('./pages/Glossary'));
+const GlossaryTerm = lazy(() => import('./pages/GlossaryTerm'));
+const Press = lazy(() => import('./pages/Press'));
+const Stats = lazy(() => import('./pages/Stats'));
 const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
 const About          = lazy(() => import('./pages/About'));
 const Careers        = lazy(() => import('./pages/Careers'));
@@ -259,6 +266,7 @@ const SalesPipeline   = lazy(() => import('./pages/admin/sales/SalesPipeline'));
 const SalesReports    = lazy(() => import('./pages/admin/sales/SalesReports'));
 const CustomerDetail  = lazy(() => import('./pages/admin/sales/CustomerDetail'));
 const SalesTemplates  = lazy(() => import('./pages/admin/sales/SalesTemplates'));
+const SalesColdCalling = lazy(() => import('./pages/admin/sales/SalesColdCalling'));
 const SalesSequences  = lazy(() => import('./pages/admin/sales/SalesSequences'));
 
 // Admin — Finance (P1: double-entry ledger)
@@ -463,6 +471,13 @@ function App() {
           <Route path="/host-agreement" element={<HostAgreement />} />
           <Route path="/host-fees" element={<HostFees />} />
           <Route path="/earnings-calculator" element={<EarningsCalculator />} />
+          <Route path="/tools" element={<ToolsIndex />} />
+          <Route path="/tools/no-show-cost-calculator" element={<NoShowCalculator />} />
+          <Route path="/tools/gst-calculator" element={<GstCalculator />} />
+          <Route path="/glossary" element={<Glossary />} />
+          <Route path="/glossary/:slug" element={<GlossaryTerm />} />
+          <Route path="/press" element={<Press />} />
+          <Route path="/stats" element={<Stats />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           {/* Customers never register — accounts are created automatically
               during booking (phone OTP). Old signup URL redirects home. */}
@@ -642,6 +657,7 @@ function App() {
           <Route path="/admin/customer/:leadId" element={<AdminWrapper><CustomerDetail /></AdminWrapper>} />
           <Route path="/admin/sales/pipeline" element={<AdminWrapper><SalesPipeline /></AdminWrapper>} />
           <Route path="/admin/sales/templates" element={<AdminWrapper><SalesTemplates /></AdminWrapper>} />
+          <Route path="/admin/sales/cold-calling" element={<AdminWrapper><SalesColdCalling /></AdminWrapper>} />
           {/* Sequences, split by audience (v3.160): host lifecycle → Growth, cold acquisition → Marketing. */}
           <Route path="/admin/growth/sequences" element={<AdminWrapper><SalesSequences audience="customer" title="Lifecycle Sequences" subtitle="Post-signup host journeys — onboarding, activation, win-back. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />
           <Route path="/admin/marketing/sequences" element={<AdminWrapper><SalesSequences audience="lead" title="Acquisition Sequences" subtitle="Automated cold-lead nurture. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />

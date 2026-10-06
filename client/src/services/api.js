@@ -771,6 +771,13 @@ export const crmDeleteView       = (id)          => API.delete(`/admin/crm/views
 export const crmListLists        = ()            => API.get('/admin/crm/lists');
 export const crmCreateList       = (data)        => API.post('/admin/crm/lists', data);
 export const crmGetList          = (id)          => API.get(`/admin/crm/lists/${id}`);
+// Cold Calling tab — call queue, batched CSV import, outcome (+ follow-ups), reminders.
+export const crmColdCallQueue    = (listId)      => API.get('/admin/crm/cold-calls/queue', { params: { listId } });
+export const crmColdCallSearch   = (q)           => API.get('/admin/crm/cold-calls/search', { params: { q } });
+export const crmColdCallImport   = (rows, listId, listName) =>
+  batchedImport((body) => API.post('/admin/crm/cold-calls/import', { ...body, listName }), rows, listId);
+export const crmColdCallOutcome  = (leadId, data) => API.post(`/admin/crm/cold-calls/${leadId}/outcome`, data);
+export const crmColdCallRemind   = (leadId, data) => API.post(`/admin/crm/cold-calls/${leadId}/remind`, data);
 export const crmListTags         = ()            => API.get('/admin/crm/tags');
 export const crmCreateTag        = (data)        => API.post('/admin/crm/tags', data);
 export const crmUpdateTag        = (id, data)    => API.patch(`/admin/crm/tags/${id}`, data);

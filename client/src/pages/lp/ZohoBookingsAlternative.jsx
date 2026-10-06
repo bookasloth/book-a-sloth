@@ -19,7 +19,7 @@ import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import Seo from "../../components/common/Seo";
 import { ogCard } from "../../config/ogImages";
-import { SITE_URL } from "../../utils/seo";
+import { SITE_URL, comparisonGraphJsonLd } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
 import { ALL_PLANS } from "../../data/plans";
@@ -201,6 +201,13 @@ const ZohoBookingsAlternative = () => {
         description="Looking for a Zoho Bookings alternative? Book A Sloth offers simple scheduling with UPI payments, GST invoices, and WhatsApp reminders — built for Indian professionals."
         image={ogCard('lp-zoho-bookings-alternative')}
         canonical={`${SITE_URL}/lp/zoho-bookings-alternative`}
+        jsonLd={comparisonGraphJsonLd({
+          canonical: `${SITE_URL}/lp/zoho-bookings-alternative`,
+          name: "The Best Zoho Bookings Alternative for Creators — Book A Sloth",
+          description: "Book A Sloth offers simple scheduling with UPI payments, GST invoices, and WhatsApp reminders — built for Indian professionals. A Zoho Bookings alternative.",
+          breadcrumbName: "Zoho Bookings Alternative",
+          faqs: FAQS,
+        })}
       />
 
       {/* ══════ HEADER ══════ */}
