@@ -27,7 +27,7 @@ vi.mock('../../../services/api', () => ({
     totals: { fresh: 8948, signedUp: 0 },
     templates: TPL,
   } }); },
-  crmGetLead: (id) => Promise.resolve({ data: LEADS[id] }),
+  crmGetLead: (id) => Promise.resolve({ data: { lead: LEADS[id], notes: [], followUps: [] } }),   // real API shape
   crmLeadTimeline: () => Promise.resolve({ data: [] }),
   crmColdCallOutcome: (...a) => outcome(...a),
   crmColdCallSend: (...a) => send(...a),
