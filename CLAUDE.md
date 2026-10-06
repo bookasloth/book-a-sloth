@@ -205,19 +205,42 @@ Limits always come from: subscription_plans.limits
 
 ## UI Rules
 
-Always use existing design tokens.
+Design language = **soft modern SaaS** (NOT "friendly brutalism" — that label in
+old docs is stale). The shipped public pages (Home, Pricing, /for/* landings,
+Navbar, Footer) are the source of truth; match them.
 
-Do not invent colors.
+**Tokens only — never invent colors.** Use the Tailwind token classes:
+`bg-ink`/`text-ink` (#1a1a1a), `bg-canvas` (#faf9f6, page bg), `bg-sand` (#f4f1ea),
+`text-primary`/`bg-primary` (#FE5100), `text-primary-cta`/`bg-primary-cta` (#c23d00 —
+the WCAG-safe orange for white-on-orange CTAs and accent headline words),
+`primary-light` (#FFE9DD), and the multi-hue `--c-*` / `text-c-*` accents. Per-landing
+pages drive accents off CSS vars (`--lp-accent`) via inline `style`.
 
-4px borders.
+**Radius:** 4–6px on cards/buttons, `rounded-full` on chips/pills/avatars. NOTE
+`tailwind.config.js` overrides the scale — `rounded-lg/md/sm` = 4px and
+`rounded-xl/2xl/3xl` = 6px (NOT 12/16/24). So reach for `rounded-[6px]`/`rounded-[5px]`;
+`rounded-[10px]` is the one allowed card exception. Never 16px+ radii.
 
-Rounded-xl only where already used.
+**Borders:** 1px, low-alpha — `border border-black/5`, `border border-white/10` (dark
+sections), or accent at ~30% alpha (`${accent}4d`). NEVER `border-4 border-ink` or
+solid ink borders (that's the old brutalist look — do not add it).
 
-Plus Jakarta Sans headings.
+**Shadows:** soft and blurred — base `shadow-[0_8px_30px_rgba(26,26,26,0.04)]`, hover
+lifts with bigger blur + negative spread (`hover:-translate-y-1 hover:shadow-[0_24px_60px_-28px_...]`).
+NEVER hard offset shadows (`shadow-[4px_4px_0_#1E1E1E]`).
 
-Poppins body.
+**Type:** `font-heading` = Plus Jakarta Sans (card titles, stat numbers, prices,
+wordmark); body inherits `font-sans` = Poppins. Hero H1 uses `clamp()`; section H2 =
+`text-4xl sm:text-5xl font-extrabold`, often one accent word in `text-primary-cta`.
 
-Reuse existing components before creating new ones.
+**CTA pattern:** `rounded-[6px] px-6 py-3 text-sm font-semibold text-white` on
+`bg-ink` or an accent fill, soft shadow, `hover:opacity-90`. Not pill-shaped, no border.
+
+**Rhythm:** sections `px-5 py-20 sm:px-8 lg:py-28`, containers `max-w-6xl`/`max-w-3xl mx-auto`,
+card grids `gap-5 sm:gap-6`, gutters `px-5 → sm:px-8`.
+
+**Reuse existing components before creating new ones.** `docs/design-system.md` is the
+long-form guide (keep it and this section in sync).
 
 
 
