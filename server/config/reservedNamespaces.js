@@ -17,7 +17,6 @@ const ROUTES = [
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'manage-booking', 'lp', 'for',
   'og', // /og/blog/:slug — render target for the OG card generator
-  'r', // /r/:code — cold-call WhatsApp tracking link (pages/TrackLink.jsx)
   'my-bookings', 'profile', 'reviews', 'loyalty', 'settings', 'search', 'wall-of-love', 'moments',
   'opening', 'inaugurators', // "The Opening" launch event + permanent Inaugurators Wall
 

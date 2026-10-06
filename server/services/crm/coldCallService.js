@@ -293,12 +293,12 @@ async function sendFollowUp(lead, channel, category, outcome, callbackAt, now, c
       // A second callback the same day carries a new time, so it gets its own key.
       idempotencyKey: `cold:${lead.id}:${outcome}:${channel}:${rules.istDate(now)}${callbackAt ? `:${callbackAt}` : ''}`,
     };
-    // A { ref: true } variable is this lead's invite code (bookasloth.com/r/<code>).
+    // { ref: 'code' | 'link' } variables are this lead's invite code / invite link.
     const code = (tpl.variables || []).some((v) => v.ref) ? await ensureRefCode(lead.id) : null;
     const row = channel === 'email'
       ? await messageService.enqueue({ ...base, subject: fill(tpl.subject), variables: { html: fill(tpl.body) }, senderKey: SENDER })
       : await messageService.enqueue({ ...base, templateKey: tpl.name, variables: {
-        params: (tpl.variables || []).map((v) => (v.ref ? code : fill(`{{${v.key}}}`))),
+        params: (tpl.variables || []).map((v) => (v.ref === 'link' ? inviteUrl(code) : v.ref ? code : fill(`{{${v.key}}}`))),
       } });
     // enqueue returns the EXISTING row on an idempotency hit — don't report it as a fresh send.
     if (row?.created_at && new Date(row.created_at).getTime() < now.getTime() - 60 * 1000) {
@@ -575,17 +575,36 @@ async function reports(opts = {}, now = new Date()) {
   };
 }
 
-// ── Tracking link (public) ────────────────────────────────────
-// bookasloth.com/r/<code> → logs a click on the lead, then the page goes to signup.
+// ── Invite link (public, via inviteService) ───────────────────
+// bookasloth.com/invite/<code> is the invite landing page: inviteService falls back here
+// when the slug isn't an invite_links row — welcome label, tap logging, signup claim.
+const inviteUrl = (code) => `https://bookasloth.com/invite/${code}`;
+
 // ponytail: ref_code lookups scan leads' JSONB (no index) — fine at ~10k leads; add an
 // expression index on attributes->cold_call->>ref_code if clicks or leads grow a lot.
-async function trackClick(raw) {
+async function leadByRefCode(raw) {
   const code = rules.cleanRefCode(raw);
-  if (!code) return false;
-  const { data: lead } = await supabaseAdmin.from('leads').select('id')
+  if (!code) return null;
+  const { data } = await supabaseAdmin.from('leads').select('id,business_name,name,profile_id')
     .eq(`${CC}ref_code`, code).limit(1).maybeSingle();
+  return data || null;
+}
+
+// A host signed up from a lead's invite link → link the account to that exact lead
+// (never re-points a lead already linked to another account).
+async function claimSignup(raw, profileId) {
+  const lead = await leadByRefCode(raw);
+  if (!lead || !profileId || lead.profile_id) return false;
+  await supabaseAdmin.from('leads').update({ profile_id: profileId, updated_at: new Date().toISOString() })
+    .eq('id', lead.id).is('profile_id', null);
+  await logActivity(lead.id, 'host_signup', { title: 'Signed up from the invite link', meta: { via: 'cold_call_invite', profile_id: profileId } });
+  return true;
+}
+
+async function trackClick(raw) {
+  const lead = await leadByRefCode(raw);
   if (!lead) return false;
-  await logActivity(lead.id, 'link_clicked', { title: 'WhatsApp link clicked', meta: { via: 'cold_call' } });
+  await logActivity(lead.id, 'link_clicked', { title: 'Invite link opened', meta: { via: 'cold_call' } });
   return true;
 }
 
@@ -656,5 +675,5 @@ ${(cbs || []).length ? `<ul>${cbs.map((c) => `<li>${esc(rules.formatIst(c.due_at
 
 module.exports = {
   importRows, getQueue, stats, followUps, setFollowUp, history, reports, search, recordOutcome, send, updateDetails, remind,
-  trackClick, callbackReminders, dailyRecap,
+  trackClick, leadByRefCode, claimSignup, callbackReminders, dailyRecap,
 };

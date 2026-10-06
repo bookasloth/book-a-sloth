@@ -151,3 +151,28 @@ describe('reports', () => {
     expect(out.byHour).toEqual([{ hour: 11, calls: 1, connected: 1 }]);
   });
 });
+
+describe('invite link (bookasloth.com/invite/<code>)', () => {
+  test('code and link params are filled from the lead invite code', async () => {
+    leadService.getLead.mockResolvedValue(LEAD);
+    mockData = {
+      leads: { data: { attributes: { cold_call: { ref_code: 'CX12' } } } },
+      crm_templates: { data: { channel: 'whatsapp', name: 'Cold Call Link - Vendor', is_active: true, variables: [{ key: 'business_name' }, { key: 'invite_code', ref: 'code' }, { key: 'invite_link', ref: 'link' }] } },
+    };
+    await svc.send(LEAD.id, { whatsapp: { category: 'cold_call_link' } }, 'adm', NOW);
+    expect(messageService.enqueue.mock.calls[0][0].variables.params).toEqual(['{{business_name}}', 'CX12', 'https://bookasloth.com/invite/CX12']);
+  });
+  test('signup from the invite links the account to that lead, never re-pointing a linked one', async () => {
+    mockData = { leads: (o) => (o._ops.some(([m]) => m === 'update') ? { data: null } : { data: { id: 'A', profile_id: null } }) };
+    expect(await svc.claimSignup('cx12', 'p1')).toBe(true);
+    const upd = mockCalls.find((c) => c._ops.some(([m]) => m === 'update'));
+    expect(upd._ops).toEqual(expect.arrayContaining([['update', expect.objectContaining({ profile_id: 'p1' })], ['eq', 'id', 'A'], ['is', 'profile_id', null]]));
+    expect(logActivity).toHaveBeenCalledWith('A', 'host_signup', expect.any(Object));
+
+    jest.clearAllMocks(); mockCalls.length = 0;
+    mockData = { leads: { data: { id: 'A', profile_id: 'other' } } };
+    expect(await svc.claimSignup('CX12', 'p1')).toBe(false);
+    expect(mockCalls.some((c) => c._ops.some(([m]) => m === 'update'))).toBe(false);
+    expect(await svc.claimSignup('not-a-code', 'p1')).toBe(false);
+  });
+});

@@ -23,9 +23,13 @@ const DEMO = 'https://bookasloth.com/sndatarkar/book-a-sloth-app-online-demo-30-
 const CALL = (text) => `<a class="sig" href="${DEMO}">${text}</a>`;
 const SIGN = '<p>Shubham<br>Founder, Book A Sloth</p>';
 const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Dental' }];
-// Body param {{2}} inside https://bookasloth.com/r/{{2}}: coldCallService fills each lead's
-// 4-char invite code (e.g. CX12), so a tap on the link shows up on that lead.
-const LINK_CODE = { key: 'link_code', label: 'Invite code in bookasloth.com/r/{{2}}', example: 'CX12', ref: true };
+// Tracked-link params, filled per lead by coldCallService: {{2}} the lead's 4-char invite
+// code (e.g. CX12), {{3}} https://bookasloth.com/invite/<code> — the invite landing page,
+// which logs the tap on the lead and carries the code through Google signup.
+const INVITE = [
+  { key: 'invite_code', label: 'Invite code', example: 'CX12', ref: 'code' },
+  { key: 'invite_link', label: 'Invite link', example: 'https://bookasloth.com/invite/CX12', ref: 'link' },
+];
 
 const COLD_CALL_TEMPLATES = [
   {
@@ -150,17 +154,19 @@ If you got stuck anywhere, reply here and I'll help you finish it in a few minut
 You can continue here: ${WA_SIGNUP}`,
   },
   {
-    // The one tracked message: its link opens bookasloth.com/r/<lead code>, so a tap
+    // The one tracked message: its link opens bookasloth.com/invite/<lead code>, so a tap
     // shows up on that lead (🔥). WhatsApp only — email clicks are tracked by Resend.
     channel: 'whatsapp', name: 'Cold Call Link - Vendor', label: 'Cold call · Booking link, tracked (WA)', category: 'cold_call_link',
     // Text as submitted to Meta (header 'Knock Knock!' shown first for the preview).
-    variables: [...BIZ, LINK_CODE], is_active: false, subject: null,
+    variables: [...BIZ, ...INVITE], is_active: false, subject: null,
     body: `Knock Knock!
 
 Hi {{1}} team,
 
-Shubham from Book A Sloth here. Here's your link to create your free booking page, as we discussed:
-https://bookasloth.com/r/{{2}}
+Shubham from Book A Sloth here. Here's your invite to create your free booking page, as we discussed.
+
+Your invite code: *{{2}}*
+Create your page: {{3}}
 
 Clients can book, pay, and get reminders automatically.
 
