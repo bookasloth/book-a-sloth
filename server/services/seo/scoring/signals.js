@@ -125,6 +125,7 @@ function extract(page, { gsc = null, queries = [], robots = {} } = {}) {
     type: page.page_type,
     url: page.url,
     httpStatus: page.http_status,
+    crawledAt: page.created_at || null,
     indexable: page.indexable !== false,
     noindex, nosnippet, robotsStr,
     title: page.title, metaDescription: page.meta_description,
