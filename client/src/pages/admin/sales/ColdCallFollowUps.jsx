@@ -20,7 +20,6 @@ const BUCKETS = [
 ];
 const toLocalInput = (d) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
 const fmt = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '—');
-const waLink = (lead) => { const d = String(lead.whatsapp_phone || lead.phone || '').replace(/\D/g, ''); return d.length >= 10 ? `https://wa.me/${d.length === 10 ? `91${d}` : d}` : null; };
 
 function Reschedule({ value, onSave, onCancel }) {
   const [at, setAt] = useState(value ? toLocalInput(value) : '');
@@ -141,7 +140,6 @@ export default function ColdCallFollowUps() {
                     const cc = r.lead.attributes?.cold_call || {};
                     const overdue = r.nextAt && new Date(r.nextAt) < now;
                     const on = picked?.lead.id === r.lead.id;
-                    const wa = waLink(r.lead);
                     return (
                       <tr key={r.lead.id} onClick={() => setPicked(r)} className={`cursor-pointer adm-hoverable ${on ? 'bg-[#FE5100]/[0.06]' : ''}`}>
                         <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}><input type="checkbox" aria-label="Select" className="!w-4 !h-4 !min-h-0 !p-0 accent-[#FE5100]" checked={checked.has(r.lead.id)}
@@ -156,7 +154,6 @@ export default function ColdCallFollowUps() {
                         <td className="px-3 py-2.5">{cc.priority ? <Badge tone="warn">{cc.priority}</Badge> : '—'}</td>
                         <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           <button type="button" className="!min-h-0 rounded-lg border adm-border px-2 py-1 text-[12px] font-semibold text-[#FE5100] adm-hoverable" onClick={() => navigate(`${BASE}/lead/${r.lead.id}`)}>Call</button>{' '}
-                          {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="rounded-lg border adm-border px-2 py-1 text-[12px] font-semibold text-emerald-600 adm-hoverable">WA</a>}{' '}
                           <button type="button" className="!min-h-0 rounded-lg border adm-border px-2 py-1 text-[12px] adm-t2 adm-hoverable" onClick={() => setEditing(r.lead.id)}>Reschedule</button>
                         </td>
                       </tr>
@@ -205,8 +202,7 @@ export default function ColdCallFollowUps() {
             </div>
             {editing === `p:${sel.id}` && <Reschedule value={picked.nextAt} onSave={(at) => act([sel.id], { at }, 'Rescheduled')} onCancel={() => setEditing(null)} />}
             <div className="grid grid-cols-2 gap-2 pt-1">
-              <Link to={`${BASE}/lead/${sel.id}`} className="inline-flex justify-center items-center rounded-xl py-2 text-[13px] font-semibold bg-[#FE5100] text-white hover:bg-[#e54900]">Call now</Link>
-              {waLink(sel) ? <a href={waLink(sel)} target="_blank" rel="noopener noreferrer" className="inline-flex justify-center items-center rounded-xl py-2 text-[13px] font-semibold adm-card adm-t2 adm-hoverable">WhatsApp</a> : <span />}
+              <Link to={`${BASE}/lead/${sel.id}`} className="col-span-2 inline-flex justify-center items-center rounded-xl py-2 text-[13px] font-semibold bg-[#FE5100] text-white hover:bg-[#e54900]">Call now</Link>
               <Btn variant="outline" className="justify-center" onClick={() => setEditing(`p:${sel.id}`)}>Reschedule</Btn>
               <Btn variant="outline" className="justify-center" onClick={() => act([sel.id], { done: true }, 'Marked done')}>Mark done</Btn>
             </div>

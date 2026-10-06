@@ -126,7 +126,6 @@ function LeadCall({ initial, plan, queue, reload }) {
   const closeComm = (thenNext) => { setComm(null); if (thenNext) goNext(); else resetCall(); };
 
   const digits = String(lead.phone || '').replace(/\D/g, '');
-  const waDigits = String(lead.whatsapp_phone || lead.phone || '').replace(/\D/g, '');
   const maps = safeUrl(cc.maps_url);
   const site = safeUrl(lead.website);
   const copy = (text) => navigator.clipboard?.writeText(text).then(() => toast.success('Copied')).catch(() => {});
@@ -180,7 +179,6 @@ function LeadCall({ initial, plan, queue, reload }) {
               <Btn size="sm" variant="ghost" onClick={() => copy(formatPhone(lead.phone).replace(/\s/g, ''))}>Copy</Btn>
               <span className="text-[12px] adm-t3 mr-auto">{form.alt_phone ? `Alt: ${form.alt_phone}` : ''}</span>
               <a href={`tel:+${digits}`} onClick={() => setRunning(true)} className="inline-flex items-center rounded-lg px-3 py-1.5 text-[13px] font-semibold bg-[#FE5100] text-white hover:bg-[#e54900]">Open in dialer</a>
-              {waDigits.length >= 10 && <a href={`https://wa.me/${waDigits.length === 10 ? `91${waDigits}` : waDigits}`} target="_blank" rel="noopener noreferrer" title={`WhatsApp ${waDigits.slice(-10) === digits.slice(-10) ? 'on the same number' : formatPhone(lead.whatsapp_phone)}`} className="inline-flex items-center rounded-lg px-3 py-1.5 text-[13px] font-semibold adm-card adm-t2 adm-hoverable">WhatsApp chat</a>}
               <Btn size="sm" variant="outline" onClick={() => setComm({ category: messageFor(cc.last_outcome, cc) || 'cold_call_interested', callbackAt: null, savedOutcome: null, afterSave: false })}>✉ Communicate</Btn>
             </div>
           </Card>
