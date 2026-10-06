@@ -298,7 +298,7 @@ async function sendFollowUp(lead, channel, category, outcome, callbackAt, now, c
     const row = channel === 'email'
       ? await messageService.enqueue({ ...base, subject: fill(tpl.subject), variables: { html: fill(tpl.body) }, senderKey: SENDER })
       : await messageService.enqueue({ ...base, templateKey: tpl.name, variables: {
-        params: (tpl.variables || []).map((v) => (v.ref === 'link' ? inviteUrl(code) : v.ref ? code : fill(`{{${v.key}}}`))),
+        params: (tpl.variables || []).map((v) => (v.ref === 'link' ? inviteUrl(code, lead.profession) : v.ref ? code : fill(`{{${v.key}}}`))),
       } });
     // enqueue returns the EXISTING row on an idempotency hit — don't report it as a fresh send.
     if (row?.created_at && new Date(row.created_at).getTime() < now.getTime() - 60 * 1000) {
@@ -576,9 +576,11 @@ async function reports(opts = {}, now = new Date()) {
 }
 
 // ── Invite link (public, via inviteService) ───────────────────
-// bookasloth.com/invite/<code> is the invite landing page: inviteService falls back here
-// when the slug isn't an invite_links row — welcome label, tap logging, signup claim.
-const inviteUrl = (code) => `https://bookasloth.com/invite/${code}`;
+// The tracked link is the lead's category landing page (or the homepage) with ?i=<code>:
+// any page with ?i= logs the visit and stashes the code for Google signup (client
+// AuthContext → /api/invite/<code>/visit). bookasloth.com/invite/<code> also still works:
+// inviteService falls back here when a slug isn't an invite_links row.
+const inviteUrl = (code, profession) => `https://bookasloth.com${rules.landingPath(profession)}?i=${code}`;
 
 // ponytail: ref_code lookups scan leads' JSONB (no index) — fine at ~10k leads; add an
 // expression index on attributes->cold_call->>ref_code if clicks or leads grow a lot.

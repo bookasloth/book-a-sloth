@@ -13,14 +13,14 @@ import HowItWorks from '../components/home/HowItWorks';
 import Reveal from '../components/home/Reveal';
 import Seo from '../components/common/Seo';
 import { ogCard } from '../config/ogImages';
+import { readInvite, stashInvite } from '../utils/inviteStash';
 
 // First-touch: bas_invite is the durable single source of truth. If it already
 // exists, change NOTHING (neither store) — mirrors the referral bas_ref rule so
 // localStorage and the UTM stash can never diverge on source.
 function stashFirstTouch(slug) {
   try {
-    if (localStorage.getItem('bas_invite')) return;
-    localStorage.setItem('bas_invite', slug.slice(0, 40));
+    if (!stashInvite(slug)) return;
     const cur = JSON.parse(sessionStorage.getItem('bas_utm') || '{}');
     if (!Object.keys(cur).length) {
       sessionStorage.setItem('bas_utm', JSON.stringify({ utm_source: `invite/${slug}`, utm_medium: 'invite' }));
@@ -50,7 +50,7 @@ export default function InviteLanding() {
 
   async function startGoogle() {
     try {
-      const invite = localStorage.getItem('bas_invite') || slug;
+      const invite = readInvite() || slug;
       const { data } = await getVendorGoogleUrl('signup', invite);
       if (data?.url) window.location.href = data.url;
     } catch { /* error surfaces on the auth page */ }
