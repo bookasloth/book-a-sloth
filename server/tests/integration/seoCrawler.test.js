@@ -9,6 +9,7 @@ jest.mock('../../controllers/prerenderController', () => ({
   resolveProfileMeta: jest.fn(async (username) => ({
     status: 200,
     buildHtmlArgs: { title: `host:${username}`, description: 'd'.repeat(150), canonical: `https://bookasloth.com/${username}`, robots: 'index,follow', jsonLd: { '@type': 'ProfilePage' } },
+    payload: { host: { name: 'Jane', username, bio: 'I coach founders on hiring and early team building.' }, services: [] },
   })),
   resolveServiceMeta: jest.fn(async (username, slug) => ({
     status: 200,
@@ -156,6 +157,20 @@ describe('seoCrawler', () => {
     expect(hostPage.bodyCrawled).toBe(false);
     expect(servicePage.bodyCrawled).toBe(false);
     expect(blogPage.bodyCrawled).toBe(true);
+  });
+
+  // Host/service word_count comes from the DB content model (not a hardcoded 0), and
+  // because the page stays bodyCrawled:false it must not trip the soft-404 rule.
+  test('host pages persist the content-model word count without new rule noise', async () => {
+    await run({ trigger: 'manual' });
+    const calls = persist.saveResults.mock.calls;
+    const pages = calls[calls.length - 1][1];
+    const issues = calls[calls.length - 1][2];
+    const hostPage = pages.find((p) => p.url === 'https://bookasloth.com/jane');
+    expect(hostPage.wordCount).toBe(hostPage.contentModel.wordCount);
+    expect(hostPage.wordCount).toBeGreaterThan(0);
+    const hostRules = issues.filter((i) => i.affectedUrl === hostPage.url).map((i) => i.ruleKey);
+    expect(hostRules).not.toContain('indexability.soft_404');
   });
 
   // GSC integration (chunk 2): buildContext loads seo_gsc_urls → rules/gsc.js
