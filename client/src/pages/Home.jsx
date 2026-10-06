@@ -61,6 +61,13 @@ import { TESTIMONIALS } from "../data/testimonials";
 import PricingCards from "../components/pricing/PricingCards";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
+// Real, consented testimonials shown on /wall-of-love — the honest basis for the
+// SoftwareApplication reviewCount below. Derived (not hardcoded) so the schema
+// count can never drift from what the site actually displays.
+import { WALL_TWEETS, WALL_GOOGLE, WALL_LINKEDIN, WALL_INSTAGRAM } from "../data/wallOfLove";
+
+const WALL_OF_LOVE_COUNT =
+  WALL_TWEETS.length + WALL_GOOGLE.length + WALL_LINKEDIN.length + WALL_INSTAGRAM.length;
 
 /* Hero headline is a single static line now — the old cycling-word typewriter
    ("Calmer / Smoother / …") was retired with the copy reposition. */
@@ -88,25 +95,43 @@ const HOME_JSONLD = [
     description:
       "Book A Sloth is the appointment booking and payment system for professionals who sell their time — appointment scheduling, booking and payment, availability, invoices and appointment reminders in one link.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
-    // Users' rating of the product. SoftwareApplication (not Organization) is the
-    // snippet-eligible node for a self-hosted rating. KEEP TRUTHFUL: reviewCount
-    // must reflect real 5★ user reviews/testimonials shown on the site — bump it
-    // as more come in, don't inflate.
+    // Users' rating of the product. ratingValue is the (uniformly 5★) sentiment of
+    // the real, consented testimonials on /wall-of-love; reviewCount is DERIVED from
+    // that same set (WALL_OF_LOVE_COUNT), so it stays truthful and in sync with what
+    // the site actually displays. The prior hardcoded 176 was not backed by real
+    // data — never hardcode or inflate this again.
     aggregateRating: {
       "@type": "AggregateRating",
       ratingValue: "5",
       bestRating: "5",
-      reviewCount: "176",
+      reviewCount: String(WALL_OF_LOVE_COUNT),
     },
   },
   {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Book A Sloth",
+    // Registered legal entity + office (source: /privacy, /terms). Mirrors
+    // ORG_LEGAL_NAME/ORG_ADDRESS/ORG_CONTACT_POINT in utils/seo.js — keep in sync.
+    legalName: "Timewheel Internet Private Limited",
     url: SITE_URL,
     logo: ORG_LOGO,
     description:
       "The booking link that gets India's creators and professionals paid — bookings, UPI payments and reminders in one link.",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Ground Floor, Holding No-55, Ward No-19, Natapada, Jajpur Road, Byasanagar",
+      addressLocality: "Jajpur",
+      addressRegion: "Odisha",
+      postalCode: "755019",
+      addressCountry: "IN",
+    },
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: "bolt@bookasloth.in",
+      availableLanguage: ["en", "hi"],
+    },
     sameAs: [
       "https://www.linkedin.com/company/book-a-sloth/",
       "https://www.instagram.com/bookasloth",
