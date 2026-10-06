@@ -23,13 +23,10 @@ const DEMO = 'https://bookasloth.com/sndatarkar/book-a-sloth-app-online-demo-30-
 const CALL = (text) => `<a class="sig" href="${DEMO}">${text}</a>`;
 const SIGN = '<p>Shubham<br>Founder, Book A Sloth</p>';
 const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Dental' }];
-// Tracked-link params, filled per lead by coldCallService: {{2}} the lead's 4-char invite
-// code (e.g. CX12), {{3}} https://bookasloth.com/invite/<code> — the invite landing page,
-// which logs the tap on the lead and carries the code through Google signup.
-const INVITE = [
-  { key: 'invite_code', label: 'Invite code', example: 'CX12', ref: 'code' },
-  { key: 'invite_link', label: 'Invite link', example: 'https://bookasloth.com/invite/CX12', ref: 'link' },
-];
+// Tracked-link param, filled per lead by coldCallService: https://bookasloth.com/invite/<code>
+// with the lead's 4-char invite code (e.g. CX12) — the invite landing page, which logs the
+// tap on the lead and carries the code through Google signup. ({ ref: 'code' } = bare code.)
+const INVITE_LINK = { key: 'invite_link', label: 'Invite link', example: 'https://bookasloth.com/invite/CX12', ref: 'link' };
 
 const COLD_CALL_TEMPLATES = [
   {
@@ -157,16 +154,13 @@ You can continue here: ${WA_SIGNUP}`,
     // The one tracked message: its link opens bookasloth.com/invite/<lead code>, so a tap
     // shows up on that lead (🔥). WhatsApp only — email clicks are tracked by Resend.
     channel: 'whatsapp', name: 'Cold Call Link - Vendor', label: 'Cold call · Booking link, tracked (WA)', category: 'cold_call_link',
-    // Text as submitted to Meta (header 'Knock Knock!' shown first for the preview).
-    variables: [...BIZ, ...INVITE], is_active: false, subject: null,
-    body: `Knock Knock!
-
-Hi {{1}} team,
+    // Text exactly as submitted to Meta.
+    variables: [...BIZ, INVITE_LINK], is_active: false, subject: null,
+    body: `Hi {{1}} team,
 
 Shubham from Book A Sloth here. Here's your link to create your free booking page, as we discussed:
-{{3}}
+{{2}}
 
-Invite Code: {{2}}
 
 Clients can book, pay, and get reminders automatically.
 

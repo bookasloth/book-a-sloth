@@ -97,10 +97,10 @@ export default function ColdCallCommunicate({ lead, templates, initialCategory, 
     </div>
   );
 
-  // The tracked-link template's {{2}}/{{3}} are the lead's own invite code and link.
-  const waBody = (waTpl?.variables || []).some((v) => v.ref)
-    ? String(waTpl.body || '').replace(/\{\{\s*2\s*\}\}/g, 'CODE').replace(/\{\{\s*3\s*\}\}/g, 'https://bookasloth.com/invite/CODE')
-    : waTpl?.body;
+  // Tracked-link params ({ ref }) are the lead's own invite code / link, filled at send.
+  const waBody = (waTpl?.variables || []).reduce((body, v, i) => (v.ref
+    ? body.replace(new RegExp(`\\{\\{\\s*${i + 1}\\s*\\}\\}`, 'g'), v.ref === 'link' ? 'https://bookasloth.com/invite/CODE' : 'CODE')
+    : body), String(waTpl?.body || ''));
   const preview = open === 'whatsapp' ? previewText(waBody, ctx)
     : open === 'email' && emailTpl ? `${previewText(emailTpl.subject, ctx)}\n\n${previewText(emailTpl.body, ctx)}` : '';
 
