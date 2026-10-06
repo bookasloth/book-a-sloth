@@ -181,7 +181,7 @@ function LeadCall({ initial, plan, queue, reload, now }) {
 
   return (
     <div className="flex flex-wrap xl:flex-nowrap gap-4 items-start">
-      <div className="w-full xl:w-[290px] xl:shrink-0 order-3 xl:order-1"><QueueRail plan={plan} currentId={lead.id} now={now} /></div>
+      <div className="w-full xl:w-[260px] xl:shrink-0 order-3 xl:order-1"><QueueRail plan={plan} currentId={lead.id} now={now} /></div>
 
       {/* Centre — the lead */}
       <div className="flex-1 min-w-0 space-y-4 order-1 xl:order-2">
@@ -197,6 +197,11 @@ function LeadCall({ initial, plan, queue, reload, now }) {
               </div>
               <h2 className="text-[24px] font-extrabold adm-t1 mt-2 leading-tight" style={{ fontFamily: "'Plus Jakarta Sans',Poppins,sans-serif" }}>{lead.business_name || lead.name || 'Unnamed lead'}</h2>
               <div className="text-[13.5px] adm-t2">{[lead.profession, cc.locality, lead.city].filter(Boolean).join(' · ')}</div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] mt-1">
+                {cc.rating && <span className="adm-t1"><b>{cc.rating} ★</b> <span className="adm-t3">({cc.reviews || 0} reviews)</span></span>}
+                {cc.address && <span className="adm-t3 truncate max-w-full" title={cc.address}>{cc.address}</span>}
+                {maps && <a href={maps} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#FE5100] whitespace-nowrap">View on Maps ↗</a>}
+              </div>
               <div className="flex flex-wrap gap-1.5 my-3">
                 {cc.fit && <Badge tone="ok">Fit {cc.fit}</Badge>}
                 {cc.priority && <Badge tone="warn">{/^p/i.test(cc.priority) ? cc.priority : `#${cc.priority}`}</Badge>}
@@ -204,17 +209,10 @@ function LeadCall({ initial, plan, queue, reload, now }) {
                 {lead.do_not_contact && <Badge tone="danger">Do not contact</Badge>}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <a href={`tel:+${digits}`} className="text-[28px] font-extrabold adm-t1 tracking-wide">{formatPhone(lead.phone)}</a>
+                <a href={`tel:+${digits}`} className="text-[26px] font-extrabold adm-t1 tracking-wide whitespace-nowrap">{formatPhone(lead.phone)}</a>
                 <Btn size="sm" variant="outline" onClick={() => copy(formatPhone(lead.phone).replace(/\s/g, ''))}>Copy</Btn>
               </div>
               <div className="text-[12.5px] adm-t3 mt-0.5">WhatsApp: {waDigits.slice(-10) === digits.slice(-10) ? 'same number' : formatPhone(lead.whatsapp_phone)}{form.alt_phone ? ` · Alt: ${form.alt_phone}` : ''}</div>
-            </div>
-            <div className="w-full sm:w-[230px] space-y-2">
-              <div className="rounded-xl bg-[#FE5100]/[0.08] p-4 text-center">
-                <div className="text-[13px] font-semibold text-[#c2410c]">{cc.address || [cc.locality, lead.city].filter(Boolean).join(', ') || 'Address not known'}</div>
-                {maps && <a href={maps} target="_blank" rel="noopener noreferrer" className="text-[12.5px] font-semibold text-[#FE5100]">View on Maps ↗</a>}
-              </div>
-              {cc.rating && <div className="rounded-xl border adm-border px-3 py-2 text-[13px] adm-t1"><b>{cc.rating} ★</b> <span className="adm-t3">({cc.reviews || 0} reviews)</span></div>}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t adm-border">
@@ -235,7 +233,7 @@ function LeadCall({ initial, plan, queue, reload, now }) {
         ]} />
 
         {tab === 'details' && (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 2xl:grid-cols-[3fr_2fr]">
             <Card className="p-5">
               <SectionTitle right={dirty ? <Btn size="sm" onClick={saveDetails}>Save details</Btn> : <span className="text-[11.5px] adm-t3">Edit while you talk</span>}>Business information</SectionTitle>
               <div className="divide-y adm-border">
@@ -311,7 +309,7 @@ function LeadCall({ initial, plan, queue, reload, now }) {
       </div>
 
       {/* Right — outcome */}
-      <div className="w-full xl:w-[320px] xl:shrink-0 space-y-4 order-2 xl:order-3">
+      <div className="w-full xl:w-[300px] xl:shrink-0 space-y-4 order-2 xl:order-3">
         <Card className="p-4">
           <SectionTitle>Call outcome</SectionTitle>
           <div className="space-y-2">
