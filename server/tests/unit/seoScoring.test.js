@@ -176,3 +176,26 @@ describe('signals: referenced author (@graph)', () => {
     expect(ec(after)).toBeGreaterThan(ec(before));
   });
 });
+
+describe('Google-chosen canonical cap', () => {
+  const gsc = (last) => ({ google_canonical: 'https://bookasloth.com/blog', last_crawl_time: last, impressions: 0, clicks: 0 });
+  const page = goodPage({ created_at: '2026-10-06T03:53:00Z' });
+
+  it('caps at 55 when Google crawled after our crawl', () => {
+    const r = v2.scorePage(page, { robots: allow, gsc: gsc('2026-10-07T00:00:00Z') });
+    expect(r.seo.score).toBeLessThanOrEqual(55);
+    expect(r.seo.caps.some((c) => c.cap === 55)).toBe(true);
+  });
+
+  it('does not cap on a stale verdict once the page self-canonicalizes with 200', () => {
+    const r = v2.scorePage(page, { robots: allow, gsc: gsc('2026-09-01T00:00:00Z') });
+    expect(r.seo.caps.some((c) => c.cap === 55)).toBe(false);
+    expect(r.seo.score).toBeGreaterThan(55);
+    expect(r.recommendations.some((x) => /Request indexing/.test(x.title))).toBe(true);
+  });
+
+  it('treats trailing-slash / case differences as the same URL', () => {
+    const r = v2.scorePage(page, { robots: allow, gsc: { ...gsc('2026-10-07T00:00:00Z'), google_canonical: 'https://bookasloth.com/Pricing/' } });
+    expect(r.seo.caps.some((c) => c.cap === 55)).toBe(false);
+  });
+});
