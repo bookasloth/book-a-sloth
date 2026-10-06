@@ -18,8 +18,8 @@ export default function ColdCallSearch({ onPick }) {
 
   const pick = (lead) => { onPick(lead); setQ(''); setRows(null); };
   return (
-    <div className="relative">
-      <input className="fb-input text-sm !w-[240px]" placeholder="Search phone, name or email…" aria-label="Search leads"
+    <div className="relative w-full">
+      <input className="fb-input text-sm !w-full" placeholder="Search phone, name or email…" aria-label="Search leads"
         value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQ(''); }} />
       {rows && (
         <div className="absolute right-0 z-20 mt-1 w-[320px] adm-card rounded-lg shadow-lg p-1 max-h-80 overflow-y-auto">

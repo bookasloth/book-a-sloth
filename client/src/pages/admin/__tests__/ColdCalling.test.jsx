@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { vi, test, expect, afterEach } from 'vitest';
 
 let queueCalls = 0;
@@ -33,10 +33,17 @@ vi.mock('../../../services/api', () => ({
   crmColdCallSend: (...a) => send(...a),
   crmColdCallDetails: (...a) => details(...a),
   crmColdCallSearch: () => Promise.resolve({ data: [LEADS.B] }),
+  crmColdCallStats: () => Promise.resolve({ data: {
+    days: 7, calls: 12, connected: 5, interested: 2, signedUp: 1, followUpsSent: 3,
+    byOutcome: { interested: 2, no_answer: 7, details: 3 }, objections: [{ label: 'Price', n: 2 }],
+    followUps: { overdue: 2, today: 1, tomorrow: 0, later: 0, next: [{ leadId: 'B', name: 'Sunrise Dental Care', dueAt: '2026-10-06T05:00:00Z', title: 'Callback: after 11' }] },
+    lists: [{ id: 'L1', name: 'Test list', total: 360, fresh: 300, interested: 4 }],
+  } }),
   crmColdCallRemind: vi.fn(() => Promise.resolve({ data: {} })), crmColdCallImport: vi.fn(), crmUpdateTemplate: vi.fn(),
 }));
 
 import ColdCallingLayout from '../sales/ColdCallingLayout';
+import ColdCallOverview from '../sales/ColdCallOverview';
 import ColdCallToday from '../sales/ColdCallToday';
 import ColdCallLead from '../sales/ColdCallLead';
 
@@ -44,7 +51,7 @@ const renderAt = (path) => render(
   <MemoryRouter initialEntries={[path]}>
     <Routes>
       <Route path="/admin/sales/cold-calling" element={<ColdCallingLayout />}>
-        <Route index element={<Navigate to="today" replace />} />
+        <Route index element={<ColdCallOverview />} />
         <Route path="today" element={<ColdCallToday />} />
         <Route path="lead/:leadId" element={<ColdCallLead />} />
       </Route>
@@ -55,11 +62,22 @@ const onLead = (name) => waitFor(() => expect(screen.getByRole('heading', { name
 
 afterEach(() => { vi.useRealTimers(); queueCalls = 0; vi.clearAllMocks(); Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); });
 
-test("today's calls lists done + pending in order and Start calling opens the first pending lead", async () => {
+test('overview: today numbers, attention, week stats, lists; Start calling opens the first lead', async () => {
   renderAt('/admin/sales/cold-calling');
+  await waitFor(() => expect(screen.getByText('1 / 60')).toBeTruthy());
+  await waitFor(() => expect(screen.getByText('2 overdue callbacks')).toBeTruthy());
+  expect(screen.getByText('Price')).toBeTruthy();
+  expect(screen.getByText(/360 · 60 called · 4 interested/)).toBeTruthy();
+  expect(screen.queryByText('Done Clinic')).toBeNull();          // the list lives on /today
+  fireEvent.click(screen.getByRole('button', { name: /Start calling/ }));
+  await onLead('Bloom Makeup Studio');
+});
+
+test("today's calls is the list only: done + pending in order", async () => {
+  renderAt('/admin/sales/cold-calling/today');
   await waitFor(() => expect(screen.getAllByText('Bloom Makeup Studio').length).toBeGreaterThan(0));
   expect(screen.getByText('Done Clinic')).toBeTruthy();
-  expect(screen.getByText('1 / 60')).toBeTruthy();
+  expect(screen.queryByText('Planned today')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: /Start calling/ }));
   await onLead('Bloom Makeup Studio');
 });
@@ -90,9 +108,11 @@ test('not interested skips the window and goes straight to the next lead', async
   expect(screen.queryByRole('dialog')).toBeNull();
 });
 
-test('details typed during the call are saved; unsafe Maps links are not rendered', async () => {
+test('details typed during the call are saved; unsafe Maps links are not rendered; no page header', async () => {
   renderAt('/admin/sales/cold-calling/lead/A');
   await onLead('Bloom Makeup Studio');
+  expect(screen.queryByRole('button', { name: 'Upload CSV' })).toBeNull();
+  expect(screen.queryByLabelText('Calling list')).toBeNull();
   expect(screen.queryByText(/View on Maps/)).toBeNull();
   expect(screen.getByText('4.6 ★')).toBeTruthy();
   fireEvent.change(screen.getByPlaceholderText('Owner / Manager / Reception'), { target: { value: 'Owner' } });

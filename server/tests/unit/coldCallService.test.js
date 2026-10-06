@@ -314,6 +314,29 @@ describe('getQueue — daily slice', () => {
   });
 });
 
+describe('stats (overview)', () => {
+  test('rolls up the week across lists with per-list progress', async () => {
+    const { supabaseAdmin } = require('../../config/supabase');
+    supabaseAdmin.from.mockImplementation((t) => {
+      const o = mockChain(t);
+      let head = false;
+      o.select = jest.fn((_c, opts) => { head = !!opts?.head; return o; });
+      o.then = (res) => Promise.resolve({ error: null, ...(head ? { count: 7 } : {
+        lead_activities: { data: [{ meta: { outcome: 'interested' } }, { meta: { outcome: 'no_answer' } }] },
+        crm_messages: { data: [{ status: 'sent' }] },
+        lead_follow_ups: { data: [{ id: 'f1', lead_id: 'A', title: 'Callback: x', due_at: '2026-10-06T05:00:00Z' }] },
+        lead_lists: { data: [{ id: 'L1', name: 'Week 1' }] },
+        leads: { data: [{ id: 'A', business_name: 'Bloom' }] },
+      }[t] || { data: [] }) }).then(res);
+      return o;
+    });
+    const s = await svc.stats({ days: 7 }, NOW);
+    expect(s).toMatchObject({ days: 7, calls: 2, connected: 1, interested: 1, followUpsSent: 1, signedUp: 7 });
+    expect(s.followUps).toMatchObject({ overdue: 1, next: [{ leadId: 'A', name: 'Bloom' }] });
+    expect(s.lists).toEqual([{ id: 'L1', name: 'Week 1', total: 7, fresh: 7, interested: 7 }]);
+  });
+});
+
 describe('search', () => {
   test('phone in any format matches the last 10 digits; short queries return nothing', async () => {
     const { supabaseAdmin } = require('../../config/supabase');

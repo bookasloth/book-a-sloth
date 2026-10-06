@@ -267,6 +267,7 @@ const SalesReports    = lazy(() => import('./pages/admin/sales/SalesReports'));
 const CustomerDetail  = lazy(() => import('./pages/admin/sales/CustomerDetail'));
 const SalesTemplates  = lazy(() => import('./pages/admin/sales/SalesTemplates'));
 const ColdCallingLayout = lazy(() => import('./pages/admin/sales/ColdCallingLayout'));
+const ColdCallOverview = lazy(() => import('./pages/admin/sales/ColdCallOverview'));
 const ColdCallToday = lazy(() => import('./pages/admin/sales/ColdCallToday'));
 const ColdCallLead = lazy(() => import('./pages/admin/sales/ColdCallLead'));
 const SalesSequences  = lazy(() => import('./pages/admin/sales/SalesSequences'));
@@ -660,7 +661,7 @@ function App() {
           <Route path="/admin/sales/pipeline" element={<AdminWrapper><SalesPipeline /></AdminWrapper>} />
           <Route path="/admin/sales/templates" element={<AdminWrapper><SalesTemplates /></AdminWrapper>} />
           <Route path="/admin/sales/cold-calling" element={<AdminWrapper><ColdCallingLayout /></AdminWrapper>}>
-            <Route index element={<Navigate to="today" replace />} />
+            <Route index element={<ColdCallOverview />} />
             <Route path="today" element={<ColdCallToday />} />
             <Route path="lead/:leadId" element={<ColdCallLead />} />
           </Route>

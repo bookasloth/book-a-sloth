@@ -1,9 +1,9 @@
-// Today's Calls — the day's list in calling order (callbacks at their promised
+// Today's Calls — just the list: the day's calls in calling order (callbacks at their promised
 // time, retries, new leads up to the daily target) plus what's already done.
 // Clicking a row opens the lead page.
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Table, Badge, Btn, StatCard, Card } from '../../../components/admin/ui';
+import { Table, Badge, Btn } from '../../../components/admin/ui';
 import { Chips } from './ccUi';
 import { pendingPlan, outcomeLabel, outcomeTone, fmtTime, countdown } from './coldCallUtils';
 
@@ -67,17 +67,6 @@ export default function ColdCallToday() {
   const t = queue.today;
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-        <StatCard label="Planned today" value={t.target} sub="Daily target, follow-ups included" icon="calendar" iconColor="bg-[#FE5100]" />
-        <StatCard label="Done" value={t.calls} sub={`${t.connected} connected · ${t.interested} interested`} icon="checkCircle" iconColor="bg-emerald-500" />
-        <StatCard label="Pending" value={plan.length} sub="Callbacks, retries and new leads" icon="clock" iconColor="bg-gray-500" />
-        <StatCard label="Callbacks today" value={callbacksToday.length} sub={nextCb ? `Next at ${fmtTime(nextCb.dueAt)}` : 'None left today'} icon="bell" iconColor="bg-amber-500" />
-        <Card className="flex flex-col justify-center gap-2 p-5">
-          <Btn onClick={() => firstPending && open(firstPending.lead.id)} disabled={!firstPending}>Start calling →</Btn>
-          <span className="text-[11.5px] adm-t3 text-center">{firstPending ? 'Opens the next lead in order' : `Today's ${t.target} calls are done`}</span>
-        </Card>
-      </div>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Chips label="Filter today's calls" value={filter} onChange={setFilter} options={[
           { value: 'all', label: 'All', count: done.length + plan.length },
@@ -86,7 +75,10 @@ export default function ColdCallToday() {
           { value: 'callbacks', label: 'Callbacks', count: plan.filter((p) => p.kind === 'callback' || p.kind === 'later').length },
           { value: 'p1', label: 'P1' },
         ]} />
-        <span className="text-[12px] adm-t3">Order: callbacks at their time → retries → new leads by fit</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[12px] adm-t3 hidden md:inline">{t.calls} / {t.target} done{nextCb ? ` · next callback ${fmtTime(nextCb.dueAt)}` : ''}</span>
+          <Btn onClick={() => firstPending && open(firstPending.lead.id)} disabled={!firstPending}>{firstPending ? 'Start calling →' : `Today's ${t.target} done`}</Btn>
+        </div>
       </div>
 
       <Table columns={columns} rows={rows} rowKey={(r) => r.key} onRowClick={(r) => open(r.lead.id)}

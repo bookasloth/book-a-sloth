@@ -128,6 +128,35 @@ function todayStats(outcomes = []) {
   };
 }
 
+// Overview: count call outcomes and the objections raised on them.
+function outcomeMix(metas = []) {
+  const byOutcome = {};
+  const objections = {};
+  for (const m of metas) {
+    if (!m?.outcome || !OUTCOMES[m.outcome]) continue;
+    byOutcome[m.outcome] = (byOutcome[m.outcome] || 0) + 1;
+    if (m.objection) objections[m.objection] = (objections[m.objection] || 0) + 1;
+  }
+  const top = Object.entries(objections).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([label, n]) => ({ label, n }));
+  return { byOutcome, objections: top, ...todayStats(metas.filter((m) => m?.outcome && OUTCOMES[m.outcome]).map((m) => m.outcome)) };
+}
+
+// Overview: open callbacks split into overdue / later today / tomorrow (IST days).
+function followUpBuckets(followUps = [], now = new Date()) {
+  const t = now.getTime();
+  const endToday = new Date(istDayEnd(now)).getTime();
+  const endTomorrow = endToday + DAY_MS;
+  const out = { overdue: 0, today: 0, tomorrow: 0, later: 0 };
+  for (const f of followUps) {
+    const due = new Date(f.due_at).getTime();
+    if (due < t) out.overdue++;
+    else if (due < endToday) out.today++;
+    else if (due < endTomorrow) out.tomorrow++;
+    else out.later++;
+  }
+  return out;
+}
+
 const istDate = (now = new Date()) => new Date(now.getTime() + IST_MS).toISOString().slice(0, 10);
 function istDayStart(now = new Date()) {
   const t = now.getTime() + IST_MS;
@@ -140,5 +169,6 @@ const formatIst = (iso) => new Intl.DateTimeFormat('en-IN', {
 
 module.exports = {
   OUTCOMES, CALLBACK_PREFIX, MAX_NO_ANSWER, DAILY_TARGET,
-  phone10, waPhone10, nextStep, sortKey, freshSlots, buildQueue, todayStats, istDate, istDayStart, istDayEnd, formatIst,
+  phone10, waPhone10, nextStep, sortKey, freshSlots, buildQueue, todayStats, outcomeMix, followUpBuckets,
+  istDate, istDayStart, istDayEnd, formatIst,
 };
