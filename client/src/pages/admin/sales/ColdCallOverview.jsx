@@ -3,9 +3,9 @@
 // outcomes, follow-ups, and every list's progress.
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import { StatCard, Card, Btn, Badge, Skeleton } from '../../../components/admin/ui';
+import { Card, Btn, Badge, Skeleton } from '../../../components/admin/ui';
 import { crmColdCallStats } from '../../../services/api';
-import { SectionTitle } from './ccUi';
+import { SectionTitle, Kpi, Bar, pct, delta } from './ccUi';
 import { pendingPlan, outcomeLabel, countdown, fmtTime, OUTCOMES } from './coldCallUtils';
 
 const BASE = '/admin/sales/cold-calling';
@@ -13,11 +13,6 @@ const OUTCOME_COLOR = {
   interested: '#16a34a', details: '#3b82f6', callback: '#f59e0b', not_now: '#a78bfa',
   not_interested: '#dc2626', no_answer: '#9ca3af', wrong_number: '#4b5563',
 };
-const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
-
-function Bar({ value, color = '#FE5100' }) {
-  return <div className="h-2 rounded-full adm-chip overflow-hidden"><div className="h-2 rounded-full" style={{ width: `${Math.min(100, value)}%`, background: color }} /></div>;
-}
 
 function Donut({ parts, total }) {
   let acc = 0;
@@ -44,6 +39,7 @@ export default function ColdCallOverview() {
   const plan = useMemo(() => pendingPlan(queue), [queue]);
   const t = queue.today;
   const tot = queue.totals;
+  const y = s?.yesterday || null;
   const count = (k) => plan.filter((p) => p.kind === k).length;
   const firstPending = plan[0];
   const listName = (lists || []).find((l) => l.id === listId)?.name;
@@ -62,12 +58,12 @@ export default function ColdCallOverview() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-        <StatCard label="Called today" value={`${t.calls} / ${t.target}`} icon="phone" iconColor="bg-[#FE5100]" to={`${BASE}/today`} />
-        <StatCard label="Connected" value={t.connected} sub={t.calls ? `${pct(t.connected, t.calls)}% of calls` : 'No calls yet'} icon="users" iconColor="bg-sky-500" />
-        <StatCard label="Interested" value={t.interested} icon="star" iconColor="bg-emerald-500" />
-        <StatCard label="Follow-ups sent" value={t.followUpsSent} icon="send" iconColor="bg-violet-500" />
-        <StatCard label="Left to call" value={(tot.fresh || 0).toLocaleString('en-IN')} sub={listName || ''} icon="layers" iconColor="bg-gray-500" />
-        <StatCard label="Signed up" value={tot.signedUp || 0} sub="from this list" icon="userCheck" iconColor="bg-amber-500" />
+        <Kpi icon="phone" value={`${t.calls} / ${t.target}`} label="Calls today" delta={delta(t.calls, y?.calls)} sub={y ? 'vs yesterday' : ''} />
+        <Kpi icon="users" value={t.connected} label="Connected" delta={delta(t.connected, y?.connected)} sub={y ? 'vs yesterday' : ''} />
+        <Kpi icon="activity" value={`${pct(t.connected, t.calls)}%`} label="Connect rate" sub={y?.calls ? `yesterday ${pct(y.connected, y.calls)}%` : ''} />
+        <Kpi icon="star" value={t.interested} label="Interested" delta={delta(t.interested, y?.interested)} sub={y ? 'vs yesterday' : ''} />
+        <Kpi icon="send" value={t.followUpsSent} label="Follow-ups sent" delta={delta(t.followUpsSent, y?.followUpsSent)} sub={y ? 'vs yesterday' : ''} />
+        <Kpi icon="userCheck" value={tot.signedUp || 0} label="Signed up" sub={listName ? 'this list' : ''} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">

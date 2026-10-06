@@ -17,6 +17,8 @@ const TPL = [
 const outcome = vi.fn(() => Promise.resolve({ data: { ok: true, coldCall: { attempts: 1, no_answers: 0 }, sends: {}, warnings: [] } }));
 const send = vi.fn(() => Promise.resolve({ data: { ok: true, sends: { email: { status: 'sent' } } } }));
 const details = vi.fn((id, d) => Promise.resolve({ data: { ...LEADS[id], ...d } }));
+const setFu = vi.fn(() => Promise.resolve({ data: { ok: true } }));
+const fuParams = [];
 vi.mock('../../../services/api', () => ({
   crmListLists: () => Promise.resolve({ data: [{ id: 'L1', name: 'Test list', source: 'cold_call' }] }),
   crmColdCallQueue: () => { queueCalls += 1; return Promise.resolve({ data: {
@@ -38,6 +40,17 @@ vi.mock('../../../services/api', () => ({
     byOutcome: { interested: 2, no_answer: 7, details: 3 }, objections: [{ label: 'Price', n: 2 }],
     followUps: { overdue: 2, today: 1, tomorrow: 0, later: 0, next: [{ leadId: 'B', name: 'Sunrise Dental Care', dueAt: '2026-10-06T05:00:00Z', title: 'Callback: after 11' }] },
     lists: [{ id: 'L1', name: 'Test list', total: 360, fresh: 300, interested: 4 }],
+    today: { calls: 1, connected: 1, interested: 1, followUpsSent: 0 }, yesterday: { calls: 2, connected: 1, interested: 0, followUpsSent: 0 },
+  } }),
+  crmColdCallFollowUps: (p) => { fuParams.push(p); return Promise.resolve({ data: {
+    rows: [{ lead: { ...LEADS.B, attributes: cc({ last_outcome: 'callback', retry_at: '2026-10-06T05:00:00Z' }) }, nextAt: '2026-10-06T05:00:00Z', lastCallAt: '2026-10-05T10:00:00Z', lastNote: 'doctor free after 11' }],
+    total: 1, page: 1, pageSize: 25, counts: { overdue: 1, today: 0, tomorrow: 0, week: 1, nodate: 0 },
+  } }); },
+  crmColdCallSetFollowUp: (...a) => setFu(...a),
+  crmColdCallHistory: () => Promise.resolve({ data: { rows: [{ id: 'h1', at: '2026-10-06T04:40:00Z', outcome: 'interested', objection: 'Price', durationMin: 3, note: 'keen, sent link', lead: LEADS.D }], total: 1, page: 1, pageSize: 25 } }),
+  crmColdCallReports: () => Promise.resolve({ data: {
+    days: 30, totals: { calls: 10, connected: 4, interested: 2, byOutcome: { interested: 2, no_answer: 6 }, objections: [] },
+    byCategory: [{ key: 'Dental clinic', calls: 6, connected: 3, interested: 2, signedUp: 1 }], byArea: [{ key: 'Dhantoli', calls: 4, connected: 1, interested: 0, signedUp: 0 }],
   } }),
   crmColdCallRemind: vi.fn(() => Promise.resolve({ data: {} })), crmColdCallImport: vi.fn(), crmUpdateTemplate: vi.fn(),
 }));
@@ -46,6 +59,10 @@ import ColdCallingLayout from '../sales/ColdCallingLayout';
 import ColdCallOverview from '../sales/ColdCallOverview';
 import ColdCallToday from '../sales/ColdCallToday';
 import ColdCallLead from '../sales/ColdCallLead';
+import ColdCallFollowUps from '../sales/ColdCallFollowUps';
+import ColdCallHistory from '../sales/ColdCallHistory';
+import ColdCallLists from '../sales/ColdCallLists';
+import ColdCallReports from '../sales/ColdCallReports';
 
 const renderAt = (path) => render(
   <MemoryRouter initialEntries={[path]}>
@@ -54,6 +71,10 @@ const renderAt = (path) => render(
         <Route index element={<ColdCallOverview />} />
         <Route path="today" element={<ColdCallToday />} />
         <Route path="lead/:leadId" element={<ColdCallLead />} />
+        <Route path="follow-ups" element={<ColdCallFollowUps />} />
+        <Route path="history" element={<ColdCallHistory />} />
+        <Route path="lists" element={<ColdCallLists />} />
+        <Route path="reports" element={<ColdCallReports />} />
       </Route>
     </Routes>
   </MemoryRouter>,
@@ -90,10 +111,12 @@ test('save → follow-up window pre-picked for the outcome → send → next lea
   const dialog = await screen.findByRole('dialog', { name: 'Send follow-up' });
   expect(outcome.mock.calls[0][0]).toBe('A');
   expect(outcome.mock.calls[0][1]).toMatchObject({ outcome: 'interested' });
-  // WhatsApp template not approved yet → unticked; email needs an address → type it.
-  expect(within(dialog).getByText('Waiting for Meta approval')).toBeTruthy();
-  fireEvent.change(within(dialog).getByPlaceholderText('name@business.com'), { target: { value: 'owner@bloom.co' } });
-  fireEvent.click(within(dialog).getByRole('button', { name: /Send 1 & next lead/ }));
+  // One template for both channels; WhatsApp not approved yet → can't tick; email needs an address → type it.
+  expect(within(dialog).getByLabelText('Template').value).toBe('cold_call_interested');
+  expect(within(dialog).getByText(/WhatsApp sends once Meta approves/)).toBeTruthy();
+  expect(within(dialog).getByLabelText('Send WhatsApp').disabled).toBe(true);
+  fireEvent.change(within(dialog).getByPlaceholderText('Type their email'), { target: { value: 'owner@bloom.co' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Send follow-up' }));
   await waitFor(() => expect(send).toHaveBeenCalled());
   expect(send.mock.calls[0][1]).toMatchObject({ email: { category: 'cold_call_interested' }, whatsapp: null, toEmail: 'owner@bloom.co' });
   await onLead('Sunrise Dental Care');
@@ -136,4 +159,30 @@ test('does not poll while the tab is hidden', async () => {
   Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
   await vi.advanceTimersByTimeAsync(61000);
   expect(queueCalls).toBe(before);
+});
+
+test('follow-ups: buckets, list, detail panel, reschedule', async () => {
+  renderAt('/admin/sales/cold-calling/follow-ups');
+  await waitFor(() => expect(screen.getAllByText('Sunrise Dental Care').length).toBeGreaterThan(0));
+  expect(fuParams[0]).toMatchObject({ bucket: 'overdue', page: 1 });
+  expect(screen.getByText('doctor free after 11')).toBeTruthy();
+  fireEvent.click(screen.getAllByText('Sunrise Dental Care')[0]);                // opens the panel
+  fireEvent.click(await screen.findByRole('button', { name: 'Mark done' }));
+  await waitFor(() => expect(setFu).toHaveBeenCalledWith('B', { done: true }));
+  fireEvent.click(screen.getByRole('button', { name: /This week/ }));
+  await waitFor(() => expect(fuParams.at(-1)).toMatchObject({ bucket: 'week' }));
+});
+
+test('history, lists and reports pages render their data', async () => {
+  const h = renderAt('/admin/sales/cold-calling/history');
+  await waitFor(() => expect(screen.getByText('keen, sent link')).toBeTruthy());
+  expect(screen.getByText('3 min')).toBeTruthy();
+  h.unmount();
+  const l = renderAt('/admin/sales/cold-calling/lists');
+  await waitFor(() => expect(screen.getAllByText('Test list').length).toBeGreaterThan(0));
+  expect(screen.getByText('In use')).toBeTruthy();
+  l.unmount();
+  renderAt('/admin/sales/cold-calling/reports');
+  await waitFor(() => expect(screen.getByText('Dental clinic')).toBeTruthy());
+  expect(screen.getByText('Dhantoli')).toBeTruthy();
 });
