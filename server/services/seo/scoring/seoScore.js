@@ -17,6 +17,19 @@ const DEPTH = {
 };
 const THIN = { content: 150, blog: 200, service: 40, profile: 50 };
 const band = (v, table) => (table.find(([t]) => v <= t) || table[table.length - 1])[1];
+const norm = (u) => (u || '').replace(/\/$/, '').toLowerCase();
+
+// Google picked a different canonical (GSC URL Inspection). `stale` = Google's last crawl
+// predates our latest crawl, which shows a 200 page with a self-referencing canonical —
+// the page is fixed and Google just hasn't recrawled, so don't cap on the old verdict.
+function googleCanon(s) {
+  const chosen = s.gsc?.google_canonical;
+  if (!chosen || norm(chosen) === norm(s.url)) return null;
+  const last = s.gsc.last_crawl_time;
+  const stale = !!(last && s.crawledAt && new Date(last) < new Date(s.crawledAt)
+    && s.httpStatus === 200 && norm(s.canonical) === norm(s.url));
+  return { chosen, stale };
+}
 
 const DIMS = [
   {
@@ -32,8 +45,9 @@ const DIMS = [
     key: 'canonical', label: 'Canonicalization', evidence: 'official',
     fn: (s) => {
       if (!s.canonical) return { score: 0.6, reason: 'No canonical tag — Google will guess the canonical URL.', fix: 'Add a self-referencing canonical.' };
-      const gscChosen = s.gsc?.google_canonical;
-      if (gscChosen && gscChosen !== s.url) return { score: 0.2, reason: `Google chose a different canonical (${gscChosen}).`, fix: 'Align content/links so Google picks this URL, or intentionally consolidate.' };
+      const gc = googleCanon(s);
+      if (gc?.stale) return { score: 0.8, reason: `Google's last crawl chose ${gc.chosen}, but the page now self-canonicalizes — awaiting recrawl.`, fix: 'Request indexing in Search Console (URL Inspection → Request indexing).' };
+      if (gc) return { score: 0.2, reason: `Google chose a different canonical (${gc.chosen}).`, fix: 'Align content/links so Google picks this URL, or intentionally consolidate.' };
       const canon = s.canonical.replace(/\/$/, '');
       if (canon !== s.url.replace(/\/$/, '')) return { score: 0.4, reason: 'Canonical points to a different URL than this page.', fix: 'Point the canonical at this page unless consolidation is intended.' };
       return { score: 1, reason: 'Self-referencing canonical.', fix: null };
@@ -125,7 +139,8 @@ function score(sig, issues = []) {
   if (sig.httpStatus && sig.httpStatus !== 200) caps.push({ cap: 20, reason: `HTTP ${sig.httpStatus} — page is broken.` });
   else if (sig.noindex) caps.push({ cap: 30, reason: 'Page is noindex — it cannot rank.' });
   if (!sig.robots.googlebot) caps.push({ cap: 25, reason: 'Blocked from Googlebot in robots.txt.' });
-  if (sig.gsc?.google_canonical && sig.gsc.google_canonical !== sig.url) caps.push({ cap: 55, reason: 'Google canonicalizes this page to a different URL.' });
+  const gc = googleCanon(sig);
+  if (gc && !gc.stale) caps.push({ cap: 55, reason: 'Google canonicalizes this page to a different URL.' });
   if ((prof === 'content' || prof === 'blog') && sig.wordCount < THIN[prof] && sig.httpStatus === 200) caps.push({ cap: 60, reason: 'Thin content — metadata cannot rescue a low-value page.' });
 
   const capped = caps.reduce((min, c) => Math.min(min, c.cap), 100);
