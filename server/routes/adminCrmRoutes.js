@@ -89,11 +89,15 @@ router.post('/recommendations/:id/dismiss', manage, c.dismissRecommendation);
 // Cold Calling — call queue, outcomes (+ one-click follow-ups), reminders.
 router.get('/cold-calls/queue', view, c.coldCallQueue);
 router.get('/cold-calls/stats', view, c.coldCallStats);
+router.get('/cold-calls/follow-ups', view, c.coldCallFollowUps);
+router.get('/cold-calls/history', view, c.coldCallHistory);
+router.get('/cold-calls/reports', view, c.coldCallReports);
 router.get('/cold-calls/search', view, c.coldCallSearch);
 router.post('/cold-calls/import', manage, c.coldCallImport);
 router.post('/cold-calls/:leadId/outcome', manage, c.coldCallOutcome);
 router.post('/cold-calls/:leadId/send', manage, c.coldCallSend);
 router.post('/cold-calls/:leadId/details', manage, c.coldCallDetails);
 router.post('/cold-calls/:leadId/remind', manage, c.coldCallRemind);
+router.post('/cold-calls/:leadId/follow-up', manage, c.coldCallSetFollowUp);
 
 module.exports = router;

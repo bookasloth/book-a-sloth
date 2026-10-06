@@ -157,6 +157,43 @@ function followUpBuckets(followUps = [], now = new Date()) {
   return out;
 }
 
+// A message that left our side (any later delivery state counts as sent).
+const SENT_STATES = new Set(['sent', 'delivered', 'opened', 'clicked', 'read']);
+const wasSent = (status) => SENT_STATES.has(status);
+
+// Follow-ups page buckets as [from, to) ISO bounds on cold_call.retry_at (IST days).
+function followUpRanges(now = new Date()) {
+  const nowIso = now.toISOString();
+  const endToday = istDayEnd(now);
+  const endTomorrow = new Date(new Date(endToday).getTime() + DAY_MS).toISOString();
+  const weekEnd = new Date(new Date(endToday).getTime() + 6 * DAY_MS).toISOString();
+  return {
+    overdue: [null, nowIso], today: [nowIso, endToday], tomorrow: [endToday, endTomorrow],
+    week: [nowIso, weekEnd], all: [null, null],
+  };
+}
+
+// Reports: roll calls up by a lead attribute (category / area).
+// calls: [{ lead_id, meta }]; leadsById: Map(id → { key fields, profile_id }).
+function groupReport(calls = [], leadsById = new Map(), keyOf = () => '') {
+  const rows = new Map();
+  const signed = new Map();
+  for (const c of calls) {
+    const o = c.meta?.outcome;
+    if (!o || !OUTCOMES[o]) continue;
+    const lead = leadsById.get(c.lead_id);
+    const key = (lead && keyOf(lead)) || 'Unknown';
+    const r = rows.get(key) || { key, calls: 0, connected: 0, interested: 0, signedUp: 0 };
+    r.calls++;
+    if (!NOT_CONNECTED.has(o)) r.connected++;
+    if (o === 'interested') r.interested++;
+    rows.set(key, r);
+    if (lead?.profile_id) { const set = signed.get(key) || new Set(); set.add(c.lead_id); signed.set(key, set); }
+  }
+  for (const [key, set] of signed) rows.get(key).signedUp = set.size;
+  return [...rows.values()].sort((a, b) => b.calls - a.calls);
+}
+
 const istDate = (now = new Date()) => new Date(now.getTime() + IST_MS).toISOString().slice(0, 10);
 function istDayStart(now = new Date()) {
   const t = now.getTime() + IST_MS;
@@ -170,5 +207,6 @@ const formatIst = (iso) => new Intl.DateTimeFormat('en-IN', {
 module.exports = {
   OUTCOMES, CALLBACK_PREFIX, MAX_NO_ANSWER, DAILY_TARGET,
   phone10, waPhone10, nextStep, sortKey, freshSlots, buildQueue, todayStats, outcomeMix, followUpBuckets,
+  followUpRanges, groupReport, wasSent,
   istDate, istDayStart, istDayEnd, formatIst,
 };

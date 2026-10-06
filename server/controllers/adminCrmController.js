@@ -542,6 +542,22 @@ const coldCallStats = async (req, res) => {
   try { res.json(await coldCallService.stats({ days: req.query.days })); } catch (e) { coldCallError(res, e); }
 };
 
+const coldCallFollowUps = async (req, res) => {
+  try { res.json(await coldCallService.followUps(req.query || {})); } catch (e) { coldCallError(res, e); }
+};
+
+const coldCallSetFollowUp = async (req, res) => {
+  try { res.json(await coldCallService.setFollowUp(req.params.leadId, req.body || {}, actor(req))); } catch (e) { coldCallError(res, e); }
+};
+
+const coldCallHistory = async (req, res) => {
+  try { res.json(await coldCallService.history(req.query || {})); } catch (e) { coldCallError(res, e); }
+};
+
+const coldCallReports = async (req, res) => {
+  try { res.json(await coldCallService.reports(req.query || {})); } catch (e) { coldCallError(res, e); }
+};
+
 const coldCallSearch = async (req, res) => {
   try { res.json(await coldCallService.search(req.query.q)); } catch (e) { coldCallError(res, e); }
 };
@@ -584,5 +600,5 @@ module.exports = {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   listTags, createTag, updateTag, deleteTag,
   listViews, createView, deleteView,
-  coldCallQueue, coldCallStats, coldCallSearch, coldCallImport, coldCallOutcome, coldCallSend, coldCallDetails, coldCallRemind,
+  coldCallQueue, coldCallStats, coldCallFollowUps, coldCallSetFollowUp, coldCallHistory, coldCallReports, coldCallSearch, coldCallImport, coldCallOutcome, coldCallSend, coldCallDetails, coldCallRemind,
 };

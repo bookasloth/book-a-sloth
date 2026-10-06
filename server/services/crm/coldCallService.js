@@ -137,7 +137,7 @@ async function getQueue(listId, now = new Date()) {
       .map((c) => ({ lead: doneById.get(c.lead_id), outcome: c.meta.outcome, at: c.occurred_at })),
     today: {
       ...rules.todayStats(outcomes), target: rules.DAILY_TARGET,
-      followUpsSent: (msgs.data || []).filter((m) => m.status === 'sent').length,
+      followUpsSent: (msgs.data || []).filter((m) => rules.wasSent(m.status)).length,
     },
     totals: { fresh: left.count || 0, signedUp: signed.count || 0 },
     templates: tpls.data || [],
@@ -154,13 +154,22 @@ async function stats({ days = 7 } = {}, now = new Date()) {
   const since = rules.istDayStart(new Date(now.getTime() - (n - 1) * 24 * 60 * 60 * 1000));
   const coldCount = () => db.from('leads').select('id', { count: 'exact', head: true }).not(`${CC}list_id`, 'is', null);
   const [calls, msgs, fu, lists, signed] = await Promise.all([
-    db.from('lead_activities').select('meta').eq('type', 'call_logged').gte('occurred_at', since),
-    db.from('crm_messages').select('status').like('idempotency_key', 'cold:%').gte('created_at', since),
+    db.from('lead_activities').select('meta,occurred_at').eq('type', 'call_logged').gte('occurred_at', since),
+    db.from('crm_messages').select('status,created_at').like('idempotency_key', 'cold:%').gte('created_at', since),
     db.from('lead_follow_ups').select('id,lead_id,title,due_at').eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`).order('due_at').limit(500),
     db.from('lead_lists').select('id,name,created_at').eq('source', 'cold_call').order('created_at', { ascending: true }),
     coldCount().not('profile_id', 'is', null),
   ]);
   const mix = rules.outcomeMix((calls.data || []).map((c) => c.meta));
+  // Today vs yesterday (IST) for the Overview's "vs yesterday" deltas.
+  const dayOf = (iso) => { const t = new Date(iso); return Number.isNaN(t.getTime()) ? '' : rules.istDate(t); };
+  const day = (d) => {
+    const m = rules.outcomeMix((calls.data || []).filter((c) => dayOf(c.occurred_at) === d).map((c) => c.meta));
+    const sent = (msgs.data || []).filter((x) => dayOf(x.created_at) === d && rules.wasSent(x.status)).length;
+    return { calls: m.calls, connected: m.connected, interested: m.interested, followUpsSent: sent };
+  };
+  const todayKey = rules.istDate(now);
+  const yesterdayKey = rules.istDate(new Date(now.getTime() - 24 * 60 * 60 * 1000));
   const followUps = fu.data || [];
   // The next few callbacks, named — a handful of ids, well below the URL limit.
   const nextFu = followUps.slice(0, 5);
@@ -178,7 +187,8 @@ async function stats({ days = 7 } = {}, now = new Date()) {
     days: n, since,
     calls: mix.calls, connected: mix.connected, interested: mix.interested, signedUp: signed.count || 0,
     byOutcome: mix.byOutcome, objections: mix.objections,
-    followUpsSent: (msgs.data || []).filter((m) => m.status === 'sent').length,
+    followUpsSent: (msgs.data || []).filter((m) => rules.wasSent(m.status)).length,
+    today: day(todayKey), yesterday: day(yesterdayKey),
     followUps: {
       ...rules.followUpBuckets(followUps, now),
       next: nextFu.map((f) => ({ leadId: f.lead_id, name: names.get(f.lead_id) || 'Lead', dueAt: f.due_at, title: f.title })),
@@ -353,10 +363,147 @@ async function remind(leadId, { at, note = '' } = {}, actorAdminId = null) {
   if (!validDate(at)) throw httpErr(400, 'valid "at" date required');
   const lead = await leadService.getLead(leadId);
   if (!lead) throw httpErr(404, 'lead not found');
-  return followUpService.create({
+  const row = await followUpService.create({
     leadId, ownerAdminId: actorAdminId, title: `${rules.CALLBACK_PREFIX} ${String(note).trim() || 'call back'}`,
     dueAt: new Date(at).toISOString(), remind: false, createdBy: 'cold_call',
   });
+  await setRetryAt(lead, new Date(at).toISOString());
+  return row;
 }
 
-module.exports = { importRows, getQueue, stats, search, recordOutcome, send, updateDetails, remind };
+// cold_call.retry_at is the lead's "next follow-up" — the Follow-ups page sorts by it.
+async function setRetryAt(lead, iso) {
+  const cc = { ...(lead.attributes?.cold_call || {}), retry_at: iso };
+  await supabaseAdmin.from('leads')
+    .update({ attributes: { ...(lead.attributes || {}), cold_call: cc }, updated_at: new Date().toISOString() })
+    .eq('id', lead.id);
+}
+
+// ── Follow-ups page ───────────────────────────────────────────
+// Every cold-call lead with a next follow-up (cold_call.retry_at: callbacks, details,
+// not now, no-answer retries, reminders), bucketed overdue / today / tomorrow / week,
+// plus "no date": interested but not signed up and nothing scheduled.
+const BUCKETS = ['overdue', 'today', 'tomorrow', 'week', 'nodate', 'all'];
+async function followUps(opts = {}, now = new Date()) {
+  const { bucket = 'all', outcome = '', listId = '', category = '', priority = '', q = '' } = opts;
+  if (!BUCKETS.includes(bucket)) throw httpErr(400, 'bad bucket');
+  const page = Math.max(1, parseInt(opts.page, 10) || 1);
+  const pageSize = Math.min(Math.max(parseInt(opts.pageSize, 10) || 25, 5), 100);
+  const db = supabaseAdmin;
+  const ranges = rules.followUpRanges(now);
+  const clean = (v) => String(v || '').replace(/[%,()*"\\]/g, ' ').trim();
+  const filtered = (cols, countOpts) => {
+    let x = db.from('leads').select(cols, countOpts).not(`${CC}list_id`, 'is', null).not('do_not_contact', 'is', true);
+    if (listId) x = x.eq(`${CC}list_id`, listId);
+    if (outcome) x = x.eq(`${CC}last_outcome`, outcome);
+    if (priority) x = x.eq(`${CC}priority`, priority);
+    if (clean(category)) x = x.ilike('profession', `%${clean(category)}%`);
+    const s = clean(q);
+    if (s.length >= 2) {
+      const d = s.replace(/\D/g, '').slice(-10);
+      x = x.or([`business_name.ilike.%${s}%`, `name.ilike.%${s}%`, ...(d.length >= 5 ? [`phone.ilike.%${d}%`] : [])].join(','));
+    }
+    return x;
+  };
+  const inBucket = (x, b) => {
+    if (b === 'nodate') return x.eq(`${CC}last_outcome`, 'interested').is(`${CC}retry_at`, null).is('profile_id', null);
+    x = x.not(`${CC}retry_at`, 'is', null);
+    const [from, to] = ranges[b];
+    if (from) x = x.gte(`${CC}retry_at`, from);
+    if (to) x = x.lt(`${CC}retry_at`, to);
+    return x;
+  };
+  const head = () => filtered('id', { count: 'exact', head: true });
+  const [rowsRes, ...counts] = await Promise.all([
+    inBucket(filtered(LEAD_COLS, { count: 'exact' }), bucket)
+      .order(`${CC}retry_at`, { ascending: true, nullsFirst: false })
+      .range((page - 1) * pageSize, page * pageSize - 1),
+    ...['overdue', 'today', 'tomorrow', 'week', 'nodate'].map((b) => inBucket(head(), b)),
+  ]);
+  if (rowsRes.error) throw rowsRes.error;
+  const rows = rowsRes.data || [];
+  // Last call note per lead on this page (≤ pageSize ids).
+  const ids = rows.map((r) => r.id);
+  const notes = new Map();
+  if (ids.length) {
+    const { data } = await db.from('lead_activities').select('lead_id,body,occurred_at,meta')
+      .eq('type', 'call_logged').in('lead_id', ids).order('occurred_at', { ascending: false });
+    for (const a of data || []) if (!notes.has(a.lead_id)) notes.set(a.lead_id, a);
+  }
+  const [overdue, today, tomorrow, week, nodate] = counts.map((c) => c.count || 0);
+  return {
+    rows: rows.map((lead) => {
+      const last = notes.get(lead.id);
+      return { lead, nextAt: lead.attributes?.cold_call?.retry_at || null, lastCallAt: last?.occurred_at || lead.attributes?.cold_call?.last_called_at || null, lastNote: last?.body || '' };
+    }),
+    total: rowsRes.count || 0, page, pageSize,
+    counts: { overdue, today, tomorrow, week, nodate },
+  };
+}
+
+// Reschedule (at) or mark done (done: true) a lead's next follow-up.
+async function setFollowUp(leadId, { at = null, done = false } = {}, actorAdminId = null) {
+  const lead = await leadService.getLead(leadId);
+  if (!lead) throw httpErr(404, 'lead not found');
+  if (!done && !validDate(at)) throw httpErr(400, 'valid "at" date required');
+  const open = (await followUpService.listOpen({ leadId })).filter((f) => String(f.title || '').startsWith(rules.CALLBACK_PREFIX));
+  for (const f of open) await followUpService.complete(f.id, actorAdminId);
+  if (!done) {
+    await followUpService.create({
+      leadId, ownerAdminId: actorAdminId, title: open[0]?.title || `${rules.CALLBACK_PREFIX} call back`,
+      dueAt: new Date(at).toISOString(), remind: false, createdBy: 'cold_call',
+    });
+  }
+  await setRetryAt(lead, done ? null : new Date(at).toISOString());
+  return { ok: true };
+}
+
+// ── Call history ──────────────────────────────────────────────
+async function history(opts = {}, now = new Date()) {
+  const days = Math.min(Math.max(parseInt(opts.days, 10) || 7, 1), 365);
+  const page = Math.max(1, parseInt(opts.page, 10) || 1);
+  const pageSize = Math.min(Math.max(parseInt(opts.pageSize, 10) || 25, 5), 100);
+  const since = rules.istDayStart(new Date(now.getTime() - (days - 1) * 24 * 60 * 60 * 1000));
+  let x = supabaseAdmin.from('lead_activities').select('id,lead_id,meta,body,occurred_at', { count: 'exact' })
+    .eq('type', 'call_logged').gte('occurred_at', since);
+  x = opts.outcome && rules.OUTCOMES[opts.outcome] ? x.eq('meta->>outcome', opts.outcome) : x.in('meta->>outcome', Object.keys(rules.OUTCOMES));
+  const { data, count, error } = await x.order('occurred_at', { ascending: false }).range((page - 1) * pageSize, page * pageSize - 1);
+  if (error) throw error;
+  const ids = [...new Set((data || []).map((a) => a.lead_id))];
+  const leads = ids.length ? ((await supabaseAdmin.from('leads').select(LEAD_COLS).in('id', ids)).data || []) : [];
+  const byId = new Map(leads.map((l) => [l.id, l]));
+  return {
+    rows: (data || []).map((a) => ({
+      id: a.id, at: a.occurred_at, outcome: a.meta?.outcome, objection: a.meta?.objection || null,
+      durationMin: a.meta?.duration_min || null, note: a.body || '', lead: byId.get(a.lead_id) || { id: a.lead_id },
+    })),
+    total: count || 0, page, pageSize, days,
+  };
+}
+
+// ── Reports ───────────────────────────────────────────────────
+// Calls in the window rolled up by category and by area. Lead lookups go in
+// chunks so the id list never overflows the request URL.
+async function reports(opts = {}, now = new Date()) {
+  const days = Math.min(Math.max(parseInt(opts.days, 10) || 30, 1), 365);
+  const since = rules.istDayStart(new Date(now.getTime() - (days - 1) * 24 * 60 * 60 * 1000));
+  const { data: calls, error } = await supabaseAdmin.from('lead_activities').select('lead_id,meta')
+    .eq('type', 'call_logged').gte('occurred_at', since).in('meta->>outcome', Object.keys(rules.OUTCOMES)).limit(20000);
+  if (error) throw error;
+  const ids = [...new Set((calls || []).map((c) => c.lead_id))];
+  const leadsById = new Map();
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data } = await supabaseAdmin.from('leads')
+      .select(`id,profession,profile_id,locality:${CC}locality`).in('id', ids.slice(i, i + 150));
+    for (const l of data || []) leadsById.set(l.id, l);
+  }
+  const mix = rules.outcomeMix((calls || []).map((c) => c.meta));
+  return {
+    days,
+    totals: { calls: mix.calls, connected: mix.connected, interested: mix.interested, byOutcome: mix.byOutcome, objections: mix.objections },
+    byCategory: rules.groupReport(calls || [], leadsById, (l) => l.profession),
+    byArea: rules.groupReport(calls || [], leadsById, (l) => l.locality),
+  };
+}
+
+module.exports = { importRows, getQueue, stats, followUps, setFollowUp, history, reports, search, recordOutcome, send, updateDetails, remind };
