@@ -538,6 +538,10 @@ const coldCallQueue = async (req, res) => {
   try { res.json(await coldCallService.getQueue(req.query.listId)); } catch (e) { coldCallError(res, e); }
 };
 
+const coldCallStats = async (req, res) => {
+  try { res.json(await coldCallService.stats({ days: req.query.days })); } catch (e) { coldCallError(res, e); }
+};
+
 const coldCallSearch = async (req, res) => {
   try { res.json(await coldCallService.search(req.query.q)); } catch (e) { coldCallError(res, e); }
 };
@@ -580,5 +584,5 @@ module.exports = {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   listTags, createTag, updateTag, deleteTag,
   listViews, createView, deleteView,
-  coldCallQueue, coldCallSearch, coldCallImport, coldCallOutcome, coldCallSend, coldCallDetails, coldCallRemind,
+  coldCallQueue, coldCallStats, coldCallSearch, coldCallImport, coldCallOutcome, coldCallSend, coldCallDetails, coldCallRemind,
 };

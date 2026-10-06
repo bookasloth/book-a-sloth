@@ -2,9 +2,9 @@
 // search, CSV upload, today's numbers, and the call queue every page reads
 // (via <Outlet context>). Spec: docs/superpowers/specs/2026-10-05-cold-calling-design.md
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useMatch, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { PageHeader, StatCard, Btn, Skeleton, Card } from '../../../components/admin/ui';
+import { PageHeader, Btn, Skeleton, Card } from '../../../components/admin/ui';
 import { crmListLists, crmColdCallQueue } from '../../../services/api';
 import ColdCallUpload from './ColdCallUpload';
 import ColdCallSearch from './ColdCallSearch';
@@ -22,6 +22,8 @@ function beep() {
 
 export default function ColdCallingLayout() {
   const navigate = useNavigate();
+  // The lead page is a focused calling screen: no page title / controls above it.
+  const onLead = !!useMatch('/admin/sales/cold-calling/lead/:leadId');
   const [lists, setLists] = useState(null);
   const [listId, setListId] = useState(() => { try { return localStorage.getItem(LIST_KEY) || ''; } catch { return ''; } });
   const [queue, setQueue] = useState(null);
@@ -70,35 +72,25 @@ export default function ColdCallingLayout() {
     }
   }, [queue]);
 
-  const t = queue?.today;
-  const tot = queue?.totals;
-  const rate = t?.calls ? Math.round((t.connected / t.calls) * 100) : 0;
   return (
     <div className="p-4 sm:p-6">
-      <PageHeader title="Cold Calling" subtitle="Open a lead, call, update the details, log the outcome, send the follow-up, move on."
-        actions={<div className="flex flex-wrap items-center gap-2">
-          <ColdCallSearch onPick={(lead) => navigate(`/admin/sales/cold-calling/lead/${lead.id}`)} />
-          <select className="fb-input text-sm !w-auto max-w-[260px]" aria-label="Calling list" value={listId} onChange={(e) => setListId(e.target.value)}>
-            <option value="">Choose a list…</option>
-            {(lists || []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
-          <Btn size="sm" variant="outline" onClick={() => setShowUpload(true)}>Upload CSV</Btn>
-        </div>} />
-
-      {t && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
-          <StatCard compact label="Called today" value={`${t.calls} / ${t.target}`} icon="phone" iconColor="bg-[#FE5100]" />
-          <StatCard compact label="Connected" value={`${t.connected}${t.calls ? ` · ${rate}%` : ''}`} icon="users" iconColor="bg-sky-500" />
-          <StatCard compact label="Interested" value={t.interested} icon="star" iconColor="bg-emerald-500" />
-          <StatCard compact label="Follow-ups sent" value={t.followUpsSent} icon="send" iconColor="bg-violet-500" />
-          <StatCard compact label="Left to call" value={(tot?.fresh ?? 0).toLocaleString('en-IN')} icon="layers" iconColor="bg-gray-500" />
-          <StatCard compact label="Signed up" value={tot?.signedUp ?? 0} icon="userCheck" iconColor="bg-amber-500" />
-        </div>
+      {!onLead && (
+        <>
+          <PageHeader title="Cold Calling" subtitle="Open a lead, call, update the details, log the outcome, send the follow-up, move on." />
+          <div className="grid grid-cols-1 sm:grid-cols-[10fr_7fr_3fr] gap-2 -mt-3 mb-5">
+            <ColdCallSearch onPick={(lead) => navigate(`/admin/sales/cold-calling/lead/${lead.id}`)} />
+            <select className="fb-input text-sm !w-full" aria-label="Calling list" value={listId} onChange={(e) => setListId(e.target.value)}>
+              <option value="">Choose a list…</option>
+              {(lists || []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+            <Btn variant="outline" className="w-full justify-center" onClick={() => setShowUpload(true)}>Upload CSV</Btn>
+          </div>
+        </>
       )}
 
       {lists === null || (listId && !queue) ? <Skeleton className="h-64 rounded-2xl" />
         : !listId ? <Card className="p-10 text-center adm-t3">Upload a CSV to start a calling list.</Card>
-        : <Outlet context={{ queue, listId, lists, reload: loadQueue, now }} />}
+        : <Outlet context={{ queue, listId, setListId, lists, reload: loadQueue, now }} />}
 
       {showUpload && (
         <ColdCallUpload lists={lists || []} onClose={() => setShowUpload(false)}

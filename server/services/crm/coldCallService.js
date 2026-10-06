@@ -144,6 +144,49 @@ async function getQueue(listId, now = new Date()) {
   };
 }
 
+// ── Overview ──────────────────────────────────────────────────
+// Week-so-far numbers across every cold-call list (one caller works them all):
+// funnel, outcome mix, top objections, follow-up buckets, and each list's progress.
+// Loaded once per Overview visit, never polled.
+async function stats({ days = 7 } = {}, now = new Date()) {
+  const db = supabaseAdmin;
+  const n = Math.min(Math.max(parseInt(days, 10) || 7, 1), 90);
+  const since = rules.istDayStart(new Date(now.getTime() - (n - 1) * 24 * 60 * 60 * 1000));
+  const coldCount = () => db.from('leads').select('id', { count: 'exact', head: true }).not(`${CC}list_id`, 'is', null);
+  const [calls, msgs, fu, lists, signed] = await Promise.all([
+    db.from('lead_activities').select('meta').eq('type', 'call_logged').gte('occurred_at', since),
+    db.from('crm_messages').select('status').like('idempotency_key', 'cold:%').gte('created_at', since),
+    db.from('lead_follow_ups').select('id,lead_id,title,due_at').eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`).order('due_at').limit(500),
+    db.from('lead_lists').select('id,name,created_at').eq('source', 'cold_call').order('created_at', { ascending: true }),
+    coldCount().not('profile_id', 'is', null),
+  ]);
+  const mix = rules.outcomeMix((calls.data || []).map((c) => c.meta));
+  const followUps = fu.data || [];
+  // The next few callbacks, named — a handful of ids, well below the URL limit.
+  const nextFu = followUps.slice(0, 5);
+  const names = nextFu.length
+    ? new Map(((await db.from('leads').select('id,business_name,name').in('id', nextFu.map((f) => f.lead_id))).data || []).map((l) => [l.id, l.business_name || l.name]))
+    : new Map();
+  const listRows = await Promise.all((lists.data || []).map(async (l) => {
+    const inList = () => db.from('leads').select('id', { count: 'exact', head: true }).eq(`${CC}list_id`, l.id);
+    const [total, fresh, interested] = await Promise.all([
+      inList(), inList().is(`${CC}attempts`, null), inList().eq(`${CC}last_outcome`, 'interested'),
+    ]);
+    return { id: l.id, name: l.name, total: total.count || 0, fresh: fresh.count || 0, interested: interested.count || 0 };
+  }));
+  return {
+    days: n, since,
+    calls: mix.calls, connected: mix.connected, interested: mix.interested, signedUp: signed.count || 0,
+    byOutcome: mix.byOutcome, objections: mix.objections,
+    followUpsSent: (msgs.data || []).filter((m) => m.status === 'sent').length,
+    followUps: {
+      ...rules.followUpBuckets(followUps, now),
+      next: nextFu.map((f) => ({ leadId: f.lead_id, name: names.get(f.lead_id) || 'Lead', dueAt: f.due_at, title: f.title })),
+    },
+    lists: listRows,
+  };
+}
+
 // ── Search (inbound callbacks) ────────────────────────────────
 // Any lead by name / business / email, or by phone in any format (+91, 0-prefix,
 // spaces) — matched on the last 10 digits against phone and WhatsApp.
@@ -316,4 +359,4 @@ async function remind(leadId, { at, note = '' } = {}, actorAdminId = null) {
   });
 }
 
-module.exports = { importRows, getQueue, search, recordOutcome, send, updateDetails, remind };
+module.exports = { importRows, getQueue, stats, search, recordOutcome, send, updateDetails, remind };

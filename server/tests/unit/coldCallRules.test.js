@@ -123,6 +123,27 @@ describe('daily plan', () => {
   });
 });
 
+describe('overview', () => {
+  test('outcomeMix counts outcomes, connected, interested and top objections; ignores non cold-call logs', () => {
+    const m = r.outcomeMix([
+      { outcome: 'interested' }, { outcome: 'not_now', objection: 'Price' }, { outcome: 'not_interested', objection: 'Price' },
+      { outcome: 'no_answer' }, { outcome: 'details', objection: 'Busy' }, { outcome: null }, null, { outcome: 'demo_done' },
+    ]);
+    expect(m.byOutcome).toEqual({ interested: 1, not_now: 1, not_interested: 1, no_answer: 1, details: 1 });
+    expect(m).toMatchObject({ calls: 5, connected: 4, interested: 1 });
+    expect(m.objections).toEqual([{ label: 'Price', n: 2 }, { label: 'Busy', n: 1 }]);
+  });
+  test('followUpBuckets splits by IST day', () => {
+    const b = r.followUpBuckets([
+      { due_at: '2026-10-06T05:00:00Z' },   // before NOW → overdue
+      { due_at: '2026-10-06T12:00:00Z' },   // 17:30 IST today
+      { due_at: '2026-10-07T05:00:00Z' },   // tomorrow
+      { due_at: '2026-10-09T05:00:00Z' },   // later
+    ], NOW);
+    expect(b).toEqual({ overdue: 1, today: 1, tomorrow: 1, later: 1 });
+  });
+});
+
 describe('stats + dates', () => {
   test('todayStats counts connected and interested', () => {
     expect(r.todayStats(['interested', 'no_answer', 'details', 'wrong_number', null])).toEqual({ calls: 5, connected: 2, interested: 1 });
