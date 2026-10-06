@@ -555,6 +555,14 @@ const coldCallOutcome = async (req, res) => {
   try { res.json(await coldCallService.recordOutcome(req.params.leadId, req.body || {}, actor(req))); } catch (e) { coldCallError(res, e); }
 };
 
+const coldCallSend = async (req, res) => {
+  try { res.json(await coldCallService.send(req.params.leadId, req.body || {}, actor(req))); } catch (e) { coldCallError(res, e); }
+};
+
+const coldCallDetails = async (req, res) => {
+  try { res.json(await coldCallService.updateDetails(req.params.leadId, req.body || {})); } catch (e) { coldCallError(res, e); }
+};
+
 const coldCallRemind = async (req, res) => {
   try { res.json(await coldCallService.remind(req.params.leadId, req.body || {}, actor(req))); } catch (e) { coldCallError(res, e); }
 };
@@ -572,5 +580,5 @@ module.exports = {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   listTags, createTag, updateTag, deleteTag,
   listViews, createView, deleteView,
-  coldCallQueue, coldCallSearch, coldCallImport, coldCallOutcome, coldCallRemind,
+  coldCallQueue, coldCallSearch, coldCallImport, coldCallOutcome, coldCallSend, coldCallDetails, coldCallRemind,
 };

@@ -778,6 +778,8 @@ export const crmColdCallImport   = (rows, listId, listName) =>
   batchedImport((body) => API.post('/admin/crm/cold-calls/import', { ...body, listName }), rows, listId);
 export const crmColdCallOutcome  = (leadId, data) => API.post(`/admin/crm/cold-calls/${leadId}/outcome`, data);
 export const crmColdCallRemind   = (leadId, data) => API.post(`/admin/crm/cold-calls/${leadId}/remind`, data);
+export const crmColdCallSend     = (leadId, data) => API.post(`/admin/crm/cold-calls/${leadId}/send`, data);
+export const crmColdCallDetails  = (leadId, data) => API.post(`/admin/crm/cold-calls/${leadId}/details`, data);
 export const crmListTags         = ()            => API.get('/admin/crm/tags');
 export const crmCreateTag        = (data)        => API.post('/admin/crm/tags', data);
 export const crmUpdateTag        = (id, data)    => API.patch(`/admin/crm/tags/${id}`, data);
