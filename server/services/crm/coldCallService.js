@@ -84,7 +84,7 @@ async function importRows({ rows = [], listId = null, listName = '', createdBy =
 }
 
 // ── Hot leads + signups ───────────────────────────────────────
-// "Hot" = clicked an email link or the WhatsApp link button in the last 48h — call
+// "Hot" = clicked an email link or the WhatsApp tracking link in the last 48h — call
 // them while they're looking. Click activities are a few a day, so this stays small.
 const HOT_MS = 48 * 60 * 60 * 1000;
 async function hotMap(now = new Date()) {
@@ -296,9 +296,8 @@ async function sendFollowUp(lead, channel, category, outcome, callbackAt, now, c
     const row = channel === 'email'
       ? await messageService.enqueue({ ...base, subject: fill(tpl.subject), variables: { html: fill(tpl.body) }, senderKey: SENDER })
       : await messageService.enqueue({ ...base, templateKey: tpl.name, variables: {
-        params: (tpl.variables || []).filter((v) => !v.button).map((v) => fill(`{{${v.key}}}`)),
-        // A "Visit website" button with URL bookasloth.com/r/{{1}} gets this lead's code.
-        ...((tpl.variables || []).some((v) => v.button) ? { buttonParams: [rules.refCode(lead.id)] } : {}),
+        // A { ref: true } variable is this lead's tracking code (bookasloth.com/r/<code>).
+        params: (tpl.variables || []).map((v) => (v.ref ? rules.refCode(lead.id) : fill(`{{${v.key}}}`))),
       } });
     // enqueue returns the EXISTING row on an idempotency hit — don't report it as a fresh send.
     if (row?.created_at && new Date(row.created_at).getTime() < now.getTime() - 60 * 1000) {
