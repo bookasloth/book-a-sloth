@@ -1,7 +1,8 @@
 'use strict';
 /**
- * coldCallTemplates.js — the 12 follow-up templates the Cold Calling tab sends
- * after a call (6 message sets × email + WhatsApp: 4 outcomes + missed call + setup help). Seeded into crm_templates by
+ * coldCallTemplates.js — the 13 follow-up templates the Cold Calling tab sends
+ * after a call (6 message sets × email + WhatsApp: 4 outcomes + missed call + setup help, plus the
+ * automatic WhatsApp callback reminder). Seeded into crm_templates by
  * scripts/seedColdCallTemplates.js; editable afterwards on /admin/sales/templates.
  *
  * Email: founder voice, sent as persona `shubham` (plain layout). Lead tokens
@@ -22,6 +23,9 @@ const DEMO = 'https://bookasloth.com/sndatarkar/book-a-sloth-app-online-demo-30-
 const CALL = (text) => `<a class="sig" href="${DEMO}">${text}</a>`;
 const SIGN = '<p>Shubham<br>Founder, Book A Sloth</p>';
 const BIZ = [{ key: 'business_name', label: 'Business name', example: 'Smile Dental' }];
+// Dynamic-URL button 'Visit website' → https://bookasloth.com/r/{{1}}: coldCallService fills
+// each lead's tracking code (rules.refCode) so a click shows up on that lead. Not a body param.
+const LINK_BUTTON = { key: 'link_code', label: 'Visit website button → bookasloth.com/r/{{1}}', example: '40e43eb52511', button: true };
 
 const COLD_CALL_TEMPLATES = [
   {
@@ -122,17 +126,24 @@ It takes about 3 minutes, and I’m happy to help you set it up.
 Just reply here whenever you’re ready.`,
   },
   {
-    channel: 'whatsapp', name: 'Cold Call Missed - Vendor', label: 'Cold call · No answer → missed call (WA)', category: 'cold_call_missed', variables: BIZ, is_active: false, subject: null,
+    channel: 'whatsapp', name: 'Cold Call Missed - Vendor', label: 'Cold call · No answer → missed call (WA)', category: 'cold_call_missed', variables: [...BIZ, LINK_BUTTON], is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. I tried calling you today but couldn't reach you.
 We help businesses like yours take bookings and payments online, with automatic reminders. It's free to start and setup takes about 3 minutes.
-Have a look: ${WA_SIGNUP}
+Tap below to have a look.
 Reply here with a good time and I'll call you back.`,
   },
   {
-    channel: 'whatsapp', name: 'Cold Call Setup Help - Vendor', label: 'Cold call · Setup help (WA)', category: 'cold_call_setup_help', variables: BIZ, is_active: false, subject: null,
+    channel: 'whatsapp', name: 'Cold Call Setup Help - Vendor', label: 'Cold call · Setup help (WA)', category: 'cold_call_setup_help', variables: [...BIZ, LINK_BUTTON], is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Just checking in: were you able to set up your booking page?
 If you got stuck anywhere, reply here and I'll help you finish it in a few minutes.
-You can continue here: ${WA_SIGNUP}`,
+Tap below to continue.`,
+  },
+  {
+    // Sent by the reminder cron ~15 min before a promised callback — no call-outcome button.
+    channel: 'whatsapp', name: 'Cold Call Callback Reminder - Vendor', label: 'Cold call · Callback in 15 min (WA, automatic)', category: 'cold_call_callback_reminder',
+    variables: [...BIZ, { key: 'callback_time', label: 'Callback time', example: 'Tue, 7 Oct, 5:00 pm' }], is_active: false, subject: null,
+    body: `Hi {{1}} team, Shubham from Book A Sloth here. A quick heads-up: I'll be calling you at {{2}}, as we discussed.
+Talk soon!`,
   },
 ];
 

@@ -34,7 +34,7 @@ test('service 400 surfaces as 400 with its message', async () => {
 });
 
 test('templates: 6 message sets × email + whatsapp; WhatsApp seeds inactive', () => {
-  expect(COLD_CALL_TEMPLATES).toHaveLength(12);
+  expect(COLD_CALL_TEMPLATES).toHaveLength(13);
   const cats = ['cold_call_interested', 'cold_call_details', 'cold_call_callback', 'cold_call_nurture', 'cold_call_missed', 'cold_call_setup_help'];
   for (const c of cats) {
     expect(COLD_CALL_TEMPLATES.filter((t) => t.category === c).map((t) => t.channel).sort()).toEqual(['email', 'whatsapp']);

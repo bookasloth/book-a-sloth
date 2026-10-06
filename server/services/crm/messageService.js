@@ -141,6 +141,7 @@ async function dispatch(row, leadArg, opts = {}) {
       lead,
       templateKey: row.template_key,
       templateParams: renderParams(row.variables?.params || row.variables?.templateParams, lead, extra),
+      buttonParams: row.variables?.buttonParams || [],   // dynamic URL button (cold-call tracking link)
       userName: extra.account_name || lead.name,
       automated,
     });

@@ -204,9 +204,49 @@ const formatIst = (iso) => new Intl.DateTimeFormat('en-IN', {
   timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
 }).format(new Date(iso));
 
+// Calls by IST hour of day — Reports' "best time to call".
+function hourMix(calls = []) {
+  const hours = Array.from({ length: 24 }, (_, hour) => ({ hour, calls: 0, connected: 0 }));
+  for (const c of calls) {
+    const o = c.meta?.outcome;
+    if (!o || !OUTCOMES[o] || !c.occurred_at) continue;
+    const t = new Date(c.occurred_at);
+    if (Number.isNaN(t.getTime())) continue;
+    const h = hours[new Date(t.getTime() + IST_MS).getUTCHours()];
+    h.calls++;
+    if (!NOT_CONNECTED.has(o)) h.connected++;
+  }
+  return hours.filter((h) => h.calls);
+}
+
+// Per-lead tracking code for the WhatsApp link button (bookasloth.com/r/<code>): the
+// first 12 hex digits of the lead id. refRange turns it back into an id range so the
+// lookup uses the primary-key index — no extra column.
+// ponytail: 48-bit prefix; collisions are ~0 below a million leads.
+const refCode = (leadId) => String(leadId || '').replace(/-/g, '').slice(0, 12).toLowerCase();
+function refRange(code) {
+  const c = String(code || '').toLowerCase();
+  if (!/^[0-9a-f]{12}$/.test(c)) return null;
+  const id = (hex) => `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  return [id(c + '0'.repeat(20)), id(c + 'f'.repeat(20))];
+}
+
+// Signed-up lead → what's left before they can take a booking.
+function setupSteps({ profile = {}, services = 0, bookings = 0 } = {}) {
+  return [
+    { key: 'account', label: 'Account created', done: true },
+    { key: 'onboarding', label: 'Finished onboarding', done: !!profile.onboarding_completed },
+    { key: 'photo', label: 'Added a profile photo', done: !!profile.profile_image },
+    { key: 'service', label: 'Published a service', done: services > 0 },
+    { key: 'booking', label: 'First booking', done: bookings > 0 },
+  ];
+}
+
+const istHour = (now = new Date()) => new Date(now.getTime() + IST_MS).getUTCHours();
+
 module.exports = {
   OUTCOMES, CALLBACK_PREFIX, MAX_NO_ANSWER, DAILY_TARGET,
   phone10, waPhone10, nextStep, sortKey, freshSlots, buildQueue, todayStats, outcomeMix, followUpBuckets,
-  followUpRanges, groupReport, wasSent,
+  followUpRanges, groupReport, wasSent, hourMix, refCode, refRange, setupSteps, istHour,
   istDate, istDayStart, istDayEnd, formatIst,
 };

@@ -20,6 +20,10 @@ const messageService = require('./messageService');
 const listService = require('./listService');
 const rules = require('./coldCallRules');
 const { rankOf, MONEY } = require('./lifecycleRules');
+const { logActivity } = require('./activity');
+const sendEmail = require('../../utils/sendEmail');
+
+const REMINDER = 'cold_call_callback_reminder';   // WhatsApp-only, sent by the cron
 
 const SENDER = 'shubham';             // founder persona — plain, hand-typed email layout
 const MAX_ROWS = 50;                  // per import request; the client batches
@@ -79,6 +83,49 @@ async function importRows({ rows = [], listId = null, listName = '', createdBy =
   return { created, merged, skipped, listId };
 }
 
+// ── Hot leads + signups ───────────────────────────────────────
+// "Hot" = clicked an email link or the WhatsApp link button in the last 48h — call
+// them while they're looking. Click activities are a few a day, so this stays small.
+const HOT_MS = 48 * 60 * 60 * 1000;
+async function hotMap(now = new Date()) {
+  const { data } = await supabaseAdmin.from('lead_activities').select('lead_id,type,occurred_at')
+    .in('type', ['email_clicked', 'link_clicked']).gte('occurred_at', new Date(now.getTime() - HOT_MS).toISOString())
+    .order('occurred_at', { ascending: false }).limit(200);
+  const out = {};
+  for (const a of data || []) if (!out[a.lead_id]) out[a.lead_id] = a.occurred_at;
+  return out;
+}
+
+// Cold-call leads who signed up in the last 30 days and aren't live yet (setup steps
+// left). signup stitching (leadService.recordAccountEvent) sets leads.profile_id.
+const SETUP_DAYS = 30;
+async function setupList(now = new Date()) {
+  const db = supabaseAdmin;
+  const { data: leads } = await db.from('leads').select(LEAD_COLS)
+    .not(`${CC}list_id`, 'is', null).not('profile_id', 'is', null).limit(200);
+  const pids = (leads || []).map((l) => l.profile_id);
+  if (!pids.length) return [];
+  const since = new Date(now.getTime() - SETUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const [profs, svcs, bks] = await Promise.all([
+    db.from('profiles').select('id,created_at,onboarding_completed,profile_image,username').in('id', pids).gte('created_at', since),
+    db.from('services').select('host_id').in('host_id', pids).eq('is_active', true),
+    db.from('bookings').select('host_id').in('host_id', pids).limit(2000),
+  ]);
+  const tally = (rows) => (rows || []).reduce((m, r) => m.set(r.host_id, (m.get(r.host_id) || 0) + 1), new Map());
+  const nSvc = tally(svcs.data);
+  const nBk = tally(bks.data);
+  const byPid = new Map((profs.data || []).map((p) => [p.id, p]));
+  return (leads || [])
+    .filter((l) => byPid.has(l.profile_id))
+    .map((l) => {
+      const profile = byPid.get(l.profile_id);
+      const steps = rules.setupSteps({ profile, services: nSvc.get(l.profile_id) || 0, bookings: nBk.get(l.profile_id) || 0 });
+      return { lead: l, signedUpAt: profile.created_at, username: profile.username || null, steps, left: steps.filter((x) => !x.done).length };
+    })
+    .filter((x) => x.left > 0)
+    .sort((a, b) => new Date(b.signedUpAt) - new Date(a.signedUpAt));
+}
+
 // ── Queue ─────────────────────────────────────────────────────
 // Callbacks come from EVERY list (a promised call is never hidden by the list
 // picker); retries and fresh leads come from the chosen list. Fresh leads only fill
@@ -90,7 +137,7 @@ async function getQueue(listId, now = new Date()) {
   const since = rules.istDayStart(now);
   const inList = (q) => q.eq(`${CC}list_id`, listId);
   const counter = () => inList(db.from('leads').select('id', { count: 'exact', head: true }));
-  const [fu, calls, msgs, tpls, retryRes, left, signed] = await Promise.all([
+  const [fu, calls, msgs, tpls, retryRes, left, signed, hot, setup] = await Promise.all([
     db.from('lead_follow_ups').select('id,lead_id,title,due_at').eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`),
     db.from('lead_activities').select('lead_id,meta,occurred_at').eq('type', 'call_logged').gte('occurred_at', since),
     db.from('crm_messages').select('lead_id,status').like('idempotency_key', 'cold:%').gte('created_at', since),
@@ -98,6 +145,8 @@ async function getQueue(listId, now = new Date()) {
     inList(db.from('leads').select(LEAD_COLS)).lte(`${CC}retry_at`, now.toISOString()).eq(`${CC}closed`, 'false').limit(300),
     counter().is(`${CC}attempts`, null).not('do_not_contact', 'is', true),
     counter().not('profile_id', 'is', null),
+    hotMap(now).catch(() => ({})),
+    setupList(now).catch(() => []),
   ]);
   if (retryRes.error) throw retryRes.error;
   const followUps = fu.data || [];
@@ -141,6 +190,8 @@ async function getQueue(listId, now = new Date()) {
     },
     totals: { fresh: left.count || 0, signedUp: signed.count || 0 },
     templates: tpls.data || [],
+    hot,      // { leadId: last click ISO } — last 48h
+    setup,    // signed up, not live yet → setup calls
   };
 }
 
@@ -153,13 +204,19 @@ async function stats({ days = 7 } = {}, now = new Date()) {
   const n = Math.min(Math.max(parseInt(days, 10) || 7, 1), 90);
   const since = rules.istDayStart(new Date(now.getTime() - (n - 1) * 24 * 60 * 60 * 1000));
   const coldCount = () => db.from('leads').select('id', { count: 'exact', head: true }).not(`${CC}list_id`, 'is', null);
-  const [calls, msgs, fu, lists, signed] = await Promise.all([
+  const [calls, msgs, fu, lists, signed, hot, setup] = await Promise.all([
     db.from('lead_activities').select('meta,occurred_at').eq('type', 'call_logged').gte('occurred_at', since),
     db.from('crm_messages').select('status,created_at').like('idempotency_key', 'cold:%').gte('created_at', since),
     db.from('lead_follow_ups').select('id,lead_id,title,due_at').eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`).order('due_at').limit(500),
     db.from('lead_lists').select('id,name,created_at').eq('source', 'cold_call').order('created_at', { ascending: true }),
     coldCount().not('profile_id', 'is', null),
+    hotMap(now).catch(() => ({})),
+    setupList(now).catch(() => []),
   ]);
+  const hotIds = Object.keys(hot);
+  const hotLeads = hotIds.length
+    ? ((await db.from('leads').select('id,business_name,name,phone').in('id', hotIds).not(`${CC}list_id`, 'is', null)).data || [])
+    : [];
   const mix = rules.outcomeMix((calls.data || []).map((c) => c.meta));
   // Today vs yesterday (IST) for the Overview's "vs yesterday" deltas.
   const dayOf = (iso) => { const t = new Date(iso); return Number.isNaN(t.getTime()) ? '' : rules.istDate(t); };
@@ -194,6 +251,9 @@ async function stats({ days = 7 } = {}, now = new Date()) {
       next: nextFu.map((f) => ({ leadId: f.lead_id, name: names.get(f.lead_id) || 'Lead', dueAt: f.due_at, title: f.title })),
     },
     lists: listRows,
+    hot: hotLeads.map((l) => ({ leadId: l.id, name: l.business_name || l.name || 'Lead', phone: l.phone, at: hot[l.id] }))
+      .sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 8),
+    setup: setup.slice(0, 8).map((x) => ({ leadId: x.lead.id, name: x.lead.business_name || x.lead.name || 'Lead', signedUpAt: x.signedUpAt, left: x.left, steps: x.steps })),
   };
 }
 
@@ -232,7 +292,11 @@ async function sendFollowUp(lead, channel, category, outcome, callbackAt, now, c
     };
     const row = channel === 'email'
       ? await messageService.enqueue({ ...base, subject: fill(tpl.subject), variables: { html: fill(tpl.body) }, senderKey: SENDER })
-      : await messageService.enqueue({ ...base, templateKey: tpl.name, variables: { params: (tpl.variables || []).map((v) => fill(`{{${v.key}}}`)) } });
+      : await messageService.enqueue({ ...base, templateKey: tpl.name, variables: {
+        params: (tpl.variables || []).filter((v) => !v.button).map((v) => fill(`{{${v.key}}}`)),
+        // A "Visit website" button with URL bookasloth.com/r/{{1}} gets this lead's code.
+        ...((tpl.variables || []).some((v) => v.button) ? { buttonParams: [rules.refCode(lead.id)] } : {}),
+      } });
     // enqueue returns the EXISTING row on an idempotency hit — don't report it as a fresh send.
     if (row?.created_at && new Date(row.created_at).getTime() < now.getTime() - 60 * 1000) {
       return { status: 'already_sent', reason: null };
@@ -430,11 +494,12 @@ async function followUps(opts = {}, now = new Date()) {
       .eq('type', 'call_logged').in('lead_id', ids).order('occurred_at', { ascending: false });
     for (const a of data || []) if (!notes.has(a.lead_id)) notes.set(a.lead_id, a);
   }
+  const hot = ids.length ? await hotMap(now).catch(() => ({})) : {};
   const [overdue, today, tomorrow, week, nodate] = counts.map((c) => c.count || 0);
   return {
     rows: rows.map((lead) => {
       const last = notes.get(lead.id);
-      return { lead, nextAt: lead.attributes?.cold_call?.retry_at || null, lastCallAt: last?.occurred_at || lead.attributes?.cold_call?.last_called_at || null, lastNote: last?.body || '' };
+      return { lead, hotAt: hot[lead.id] || null, nextAt: lead.attributes?.cold_call?.retry_at || null, lastCallAt: last?.occurred_at || lead.attributes?.cold_call?.last_called_at || null, lastNote: last?.body || '' };
     }),
     total: rowsRes.count || 0, page, pageSize,
     counts: { overdue, today, tomorrow, week, nodate },
@@ -487,7 +552,7 @@ async function history(opts = {}, now = new Date()) {
 async function reports(opts = {}, now = new Date()) {
   const days = Math.min(Math.max(parseInt(opts.days, 10) || 30, 1), 365);
   const since = rules.istDayStart(new Date(now.getTime() - (days - 1) * 24 * 60 * 60 * 1000));
-  const { data: calls, error } = await supabaseAdmin.from('lead_activities').select('lead_id,meta')
+  const { data: calls, error } = await supabaseAdmin.from('lead_activities').select('lead_id,meta,occurred_at')
     .eq('type', 'call_logged').gte('occurred_at', since).in('meta->>outcome', Object.keys(rules.OUTCOMES)).limit(20000);
   if (error) throw error;
   const ids = [...new Set((calls || []).map((c) => c.lead_id))];
@@ -503,7 +568,71 @@ async function reports(opts = {}, now = new Date()) {
     totals: { calls: mix.calls, connected: mix.connected, interested: mix.interested, byOutcome: mix.byOutcome, objections: mix.objections },
     byCategory: rules.groupReport(calls || [], leadsById, (l) => l.profession),
     byArea: rules.groupReport(calls || [], leadsById, (l) => l.locality),
+    byHour: rules.hourMix(calls || []),
   };
 }
 
-module.exports = { importRows, getQueue, stats, followUps, setFollowUp, history, reports, search, recordOutcome, send, updateDetails, remind };
+// ── Tracking link (public) ────────────────────────────────────
+// bookasloth.com/r/<code> → logs a click on the lead, then the page goes to signup.
+async function trackClick(code) {
+  const range = rules.refRange(code);
+  if (!range) return false;
+  const { data: lead } = await supabaseAdmin.from('leads').select('id')
+    .gte('id', range[0]).lte('id', range[1]).limit(1).maybeSingle();
+  if (!lead) return false;
+  await logActivity(lead.id, 'link_clicked', { title: 'WhatsApp link clicked', meta: { via: 'cold_call' } });
+  return true;
+}
+
+// ── Callback reminder (cron, every 5 min) ─────────────────────
+// WhatsApp the lead ~15 min before a promised callback ("calling you at 4 pm").
+// Skips quietly until the template is approved; the idempotency key (lead + due
+// time) makes every tick safe to repeat.
+async function callbackReminders(now = new Date()) {
+  const { data: tpl } = await supabaseAdmin.from('crm_templates').select('is_active')
+    .eq('channel', 'whatsapp').eq('category', REMINDER).maybeSingle();
+  if (!tpl?.is_active) return { sent: 0 };
+  const { data: due } = await supabaseAdmin.from('lead_follow_ups').select('lead_id,due_at')
+    .eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`)
+    .gte('due_at', new Date(now.getTime() + 5 * 60 * 1000).toISOString())
+    .lte('due_at', new Date(now.getTime() + 20 * 60 * 1000).toISOString()).limit(20);
+  let sent = 0;
+  for (const f of due || []) {
+    const lead = await leadService.getLead(f.lead_id);
+    if (!lead || lead.do_not_contact) continue;
+    const r = await sendFollowUp(lead, 'whatsapp', REMINDER, 'cb_reminder', f.due_at, now, 'cold_call_reminder');
+    if (r.status !== 'already_sent' && r.status !== 'failed' && r.status !== 'skipped') sent++;
+  }
+  return { sent };
+}
+
+// ── 6 pm recap email (cron) ───────────────────────────────────
+const RECAP_TO = process.env.COLD_CALL_RECAP_EMAIL || 'bookasloth@gmail.com';
+async function dailyRecap(now = new Date()) {
+  const s = await stats({ days: 1 }, now);
+  const t = s.today;
+  const tomorrowStart = rules.istDayEnd(now);
+  const tomorrowEnd = new Date(new Date(tomorrowStart).getTime() + 24 * 60 * 60 * 1000).toISOString();
+  const { data: cbs } = await supabaseAdmin.from('lead_follow_ups').select('lead_id,due_at')
+    .eq('status', 'open').like('title', `${rules.CALLBACK_PREFIX}%`)
+    .gte('due_at', tomorrowStart).lt('due_at', tomorrowEnd).order('due_at').limit(30);
+  if (!t.calls && !(cbs || []).length) return { sent: false, reason: 'nothing to report' };
+  const names = (cbs || []).length
+    ? new Map(((await supabaseAdmin.from('leads').select('id,business_name,name').in('id', cbs.map((c) => c.lead_id))).data || []).map((l) => [l.id, l.business_name || l.name]))
+    : new Map();
+  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const row = (k, v) => `<tr><td style="padding:4px 16px 4px 0;color:#6b7280">${k}</td><td style="font-weight:700">${v}</td></tr>`;
+  const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#111827">
+<h2 style="margin:0 0 12px">Cold calling — ${esc(rules.istDate(now))}</h2>
+<table>${row('Calls', `${t.calls} / ${rules.DAILY_TARGET}`)}${row('Connected', t.connected)}${row('Interested', t.interested)}${row('Follow-ups sent', t.followUpsSent)}${row('Clicked a link (48h)', s.hot.length)}${row('Signed up, not live yet', s.setup.length)}</table>
+<h3 style="margin:18px 0 6px">Tomorrow's callbacks (${(cbs || []).length})</h3>
+${(cbs || []).length ? `<ul>${cbs.map((c) => `<li>${esc(rules.formatIst(c.due_at))} — ${esc(names.get(c.lead_id) || 'Lead')}</li>`).join('')}</ul>` : '<p>None booked.</p>'}
+<p><a href="https://bookasloth.com/admin/sales/cold-calling">Open Cold Calling</a></p></div>`;
+  await sendEmail({ to: RECAP_TO, subject: `Cold calling today: ${t.calls} calls · ${t.interested} interested`, html });
+  return { sent: true };
+}
+
+module.exports = {
+  importRows, getQueue, stats, followUps, setFollowUp, history, reports, search, recordOutcome, send, updateDetails, remind,
+  trackClick, callbackReminders, dailyRecap,
+};
