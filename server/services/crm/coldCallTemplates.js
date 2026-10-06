@@ -1,8 +1,8 @@
 'use strict';
 /**
- * coldCallTemplates.js — the 13 follow-up templates the Cold Calling tab sends
+ * coldCallTemplates.js — the 14 follow-up templates the Cold Calling tab sends
  * after a call (6 message sets × email + WhatsApp: 4 outcomes + missed call + setup help, plus the
- * automatic WhatsApp callback reminder). Seeded into crm_templates by
+ * automatic WhatsApp callback reminder and the tracked-link WhatsApp). Seeded into crm_templates by
  * scripts/seedColdCallTemplates.js; editable afterwards on /admin/sales/templates.
  *
  * Email: founder voice, sent as persona `shubham` (plain layout). Lead tokens
@@ -126,17 +126,26 @@ It takes about 3 minutes, and I’m happy to help you set it up.
 Just reply here whenever you’re ready.`,
   },
   {
-    channel: 'whatsapp', name: 'Cold Call Missed - Vendor', label: 'Cold call · No answer → missed call (WA)', category: 'cold_call_missed', variables: [...BIZ, LINK_BUTTON], is_active: false, subject: null,
+    channel: 'whatsapp', name: 'Cold Call Missed - Vendor', label: 'Cold call · No answer → missed call (WA)', category: 'cold_call_missed', variables: BIZ, is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. I tried calling you today but couldn't reach you.
 We help businesses like yours take bookings and payments online, with automatic reminders. It's free to start and setup takes about 3 minutes.
-Tap below to have a look.
+Have a look: ${WA_SIGNUP}
 Reply here with a good time and I'll call you back.`,
   },
   {
-    channel: 'whatsapp', name: 'Cold Call Setup Help - Vendor', label: 'Cold call · Setup help (WA)', category: 'cold_call_setup_help', variables: [...BIZ, LINK_BUTTON], is_active: false, subject: null,
+    channel: 'whatsapp', name: 'Cold Call Setup Help - Vendor', label: 'Cold call · Setup help (WA)', category: 'cold_call_setup_help', variables: BIZ, is_active: false, subject: null,
     body: `Hi {{1}} team, Shubham from Book A Sloth here. Just checking in: were you able to set up your booking page?
 If you got stuck anywhere, reply here and I'll help you finish it in a few minutes.
-Tap below to continue.`,
+You can continue here: ${WA_SIGNUP}`,
+  },
+  {
+    // The one tracked message: its button opens bookasloth.com/r/<lead code>, so a click
+    // shows up on that lead (🔥). WhatsApp only — email clicks are tracked by Resend.
+    channel: 'whatsapp', name: 'Cold Call Link - Vendor', label: 'Cold call · Booking link, tracked (WA)', category: 'cold_call_link',
+    variables: [...BIZ, LINK_BUTTON], is_active: false, subject: null,
+    body: `Hi {{1}} team, Shubham from Book A Sloth here. Here's the link to create your free booking page, as we discussed.
+Clients can book, pay, and get reminders automatically. Setup takes about 3 minutes.
+Reply here if you'd like me to help you set it up.`,
   },
   {
     // Sent by the reminder cron ~15 min before a promised callback — no call-outcome button.

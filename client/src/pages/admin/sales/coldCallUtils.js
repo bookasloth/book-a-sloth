@@ -46,6 +46,7 @@ export const MESSAGE_SETS = [
   { category: 'cold_call_nurture', label: 'Not now' },
   { category: 'cold_call_missed', label: 'Missed call' },
   { category: 'cold_call_setup_help', label: 'Setup help' },
+  { category: 'cold_call_link', label: 'Booking link (tracked click)' },
 ];
 
 // Which set to open after saving. A missed call only gets a message on the FIRST
