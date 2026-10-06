@@ -448,16 +448,22 @@ const deepSanitize = (obj) => {
 
 // Block requests with suspicious patterns
 const blockSuspiciousRequests = (req, res, next) => {
+  // Path traversal only matters where a path is resolved: the URL + query.
+  // It is NOT scanned in the JSON body and needs a real traversal shape
+  // (`../`, `..\`, `%2e%2e%2f`) — a bare `..` matched ordinary text like
+  // "see you.." / "..." and, since a hit is an instant 24h IP ban, locked the
+  // founder out mid CSV import (2026-10-05).
+  const traversal = /((\.|%2e){2}(\/|\\|%2f|%5c)|\/etc\/passwd|\/proc\/)/i;
   const suspicious = [
-    /(\.\.|\/etc\/passwd|\/proc\/)/i,  // path traversal
     /(union\s+select|drop\s+table|insert\s+into)/i, // SQL injection hints
     /(<script|javascript:|vbscript:|data:text\/html)/i, // XSS
   ];
   // A raw webhook body is a Buffer (express.raw); JSON.stringify would mangle
   // it and it isn't a JSON payload to scan anyway — skip the body in that case.
   const bodyStr = Buffer.isBuffer(req.body) ? '' : JSON.stringify(req.body);
-  const payload = bodyStr + req.url + JSON.stringify(req.query);
-  if (suspicious.some(p => p.test(payload))) {
+  const urlStr = req.url + JSON.stringify(req.query);
+  const payload = bodyStr + urlStr;
+  if (traversal.test(urlStr) || suspicious.some(p => p.test(payload))) {
     // Unambiguous attack signature (SQLi/XSS/path-traversal) → auto-ban the source
     // IP immediately (no repeat threshold). Fire-and-forget; never block the 400.
     ipBlocklist.recordAttack(getClientIp(req), 'pattern').catch(() => {});
