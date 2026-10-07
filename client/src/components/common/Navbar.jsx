@@ -43,7 +43,7 @@ const PRODUCT_MENU = [
     { label: 'Digital products',  href: '/features/digital-products',  desc: 'Sell guides & templates, no live call',     icon: Layers,           tone: 'blue' },
   ] },
   { header: 'Platform', items: [
-    { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Two-way sync, always up to date',           icon: CalendarCheck,    tone: 'pink' },
+    { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Busy times blocked, bookings added',         icon: CalendarCheck,    tone: 'pink' },
     { label: 'Notifications',     href: '/features/notifications',     desc: 'Automatic WhatsApp + email reminders',      icon: Bell,             tone: 'amber' },
     { label: 'Availability',      href: '/features/availability',      desc: 'Buffers, limits and hours that fit you',    icon: Clock,            tone: 'violet' },
     { label: 'Reviews & ratings', href: '/features/reviews',           desc: 'Collect reviews that win more bookings',    icon: Star,             tone: 'pink' },

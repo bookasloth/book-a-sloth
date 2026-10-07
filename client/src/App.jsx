@@ -237,6 +237,15 @@ const SalonPage          = lazy(() => import('./pages/for/SalonPage'));
 const Veterinarians      = lazy(() => import('./pages/for/Veterinarians'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 const PaymentsFeature = lazy(() => import('./pages/features/PaymentsFeature'));
+const SchedulingFeature       = lazy(() => import('./pages/features/SchedulingFeature'));
+const BookingPagesFeature     = lazy(() => import('./pages/features/BookingPagesFeature'));
+const AvailabilityFeature     = lazy(() => import('./pages/features/AvailabilityFeature'));
+const GoogleCalendarFeature   = lazy(() => import('./pages/features/GoogleCalendarFeature'));
+const NotificationsFeature    = lazy(() => import('./pages/features/NotificationsFeature'));
+const ClientManagementFeature = lazy(() => import('./pages/features/ClientManagementFeature'));
+const DigitalProductsFeature  = lazy(() => import('./pages/features/DigitalProductsFeature'));
+const ReviewsFeature          = lazy(() => import('./pages/features/ReviewsFeature'));
+const AnalyticsFeature        = lazy(() => import('./pages/features/AnalyticsFeature'));
 
 // Admin — Operations
 const AdminPlans  = lazy(() => import('./pages/admin/AdminPlans'));
@@ -717,6 +726,15 @@ function App() {
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
           {/* Bespoke feature pages precede the /features/:slug template */}
           <Route path="/features/payments" element={<PaymentsFeature />} />
+          <Route path="/features/online-scheduling" element={<SchedulingFeature />} />
+          <Route path="/features/booking-pages" element={<BookingPagesFeature />} />
+          <Route path="/features/availability" element={<AvailabilityFeature />} />
+          <Route path="/features/google-calendar" element={<GoogleCalendarFeature />} />
+          <Route path="/features/notifications" element={<NotificationsFeature />} />
+          <Route path="/features/client-management" element={<ClientManagementFeature />} />
+          <Route path="/features/digital-products" element={<DigitalProductsFeature />} />
+          <Route path="/features/reviews" element={<ReviewsFeature />} />
+          <Route path="/features/analytics" element={<AnalyticsFeature />} />
           <Route path="/features/:slug" element={<FeaturePage />} />
 
           {/* Support / Contact — placeholders; MUST precede the /:profileSlug catch-all */}

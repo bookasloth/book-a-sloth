@@ -236,7 +236,7 @@ function CheckoutDemo() {
           </button>
         ))}
       </div>
-      <p className="mt-3 text-center text-[11px] text-[#F5EFE3]/45">Illustration of the client checkout</p>
+      <p className="mt-3 text-center text-[11px] text-[#F5EFE3]/60">Illustration of the client checkout</p>
     </div>
   );
 }
@@ -400,13 +400,13 @@ export default function PaymentsFeature() {
           <div className="mt-14">
             <div className="hidden grid-cols-[1fr_1.2fr_1.2fr] gap-8 border-b-2 border-[#12261D] pb-3 text-[11px] font-bold uppercase tracking-[0.18em] md:grid">
               <span />
-              <span className="text-neutral-400">UPI QR + DMs</span>
+              <span className="text-neutral-500">UPI QR + DMs</span>
               <span className="text-[#1F6B4A]">Book A Sloth</span>
             </div>
             {LEDGER.map((r, i) => (
               <Reveal key={r.row} delay={i * 0.04} className="grid gap-2 border-b border-black/10 py-6 md:grid-cols-[1fr_1.2fr_1.2fr] md:gap-8">
                 <h3 className="font-heading text-lg font-bold">{r.row}</h3>
-                <p className="flex items-start gap-2 text-[15px] text-neutral-400"><X size={16} className="mt-0.5 shrink-0" aria-hidden /><span><span className="sr-only">Without: </span>{r.old}</span></p>
+                <p className="flex items-start gap-2 text-[15px] text-neutral-500"><X size={16} className="mt-0.5 shrink-0" aria-hidden /><span><span className="sr-only">Without: </span>{r.old}</span></p>
                 <p className="flex items-start gap-2 text-[15px] font-medium text-[#12261D]"><Check size={16} className="mt-0.5 shrink-0 text-[#1F6B4A]" aria-hidden /><span><span className="sr-only">With Book A Sloth: </span>{r.now}</span></p>
               </Reveal>
             ))}
