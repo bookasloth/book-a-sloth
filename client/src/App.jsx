@@ -236,6 +236,7 @@ const Spas               = lazy(() => import('./pages/for/Spas'));
 const SalonPage          = lazy(() => import('./pages/for/SalonPage'));
 const Veterinarians      = lazy(() => import('./pages/for/Veterinarians'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
+const PaymentsFeature = lazy(() => import('./pages/features/PaymentsFeature'));
 
 // Admin — Operations
 const AdminPlans  = lazy(() => import('./pages/admin/AdminPlans'));
@@ -714,6 +715,8 @@ function App() {
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
+          {/* Bespoke feature pages precede the /features/:slug template */}
+          <Route path="/features/payments" element={<PaymentsFeature />} />
           <Route path="/features/:slug" element={<FeaturePage />} />
 
           {/* Support / Contact — placeholders; MUST precede the /:profileSlug catch-all */}
