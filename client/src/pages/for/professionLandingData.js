@@ -117,7 +117,7 @@ export const PROFESSION_LANDING = {
       {
         icon: CalendarX2,
         problem: 'Court dates and client meetings colliding',
-        solution: 'Two-way Google Calendar sync locks your real availability. No double-booking, ever.',
+        solution: 'Google Calendar busy times are blocked automatically. No double-booking, ever.',
       },
       {
         icon: FileClock,
@@ -178,7 +178,7 @@ export const PROFESSION_LANDING = {
       },
       {
         q: 'Will it avoid clashes with my court dates?',
-        a: 'Yes. Book A Sloth offers two-way Google Calendar sync, so blocked court dates and existing appointments are never offered as available slots. Booked slots lock instantly to prevent double-booking.',
+        a: 'Yes. Book A Sloth reads the busy times on your Google Calendar, so blocked court dates and existing appointments are never offered as available slots. Booked slots lock instantly to prevent double-booking.',
       },
       {
         q: 'Do my clients need to create an account to book?',
@@ -548,7 +548,7 @@ export const PROFESSION_LANDING = {
       {
         icon: CalendarX2,
         problem: 'Juggling client calls across time zones and tools',
-        solution: 'Two-way calendar sync shows only your real free slots. No clashes, no double-booking.',
+        solution: 'Google Calendar busy times are blocked, so only your real free slots show. No clashes, no double-booking.',
       },
       {
         icon: Target,
@@ -967,7 +967,7 @@ export const PROFESSION_LANDING = {
       {
         icon: CalendarX2,
         problem: 'Juggling calls across clients and time zones',
-        solution: 'Two-way calendar sync shows only your real free slots, in the client’s own time zone.',
+        solution: 'Google Calendar busy times are blocked, so only your real free slots show, in the client’s own time zone.',
       },
       {
         icon: UserX,
@@ -1040,7 +1040,7 @@ export const PROFESSION_LANDING = {
       },
       {
         q: 'Does it handle clients in other time zones?',
-        a: 'Yes. Your availability is shown in each client’s own time zone, and two-way calendar sync keeps your real free slots accurate — so overseas clients book without any back-and-forth.',
+        a: 'Yes. Your availability is shown in each client’s own time zone, and Google Calendar busy-time blocking keeps your real free slots accurate — so overseas clients book without any back-and-forth.',
       },
       {
         q: 'How does it reduce no-shows on discovery calls?',
@@ -1470,7 +1470,7 @@ export const PROFESSION_LANDING = {
     faq: [
       { q: 'What is the best booking software for photographers in India?', a: 'Book A Sloth is built for Indian photographers — clients book shoots online, pay a deposit upfront via UPI or card, and get automatic reminders. It syncs with your calendar, handles GST invoicing and charges 0% commission on paid plans.' },
       { q: 'Can I collect a shoot deposit when a client books?', a: 'Yes. You can collect a deposit or the full fee at checkout through Razorpay (UPI, cards, netbanking) before the shoot, with a GST invoice generated automatically.' },
-      { q: 'Does it stop double-booking dates?', a: 'Yes. Each date and slot locks the moment it’s booked, and two-way calendar sync keeps your real availability accurate — so you never double-book a shoot.' },
+      { q: 'Does it stop double-booking dates?', a: 'Yes. Each date and slot locks the moment it’s booked, and Google Calendar busy-time blocking keeps your real availability accurate — so you never double-book a shoot.' },
       { q: 'How does it reduce cancellations and no-shows?', a: 'Requiring a deposit filters out flaky enquiries, and automatic reminders before every shoot keep confirmed clients showing up.' },
       { q: 'Do clients need an app to book?', a: 'No. Clients open your link, pick a date and pay — no app or account needed. It works straight from your Instagram bio or website.' },
       { q: 'Is it suitable for wedding, portrait and event photographers?', a: 'Yes. Wedding, portrait, product, event and pre-wedding photographers, plus videographers and studios, can all use Book A Sloth for shoot bookings and payments.' },
@@ -1561,7 +1561,7 @@ export const PROFESSION_LANDING = {
     faq: [
       { q: 'What is the best booking software for event planners in India?', a: 'Book A Sloth is built for Indian event planners — clients book consultations online, pay an advance to hold a date via UPI or card, and get automatic reminders. It syncs with your calendar, handles GST invoicing and charges 0% commission on paid plans.' },
       { q: 'Can clients pay an advance to hold their date?', a: 'Yes. You can collect a consultation fee or a date-hold advance at checkout through Razorpay (UPI, cards, netbanking), with a GST invoice generated automatically — so only committed clients block your calendar.' },
-      { q: 'Does it prevent double-booking peak dates?', a: 'Yes. A date locks the moment its advance is paid, and two-way calendar sync keeps availability accurate — so two clients can never hold the same date.' },
+      { q: 'Does it prevent double-booking peak dates?', a: 'Yes. A date locks the moment its advance is paid, and Google Calendar busy-time blocking keeps availability accurate — so two clients can never hold the same date.' },
       { q: 'How does it reduce no-shows for planning meetings?', a: 'Automatic email and WhatsApp reminders go out before every consultation, and paid consultations mean serious clients actually attend.' },
       { q: 'How much does it cost?', a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
       { q: 'Is it suitable for wedding planners and decorators?', a: 'Yes. Wedding and event planners, decorators, caterers and venue managers can all use Book A Sloth for consultation bookings, date holds and payments from one link.' },

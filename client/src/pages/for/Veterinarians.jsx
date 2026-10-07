@@ -530,7 +530,7 @@ export default function Veterinarians() {
             </div>
           </Reveal>
           <Reveal delay={0.1} className="mt-6 text-center text-sm text-slate-500">
-            Two-way calendar sync, auto Google Meet links, WhatsApp reminders, and Razorpay payments with automatic GST invoices.
+            Google Calendar busy-time blocking, auto Google Meet links, WhatsApp reminders, and Razorpay payments with automatic GST invoices.
           </Reveal>
           <Reveal delay={0.12} className="mt-8 text-center">
             <Link to="/pricing" className="inline-flex items-center gap-2 text-sm font-semibold hover:no-underline" style={{ color: 'var(--ca-primary)' }}>

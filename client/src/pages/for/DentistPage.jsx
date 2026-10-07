@@ -93,7 +93,7 @@ const STEPS = [
 // logos the previous page shipped (favicon + brand logos are excepted from the
 // image rule; these are the tool-logo row).
 const TOOLS = [
-  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
+  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Busy times blocked, bookings added to your calendar' },
   { name: 'Google Meet', logo: '/images/logos/google-meet.svg', sub: 'Auto Meet links for online consults' },
   { name: 'WhatsApp', logo: '/images/logos/whatsapp.svg', sub: 'Appointment reminders on autopilot' },
   { name: 'Razorpay', logo: razorpayLogo, sub: 'Online payments, refunds & GST invoices' },

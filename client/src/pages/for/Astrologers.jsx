@@ -100,7 +100,7 @@ const STEPS = [
 
 // REAL Book A Sloth integrations only.
 const TOOLS = [
-  { name: 'Google Calendar', logo: calendarLogo, sub: 'Two-way sync of your real availability' },
+  { name: 'Google Calendar', logo: calendarLogo, sub: 'Busy times blocked, bookings added to your calendar' },
   { name: 'WhatsApp', logo: WHATSAPP_LOGO, sub: 'Send reminders and updates' },
   { name: 'Google Meet', logo: meetLogo, sub: 'Auto-add a video link to every reading' },
   { name: 'Zoom', logo: zoomLogo, sub: 'Share meeting links automatically' },
