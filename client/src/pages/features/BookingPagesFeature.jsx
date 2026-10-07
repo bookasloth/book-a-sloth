@@ -212,7 +212,6 @@ function BookingPageDemo() {
     return () => clearInterval(id);
   }, [reduce, paused]);
 
-  const s = DEMO_SERVICES[active];
   return (
     <div className="relative mx-auto w-full max-w-[20.5rem]">
       <Sparkle className="absolute -left-6 top-10 h-6 w-6" />
@@ -224,7 +223,7 @@ function BookingPageDemo() {
             <Link2 size={11} aria-hidden /> bookasloth.com/priya
           </div>
 
-          <div className="px-4 pb-4 pt-5 text-center">
+          <div className="px-4 pb-3 pt-4 text-center">
             <div aria-hidden className="mx-auto flex h-14 w-14 items-center justify-center rounded-full font-heading text-lg font-extrabold text-white" style={{ background: ORANGE_INK }}>PN</div>
             <div className="mt-2.5 font-heading text-base font-extrabold text-[#1a1a1a]">Priya Nair</div>
             <div className="text-xs font-semibold" style={{ color: ORANGE_INK }}>Brand designer</div>
@@ -236,39 +235,39 @@ function BookingPageDemo() {
             </div>
           </div>
 
-          <div className="space-y-1.5 px-3" role="group" aria-label="Services on the demo booking page">
+          <div className="space-y-1.5 px-3 pb-3" role="group" aria-label="Services on the demo booking page">
             {DEMO_SERVICES.map((svc, i) => {
               const on = i === active;
               return (
-                <button
-                  key={svc.title}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => { setActive(i); setPaused(true); }}
-                  className="flex w-full items-center justify-between rounded-[6px] border bg-white px-3 py-2.5 text-left transition-colors"
-                  style={{ borderColor: on ? ORANGE : 'rgba(0,0,0,0.06)', background: on ? PEACH : '#fff' }}
-                >
-                  <span>
-                    <span className="block font-heading text-[13px] font-bold text-[#1a1a1a]">{svc.title}</span>
-                    <span className="mt-0.5 flex items-center gap-1 text-[11px] text-neutral-500">
-                      <Clock size={10} aria-hidden /> {svc.mins} min · {svc.mode}
+                <div key={svc.title} className="overflow-hidden rounded-[6px] border transition-colors" style={{ borderColor: on ? ORANGE : 'rgba(0,0,0,0.06)', background: on ? PEACH : '#fff' }}>
+                  <button
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => { setActive(i); setPaused(true); }}
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-left"
+                  >
+                    <span>
+                      <span className="block font-heading text-[13px] font-bold text-[#1a1a1a]">{svc.title}</span>
+                      <span className="mt-0.5 flex items-center gap-1 text-[11px] text-neutral-500">
+                        <Clock size={10} aria-hidden /> {svc.mins} min · {svc.mode}
+                      </span>
                     </span>
-                  </span>
-                  <span className="font-heading text-[13px] font-extrabold tabular-nums text-[#1a1a1a]">{svc.price}</span>
-                </button>
+                    <span className="font-heading text-[13px] font-extrabold tabular-nums text-[#1a1a1a]">{svc.price}</span>
+                  </button>
+                  {on && (
+                    <div className="px-3 pb-3" aria-live="polite">
+                      <p className="flex gap-1.5 text-[12px] leading-snug text-neutral-700">
+                        {svc.mode === 'Online' ? <Video size={12} className="mt-0.5 shrink-0 text-neutral-500" aria-hidden /> : <MapPin size={12} className="mt-0.5 shrink-0 text-neutral-500" aria-hidden />}
+                        {svc.desc}
+                      </p>
+                      <div className="mt-2 rounded-[6px] py-2 text-center text-[13px] font-semibold text-white" style={{ background: ORANGE_INK }}>
+                        Book · {svc.price}
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
-          </div>
-
-          <div className="mx-3 mb-3 mt-2.5 rounded-[6px] border border-dashed border-black/10 bg-white p-3" aria-live="polite">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500">
-              {s.mode === 'Online' ? <Video size={11} aria-hidden /> : <MapPin size={11} aria-hidden />}
-              {s.title} · {s.mins} min
-            </div>
-            <p className="mt-1 min-h-[3.2rem] text-[12px] leading-snug text-neutral-700">{s.desc}</p>
-            <div className="mt-2 rounded-[6px] py-2 text-center text-[13px] font-semibold text-white" style={{ background: ORANGE_INK }}>
-              Book {s.title} · {s.price}
-            </div>
           </div>
         </div>
       </div>
@@ -441,8 +440,8 @@ export default function BookingPagesFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (phone-frame booking page) ═══════════════ */}
-      <section className="relative px-5 pb-20 pt-14 sm:px-8 lg:pb-28 lg:pt-20">
-        <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-24 lg:pt-10">
+        <div className="mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-neutral-500">
               <Link to="/" className="text-neutral-500 hover:text-[#1a1a1a] hover:no-underline">Home</Link>
@@ -451,41 +450,31 @@ export default function BookingPagesFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-[#1a1a1a]">Booking pages</span>
             </nav>
-            <Reveal instant className="mt-6">
+            <Reveal instant className="mt-5">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-black/5 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-700 shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
                 <Sparkle className="h-3 w-3" /> For freelancers, coaches and creators
               </span>
             </Reveal>
-            <Reveal as="h1" instant delay={0.03} className="mt-5 font-heading text-[clamp(2.4rem,6vw,4.4rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#1a1a1a]">
+            <Reveal as="h1" instant delay={0.03} className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#1a1a1a]">
               A free booking page that{' '}
               <span className="relative inline-block whitespace-nowrap" style={{ color: ORANGE_INK }}>
                 feels like you.
                 <Squiggle className="absolute -bottom-2 left-0 h-3 w-full" />
               </span>
             </Reveal>
-            <Reveal as="p" instant delay={0.06} className="mt-7 max-w-lg text-base leading-relaxed text-neutral-600 sm:text-lg">
+            <Reveal as="p" instant delay={0.06} className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600 lg:text-[17px]">
               Your photo, bio, socials and every service with its price, at bookasloth.com/yourname. Clients pick a time and pay right there. Put it in your Instagram bio and let it do the asking.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta>Claim your free link <ArrowRight size={16} /></PrimaryCta>
-              <a href="#how" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1a1a1a] hover:no-underline hover:opacity-70">
-                How it works <ArrowRight size={15} />
-              </a>
+              <Link to={DEMO} className="inline-flex items-center gap-1.5 text-sm font-semibold hover:no-underline hover:opacity-80" style={{ color: ORANGE_INK }}>
+                See a live booking page <ArrowRight size={15} />
+              </Link>
             </Reveal>
           </div>
 
           <Reveal instant delay={0.12} className="relative">
             <BookingPageDemo />
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <CurvedArrow className="hidden h-8 w-14 -scale-y-100 sm:block" />
-              <Link
-                to={DEMO}
-                className="inline-flex items-center gap-1.5 rounded-full border bg-white px-4 py-2 text-sm font-semibold transition-colors hover:no-underline hover:bg-[#FFE9DD]"
-                style={{ borderColor: `${ORANGE}4d`, color: ORANGE_INK }}
-              >
-                Open the live demo page <ArrowRight size={14} />
-              </Link>
-            </div>
           </Reveal>
         </div>
       </section>

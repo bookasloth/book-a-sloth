@@ -377,9 +377,9 @@ export default function SchedulingFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (dotted grid + slot picker demo) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-14 sm:px-8 lg:pb-28 lg:pt-20" style={{ background: `linear-gradient(180deg, #FFFFFF 0%, ${PALE} 100%)` }}>
+      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10" style={{ background: `linear-gradient(180deg, #FFFFFF 0%, ${PALE} 100%)` }}>
         <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(180deg,transparent,black_30%,black_70%,transparent)]" style={DOTS} />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
               <Link to="/" className="text-slate-500 hover:text-slate-800 hover:no-underline">Home</Link>
@@ -388,19 +388,19 @@ export default function SchedulingFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-slate-700">Online scheduling</span>
             </nav>
-            <Reveal as="h1" instant className="mt-6 font-heading text-[clamp(2.3rem,5.6vw,4.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em]">
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em]">
               Free online appointment scheduling, <span style={{ color: BLUE }}>minus the back and forth.</span>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mt-6 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
+            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 lg:text-[17px]">
               Scheduling software for coaches, consultants and creators in India. Share one link, clients pick a time you are actually free, confirm with a WhatsApp code, and it is booked.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta>Start free <ArrowRight size={16} /></PrimaryCta>
               <Link to="/demo" className="inline-flex items-center gap-1.5 text-sm font-semibold hover:no-underline hover:opacity-80" style={{ color: BLUE }}>
                 See a live booking page <ArrowRight size={15} />
               </Link>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-x-6 gap-y-2">
+            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
               {HERO_TRUST.map((t) => (
                 <span key={t} className="flex items-center gap-1.5 text-[13px] text-slate-600">
                   <Check size={14} style={{ color: BLUE }} aria-hidden /> {t}

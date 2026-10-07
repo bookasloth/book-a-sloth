@@ -353,8 +353,8 @@ export default function ReviewsFeature() {
         <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(31,15,23,0.80) 0%, rgba(31,15,23,0.72) 45%, rgba(31,15,23,0.92) 100%)' }} />
         <div aria-hidden className="pointer-events-none absolute -left-40 top-10 h-[34rem] w-[34rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(255,77,147,0.28), transparent)' }} />
 
-        <section className="relative px-5 pb-16 pt-14 sm:px-8 lg:pb-20 lg:pt-20">
-          <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="relative px-5 pb-16 pt-8 sm:px-8 lg:pb-20 lg:pt-10">
+          <div className="mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <nav aria-label="Breadcrumb" className="text-xs text-white/60">
                 <Link to="/" className="text-white/60 hover:text-white hover:no-underline">Home</Link>
@@ -363,19 +363,19 @@ export default function ReviewsFeature() {
                 <span aria-hidden className="mx-2">/</span>
                 <span aria-current="page" className="text-white/85">Reviews</span>
               </nav>
-              <Reveal as="h1" instant className="mt-6 font-heading text-[clamp(2.4rem,6vw,4.4rem)] font-extrabold leading-[1.0] tracking-[-0.03em] text-white">
+              <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.0] tracking-[-0.03em] text-white">
                 Reviews from clients who <span style={{ color: PINK }}>actually booked you.</span>
               </Reveal>
-              <Reveal as="p" instant delay={0.05} className="mt-6 max-w-lg text-base leading-relaxed text-white/80 sm:text-lg">
-                Collect reviews from clients after every booking, without asking by hand. When a session is complete we ask the guest for a review, only guests with a real booking can leave one, and it shows on your page where new clients decide.
+              <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-white/80 lg:text-[17px]">
+                After every completed session we ask the client for a review. Only real bookings can leave one, and it shows on your page where new clients decide.
               </Reveal>
-              <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <PrimaryCta onDark>Start free <ArrowRight size={16} /></PrimaryCta>
                 <a href="#verified" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white hover:no-underline hover:opacity-80">
                   How reviews get verified <ArrowRight size={15} />
                 </a>
               </Reveal>
-              <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-x-6 gap-y-2">
+              <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
                 {HERO_TRUST.map((t) => (
                   <span key={t} className="flex items-center gap-1.5 text-[13px] text-white/70">
                     <Check size={14} style={{ color: PINK }} aria-hidden /> {t}

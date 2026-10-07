@@ -375,10 +375,10 @@ export default function DigitalProductsFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (gradient + product shelf demo) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-16 pt-14 sm:px-8 lg:pb-24 lg:pt-20" style={{ background: GRADIENT }}>
+      <section className="relative overflow-hidden px-5 pb-16 pt-8 sm:px-8 lg:pb-24 lg:pt-10" style={{ background: GRADIENT }}>
         <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(139,92,246,0.28), transparent)' }} />
         <div aria-hidden className="pointer-events-none absolute -bottom-48 -left-32 h-[28rem] w-[28rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(109,40,217,0.22), transparent)' }} />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-[#EEF0FF]/55">
               <Link to="/" className="text-[#EEF0FF]/55 hover:text-[#EEF0FF] hover:no-underline">Home</Link>
@@ -387,19 +387,19 @@ export default function DigitalProductsFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-[#EEF0FF]/85">Digital products</span>
             </nav>
-            <Reveal as="h1" instant className="mt-6 font-heading text-[clamp(2.4rem,6vw,4.4rem)] font-extrabold leading-[1] tracking-[-0.035em] text-[#EEF0FF]">
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1] tracking-[-0.035em] text-[#EEF0FF]">
               Sell digital products online, <span style={{ color: VIOLET_SOFT }}>right beside your bookings.</span>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mt-6 max-w-lg text-base leading-relaxed text-[#EEF0FF]/75 sm:text-lg">
-              Put your PDF guides, templates and checklists on the same page clients already book you from. Buyers verify with a WhatsApp code, pay by UPI or card, and get a secure download link. No separate store to run.
+            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-[#EEF0FF]/75 lg:text-[17px]">
+              Sell PDF guides, templates and checklists from the page clients already book you on. Buyers pay by UPI or card and get a secure download link.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta>Start free <ArrowRight size={16} /></PrimaryCta>
               <a href="#plans" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#EEF0FF] hover:no-underline hover:opacity-80">
                 See product limits by plan <ArrowRight size={15} />
               </a>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-x-6 gap-y-2">
+            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
               {HERO_TRUST.map((t) => (
                 <span key={t} className="flex items-center gap-1.5 text-[13px] text-[#EEF0FF]/65">
                   <Check size={14} style={{ color: VIOLET_SOFT }} aria-hidden /> {t}

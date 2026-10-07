@@ -338,9 +338,9 @@ export default function PaymentsFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (editorial display + checkout demo) ═══════════════ */}
-      <section className="relative overflow-hidden bg-[#0E3B2C] px-5 pb-20 pt-14 text-[#F5EFE3] sm:px-8 lg:pb-28 lg:pt-20">
+      <section className="relative overflow-hidden bg-[#0E3B2C] px-5 pb-20 pt-8 text-[#F5EFE3] sm:px-8 lg:pb-28 lg:pt-10">
         <div aria-hidden className="pointer-events-none absolute -right-32 -top-32 h-[30rem] w-[30rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(233,196,106,0.16), transparent)' }} />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-[#F5EFE3]/55">
               <Link to="/" className="text-[#F5EFE3]/55 hover:text-[#F5EFE3] hover:no-underline">Home</Link>
@@ -349,19 +349,19 @@ export default function PaymentsFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-[#F5EFE3]/85">Payments</span>
             </nav>
-            <Reveal as="h1" instant className="mt-6 font-heading text-[clamp(2.4rem,6vw,4.6rem)] font-extrabold text-[#F5EFE3] leading-[0.98] tracking-[-0.035em]">
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold text-[#F5EFE3] leading-[0.98] tracking-[-0.035em]">
               Get paid before the session, <span style={{ color: GOLD }}>not after.</span>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mt-6 max-w-lg text-base leading-relaxed text-[#F5EFE3]/75 sm:text-lg">
+            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-[#F5EFE3]/75 lg:text-[17px]">
               Online payments for freelancers, coaches and consultants in India. Clients pay by UPI, card or netbanking when they book, every booking gets a GST invoice, and your payout lands in your bank.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta dark>Start free <ArrowRight size={16} /></PrimaryCta>
               <a href="#keep" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#F5EFE3] hover:no-underline hover:opacity-80">
                 See what you keep <ArrowRight size={15} />
               </a>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-x-6 gap-y-2">
+            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
               {HERO_TRUST.map((t) => (
                 <span key={t} className="flex items-center gap-1.5 text-[13px] text-[#F5EFE3]/65">
                   <Check size={14} style={{ color: GOLD }} aria-hidden /> {t}

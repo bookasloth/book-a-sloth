@@ -375,9 +375,9 @@ export default function NotificationsFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (bold display + phone chat demo) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-14 sm:px-8 lg:pb-28 lg:pt-20">
+      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10">
         <div aria-hidden className="pointer-events-none absolute -left-40 top-10 h-[28rem] w-[28rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(37,211,102,0.12), transparent)' }} />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-[#F2F5F3]/55">
               <Link to="/" className="text-[#F2F5F3]/55 hover:text-[#F2F5F3] hover:no-underline">Home</Link>
@@ -386,19 +386,19 @@ export default function NotificationsFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-[#F2F5F3]/85">Notifications</span>
             </nav>
-            <Reveal as="h1" instant className="mt-6 font-heading text-[clamp(2.4rem,6vw,4.6rem)] font-extrabold uppercase leading-[0.95] tracking-[-0.03em] text-[#F2F5F3]">
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold uppercase leading-[0.95] tracking-[-0.03em] text-[#F2F5F3]">
               The appointment reminder system that <span style={{ color: GREEN }}>texts clients for you.</span>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mt-6 max-w-lg text-base leading-relaxed text-[#F2F5F3]/75 sm:text-lg">
+            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-[#F2F5F3]/75 lg:text-[17px]">
               Automated WhatsApp and email reminders for coaches, therapists, tutors and consultants in India. Every booking is confirmed, reminded and followed up without you typing a word.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta>Start free <ArrowRight size={16} /></PrimaryCta>
               <a href="#plans" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#F2F5F3] hover:no-underline hover:opacity-80">
                 See what fires on each plan <ArrowRight size={15} />
               </a>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-x-6 gap-y-2">
+            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
               {HERO_TRUST.map((t) => (
                 <span key={t} className="flex items-center gap-1.5 text-[13px] text-[#F2F5F3]/65">
                   <Check size={14} style={{ color: GREEN }} aria-hidden /> {t}

@@ -180,7 +180,7 @@ function Avatar({ name, i = 0, size = 'h-9 w-9 text-xs', ring = false }) {
   return (
     <span
       aria-hidden
-      className={`flex shrink-0 items-center justify-center rounded-full font-heading font-bold ${size} ${ring ? 'ring-2 ring-[#FBF6EE]' : ''}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-heading font-bold ${size} ${ring ? 'ring-2 ring-white' : ''}`}
       style={{ background: TINTS[i % TINTS.length], color: INK }}
     >
       {initials(name)}
@@ -192,8 +192,8 @@ function Avatar({ name, i = 0, size = 'h-9 w-9 text-xs', ring = false }) {
 function AvatarStackPill({ names, label }) {
   return (
     <span className="inline-flex items-center gap-3 rounded-full border border-black/5 bg-white py-1.5 pl-1.5 pr-4 shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
-      <span className="flex -space-x-2">
-        {names.map((n, i) => <Avatar key={n} name={n} i={i} size="h-8 w-8 text-[11px]" ring />)}
+      <span className="flex -space-x-1.5">
+        {names.map((n, i) => <Avatar key={n} name={n} i={i} size="h-8 w-8 text-[10px] tracking-tight" ring />)}
       </span>
       <span className="text-sm font-semibold" style={{ color: INK }}>{label}</span>
     </span>
@@ -442,9 +442,9 @@ export default function ClientManagementFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (client list + client card demo) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-14 sm:px-8 lg:pb-28 lg:pt-20">
+      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10">
         <div aria-hidden className="pointer-events-none absolute -left-40 top-10 h-[28rem] w-[28rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(252,231,218,0.9), transparent)' }} />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[0.95fr_1.05fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs" style={{ color: MUTED }}>
               <Link to="/" className="hover:no-underline hover:opacity-70" style={{ color: MUTED }}>Home</Link>
@@ -453,22 +453,22 @@ export default function ClientManagementFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" style={{ color: INK }}>Client management</span>
             </nav>
-            <Reveal instant className="mt-6">
+            <Reveal instant className="mt-5">
               <AvatarStackPill names={SAMPLE_CLIENTS.map((c) => c.name)} label="Your clients, in one place" />
             </Reveal>
-            <Reveal as="h1" instant delay={0.03} className="mt-6 font-heading text-[clamp(2.3rem,5.4vw,4.1rem)] font-extrabold leading-[1.02] tracking-[-0.03em]" style={{ color: INK }}>
-              Free client management for coaches, <span style={{ color: ACCENT }}>that fills itself in.</span>
+            <Reveal as="h1" instant delay={0.03} className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em]" style={{ color: INK }}>
+              Free client management <span style={{ color: ACCENT }}>that fills itself in.</span>
             </Reveal>
-            <Reveal as="p" instant delay={0.06} className="mt-6 max-w-lg text-base leading-relaxed sm:text-lg" style={{ color: MUTED }}>
-              Everyone who books with you is saved on their own, with every session, what they have spent and your private notes. For coaches, creators and consultants who would rather remember people than maintain a CRM.
+            <Reveal as="p" instant delay={0.06} className="mt-4 max-w-xl text-base leading-relaxed lg:text-[17px]" style={{ color: MUTED }}>
+              Everyone who books you is saved automatically, with every session, what they have spent and your private notes. No CRM to maintain.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta>Start free <ArrowRight size={16} /></PrimaryCta>
               <a href="#plans" className="inline-flex items-center gap-1.5 text-sm font-semibold hover:no-underline hover:opacity-80" style={{ color: ACCENT }}>
                 What is free, what is not <ArrowRight size={15} />
               </a>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-2">
+            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-2">
               {HERO_TRUST.map((t) => (
                 <span key={t} className="inline-flex items-center gap-1.5 rounded-full border border-black/5 bg-white/70 px-3 py-1.5 text-[13px]" style={{ color: MUTED }}>
                   <Check size={13} style={{ color: ACCENT }} aria-hidden /> {t}

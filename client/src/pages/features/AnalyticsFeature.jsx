@@ -534,13 +534,13 @@ export default function AnalyticsFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (tabbed mini dashboard) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-14 sm:px-8 lg:pb-28 lg:pt-20" style={{ background: CHARCOAL, color: ON_DARK }}>
+      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10" style={{ background: CHARCOAL, color: ON_DARK }}>
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.35]"
           style={{ backgroundImage: 'linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
         />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1fr_1fr]">
+        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-[#94A3B8]">
               <Link to="/" className="text-[#94A3B8] hover:text-[#F1F5F9] hover:no-underline">Home</Link>
@@ -549,22 +549,22 @@ export default function AnalyticsFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-[#E2E8F0]">Analytics</span>
             </nav>
-            <Reveal instant className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-[#CBD5E1]">
+            <Reveal instant className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-[#CBD5E1]">
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: AMBER }} aria-hidden /> Booking analytics
             </Reveal>
-            <Reveal as="h1" instant className="mt-5 font-heading text-[clamp(2.3rem,5.4vw,4.1rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#F1F5F9]">
-              Booking analytics for freelancers and coaches, <span style={{ color: AMBER }}>without the spreadsheet.</span>
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#F1F5F9]">
+              Booking analytics, <span style={{ color: AMBER }}>without the spreadsheet.</span>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mt-6 max-w-lg text-base leading-relaxed text-[#CBD5E1] sm:text-lg">
-              Net and gross earnings, paid bookings, revenue by service and your top clients, in the same dashboard you take bookings from. Every number comes from your bookings, so there is nothing to type in.
+            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-[#CBD5E1] lg:text-[17px]">
+              Earnings, paid bookings, revenue by service and your top clients, for freelancers and coaches. Every number comes straight from your bookings.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta dark>Start free <ArrowRight size={16} /></PrimaryCta>
               <a href="#questions" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#F1F5F9] hover:no-underline hover:opacity-80">
                 See what it answers <ArrowRight size={15} />
               </a>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-x-6 gap-y-2">
+            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
               {HERO_TRUST.map((t) => (
                 <span key={t} className="flex items-center gap-1.5 text-[13px] text-[#94A3B8]">
                   <Check size={14} style={{ color: AMBER }} aria-hidden /> {t}

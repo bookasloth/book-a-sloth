@@ -521,10 +521,10 @@ export default function GoogleCalendarFeature() {
 
       {/* ═══════════════ 1 · HERO (two-calendar sync demo) ═══════════════ */}
       <section
-        className="relative px-5 pb-20 pt-14 sm:px-8 lg:pb-28 lg:pt-20"
+        className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10"
         style={{ backgroundImage: 'radial-gradient(rgba(32,33,36,0.07) 1px, transparent 1px)', backgroundSize: '22px 22px' }}
       >
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1fr_1fr]">
+        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs" style={{ color: MUTED }}>
               <Link to="/" className="hover:no-underline hover:opacity-80" style={{ color: MUTED }}>Home</Link>
@@ -533,20 +533,20 @@ export default function GoogleCalendarFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" style={{ color: INK }}>Google Calendar</span>
             </nav>
-            <Reveal instant className="mt-6"><Eyebrow>Google Calendar appointment scheduler &amp; sync</Eyebrow></Reveal>
-            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.3rem,5.4vw,4.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#202124]">
-              Sync Google Calendar with your booking page. <span style={{ color: LINK }}>One calendar, not two.</span>
+            <Reveal instant className="mt-5"><Eyebrow>Google Calendar appointment scheduler &amp; sync</Eyebrow></Reveal>
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#202124]">
+              Google Calendar sync for <span style={{ color: LINK }}>your booking page.</span>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mt-6 max-w-lg text-base leading-relaxed sm:text-lg" style={{ color: MUTED }}>
-              Book A Sloth reads the busy times on your Google Calendar to hide slots you can&rsquo;t take, and adds every online booking back to it with a Google Meet link. Reschedule or cancel, and the event follows.
+            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed lg:text-[17px]" style={{ color: MUTED }}>
+              Your busy times hide the slots you can&rsquo;t take. Every online booking lands in your calendar with a Google Meet link, and moves when you reschedule.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta>Connect your calendar free <ArrowRight size={16} /></PrimaryCta>
               <a href="#sync" className="inline-flex items-center gap-1.5 text-sm font-semibold hover:no-underline hover:opacity-80" style={{ color: LINK }}>
                 What syncs which way <ArrowRight size={15} />
               </a>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-x-6 gap-y-2">
+            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
               {HERO_TRUST.map((t, i) => (
                 <span key={t} className="flex items-center gap-2 text-[13px]" style={{ color: MUTED }}>
                   <Dot color={HUES[i]} size={7} /> {t}

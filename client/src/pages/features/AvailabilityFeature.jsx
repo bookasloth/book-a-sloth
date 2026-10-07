@@ -403,8 +403,8 @@ export default function AvailabilityFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (highlighted headline + clickable hours grid) ═══════════════ */}
-      <section className="relative px-5 pb-20 pt-14 sm:px-8 lg:pb-28 lg:pt-20">
-        <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1fr_1fr]">
+      <section className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10">
+        <div className="mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-neutral-500">
               <Link to="/" className="text-neutral-500 hover:text-[#1a1a1a] hover:no-underline">Home</Link>
@@ -413,19 +413,19 @@ export default function AvailabilityFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-[#1a1a1a]">Availability</span>
             </nav>
-            <Reveal as="h1" instant className="mt-6 font-heading text-[clamp(2.4rem,5.6vw,4.3rem)] font-extrabold leading-[1.04] tracking-[-0.03em] text-[#1a1a1a]">
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.04] tracking-[-0.03em] text-[#1a1a1a]">
               Set your availability for online bookings <Hl>once.</Hl>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mt-6 max-w-lg text-base leading-relaxed text-neutral-600 sm:text-lg">
+            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600 lg:text-[17px]">
               Your weekly hours, breaks, days off and a buffer between sessions, set one time. Your booking page only offers the hours you are actually free, every week, without you touching it.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta>Start free <ArrowRight size={16} /></PrimaryCta>
               <a href="#buffer" className="inline-flex items-center gap-1.5 text-sm font-semibold hover:no-underline hover:opacity-80" style={{ color: TEAL }}>
                 Try the buffer maths <ArrowRight size={15} />
               </a>
             </Reveal>
-            <Reveal instant delay={0.14} className="mt-9 flex flex-wrap gap-x-6 gap-y-2">
+            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
               {HERO_TRUST.map((t) => (
                 <span key={t} className="flex items-center gap-1.5 text-[13px] text-neutral-600">
                   <Check size={14} style={{ color: TEAL }} aria-hidden /> {t}
