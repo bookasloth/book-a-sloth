@@ -93,6 +93,8 @@ const CAPS = [
   { icon: Lock, title: 'No public file links', body: 'Uploaded files are never handed out as a permanent URL. Each download opens a link that expires within a minute.' },
   { icon: RefreshCw, title: 'Lost links, restored', body: 'If a buyer misses the 24 hour window, they verify their email with a code and get a fresh link on their own.' },
   { icon: Gift, title: 'Free downloads, same delivery', body: 'Set a price of ₹0 for a checklist or a sample chapter. There is no booking fee, and the buyer gets the same secure link.' },
+  { icon: Smartphone, title: 'No account to buy', body: 'Buyers give their name, email and WhatsApp number and confirm with a 6-digit WhatsApp code. No password, no app.' },
+  { icon: IndianRupee, title: 'UPI, card or wallet', body: 'Paid products use the same Razorpay checkout as your bookings. The buyer pays your price plus a ₹10 booking fee and GST on it.' },
 ];
 
 const PICKED = ['Happy Singh', 'Vishal Chaware', 'Sangharata Somkuvar'];
@@ -375,10 +377,10 @@ export default function DigitalProductsFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (gradient + product shelf demo) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-16 pt-8 sm:px-8 lg:pb-24 lg:pt-10" style={{ background: GRADIENT }}>
+      <section className="relative overflow-hidden px-5 pb-16 pt-8 sm:px-8 lg:pb-24 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center" style={{ background: GRADIENT }}>
         <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(139,92,246,0.28), transparent)' }} />
         <div aria-hidden className="pointer-events-none absolute -bottom-48 -left-32 h-[28rem] w-[28rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(109,40,217,0.22), transparent)' }} />
-        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-[#EEF0FF]/55">
               <Link to="/" className="text-[#EEF0FF]/55 hover:text-[#EEF0FF] hover:no-underline">Home</Link>

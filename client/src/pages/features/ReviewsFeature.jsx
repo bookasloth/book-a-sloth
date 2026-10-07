@@ -139,7 +139,7 @@ const VERIFY = [
   },
 ];
 
-const PICKED = ['Happy Singh', 'Ar. Pranav Kadoo', 'Mukesh Tidke', 'Sangharata Somkuvar'];
+const PICKED = ['Happy Singh', 'Ar. Pranav Kadoo', 'Mukesh Tidke', 'Sangharata Somkuvar', 'Vishal Chaware', 'Dr. Yukta Bawankar'];
 const QUOTES = PICKED.map((n) => ALL_TESTIMONIALS.find((t) => t.name === n)).filter(Boolean);
 
 const FAQ = [
@@ -353,8 +353,8 @@ export default function ReviewsFeature() {
         <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(31,15,23,0.80) 0%, rgba(31,15,23,0.72) 45%, rgba(31,15,23,0.92) 100%)' }} />
         <div aria-hidden className="pointer-events-none absolute -left-40 top-10 h-[34rem] w-[34rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(255,77,147,0.28), transparent)' }} />
 
-        <section className="relative px-5 pb-16 pt-8 sm:px-8 lg:pb-20 lg:pt-10">
-          <div className="mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="relative px-5 pb-16 pt-8 sm:px-8 lg:pb-20 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center">
+          <div className="mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <nav aria-label="Breadcrumb" className="text-xs text-white/60">
                 <Link to="/" className="text-white/60 hover:text-white hover:no-underline">Home</Link>
@@ -504,7 +504,8 @@ export default function ReviewsFeature() {
       {/* ═══════════════ 5 · CAPABILITIES (two-column icon list) ═══════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-          <div>
+          {/* Left intro stays pinned while the list scrolls past it. */}
+          <div className="lg:sticky lg:top-24 lg:self-start">
             <Reveal as="h2" className="font-heading text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
               Built so reviews <span style={{ color: PINK_INK }}>can be trusted.</span>
             </Reveal>
@@ -515,7 +516,7 @@ export default function ReviewsFeature() {
               <Heart size={14} aria-hidden /> Included on every plan
             </Reveal>
           </div>
-          <ul className="grid gap-x-10 sm:grid-cols-2">
+          <ul className="grid gap-x-10 sm:grid-cols-2 lg:grid-cols-1">
             {CAPS.map((c, i) => (
               <Reveal as="li" key={c.title} delay={(i % 2) * 0.05} className="flex gap-4 border-t border-black/5 py-6">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px]" style={{ background: BLUSH, color: PINK_INK }}>

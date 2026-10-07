@@ -188,7 +188,7 @@ function SlotPicker() {
     : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 }, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } };
 
   return (
-    <div className="mx-auto w-full max-w-[24rem]">
+    <div className="mx-auto w-full max-w-[28rem]">
       <div className="overflow-hidden rounded-[10px] border border-black/5 bg-white shadow-[0_30px_70px_-30px_rgba(11,37,89,0.35)]">
         <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
           <div>
@@ -377,9 +377,9 @@ export default function SchedulingFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (dotted grid + slot picker demo) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10" style={{ background: `linear-gradient(180deg, #FFFFFF 0%, ${PALE} 100%)` }}>
+      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center" style={{ background: `linear-gradient(180deg, #FFFFFF 0%, ${PALE} 100%)` }}>
         <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(180deg,transparent,black_30%,black_70%,transparent)]" style={DOTS} />
-        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
               <Link to="/" className="text-slate-500 hover:text-slate-800 hover:no-underline">Home</Link>
@@ -388,7 +388,7 @@ export default function SchedulingFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-slate-700">Online scheduling</span>
             </nav>
-            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em]">
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.3rem,4vw,3.6rem)] font-extrabold leading-[1.02] tracking-[-0.03em]">
               Free online appointment scheduling, <span style={{ color: BLUE }}>minus the back and forth.</span>
             </Reveal>
             <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 lg:text-[17px]">

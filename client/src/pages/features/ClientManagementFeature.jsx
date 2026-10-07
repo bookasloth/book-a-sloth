@@ -102,7 +102,8 @@ export const totalSpent = (c) => c.bookings.reduce((s, b) => s + b.amount, 0);
 
 const HERO_TRUST = [`Free on ${FREE_PLAN.name}`, 'No data entry', 'Your clients stay yours'];
 
-const FACTS = ['Built from your bookings', 'Search by name, phone or email', 'Export to CSV', 'Private notes'];
+// Hero checklist (above the CTA) — every item verified in crmService / ClientsList.
+const FACTS = ['Built from your bookings', 'Search by name, phone or email', 'Export to CSV', 'Private notes', 'Booking history and total spent', 'Recurring and lapsed filters'];
 
 const SCATTERED = [
   { icon: MessageCircle, label: 'WhatsApp', text: '"who was the 4 pm on Tuesday?"', rot: '-4deg', pos: 'left-[2%] top-0' },
@@ -442,9 +443,9 @@ export default function ClientManagementFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (client list + client card demo) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10">
+      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center">
         <div aria-hidden className="pointer-events-none absolute -left-40 top-10 h-[28rem] w-[28rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(252,231,218,0.9), transparent)' }} />
-        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="relative mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[0.95fr_1.05fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs" style={{ color: MUTED }}>
               <Link to="/" className="hover:no-underline hover:opacity-70" style={{ color: MUTED }}>Home</Link>
@@ -453,27 +454,28 @@ export default function ClientManagementFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" style={{ color: INK }}>Client management</span>
             </nav>
-            <Reveal instant className="mt-5">
+            <Reveal instant className="mt-5 hidden sm:block">
               <AvatarStackPill names={SAMPLE_CLIENTS.map((c) => c.name)} label="Your clients, in one place" />
             </Reveal>
-            <Reveal as="h1" instant delay={0.03} className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em]" style={{ color: INK }}>
+            <Reveal as="h1" instant delay={0.03} className="mt-4 font-heading text-[clamp(2.1rem,3.5vw,3rem)] font-extrabold leading-[1.02] tracking-[-0.03em]" style={{ color: INK }}>
               Free client management <span style={{ color: ACCENT }}>that fills itself in.</span>
             </Reveal>
             <Reveal as="p" instant delay={0.06} className="mt-4 max-w-xl text-base leading-relaxed lg:text-[17px]" style={{ color: MUTED }}>
               Everyone who books you is saved automatically, with every session, what they have spent and your private notes. No CRM to maintain.
             </Reveal>
-            <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <Reveal as="ul" instant delay={0.08} className="mt-4 grid max-w-xl gap-x-6 gap-y-1.5 sm:grid-cols-2">
+              {FACTS.map((f) => (
+                <li key={f} className="flex items-center gap-2 text-[14.5px] font-medium" style={{ color: INK }}>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: PEACH }}><Check size={12} style={{ color: ACCENT }} aria-hidden /></span>
+                  {f}
+                </li>
+              ))}
+            </Reveal>
+            <Reveal instant delay={0.1} className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <PrimaryCta>Start free <ArrowRight size={16} /></PrimaryCta>
               <a href="#plans" className="inline-flex items-center gap-1.5 text-sm font-semibold hover:no-underline hover:opacity-80" style={{ color: ACCENT }}>
                 What is free, what is not <ArrowRight size={15} />
               </a>
-            </Reveal>
-            <Reveal instant delay={0.14} className="mt-6 flex flex-wrap gap-2">
-              {HERO_TRUST.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1.5 rounded-full border border-black/5 bg-white/70 px-3 py-1.5 text-[13px]" style={{ color: MUTED }}>
-                  <Check size={13} style={{ color: ACCENT }} aria-hidden /> {t}
-                </span>
-              ))}
             </Reveal>
           </div>
           <Reveal instant delay={0.12}>
@@ -487,7 +489,7 @@ export default function ClientManagementFeature() {
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 rounded-[10px] px-6 py-8 text-center sm:px-10 lg:flex-row lg:justify-between lg:text-left" style={{ background: PEACH }}>
           <AvatarStackPill names={['Asha Example', 'Rohan Sample', 'Meera Demo']} label="Every client who books, saved" />
           <ul className="flex flex-wrap justify-center gap-2 lg:justify-end">
-            {FACTS.map((f) => (
+            {HERO_TRUST.map((f) => (
               <li key={f} className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[13px] font-semibold" style={{ color: INK }}>
                 <Check size={13} style={{ color: ACCENT }} aria-hidden /> {f}
               </li>

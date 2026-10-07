@@ -534,13 +534,13 @@ export default function AnalyticsFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (tabbed mini dashboard) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10" style={{ background: CHARCOAL, color: ON_DARK }}>
+      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center" style={{ background: CHARCOAL, color: ON_DARK }}>
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.35]"
           style={{ backgroundImage: 'linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
         />
-        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1fr_1fr]">
+        <div className="relative mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-[#94A3B8]">
               <Link to="/" className="text-[#94A3B8] hover:text-[#F1F5F9] hover:no-underline">Home</Link>

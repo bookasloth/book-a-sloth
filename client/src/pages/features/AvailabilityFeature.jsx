@@ -27,7 +27,7 @@
 // IMAGES: empty ImgSlot placeholders (data-img-slot names the photo to supply).
 // Global Navbar + Footer come from App.jsx. No hover uplift anywhere.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check, X, ImageIcon, CalendarDays } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
@@ -363,6 +363,84 @@ function BufferControl() {
   );
 }
 
+function QuoteCard({ t, hidden = false }) {
+  return (
+    <figure aria-hidden={hidden || undefined} className="flex w-[85%] shrink-0 flex-col justify-between rounded-[10px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:w-[22rem]">
+      <blockquote className="text-[16px] leading-relaxed text-[#1a1a1a]">&ldquo;{t.quote}&rdquo;</blockquote>
+      <figcaption className="mt-6 flex items-center gap-3">
+        <img src={t.avatar} alt="" loading="lazy" className="h-11 w-11 rounded-full object-cover" />
+        <div>
+          <div className="text-sm font-semibold text-[#1a1a1a]">{t.name}</div>
+          <div className="text-xs text-neutral-500">{t.role}</div>
+        </div>
+      </figcaption>
+    </figure>
+  );
+}
+
+/* Testimonials slide one card, pause, slide again ("swoosh, stop"). The list is
+   rendered twice so the loop wraps seamlessly: after the last real card the track
+   snaps back to the start with the transition off. Pauses on hover/focus; under
+   reduced motion it falls back to a plain sideways-scroll row. */
+const SWOOSH_EVERY = 3200;
+function SwooshCarousel({ items }) {
+  const trackRef = useRef(null);
+  const pausedRef = useRef(false);
+  const [idx, setIdx] = useState(0);
+  const [animate, setAnimate] = useState(true);
+  const [step, setStep] = useState(0);
+  const [reduce] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el || el.children.length < 2) return undefined;
+    const measure = () => setStep(el.children[1].offsetLeft - el.children[0].offsetLeft);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (reduce) return undefined;
+    const id = setInterval(() => {
+      if (!pausedRef.current) { setAnimate(true); setIdx((i) => i + 1); }
+    }, SWOOSH_EVERY);
+    return () => clearInterval(id);
+  }, [reduce]);
+
+  if (reduce) {
+    return (
+      <div className="mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 sm:gap-6" role="region" aria-label="Host testimonials, scroll sideways for more" tabIndex={0}>
+        {items.map((t) => <QuoteCard key={t.name} t={t} />)}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="mt-12 overflow-hidden"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Host testimonials"
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+      onFocus={() => { pausedRef.current = true; }}
+      onBlur={() => { pausedRef.current = false; }}
+    >
+      <div
+        ref={trackRef}
+        className="flex gap-5 pb-4 sm:gap-6"
+        style={{ transform: `translate3d(${-idx * step}px,0,0)`, transition: animate ? 'transform 700ms cubic-bezier(0.22,1,0.36,1)' : 'none' }}
+        onTransitionEnd={() => { if (idx >= items.length) { setAnimate(false); setIdx(0); } }}
+      >
+        {[...items, ...items].map((t, i) => <QuoteCard key={`${t.name}-${i}`} t={t} hidden={i >= items.length} />)}
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────────────  PAGE  ────────────────────────────── */
 
 export default function AvailabilityFeature() {
@@ -403,8 +481,8 @@ export default function AvailabilityFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (highlighted headline + clickable hours grid) ═══════════════ */}
-      <section className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10">
-        <div className="mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1fr_1fr]">
+      <section className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center">
+        <div className="mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-neutral-500">
               <Link to="/" className="text-neutral-500 hover:text-[#1a1a1a] hover:no-underline">Home</Link>
@@ -413,10 +491,10 @@ export default function AvailabilityFeature() {
               <span aria-hidden className="mx-2">/</span>
               <span aria-current="page" className="text-[#1a1a1a]">Availability</span>
             </nav>
-            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.04] tracking-[-0.03em] text-[#1a1a1a]">
+            <Reveal as="h1" instant className="mt-4 font-heading text-[clamp(2.4rem,4.4vw,3.9rem)] font-extrabold leading-[1.04] tracking-[-0.03em] text-[#1a1a1a]">
               Set your availability for online bookings <Hl>once.</Hl>
             </Reveal>
-            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600 lg:text-[17px]">
+            <Reveal as="p" instant delay={0.05} className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600 lg:text-lg">
               Your weekly hours, breaks, days off and a buffer between sessions, set one time. Your booking page only offers the hours you are actually free, every week, without you touching it.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
@@ -537,30 +615,12 @@ export default function AvailabilityFeature() {
         </div>
       </section>
 
-      {/* ═══════════════ 7 · TESTIMONIALS (horizontal scroll, snap) ═══════════════ */}
+      {/* ═══════════════ 7 · TESTIMONIALS (auto-advancing "swoosh, stop" carousel) ═══════════════ */}
       {QUOTES.length > 0 && (
         <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: LIME_WASH }}>
           <div className="mx-auto max-w-6xl">
             <SectionHead>Hosts who stopped <Hl>sharing their calendar by text.</Hl></SectionHead>
-            <div
-              className="mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 sm:gap-6"
-              role="region"
-              aria-label="Host testimonials, scroll sideways for more"
-              tabIndex={0}
-            >
-              {QUOTES.map((t) => (
-                <figure key={t.name} className="flex w-[85%] shrink-0 snap-start flex-col justify-between rounded-[10px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:w-[22rem]">
-                  <blockquote className="text-[16px] leading-relaxed text-[#1a1a1a]">&ldquo;{t.quote}&rdquo;</blockquote>
-                  <figcaption className="mt-6 flex items-center gap-3">
-                    <img src={t.avatar} alt="" loading="lazy" className="h-11 w-11 rounded-full object-cover" />
-                    <div>
-                      <div className="text-sm font-semibold text-[#1a1a1a]">{t.name}</div>
-                      <div className="text-xs text-neutral-500">{t.role}</div>
-                    </div>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
+            <SwooshCarousel items={QUOTES} />
           </div>
         </section>
       )}

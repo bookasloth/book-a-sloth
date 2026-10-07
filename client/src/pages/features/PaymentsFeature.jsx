@@ -24,7 +24,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
 import {
   ArrowRight, Check, X, CheckCircle2, Lock, Receipt, CreditCard, Wallet,
   IndianRupee, FileText, RotateCcw, Gift, ImageIcon, Clock,
@@ -163,9 +163,9 @@ function CheckoutDemo() {
     return () => clearInterval(id);
   }, [reduce, paused]);
 
-  const slide = reduce
-    ? {}
-    : { initial: { opacity: 0, x: 14 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -14 }, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } };
+  // All three panels share one grid cell, so the card always keeps the
+  // height of the tallest (invoice) step instead of jumping between steps.
+  const panel = (i) => `[grid-area:1/1] transition-[opacity,transform] duration-300 ${step === i ? 'opacity-100' : 'pointer-events-none invisible opacity-0'} ${!reduce && step !== i ? 'translate-x-3' : ''}`;
 
   return (
     <div className="relative mx-auto w-full max-w-[22rem]">
@@ -178,10 +178,8 @@ function CheckoutDemo() {
           <Lock size={15} className="text-[#1F6B4A]" aria-hidden />
         </div>
 
-        <div className="min-h-[15.5rem] px-5 py-5" aria-live="polite">
-          <AnimatePresence mode="wait" initial={false}>
-            {step === 0 && (
-              <motion.div key="checkout" {...slide}>
+        <div className="grid px-5 py-5" aria-live="polite">
+            <div className={panel(0)} aria-hidden={step !== 0}>
                 <dl className="space-y-2.5 text-sm">
                   <div className="flex justify-between"><dt className="text-neutral-500">Session</dt><dd className="tabular-nums">{inr(1500)}</dd></div>
                   <div className="flex justify-between"><dt className="text-neutral-500">Booking fee + GST</dt><dd className="tabular-nums">{inr(BOOKING_FEE + BOOKING_FEE_GST)}</dd></div>
@@ -193,20 +191,16 @@ function CheckoutDemo() {
                   ))}
                 </div>
                 <div className="mt-4 rounded-[6px] bg-[#0E3B2C] py-2.5 text-center text-sm font-semibold text-[#F5EFE3]">Pay {inr(DEMO.guestPays)}</div>
-              </motion.div>
-            )}
-            {step === 1 && (
-              <motion.div key="paid" {...slide} className="flex flex-col items-center pt-3 text-center">
+            </div>
+            <div className={`${panel(1)} flex flex-col items-center justify-center text-center`} aria-hidden={step !== 1}>
                 <CheckCircle2 size={44} className="text-[#1F6B4A]" aria-hidden />
                 <div className="mt-3 font-heading text-lg font-extrabold">Payment successful</div>
                 <div className="mt-1 text-sm text-neutral-500">{inr(DEMO.guestPays)} via UPI</div>
                 <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#1F6B4A]/10 px-3 py-1.5 text-xs font-semibold text-[#1F6B4A]">
                   <Lock size={12} aria-hidden /> Slot locked · Thu 4:30 PM
                 </div>
-              </motion.div>
-            )}
-            {step === 2 && (
-              <motion.div key="invoice" {...slide}>
+            </div>
+            <div className={panel(2)} aria-hidden={step !== 2}>
                 <div className="flex items-center gap-2 font-heading text-sm font-bold"><Receipt size={16} className="text-[#1F6B4A]" aria-hidden /> Tax invoice</div>
                 <div className="mt-3 space-y-2 rounded-[6px] border border-dashed border-black/15 p-3.5 text-[13px]">
                   <div className="flex justify-between"><span className="text-neutral-500">Billed to</span><span>Priya Nair</span></div>
@@ -216,9 +210,7 @@ function CheckoutDemo() {
                   <div className="flex justify-between border-t border-black/10 pt-2 font-semibold"><span>Paid</span><span className="tabular-nums">{inr(DEMO.guestPays)}</span></div>
                 </div>
                 <div className="mt-3 text-center text-xs text-neutral-500">Confirmation sent on WhatsApp and email</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            </div>
         </div>
       </div>
 
@@ -338,9 +330,9 @@ export default function PaymentsFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (editorial display + checkout demo) ═══════════════ */}
-      <section className="relative overflow-hidden bg-[#0E3B2C] px-5 pb-20 pt-8 text-[#F5EFE3] sm:px-8 lg:pb-28 lg:pt-10">
+      <section className="relative overflow-hidden bg-[#0E3B2C] px-5 pb-20 pt-8 text-[#F5EFE3] sm:px-8 lg:pb-28 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center">
         <div aria-hidden className="pointer-events-none absolute -right-32 -top-32 h-[30rem] w-[30rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(233,196,106,0.16), transparent)' }} />
-        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-[#F5EFE3]/55">
               <Link to="/" className="text-[#F5EFE3]/55 hover:text-[#F5EFE3] hover:no-underline">Home</Link>

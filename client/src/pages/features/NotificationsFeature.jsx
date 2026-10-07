@@ -220,7 +220,7 @@ function ReminderPhone() {
   const shown = MOMENTS.slice(0, step + 1);
 
   return (
-    <div className="mx-auto w-full max-w-[21rem]">
+    <div className="mx-auto w-full max-w-[30rem]">
       <div className="overflow-hidden rounded-[10px] border border-white/10 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.7)]" style={{ background: CHAT_BG }}>
         <div className="flex items-center gap-3 px-4 py-3" style={{ background: CHAT_BUBBLE }}>
           <span className="flex h-8 w-8 items-center justify-center rounded-full font-heading text-xs font-extrabold" style={{ background: GREEN, color: INK }}>BS</span>
@@ -229,10 +229,10 @@ function ReminderPhone() {
             <div className="text-[11px] text-[#E9EDEF]/55">Business account</div>
           </div>
         </div>
-        <div className="flex min-h-[19rem] flex-col justify-end gap-2.5 px-3 py-4" aria-live="polite">
+        <div className="flex min-h-[23rem] flex-col justify-end gap-2.5 px-3 py-4" aria-live="polite">
           <AnimatePresence initial={false}>
             {shown.map((m) => (
-              <motion.div key={m.key} {...pop} className="max-w-[88%] rounded-[6px] px-3 py-2 text-[13px] leading-snug" style={{ background: CHAT_BUBBLE, color: CHAT_TEXT }}>
+              <motion.div key={m.key} {...pop} className="max-w-[86%] rounded-[6px] px-3.5 py-2.5 text-[14px] leading-snug" style={{ background: CHAT_BUBBLE, color: CHAT_TEXT }}>
                 {m.text}
                 <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-[#E9EDEF]/50">
                   {m.time} <CheckCheck size={12} style={{ color: CHAT_TICK }} aria-hidden />
@@ -243,7 +243,7 @@ function ReminderPhone() {
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2" role="group" aria-label="When each message fires">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label="When each message fires">
         {MOMENTS.map((m, i) => (
           <button
             key={m.key}
@@ -375,9 +375,9 @@ export default function NotificationsFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (bold display + phone chat demo) ═══════════════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10">
+      <section className="relative overflow-hidden px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center">
         <div aria-hidden className="pointer-events-none absolute -left-40 top-10 h-[28rem] w-[28rem] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, rgba(37,211,102,0.12), transparent)' }} />
-        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="relative mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-[#F2F5F3]/55">
               <Link to="/" className="text-[#F2F5F3]/55 hover:text-[#F2F5F3] hover:no-underline">Home</Link>

@@ -521,10 +521,10 @@ export default function GoogleCalendarFeature() {
 
       {/* ═══════════════ 1 · HERO (two-calendar sync demo) ═══════════════ */}
       <section
-        className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-10"
+        className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-28 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center"
         style={{ backgroundImage: 'radial-gradient(rgba(32,33,36,0.07) 1px, transparent 1px)', backgroundSize: '22px 22px' }}
       >
-        <div className="relative mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1fr_1fr]">
+        <div className="relative mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs" style={{ color: MUTED }}>
               <Link to="/" className="hover:no-underline hover:opacity-80" style={{ color: MUTED }}>Home</Link>

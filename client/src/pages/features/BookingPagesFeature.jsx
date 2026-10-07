@@ -213,7 +213,7 @@ function BookingPageDemo() {
   }, [reduce, paused]);
 
   return (
-    <div className="relative mx-auto w-full max-w-[20.5rem]">
+    <div className="relative mx-auto w-full max-w-[27rem]">
       <Sparkle className="absolute -left-6 top-10 h-6 w-6" />
       <Sparkle className="absolute -right-4 top-48 h-4 w-4" />
       <div className="rounded-[10px] border border-black/5 bg-white p-2.5 shadow-[0_30px_70px_-30px_rgba(26,26,26,0.35)]">
@@ -223,12 +223,16 @@ function BookingPageDemo() {
             <Link2 size={11} aria-hidden /> bookasloth.com/priya
           </div>
 
-          <div className="px-4 pb-3 pt-4 text-center">
-            <div aria-hidden className="mx-auto flex h-14 w-14 items-center justify-center rounded-full font-heading text-lg font-extrabold text-white" style={{ background: ORANGE_INK }}>PN</div>
-            <div className="mt-2.5 font-heading text-base font-extrabold text-[#1a1a1a]">Priya Nair</div>
-            <div className="text-xs font-semibold" style={{ color: ORANGE_INK }}>Brand designer</div>
-            <p className="mx-auto mt-1.5 max-w-[15rem] text-[12px] leading-snug text-neutral-600">I help small studios look as good as their work. Based in Pune.</p>
-            <div className="mt-2.5 flex justify-center gap-1.5 text-[10px] font-semibold text-neutral-600">
+          <div className="px-4 pb-3 pt-4">
+            <div className="flex items-center gap-3">
+              <div aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-heading text-base font-extrabold text-white" style={{ background: ORANGE_INK }}>PN</div>
+              <div className="min-w-0">
+                <div className="font-heading text-base font-extrabold text-[#1a1a1a]">Priya Nair</div>
+                <div className="text-xs font-semibold" style={{ color: ORANGE_INK }}>Brand designer · Pune</div>
+              </div>
+            </div>
+            <p className="mt-2 text-[12.5px] leading-snug text-neutral-600">I help small studios look as good as their work.</p>
+            <div className="mt-2 flex gap-1.5 text-[10px] font-semibold text-neutral-600">
               {['Instagram', 'LinkedIn', 'Website'].map((x) => (
                 <span key={x} className="rounded-full border border-black/10 bg-white px-2 py-0.5">{x}</span>
               ))}
@@ -440,8 +444,8 @@ export default function BookingPagesFeature() {
       />
 
       {/* ═══════════════ 1 · HERO (phone-frame booking page) ═══════════════ */}
-      <section className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-24 lg:pt-10">
-        <div className="mx-auto grid max-w-6xl items-start gap-10 lg:gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="relative px-5 pb-20 pt-8 sm:px-8 lg:pb-24 lg:pt-6 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center">
+        <div className="mx-auto grid w-full max-w-6xl items-start gap-10 lg:items-center lg:gap-14 lg:grid-cols-[1fr_1fr]">
           <div>
             <nav aria-label="Breadcrumb" className="text-xs text-neutral-500">
               <Link to="/" className="text-neutral-500 hover:text-[#1a1a1a] hover:no-underline">Home</Link>
@@ -455,14 +459,14 @@ export default function BookingPagesFeature() {
                 <Sparkle className="h-3 w-3" /> For freelancers, coaches and creators
               </span>
             </Reveal>
-            <Reveal as="h1" instant delay={0.03} className="mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#1a1a1a]">
+            <Reveal as="h1" instant delay={0.03} className="mt-4 font-heading text-[clamp(2.5rem,4.8vw,4.1rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#1a1a1a]">
               A free booking page that{' '}
               <span className="relative inline-block whitespace-nowrap" style={{ color: ORANGE_INK }}>
                 feels like you.
                 <Squiggle className="absolute -bottom-2 left-0 h-3 w-full" />
               </span>
             </Reveal>
-            <Reveal as="p" instant delay={0.06} className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600 lg:text-[17px]">
+            <Reveal as="p" instant delay={0.06} className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600 lg:text-lg">
               Your photo, bio, socials and every service with its price, at bookasloth.com/yourname. Clients pick a time and pay right there. Put it in your Instagram bio and let it do the asking.
             </Reveal>
             <Reveal instant delay={0.1} className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
