@@ -19,6 +19,92 @@ const TAG_STYLES = {
 // misplaced entry can't show out of order (see SORTED_RELEASES).
 const RELEASES = [
   {
+    date: 'Oct 8, 2026',
+    title: 'Search that understands what you mean',
+    tags: ['Improved', 'Fixed'],
+    points: [
+      'Explore now matches every word you type, in any order — and knows that “CA” means chartered accountant, “CV” means resume and “lawyer” should find advocates. Search by a host’s name or profession too.',
+      'Add a city or how you want to meet — “mock interview in person Nagpur” — and results narrow to match. Nothing there yet? We tell you, and show the closest options instead of an empty page.',
+      'Fixed the category filter on Explore, which had stopped loading.',
+    ],
+  },
+  {
+    date: 'Oct 7, 2026',
+    title: 'Every feature, explained properly',
+    tags: ['New'],
+    points: [
+      'Ten rebuilt feature pages — payments, scheduling, booking pages, availability, Google Calendar, notifications, clients, digital products, reviews and analytics — each with a live demo you can click through.',
+      'Every claim on them is checked against what the product actually does today. No invented stats.',
+    ],
+  },
+  {
+    date: 'Oct 6, 2026',
+    title: 'A proper welcome for invited hosts',
+    tags: ['Improved'],
+    points: [
+      'Invite links now open a full page — how it works, real pricing, answers to common questions and a clear way to get started — instead of trailing off with nowhere to go.',
+    ],
+  },
+  {
+    date: 'Oct 6, 2026',
+    title: 'No more surprise lockouts',
+    tags: ['Fixed', 'Security'],
+    points: [
+      'Fixed a rare case where an ordinary form submission could get a visitor temporarily blocked from the site. Our protection against real attacks stays in place.',
+    ],
+  },
+  {
+    date: 'Oct 3, 2026',
+    title: 'Don’t go live empty-handed',
+    tags: ['Improved'],
+    points: [
+      'Skipping your first service during setup now asks you to confirm — a page with at least one service is a page guests can actually book.',
+    ],
+  },
+  {
+    date: 'Oct 3, 2026',
+    title: 'Profession pages, polished',
+    tags: ['Improved'],
+    points: [
+      'Friendly mascot art on 13 profession pages, cleaner heroes, and richer behind-the-scenes details so Google and AI assistants understand exactly who each page is for.',
+    ],
+  },
+  {
+    date: 'Oct 1, 2026',
+    title: 'Your calendar knows you’re coming',
+    tags: ['Fixed'],
+    points: [
+      'New bookings in your Google Calendar now show you as attending, instead of “awaiting” a reply from yourself.',
+    ],
+  },
+  {
+    date: 'Sep 28, 2026',
+    title: 'Verified badges that look after themselves',
+    tags: ['Fixed', 'Improved'],
+    points: [
+      'Google- and LinkedIn-verified badges are now awarded automatically — and no longer vanish once you start earning.',
+      'Tap any badge on a profile to see what it means.',
+    ],
+  },
+  {
+    date: 'Sep 28, 2026',
+    title: 'Digital products, done properly',
+    tags: ['Improved', 'Fixed'],
+    points: [
+      'Products now work like services: a clean 16:9 cover, fees and GST shown upfront at checkout, and a GST invoice with every purchase.',
+      'Fixed checkout codes: they now arrive on WhatsApp and verify first time.',
+    ],
+  },
+  {
+    date: 'Sep 27, 2026',
+    title: 'A cleaner profile and a smoother booking',
+    tags: ['Improved'],
+    points: [
+      'Host pages put price and ratings up front, service cards hug their content, and phones get a sticky “Book a session” bar.',
+      'Booking now shows clearly labelled steps — Time, Details, Verify, Pay, Done — plus what you can count on: instant confirmation, a calendar invite, reminders and secure payment.',
+    ],
+  },
+  {
     date: 'Sep 27, 2026',
     title: 'Booking pages built for your profession — 18 and counting',
     tags: ['New'],
