@@ -1042,6 +1042,630 @@ export const BLOG_POSTS = [
   ]
 },
 {
+  "slug": "marketing-consultant-lead-generation-coworking-hosts",
+  "title": "Marketing Consultant Online in India: 4 New Hosts to Book",
+  "date": "Oct 8, 2026",
+  "icons": [
+    "megaphone",
+    "target",
+    "users"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Host Story",
+  "image": null,
+  "excerpt": "Need a marketing consultant online in India, a B2B lead generation expert or a coworking day pass? Meet 4 new Book A Sloth hosts, two of them free to book.",
+  "body": [
+    {
+      "p": "Every small business in India hits the same wall around month six. The product works. Two friends and an aunt have bought it. And then the WhatsApp status views stop turning into orders. I'm [Shubham](/sndatarkar), I run Book A Sloth, and this week four new hosts joined who fix exactly that wall, from four different sides."
+    },
+    {
+      "p": "Short version, if you're in a hurry: you can book a free 15-minute **marketing triage** call with an ad agency founder ([Sujata Mishra](/sujatamishra), online), a **marketing consultant online** in India ([Aditya Mahajan](/adityamahajan), 60 minutes, listed at ₹1,800), a **B2B lead generation expert** ([Abhishek Toksiya](/abhishektoksiya16), 30 minutes, free), and a **coworking day pass** with an open desk ([Eureka CoWorking](/eureka-coworking), a full working day, listed at ₹348). Direction, story, pipeline, and a desk to work on all three. That's most of a growth plan."
+    },
+    {
+      "h2": "Sujata Mishra: a digital marketer and ad agency founder for free marketing triage"
+    },
+    {
+      "p": "The first question most founders ask isn't \"how do I market this?\" It's \"what kind of help do I even need?\" Ads? Content? A rebrand? A lead list? People pay for the wrong one all the time, the way you'd book a cardiologist for what turns out to be acidity."
+    },
+    {
+      "p": "[Sujata Mishra](/sujatamishra) is a Mumbai-based founder and digital marketer who runs an ad agency; her tagline lists her as founder at Grey Hawks. Her bio reads, in full, \"Enjoying the life at jungle\", which on a platform called Book A Sloth feels less like a bio and more like a sense of belonging."
+    },
+    {
+      "p": "Her [Quick Connect](/sujatamishra/quick-connect) session is 15 minutes, online, and free. The description is six words: \"Not sure where this fits? Start here.\" That's the pitch. Bring the messy version of your problem, leave knowing which kind of marketing help to pay for (and which to skip) before you spend a rupee on consultancy."
+    },
+    {
+      "ul": [
+        "**Book her if:** you know sales need to grow but can't tell whether the fix is ads, content, branding or outreach.",
+        "**Bring:** what you sell, who buys it today, and what you've already tried."
+      ]
+    },
+    {
+      "h2": "Aditya Mahajan: a creative director and marketing consultant you can book online"
+    },
+    {
+      "p": "Most brands don't have a marketing problem. They have a *sentence* problem. Nobody can say, in one breath, why the thing should be bought. [Aditya Mahajan](/adityamahajan) is a Pune-based creative director who works across copy, content, scripts and strategy, and his profile puts it plainly: he's \"the person who can almost do anything & everything creatively!\""
+    },
+    {
+      "p": "That line would sound like bluster from most people. His bio backs it with a body of work. He writes in Hindi, English and Marathi. He has a Hindi poetry book, *Deedar*. A Marathi series, *Bhetistan*, on Storytel. And a book, *Na Maarlelya Gappa*, built from his column *Duniyadari*. He's also a speaker and (this is my favourite detail) a former district-level cricketer. Someone who has written a column, a poetry book and an audio series knows how to hold an audience across formats. That is the whole job of a brand story."
+    },
+    {
+      "p": "His session is [Advertising, Marketing & Social Media Consultancy](/adityamahajan/advertising-marketing-social-media-consultancy): 60 minutes, online, listed at ₹1,800. The pitch on the listing is refreshingly direct. Got a product or service and no idea where to start? Work out the brand story with him and make the thing sell, with 10+ years of experience (his count) guiding the call."
+    },
+    {
+      "ul": [
+        "**Book him if:** you're launching, rebranding, or your Instagram looks busy but sells nothing.",
+        "**Bring:** your product, your current posts, and the one line you use to describe the business.",
+        "**See his work first:** [Instagram](https://instagram.com/lekhaaditya), [LinkedIn](https://www.linkedin.com/in/aditya-mahajan-writer/), [Behance](https://www.behance.net/adityamahajan5)."
+      ]
+    },
+    {
+      "h2": "Abhishek Toksiya: a B2B lead generation expert who builds verified lead lists"
+    },
+    {
+      "p": "Here's an uncomfortable number. DemandScience's B2B prospecting report found sales people spend around [13.4 hours a week researching prospects](https://demandscience.com/resources/b2b-sales-prospecting-report-2023/). That's roughly a third of the week spent looking for people to talk to, instead of talking to them. Pipedrive's State of Sales survey found [46% of sales professionals say most of their time goes on prospecting](https://www.pipedrive.com/blog/sales-statistics). Your best closer is, in effect, a part-time researcher."
+    },
+    {
+      "p": "[Abhishek Toksiya](/abhishektoksiya16), a founder and freelancer from Pune, Maharashtra, exists to take that job off the table. He builds hyper-targeted, verified B2B lead lists using LinkedIn Sales Navigator, Clay, Apollo and ZoomInfo, so the sales team spends its time closing, not prospecting."
+    },
+    {
+      "p": "The numbers on his profile are his own, and they're loud: Upwork Top Rated Plus, 100% Job Success, 15,000+ hours on Upwork, 240 projects completed, $100K+ earned on the platform, and 10+ years of experience. Fifteen thousand hours is a lot of spreadsheets. It's also the kind of track record that tells you he has seen most ways a lead list can go wrong."
+    },
+    {
+      "p": "His [Lead Generation](/abhishektoksiya16/lead-generation) session is 30 minutes, online, and free. Free. A call with a B2B lead generation expert, where the worst outcome is that you leave knowing exactly who your buyer is."
+    },
+    {
+      "ul": [
+        "**Book him if:** you sell to businesses and your pipeline depends on whoever replied to last month's cold email.",
+        "**Bring:** your ideal customer (industry, company size, job title) and the list you're using today, however embarrassing."
+      ]
+    },
+    {
+      "h2": "Eureka CoWorking: book a coworking day pass with an open desk"
+    },
+    {
+      "p": "Strategy happens on calls. Execution happens at a desk. And in most Indian homes the \"desk\" is the dining table, shared with a pressure cooker on its third whistle. [Eureka CoWorking](/eureka-coworking) calls itself \"Your Next Office Space\", and the simplest way in is a single day."
+    },
+    {
+      "p": "The [Day Pass - Open Desk](/eureka-coworking/day-pass-open-desk) is listed at ₹348 for a full working day (about 8 hours), in person. It includes WiFi, coffee, a desk and chair, and AC. Under ₹350 for a working day with AC and coffee is, honestly, less than a café would charge you to occupy a corner with one cappuccino."
+    },
+    {
+      "p": "You're not alone in wanting that. India's flexible office stock has crossed [110 million sq ft and tripled in five years](https://ianslive.in/indias-flexible-office-stock-tops-110-million-sq-ft-triples-in-5-years-report--20260324155649), with over 500 operators across 2,600 locations. Flexible desks stopped being a startup quirk a while ago."
+    },
+    {
+      "ul": [
+        "**Book it if:** you work from home and need one focused day a week, or you're testing coworking before signing a monthly plan.",
+        "**Pairs well with:** a call with Aditya or Abhishek. Take it from a proper desk, not the dining table."
+      ]
+    },
+    {
+      "h2": "Summary: who to book, for what, and what it costs"
+    },
+    {
+      "table": {
+        "head": [
+          "Host",
+          "Book them for",
+          "Price & length",
+          "Profile"
+        ],
+        "rows": [
+          [
+            "Sujata Mishra",
+            "Quick Connect: free marketing triage with an ad agency founder",
+            "Free · 15 min · online",
+            "[/sujatamishra](/sujatamishra)"
+          ],
+          [
+            "Aditya Mahajan",
+            "Brand story, advertising, marketing & social media consultancy",
+            "Listed at ₹1,800 · 60 min · online",
+            "[/adityamahajan](/adityamahajan)"
+          ],
+          [
+            "Abhishek Toksiya",
+            "B2B lead generation and verified lead lists",
+            "Free · 30 min · online",
+            "[/abhishektoksiya16](/abhishektoksiya16)"
+          ],
+          [
+            "Eureka CoWorking",
+            "Coworking day pass, open desk (WiFi, coffee, AC)",
+            "Listed at ₹348 · full day (~8 hrs) · in person",
+            "[/eureka-coworking](/eureka-coworking)"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "How booking works on Book A Sloth"
+    },
+    {
+      "p": "Open the host's page, pick the service, and choose a slot that works for you. For a paid session you pay online through Razorpay; for a free one there's nothing to pay. Either way you get a confirmation once the booking goes through. No DMs, no \"is Tuesday ok?\" thread that runs for four days. If you've never booked a session online before, [this walkthrough](/blog/how-to-book-an-appointment-online) covers the basics, and you can browse more hosts on [Explore](/explore)."
+    },
+    {
+      "info": {
+        "title": "A quick note on prices",
+        "text": "Prices above are the listed prices on each host's page. The final amount at checkout may include applicable taxes."
+      }
+    },
+    {
+      "h2": "FAQ: hiring a marketing consultant online in India"
+    },
+    {
+      "faq": [
+        {
+          "q": "What if I don't know what kind of marketing help I need?",
+          "a": "Start with a short triage call before paying for consultancy. On Book A Sloth, ad agency founder and digital marketer Sujata Mishra offers Quick Connect, a free 15-minute online session for exactly this: you describe the problem, and you leave knowing whether you need ads, content, branding or lead generation."
+        },
+        {
+          "q": "How much does a marketing consultant cost online in India?",
+          "a": "It varies widely by experience and format. On Book A Sloth, creative director Aditya Mahajan's 60-minute online Advertising, Marketing & Social Media Consultancy session is listed at ₹1,800, which makes it a low-commitment way to get expert input on your brand story before you hire anyone long-term."
+        },
+        {
+          "q": "What does a B2B lead generation expert actually do?",
+          "a": "A B2B lead generation expert finds and verifies the companies and decision-makers most likely to buy from you, so your sales team spends time selling instead of researching. Abhishek Toksiya, for example, builds targeted lead lists with LinkedIn Sales Navigator, Clay, Apollo and ZoomInfo, and offers a free 30-minute online Lead Generation session on Book A Sloth."
+        },
+        {
+          "q": "Is a coworking day pass worth it compared to working from a café?",
+          "a": "For a full working day, usually yes. Eureka CoWorking's Day Pass - Open Desk is listed at ₹348 for about 8 hours and includes WiFi, coffee, a desk and chair, and AC, which is often less than a café spend for the same hours, with a proper desk instead of a wobbly table."
+        }
+      ]
+    },
+    {
+      "p": "Four hosts, four parts of the same problem: what help you need, what to say, who to say it to, and somewhere quiet to actually do the work. If you're the kind of person who'd be a fifth (a consultant, a specialist, a space with good chairs), [talk to me](/sndatarkar) or [become a host](/be-a-sloth). The aunt has already bought it. Time to find the next hundred buyers."
+    }
+  ]
+},
+{
+  "slug": "family-lawyer-architect-financial-advisor-consultation-online",
+  "title": "Family Lawyer Consultation Online: 3 New Hosts to Book",
+  "date": "Oct 8, 2026",
+  "icons": [
+    "scale",
+    "wallet",
+    "layers"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Host Story",
+  "image": null,
+  "excerpt": "Book a family lawyer consultation online, a plot feasibility session with a Nagpur architect, or a ₹199 money chat. Meet three new Book A Sloth hosts.",
+  "body": [
+    {
+      "p": "Every Indian family has that one folder. Sale deed, a photocopy of a photocopy of a 7/12 extract, an LIC policy nobody remembers buying, and somewhere underneath, a letter that needs a lawyer. The folder lives on top of the almirah. Everyone knows it is there. Nobody opens it."
+    },
+    {
+      "p": "I'm [Shubham](/sndatarkar), I run Book A Sloth, and this week three people joined who can each take one problem out of that folder in a single session. If you need a family lawyer consultation online, [Adv. Vinit Sisle](/vinitsisleadv) offers a 60-minute family-law consultancy session listed at ₹3,000. If you own a plot and want to know what it can become, Nagpur architect [Pranav Kadoo](/pranavkadoo) runs pre-design and plot feasibility consultations listed at ₹1,499 for 90 minutes. And if the trouble is the monthly budget itself, [Leena Goklani](/leenagoklani) offers a 30-minute financial advice session online, listed at ₹199. Legal, property, money. The almirah trilogy."
+    },
+    {
+      "h2": "Adv. Vinit Sisle: family law consultation online, from Nagpur"
+    },
+    {
+      "p": "Family matters are the ones people delay longest, mostly because the first conversation feels so heavy. Divorce, separation, custody, maintenance, domestic violence: these are not things you want to explain in a crowded chamber corridor while someone's phone rings with a devotional ringtone."
+    },
+    {
+      "p": "Vinit Sisle is an Advocate and Legal Consultant based in Nagpur, Maharashtra. His profile describes his approach as strategic, practical and result-oriented legal representation, and lists a practice that spans civil and commercial litigation, constitutional and administrative law, criminal law, property disputes, banking and financial matters, consumer disputes, labour and service law, and arbitration and tribunal proceedings. The forums listed on his profile: District & Sessions Court, High Court, Consumer forum, MAT/CAT/CGIT/College & School Tribunal, Labour & Industrial Court, and Revenue."
+    },
+    {
+      "p": "What you can book on Book A Sloth is specific: [Consultancy - Family Laws](/vinitsisleadv/consultancy-family-laws). It is a 60-minute online session, listed at ₹3,000, covering divorce, separation, custody, maintenance and domestic violence. The listing says consultation only, so think of it as the hour where you lay out the facts and understand where you stand, from home, without taking a half-day off."
+    },
+    {
+      "info": {
+        "title": "A note on what this post is",
+        "text": "This post introduces hosts and the sessions they list. It is not legal or financial advice, and nothing here predicts the outcome of any matter. For your situation, speak to the professional directly."
+      }
+    },
+    {
+      "p": "Courts in India publish their pendency numbers openly on the [National Judicial Data Grid](https://en.wikipedia.org/wiki/National_Judicial_Data_Grid), and the figures are long. Which is one more reason the first conversation should happen early, and calmly, not on the morning of a hearing."
+    },
+    {
+      "h2": "Pranav Kadoo: architect consultation in Nagpur and online plot feasibility"
+    },
+    {
+      "p": "Here is a very Nagpur scene. A family buys a plot on the outer ring road side, then spends three years discussing it at dinner. Two floors or three? Rent the ground floor? Can we even build that much? Every uncle has a number. None of the numbers come from the regulations."
+    },
+    {
+      "p": "[Pranav Kadoo](/pranavkadoo) is the founder of Ashlar Studio and describes himself as an Architect, Interior Designer and Urban Planner. Per his profile, he graduated from MANIT Bhopal and IIT Kharagpur, and has worked across architecture, interior design and large-scale construction projects. At Ashlar Studio, his stated focus is understanding each project deeply and translating client requirements and site context into well-planned architectural solutions. You can see his background on [LinkedIn](https://www.linkedin.com/in/pranavkadoo/)."
+    },
+    {
+      "p": "He lists two sessions, and they answer two different questions:"
+    },
+    {
+      "ul": [
+        "[Pre Design Consultation](/pranavkadoo/pre-design-consultation): listed at ₹1,499, 90 minutes, in person. Before any drawing starts, it covers your brief and requirements, site and plot analysis, development potential, regulatory and UDCPR considerations, space planning, budget and project timeline.",
+        "[Plot Development & Financial Feasibility Consultation](/pranavkadoo/plot-development-financial-feasibility-consultation): listed at ₹1,499, 90 minutes, online. It covers a zoning and land-use review, construction cost estimation, a financial projection of capital and returns, site constraint analysis, and a written summary of findings and next steps."
+      ]
+    },
+    {
+      "p": "The UDCPR part matters more than it sounds. Maharashtra's unified building rules have been revised since they first came in, and Nagpur's developers were sitting through [workshops on the revised UDCPR](https://www.thehitavada.com/Encyc/2022/4/23/CREDAI-Ngp-Metro-holds-workshop-on-Revised-UDCPR-Online-Building-Plan-Mgmt-System.html) to keep up. If the builders need a workshop, the dinner table probably needs a plot feasibility consultation."
+    },
+    {
+      "h2": "Leena Goklani: a financial advice session online in India, for ₹199"
+    },
+    {
+      "p": "Most money stress is not dramatic. It is a credit card bill paid at minimum for the fourth month running, a savings account that behaves like a waiting room, and a vague sense that you should be \"investing something\". You know the feeling. You also know you have not asked anyone, because asking feels expensive."
+    },
+    {
+      "p": "One older S&P global survey found that [76% of Indian adults](https://www.moneylife.in/article/76-percentage-indian-adults-financially-illiterate-survey/44508.html) did not adequately understand key financial concepts. Wherever that number sits today, the gap between earning money and knowing what to do with it is real."
+    },
+    {
+      "p": "[Leena Goklani](/leenagoklani) describes herself as a Finance Professional and Career Consultant. Her [1:1 Financial Advice Session](/leenagoklani/11-financial-advice-session) is listed at ₹199 for 30 minutes, online, by video or phone. Per her listing, it covers budgeting, debt management, savings strategies and investment basics. She reviews your financial questions and goals, then gives personalised recommendations and next-step action items. Thirty minutes, one problem, a list of what to do next. Cheaper than the pizza you order while avoiding the spreadsheet."
+    },
+    {
+      "h2": "Family lawyer, architect, financial advisor: who to book for what"
+    },
+    {
+      "table": {
+        "head": [
+          "Host",
+          "Book them for",
+          "Price & length",
+          "Profile"
+        ],
+        "rows": [
+          [
+            "Adv. Vinit Sisle (Nagpur)",
+            "Family law consultation: divorce, separation, custody, maintenance, domestic violence",
+            "Listed at ₹3,000 · 60 min · online",
+            "[/vinitsisleadv](/vinitsisleadv)"
+          ],
+          [
+            "Pranav Kadoo (Nagpur)",
+            "Pre-design consultation (in person) or plot development & financial feasibility (online)",
+            "Listed at ₹1,499 each · 90 min",
+            "[/pranavkadoo](/pranavkadoo)"
+          ],
+          [
+            "Leena Goklani",
+            "Budgeting, debt, savings and investment basics",
+            "Listed at ₹199 · 30 min · online",
+            "[/leenagoklani](/leenagoklani)"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "How booking works on Book A Sloth"
+    },
+    {
+      "p": "Open the host's profile, pick the service, choose a slot that suits you, and pay online through Razorpay. You get a booking confirmation, and the session happens online or in person, as the listing says. Final checkout may add applicable taxes. If you have never booked a professional this way, [this walkthrough on booking appointments online](/blog/how-to-book-an-appointment-online) covers the basics."
+    },
+    {
+      "faq": [
+        {
+          "q": "Can I get a family lawyer consultation online in India?",
+          "a": "Yes. Many advocates now offer consultations by video or phone. On Book A Sloth, Nagpur-based Adv. Vinit Sisle lists a 60-minute online family-law consultancy session at ₹3,000, covering divorce, separation, custody, maintenance and domestic violence. It is a consultation only, so it helps you understand your position before deciding next steps."
+        },
+        {
+          "q": "What happens in a plot feasibility consultation?",
+          "a": "A plot feasibility consultation checks what a piece of land can realistically become before you spend on design. Pranav Kadoo's online session on Book A Sloth covers zoning and land-use review, construction cost estimation, a financial projection of capital and returns, site constraint analysis, and a written summary of findings and next steps. It runs 90 minutes and is listed at ₹1,499."
+        },
+        {
+          "q": "How much does an architect consultation in Nagpur cost?",
+          "a": "Fees vary by architect and scope. On Book A Sloth, Nagpur architect Pranav Kadoo lists a 90-minute in-person Pre Design Consultation at ₹1,499, covering brief, site and plot analysis, development potential, UDCPR considerations, space planning, budget and timeline."
+        },
+        {
+          "q": "Is a ₹199 financial advice session online worth it?",
+          "a": "For a focused question about budgeting, debt, savings or investment basics, a short session can give you clarity and a next-step list. Leena Goklani's 30-minute 1:1 Financial Advice Session on Book A Sloth is listed at ₹199, by video or phone, and ends with personalised recommendations and action items."
+        }
+      ]
+    },
+    {
+      "p": "That folder on the almirah is not going to sort itself. But it can be sorted one hour at a time, by people who do this for a living. Book [Vinit](/vinitsisleadv), [Pranav](/pranavkadoo) or [Leena](/leenagoklani), or browse more hosts on [Explore](/explore)."
+    },
+    {
+      "p": "And if you are a lawyer, architect or advisor who wants a booking page like theirs, [talk to me](/sndatarkar). I reply to every message, slowly but surely. It is in the name."
+    }
+  ]
+},
+{
+  "slug": "online-nutritionist-pcos-tarot-reading-life-coach",
+  "title": "Online Nutritionist for PCOS India, Tarot & Life Coach",
+  "date": "Oct 8, 2026",
+  "icons": [
+    "heart",
+    "sparkles",
+    "target"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Host Story",
+  "image": null,
+  "excerpt": "Online nutritionist for PCOS in India? Meet 4 new Book A Sloth hosts: a PCOS diet consult, reflective tarot, a free life coach and a free style consult.",
+  "body": [
+    {
+      "p": "Somewhere in India right now, a woman is scrolling a reel that says jeera water fixes PCOS, while her mother forwards a different reel that says jeera water causes it. I'm [Shubham](/sndatarkar), I run Book A Sloth, and this week four new hosts joined who each answer a different kind of 3 a.m. question. If you want an **online nutritionist for PCOS in India**, book [Varun Mahajan](/fabled-bison-v88ym) for a 30-minute personalised diet consultation, listed at ₹999. If you want a tarot reading online that helps you think rather than predicts your future, book [Mehak S](/mehak), from ₹333. If you want a life coach session online without paying for it, [Tatharth Ghate](/humble-jaguar-1lszx) offers a free 30-minute call. And if the question is about how you show up (your personal style, or a boutique you want to build), fashion designer [Muktanjali Koche](/muktanjali) offers a free 30-minute consult. All four sessions happen online."
+    },
+    {
+      "p": "Different problems, same shape: you have a question, and you would like one human being to sit with it for half an hour. That is the whole idea of this platform."
+    },
+    {
+      "h2": "Varun Mahajan: online nutritionist for PCOS and PCOD diet consultation"
+    },
+    {
+      "p": "Varun is a nutritionist based in Amritsar, and his profile tagline reads, in full, \"PCOD PCOS DO DID DONE.\" Not poetry. Very clear, though. PCOD and PCOS are what he wants to talk about, and he wants to talk about them with you."
+    },
+    {
+      "p": "That focus matters because the condition is not rare. A nationwide ICMR-backed study published in 2024 put PCOS prevalence among Indian women aged 18 to 40 at 7.2% by the stricter NIH criteria and 19.6% by the broader Rotterdam criteria ([ICMR-PCOS study, JAMA Network Open](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11581580/)). Somewhere between one in fourteen and one in five. That is a lot of people being told to \"just lose weight\" by an uncle at a wedding."
+    },
+    {
+      "p": "International evidence-based guidelines treat lifestyle (diet, physical activity and behaviour) as first-line management for PCOS ([lifestyle management review, 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9841505/)). And there is no single magic PCOS diet; the advice is a healthy, balanced way of eating that fits your life ([Jean Hailes for Women's Health](https://www.jeanhailes.org.au/uploads/05-Fact-sheets-English-TGD/0523_jh_fact_sheet_PCOS-and-healthy-eating_TGD.pdf)). Which is exactly why a personalised plan beats a forwarded one."
+    },
+    {
+      "p": "His service, [Nutrition Consultation – Personalised Diet & Wellness Plan](/fabled-bison-v88ym/nutrition-consultation-personalised-diet-wellness-plan), is listed at ₹999 for 30 minutes, online. Per his listing, you get a tailored eating plan built around your health goals, your dietary needs and your actual lifestyle (the one with the 9 p.m. office chai, not the imaginary one), and you leave with actionable steps."
+    },
+    {
+      "ul": [
+        "**Who it's for:** anyone living with PCOS or PCOD who wants a diet consultation online built around them, or anyone with a broader wellness goal.",
+        "**What you leave with:** a personalised eating plan and concrete next steps.",
+        "**What it isn't:** a replacement for your gynaecologist or endocrinologist. Diet is one part of PCOS management; keep your doctor in the loop."
+      ]
+    },
+    {
+      "h2": "Mehak S: tarot reading online India, minus the fortune-telling"
+    },
+    {
+      "p": "Most people book a tarot reader hoping to hear a name, a date and a salary figure. [Mehak](/mehak) will politely disappoint you there. She does not do future predictions. Her profile describes tarot as a psycho-spiritual tool for reflection, and her tagline promises \"tarot and oracle readings that help you make empowered choices, no matter what your journey.\""
+    },
+    {
+      "p": "Here is the honest framing: tarot is not science, and Mehak isn't selling it as science. Think of it like a good friend who asks a strange question at the right moment. The cards are the prompt. The thinking is yours. Plenty of people find that useful when they're stuck between two choices and the spreadsheet has stopped helping."
+    },
+    {
+      "ul": [
+        "[Quick Guidance](/mehak/quick-guidance): listed at ₹333, 15 minutes, online. One question, one quick pull, immediate perspective.",
+        "[Cosmic Connection](/mehak/cosmic-connection): listed at ₹555, 30 minutes, online. A deeper conversation across one or more questions, ending with actionable insights."
+      ]
+    },
+    {
+      "p": "Fifteen minutes for ₹333 is roughly the price of a decent pizza and much less likely to cause regret."
+    },
+    {
+      "h2": "Tatharth Ghate: free life coach session online"
+    },
+    {
+      "p": "[Tatharth Ghate](/humble-jaguar-1lszx) lists himself as a life coach and consultant, and his tagline says, roughly, that you already have the solution to your problems, so ask him now. That is a coach's belief in one line: the answer is in the room, it just needs better questions."
+    },
+    {
+      "p": "His [Consultant – Life coach](/humble-jaguar-1lszx/consultant-life-coach) session is free, 30 minutes, online. No price, no lock-in. If you have been circling a career decision, a relationship knot or a vague sense that something should change, this is a zero-rupee way to say it out loud to someone who is actually listening."
+    },
+    {
+      "h2": "Muktanjali Koche: free fashion designer consultation online"
+    },
+    {
+      "p": "Nutrition handles what goes on your plate. Tarot and coaching handle what goes on in your head. That leaves the bit everyone sees first: what you walk into the room wearing. [Muktanjali Koche](/muktanjali) is a fashion designer, described by the founder (that's me) as a \"Fashion Designer and Expert\", and she has put a free session on the table."
+    },
+    {
+      "p": "Her [Consultation](/muktanjali/consultation) is free, 30 minutes, online, and her listing describes it simply as a business consultation. That opens two useful doors:"
+    },
+    {
+      "ul": [
+        "**Personal style:** how you show up, at work, on camera, at your cousin's sangeet. Looking put-together and feeling good tend to travel together, which is why she belongs in a health-and-growth post.",
+        "**Fashion business questions:** if you are sketching a label, running a boutique from a spare room or wondering how to price your first collection, half an hour with a designer is a sensible first conversation.",
+        "**Cost:** zero rupees. The only thing you spend is the 30 minutes."
+      ]
+    },
+    {
+      "h2": "Quick comparison: who to book for what"
+    },
+    {
+      "table": {
+        "head": [
+          "Host",
+          "Book them for",
+          "Price & length",
+          "Profile"
+        ],
+        "rows": [
+          [
+            "Varun Mahajan",
+            "PCOS/PCOD-focused personalised diet & wellness plan",
+            "Listed at ₹999 · 30 min · online",
+            "[/fabled-bison-v88ym](/fabled-bison-v88ym)"
+          ],
+          [
+            "Mehak S",
+            "Tarot and oracle readings for reflection (no predictions)",
+            "Listed at ₹333 · 15 min, or ₹555 · 30 min · online",
+            "[/mehak](/mehak)"
+          ],
+          [
+            "Tatharth Ghate",
+            "Life coaching conversation",
+            "Free · 30 min · online",
+            "[/humble-jaguar-1lszx](/humble-jaguar-1lszx)"
+          ],
+          [
+            "Muktanjali Koche",
+            "Fashion designer consult: personal style or fashion/boutique business questions",
+            "Free · 30 min · online",
+            "[/muktanjali](/muktanjali)"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "How booking works on Book A Sloth"
+    },
+    {
+      "p": "Open the host's profile, pick the service, choose a slot that suits you, and pay online through Razorpay if the session is paid (Tatharth's and Muktanjali's sessions are free, so you skip that step). You get a booking confirmation, and the session happens online at the time you picked. If you want the longer walkthrough, read [how to book an appointment online](/blog/how-to-book-an-appointment-online)."
+    },
+    {
+      "info": {
+        "title": "Prices shown are listed prices",
+        "text": "The amounts above are what each host lists on their profile. Final checkout may add applicable taxes, so check the total before you pay."
+      }
+    },
+    {
+      "faq": [
+        {
+          "q": "Can I consult an online nutritionist for PCOS in India?",
+          "a": "Yes. On Book A Sloth, Varun Mahajan, an Amritsar-based nutritionist whose profile focuses on PCOS and PCOD, offers a 30-minute online Nutrition Consultation listed at ₹999. You get a personalised eating plan based on your goals, dietary needs and lifestyle, plus actionable steps. Keep your doctor involved for medical treatment."
+        },
+        {
+          "q": "Does diet actually help with PCOS?",
+          "a": "International evidence-based guidelines treat lifestyle changes, including diet, physical activity and behaviour, as first-line management for PCOS. There is no single proven PCOS diet, so a balanced plan tailored to your routine is usually more practical than a generic chart. Diet supports, but does not replace, medical care."
+        },
+        {
+          "q": "Is online tarot reading in India about predicting the future?",
+          "a": "It depends on the reader. Mehak S on Book A Sloth explicitly does not make future predictions; she uses tarot and oracle cards as a reflection tool to help you think through choices. Her sessions are listed at ₹333 for 15 minutes or ₹555 for 30 minutes, online."
+        },
+        {
+          "q": "Where can I get a free life coach or style consultation online?",
+          "a": "On Book A Sloth, Tatharth Ghate offers a free 30-minute online life coaching session, and fashion designer Muktanjali Koche offers a free 30-minute online consultation for personal style or fashion business questions. You pick a slot on their profile, confirm the booking, and no payment is required."
+        }
+      ]
+    },
+    {
+      "p": "Four hosts, four very different doors: one for your plate, one for your head, one for your next move, one for your mirror. If you are a nutritionist, reader, coach, designer or any kind of expert who would rather spend time on clients than on chasing payments, [list your own services](/be-a-sloth), or just [talk to me](/sndatarkar). I read every message. Even the jeera water ones."
+    }
+  ]
+},
+{
+  "slug": "mbbs-abroad-counselling-developer-mentorship-salesforce-career",
+  "title": "MBBS Abroad Counselling, Dev Mentorship & Salesforce Careers",
+  "date": "Oct 8, 2026",
+  "icons": [
+    "users",
+    "target",
+    "code"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 6,
+  "category": "Host Story",
+  "image": null,
+  "excerpt": "Free MBBS abroad counselling, 1:1 mentorship for developers and Salesforce career guidance: three new Book A Sloth hosts you can book online today.",
+  "body": [
+    {
+      "p": "Every Indian family has a dining table where careers get decided. Somebody's NEET score sits in the middle like a bill nobody wants to pay, an uncle cites a cousin who went to Russia, and a younger sibling quietly googles \"how to become a developer\" under the table. I'm [Shubham](/sndatarkar), I run Book A Sloth, and this week three people joined the platform who can take a seat at that table for free."
+    },
+    {
+      "p": "Here is the short version. [Atish Gupta](/theedulocusway) offers free MBBS abroad counselling (45 minutes, online). [Naman Acharya](/naman-acharya) offers free 1:1 mentorship for developers (30 minutes, online). [Vishal Chaware](/grand-vale-1lcwv) offers free Salesforce career guidance (60 minutes, online). Three careers, three honest conversations, zero rupees. Career counselling online in India usually comes with a sales funnel attached. These three just put a calendar up."
+    },
+    {
+      "h2": "Atish Gupta: MBBS abroad counselling from The Edulocus Way"
+    },
+    {
+      "p": "If Atish's name sounds familiar, it's because I wrote about him already. On 30 June 2026 he became [the first host who ever paid us](/blog/the-first-host-who-paid). A founder doesn't forget that kind of thing. Now he's back in the spotlight for his own work: Atish is Director of The Edulocus Way in Nagpur, and his tagline reads \"Right Guidance. Right College. Bright Future.\""
+    },
+    {
+      "p": "His profile says he helps students and parents make informed admission decisions through expert counselling, personalised guidance and transparent support. That last word matters more than it looks. The MBBS-abroad market runs on brochures with smiling students in snow, and parents rarely know which questions to ask before they sign."
+    },
+    {
+      "p": "The stakes are real. The National Medical Commission's [FMGL Regulations 2021](https://nmc.org.in/storage/cms/rules-regulation-nmc/yFQCJ2Bf9yZU5zBfLCNUFIFG2E3optNdIAQfas9Z.pdf) require at least 54 months of study plus a 12-month internship at the same foreign institution, taught in English. Then comes the licensing exam. In the December 2025 FMGE session, only 10,264 of 43,933 candidates cleared it, [according to Medical Dialogues](https://medicaldialogues.in/news/education/medical-admissions/only-10264-candidates-clear-fmge-december-2025-over-77-percent-fail-screening-test-163962). Picking a university is not the finish line. It's the first of several gates."
+    },
+    {
+      "p": "His free session, [MBBS Abroad Counselling](/theedulocusway/mbbs-abroad-counselling), covers the whole route:"
+    },
+    {
+      "ul": [
+        "Choosing the right country and university based on your NEET score, budget and career goals",
+        "A personalised profile evaluation, plus NEET eligibility and the admission process",
+        "Tuition fee and total cost estimation, with hostel and accommodation information",
+        "Visa and documentation guidance",
+        "FMGE/NExT licensing and career counselling after the degree",
+        "Scholarship and education-loan guidance",
+        "Open Q&A, ending with a personalised admission roadmap"
+      ]
+    },
+    {
+      "p": "Book it if you're a NEET aspirant (or the parent paying for one) and you want the cost, the licensing exam and the paperwork on one page before any agent asks for a deposit. Bring your score and your budget. Leave with a roadmap."
+    },
+    {
+      "h2": "Naman Acharya: free 1:1 mentorship for developers"
+    },
+    {
+      "p": "Naman is a full stack web developer and freelancer based in Pune. His bio is five words long: \"Developing secure websites and application\". No LinkedIn poetry. I respect a man who doesn't decorate."
+    },
+    {
+      "p": "A freelancer has to know the full stack, and also how to find clients, scope work and get paid. That second half is the part tutorials skip. YouTube will teach you React for free, but it won't look at your half-built project and tell you why the login page leaks."
+    },
+    {
+      "p": "His [1:1 Mentorship](/naman-acharya/11-mentorship-4134) session is free, 30 minutes, online. It's built for students stuck between tutorials, freshers deciding between a job and freelancing, or anyone who wants a working developer to look at their code. Thirty minutes is short, so come with one sharp question rather than a vague \"how do I start\". You'll get more out of it."
+    },
+    {
+      "h2": "Vishal Chaware: Salesforce career guidance from a working developer"
+    },
+    {
+      "p": "Vishal's bio is even shorter than Naman's: \"I am Salesforce Developer\". Four words, and the job title is the whole pitch. Fair enough. It's a niche most college placement cells barely mention, and that gap is exactly why this session exists."
+    },
+    {
+      "p": "Salesforce is a CRM platform with its own development world (admins, developers, consultants, certifications) and a lot of confused people trying to work out where to enter. Someone already doing the work is the right person to ask, not a coaching ad that promises a package in 90 days."
+    },
+    {
+      "p": "His [career counselling for Salesforce](/grand-vale-1lcwv/carrier-counselling-for-salesforce-9143) session is free and runs a full 60 minutes online, the longest of the three. That's enough time to talk about where you are now, what the developer role involves day to day, and what you'd need to learn next. Good for engineering students, career switchers from testing or support roles, and admins wondering about the developer side."
+    },
+    {
+      "h2": "All three hosts at a glance"
+    },
+    {
+      "table": {
+        "head": [
+          "Host",
+          "Book them for",
+          "Price & length",
+          "Profile"
+        ],
+        "rows": [
+          [
+            "Atish Gupta (Nagpur)",
+            "MBBS abroad counselling: country, university, cost, visa, FMGE/NExT",
+            "Free · 45 min · online",
+            "[theedulocusway](/theedulocusway)"
+          ],
+          [
+            "Naman Acharya (Pune)",
+            "1:1 mentorship for developers and freelancers",
+            "Free · 30 min · online",
+            "[naman-acharya](/naman-acharya)"
+          ],
+          [
+            "Vishal Chaware",
+            "Salesforce career guidance",
+            "Free · 60 min · online",
+            "[grand-vale-1lcwv](/grand-vale-1lcwv)"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "How booking works on Book A Sloth"
+    },
+    {
+      "p": "Open the host's profile, pick the service, choose a slot that works for you, and confirm. All three of these sessions are free, so there's no payment step. When a host lists a paid service, you pay online through Razorpay at checkout. Either way, you get a booking confirmation with the details. If you're new to this, our guide on [how to book an appointment online](/blog/how-to-book-an-appointment-online) walks through it."
+    },
+    {
+      "info": {
+        "title": "Why are these sessions free?",
+        "text": "Each host chose to list these services at ₹0 on their Book A Sloth profile. Free sessions are a common way for experts to meet people who need them. Check the service page before booking, since a host can update their listings."
+      }
+    },
+    {
+      "faq": [
+        {
+          "q": "Is MBBS abroad counselling free?",
+          "a": "Some MBBS abroad counselling is free. On Book A Sloth, Atish Gupta of The Edulocus Way lists his MBBS Abroad Counselling session as free: 45 minutes, online, covering country and university choice by NEET score and budget, cost estimates, visa paperwork, FMGE/NExT licensing and a personalised admission roadmap."
+        },
+        {
+          "q": "What should I ask in an MBBS abroad counselling session?",
+          "a": "Ask whether the university fits NMC rules (the FMGL Regulations 2021 require at least 54 months of study plus a 12-month internship at the same institution, in English), the total cost including hostel, visa steps, how graduates prepare for FMGE or NExT, and which scholarships or education loans apply to you."
+        },
+        {
+          "q": "Where can I get free 1:1 mentorship as a developer in India?",
+          "a": "Working developers on Book A Sloth offer free 1:1 sessions online. Naman Acharya, a full stack web developer and freelancer in Pune, lists a free 30-minute 1:1 Mentorship session that you can book directly from his profile."
+        },
+        {
+          "q": "How do I get Salesforce career guidance online?",
+          "a": "Book a session with someone already working in Salesforce. Vishal Chaware, a Salesforce developer, offers a free 60-minute online career counselling session for Salesforce on Book A Sloth, useful for students and career switchers deciding where to start."
+        }
+      ]
+    },
+    {
+      "p": "One more thing about Atish. The first host to trust us with money is now handing out free advice on one of the most expensive decisions an Indian family makes. That tells you something about the man. Book [Atish](/theedulocusway), [Naman](/naman-acharya) or [Vishal](/grand-vale-1lcwv) before the dining table decides for you. And if you'd like to list your own services, [talk to me](/sndatarkar)."
+    }
+  ]
+},
+{
   "slug": "how-to-make-money-from-home-india",
   "title": "How to Make Money From Home in India (2026): Real Ways",
   "date": "Oct 7, 2026",

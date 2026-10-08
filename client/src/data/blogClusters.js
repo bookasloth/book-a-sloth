@@ -6,6 +6,11 @@
 
 // Per-post keyword tags. Every published slug MUST appear (enforced by test).
 export const POST_TAGS = {
+  // October 2026 host spotlights: isolated tag + own cluster (orphan gate).
+  'marketing-consultant-lead-generation-coworking-hosts': ['host-spotlight'],
+  'family-lawyer-architect-financial-advisor-consultation-online': ['host-spotlight'],
+  'online-nutritionist-pcos-tarot-reading-life-coach': ['host-spotlight'],
+  'mbbs-abroad-counselling-developer-mentorship-salesforce-career': ['host-spotlight'],
   // October 2026 product-update posts: isolated tag + own cluster (orphan gate).
   'product-otp-and-verification-badges': ['product-update-oct-2026'],
   'landing-pages-for-your-profession': ['product-update-oct-2026'],
@@ -234,4 +239,9 @@ export const BLOG_CLUSTERS = [
     tags: ['product-update-oct-2026'], priority: 55,
     description: 'October 2026 shipped updates: product OTP + verification badges, profession pages, fixes.',
     priorityLinks: ['landing-pages-for-your-profession', 'october-2026-small-fixes'] },
+  // October 2026 host spotlights — isolated, self-covering (member pillar + priorityLinks).
+  { key: 'host-spotlights', keyword: 'meet our hosts', pillar: 'marketing-consultant-lead-generation-coworking-hosts',
+    tags: ['host-spotlight'], priority: 55,
+    description: 'New host spotlights: who joined Book A Sloth and what you can book them for.',
+    priorityLinks: ['family-lawyer-architect-financial-advisor-consultation-online', 'online-nutritionist-pcos-tarot-reading-life-coach', 'mbbs-abroad-counselling-developer-mentorship-salesforce-career'] },
 ];
