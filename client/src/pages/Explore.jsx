@@ -29,12 +29,16 @@ function ExploreFull() {
   const q        = searchParams.get('q') || '';
   const category = searchParams.get('category') || '';
   const service  = searchParams.get('service') || '';
-  const page     = Math.max(1, Math.min(10, parseInt(searchParams.get('page'), 10) || 1));
+  // Server caps results at 96 = 8 pages (exploreController.paginate).
+  const page     = Math.max(1, Math.min(8, parseInt(searchParams.get('page'), 10) || 1));
 
   const [inputVal,   setInputVal]   = useState(q);
   const [categories, setCategories] = useState([]);
   const [services,   setServices]   = useState([]);
   const [meta,       setMeta]       = useState({ total: 0, totalPages: 0, page: 1 });
+  // What the server understood ({text, location, mode}) + whether results are a
+  // fallback ('exact' | 'partial' | 'relaxed_topic' | 'relaxed_location' | 'none').
+  const [parsed,     setParsed]     = useState(null);
   const [fetching,   setFetching]   = useState(false);
 
   const reqRef   = useRef(0);
@@ -83,12 +87,14 @@ function ExploreFull() {
         if (reqId !== reqRef.current) return;
         setServices(res.data.services || []);
         setMeta(res.data.meta || { total: 0, totalPages: 0, page });
+        setParsed(res.data.filters?.parsed || null);
       })
       .catch(err => {
         if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return; // superseded
         if (reqId !== reqRef.current) return;
         setServices([]);
         setMeta({ total: 0, totalPages: 0, page: 1 });
+        setParsed(null);
       })
       .finally(() => { if (reqId === reqRef.current) setFetching(false); });
   }, [q, category, service, page]);
@@ -119,6 +125,19 @@ function ExploreFull() {
     : 'Explore all services';
 
   const firstLoad = fetching && services.length === 0;
+
+  // "offline in Nagpur" — the filters the server peeled off the query.
+  const pMode  = parsed?.mode === 'online' || parsed?.mode === 'offline' ? parsed.mode : '';
+  const pWhere = [pMode, parsed?.location && `in ${parsed.location}`].filter(Boolean).join(' ');
+  // Say so when results are a fallback, instead of passing them off as matches.
+  const fallbackNote = !q || !services.length ? null
+    : meta.match === 'partial'
+    ? <>No exact match for “{q}” — showing the closest matches.</>
+    : meta.match === 'relaxed_topic'
+    ? <>No “{parsed?.text}” services {pWhere} yet — here’s everything else {pWhere}.</>
+    : meta.match === 'relaxed_location'
+    ? <>No services in {parsed?.location} yet — showing online {parsed?.text ? <>“{parsed.text}” </> : null}services you can book from anywhere.</>
+    : null;
 
   // Faceted / searched / paginated Explore views are thin, duplicative variants of
   // the canonical /explore (which they already canonicalize to). Google was indexing
@@ -196,8 +215,15 @@ function ExploreFull() {
           <h2 className="font-heading text-xl font-bold tracking-tight text-ink">{headingText}</h2>
           <p className="mt-0.5 text-sm text-muted">
             {fetching && services.length === 0 ? 'Searching…' : `${meta.total} service${meta.total === 1 ? '' : 's'} found`}
+            {q && pWhere && !fallbackNote && ` · ${pWhere}`}
           </p>
         </div>
+
+        {fallbackNote && (
+          <p role="status" className="rounded-[6px] border border-black/5 bg-sand px-4 py-3 text-sm text-ink">
+            {fallbackNote}
+          </p>
+        )}
 
         {/* Active filter pills */}
         {(q || category || service) && (
