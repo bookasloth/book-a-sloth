@@ -397,6 +397,20 @@ async function prerender() {
     ? 'configured'
     : 'MISSING — dynamic pages may self-ban; set PRERENDER_BUILD_TOKEN on the build env (must match the API server)'}`);
 
+  // Critical CSS: inline the rules each snapshot's DOM actually uses and load the
+  // full stylesheet non-blocking (media="print" → onload swap, <noscript> fallback).
+  // The 38 KiB index CSS was ~33 KiB unused on the homepage and blocked first paint
+  // ~1s on mobile Lighthouse. Only prerendered pages get this — spa-shell.html and
+  // non-prerendered routes keep the normal blocking <link>. NOTE: the onload swap is
+  // an inline handler; an enforced CSP without 'unsafe-inline' in script-src would
+  // strand the full CSS at media="print" (CSP is report-only + unsafe-inline today).
+  const { default: Beasties } = await import('beasties');
+  const beasties = new Beasties({ path: DIST, publicPath: '/', preload: 'media', logLevel: 'warn' });
+  const inlineCritical = async (html) => {
+    try { return await beasties.process(html); }
+    catch (e) { console.warn(`[prerender] critical CSS skipped: ${e.message}`); return html; }
+  };
+
   const server = createStaticServer();
   await new Promise((resolve) => server.listen(PORT, resolve));
   console.log(`[prerender] Static server on ${ORIGIN}`);
@@ -560,7 +574,7 @@ async function prerender() {
         outPath = join(dir, 'index.html');
       }
 
-      writeFileSync(outPath, html, 'utf-8');
+      writeFileSync(outPath, await inlineCritical(html), 'utf-8');
       return outPath;
     } finally {
       // Always close, including on a timeout — an orphaned page holds memory for
