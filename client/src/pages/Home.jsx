@@ -225,12 +225,9 @@ const StatIcon = ({ icon: Icon, delay = 0 }) => {
       transition={{ type: "spring", stiffness: 200, damping: 13, delay }}
       className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20"
     >
-      <motion.span
-        animate={reduce ? {} : { y: [0, -5, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay }}
-      >
+      <span className="sloth-bob" style={{ animationDelay: `${delay}s` }}>
         <Icon size={30} strokeWidth={2} className="text-primary" />
-      </motion.span>
+      </span>
     </motion.div>
   );
 };

@@ -405,7 +405,7 @@ async function prerender() {
   // an inline handler; an enforced CSP without 'unsafe-inline' in script-src would
   // strand the full CSS at media="print" (CSP is report-only + unsafe-inline today).
   const { default: Beasties } = await import('beasties');
-  const beasties = new Beasties({ path: DIST, publicPath: '/', preload: 'media', logLevel: 'warn' });
+  const beasties = new Beasties({ path: DIST, publicPath: '/', preload: 'media', inlineFonts: true, logLevel: 'warn' });
   const inlineCritical = async (html) => {
     try { return await beasties.process(html); }
     catch (e) { console.warn(`[prerender] critical CSS skipped: ${e.message}`); return html; }
