@@ -1,7 +1,7 @@
 // PostHog adapter — first-party product analytics, always-on (not consent-gated).
 //
 // posthog-js (~67 kB gzip) is DYNAMICALLY imported here so it stays OUT of the
-// initial bundle that loads on every page. init() is triggered on first idle by
+// initial bundle that loads on every page. init() is triggered on first interaction / 4s after load by
 // the analytics bus (AnalyticsBridge), so the SDK never competes with first paint.
 // Calls made before the SDK finishes loading are queued and flushed on load, so no
 // events are dropped during the gap.
