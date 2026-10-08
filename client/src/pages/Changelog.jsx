@@ -19,6 +19,37 @@ const TAG_STYLES = {
 // misplaced entry can't show out of order (see SORTED_RELEASES).
 const RELEASES = [
   {
+    date: 'Oct 7, 2026',
+    title: 'Every feature explained, and a proper welcome for invited hosts',
+    tags: ['New', 'Improved', 'Fixed'],
+    points: [
+      'Ten rebuilt feature pages — payments, scheduling, booking pages, availability, Google Calendar, notifications, clients, digital products, reviews and analytics — each with a live demo you can click through, and every claim checked against what the product actually does today.',
+      'Invite links now open a full page — how it works, real pricing, answers to common questions and a clear way to get started — instead of trailing off with nowhere to go.',
+      'Fixed a rare case where an ordinary form submission could get a visitor temporarily blocked from the site. Our protection against real attacks stays in place.',
+    ],
+  },
+  {
+    date: 'Oct 3, 2026',
+    title: 'Calendar, setup and profession pages, tightened',
+    tags: ['Improved', 'Fixed'],
+    points: [
+      'New bookings in your Google Calendar now show you as attending, instead of “awaiting” a reply from yourself.',
+      'Skipping your first service during setup now asks you to confirm — a page with at least one service is a page guests can actually book.',
+      'Friendly mascot art on 13 profession pages, cleaner heroes, and richer behind-the-scenes details so Google and AI assistants understand exactly who each page is for.',
+    ],
+  },
+  {
+    date: 'Sep 28, 2026',
+    title: 'A sharper profile, a smoother booking',
+    tags: ['Improved', 'Fixed'],
+    points: [
+      'Host pages put price and ratings up front, service cards hug their content, and phones get a sticky “Book a session” bar.',
+      'Booking now shows clearly labelled steps — Time, Details, Verify, Pay, Done — plus what you can count on: instant confirmation, a calendar invite, reminders and secure payment.',
+      'Google- and LinkedIn-verified badges are now awarded automatically, no longer vanish once you start earning, and explain themselves when tapped.',
+      'Digital products now work like services: a clean 16:9 cover, fees and GST shown upfront, a GST invoice with every purchase, and checkout codes that arrive on WhatsApp and verify first time.',
+    ],
+  },
+  {
     date: 'Sep 27, 2026',
     title: 'Booking pages built for your profession — 18 and counting',
     tags: ['New'],
