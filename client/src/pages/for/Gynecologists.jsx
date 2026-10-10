@@ -78,7 +78,7 @@ const STEPS = [
 ];
 
 const TOOLS = [
-  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way availability sync' },
+  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Busy times blocked, bookings added to your calendar' },
   { name: 'Google Meet', logo: '/images/logos/google-meet.svg', sub: 'Private video link per consult' },
   { name: 'WhatsApp', logo: '/images/logos/whatsapp.svg', sub: 'Gentle reminders on autopilot' },
   { name: 'Razorpay', logo: razorpayLogo, sub: 'Payments, refunds & GST invoices' },

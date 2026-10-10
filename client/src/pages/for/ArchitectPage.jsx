@@ -103,7 +103,7 @@ const STEPS = [
 
 // Integration logos — REAL BAS integrations only (real logo files + ToolLogo).
 const TOOLS = [
-  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
+  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Busy times blocked, bookings added to your calendar' },
   { name: 'Razorpay', logo: razorpayLogo, sub: 'Payments, refunds and GST invoices' },
   { name: 'WhatsApp', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
   { name: 'PhonePe', logo: '/images/logos/phonepe.svg', sub: 'Accept instant UPI payments' },
@@ -155,7 +155,7 @@ const FAQ = [
   { q: 'Can I send WhatsApp reminders before site visits and meetings?', a: 'Yes. Book A Sloth sends automatic confirmations and reminders over WhatsApp and email before each meeting, which cuts no-shows and wasted site trips. WhatsApp reminders are included on the Sloth Active plan (and free for your first two months on the Sloth plan).' },
   { q: 'Can I offer different meeting types and lengths?', a: 'Yes. Set up separate services — a 30-minute discovery call, a paid design consultation, a site visit, a concept review — each with its own duration, price and availability, and clients pick the one they need.' },
   { q: 'Can I manage more than one designer’s calendar?', a: 'Right now Book A Sloth is best for a single booking calendar per account — two designers on one account share one diary and cannot be booked in parallel. Parallel multi-calendar scheduling is on our roadmap; in the meantime a separate account per designer is the workaround. We would rather tell you upfront than have it surprise you after setup.' },
-  { q: 'Does it sync with my Google Calendar?', a: 'Yes. Book A Sloth syncs two-way with Google Calendar, so a slot you block elsewhere is not offered to clients, and every booking lands in your calendar automatically.' },
+  { q: 'Does it sync with my Google Calendar?', a: 'Yes. Book A Sloth reads the busy times on your Google Calendar, so a slot you have blocked there is not offered to clients, and online bookings are added to your calendar with a Meet link.' },
   { q: 'Is there a free plan?', a: 'Yes. The Sloth plan is free forever — an online booking page, unlimited consultation types and bookings, UPI payments, 24-hour reminders and GST invoices — with a small 5% per-booking fee. Sloth Active removes that commission entirely and adds WhatsApp automation and more.' },
 ];
 
