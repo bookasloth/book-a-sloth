@@ -7,6 +7,7 @@ import {
   PageHeader, Card, DataTable, Badge, SearchInput, SegmentedControl,
   Button, buttonClasses, EmptyState, ErrorState, cn, fmtMoney,
 } from '../components/dashboard/ui';
+import { PREMIUM_PLAN } from '../data/plans';
 
 const fmtDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
@@ -105,10 +106,10 @@ const ClientsList = () => {
           <div className="mb-3 text-3xl">🗂️</div>
           <h3 className="mb-1 font-semibold text-gray-900">Unlock Customers</h3>
           <p className="mb-4 text-sm text-gray-500">
-            See every customer's booking history, total spend, and private notes — a Studio feature.
+            See every customer's booking history, total spend, and private notes with {PREMIUM_PLAN.name}.
           </p>
           <Link to="/dashboard/upgrade" className={buttonClasses({ variant: 'primary' })}>
-            Upgrade to Studio
+            Upgrade to {PREMIUM_PLAN.name}
           </Link>
         </Card>
       </div>

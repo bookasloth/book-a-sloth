@@ -91,7 +91,7 @@ const STEPS = [
 // Integration hub — REAL BAS integrations only. Turf is in-person, so no
 // Meet/Zoom video tools (dropped vs the CA page).
 const TOOLS_LEFT = [
-  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
+  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Busy times blocked, bookings added to your calendar' },
   { name: 'WhatsApp Automation', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
   { name: 'Player Records', logo: '/favicon.svg', sub: 'Every regular, note and history in one place' },
 ];

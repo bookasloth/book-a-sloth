@@ -97,7 +97,7 @@ const STEPS = [
 
 // Integration list — REAL BAS integrations only.
 const TOOLS = [
-  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
+  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Busy times blocked, bookings added to your calendar' },
   { name: 'Google Meet', logo: '/images/logos/google-meet.svg', sub: 'Auto-add a video link to every booking' },
   { name: 'Zoom', logo: '/images/logos/zoom.ico', sub: 'Share meeting links automatically' },
   { name: 'Razorpay', logo: razorpayLogo, sub: 'Online payments, refunds and GST invoices' },

@@ -96,7 +96,7 @@ const STEPS = [
 
 // Integration schedule — REAL BAS integrations only (from the old page).
 const TOOLS = [
-  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Two-way sync of your real availability' },
+  { name: 'Google Calendar', icon: 'google-calendar', sub: 'Busy times blocked, bookings added to your calendar' },
   { name: 'WhatsApp Automation', logo: '/images/logos/whatsapp.svg', sub: 'Reminders and updates on autopilot' },
   { name: 'Razorpay', logo: razorpayLogo, sub: 'Online payments, refunds and GST invoices' },
   { name: 'PhonePe', logo: '/images/logos/phonepe.svg', sub: 'Accept instant UPI payments' },
