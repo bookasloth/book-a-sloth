@@ -56,7 +56,7 @@ const SEARCH_TOPICS = [
 ];
 const REDDIT_DELAY_MS = 15000;
 const UA = 'bookasloth-reply-radar/1.0 (manual review tool)';
-const MODEL = process.env.REPLY_RADAR_MODEL || 'claude-opus-5-5';
+const MODEL = process.env.REPLY_RADAR_MODEL || 'claude-sonnet-5-5';
 
 // Product facts the drafter may use. Keep in sync with Pricing.jsx — a wrong
 // price in a public comment is worse than no comment.
