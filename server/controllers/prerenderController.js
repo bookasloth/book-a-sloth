@@ -304,7 +304,10 @@ async function resolveProfileMeta(username) {
       || `Skip the back-and-forth — ${name}'s calendar is open. Book a slot with them.`,
     image: ogCard,
     cardImage: true, // ogCard is always a known 1200x630 card (generated or site default)
-    robots: host.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
+    // No bookable service = thin profile: noindex but keep links followable.
+    // Mirrors client resolveProfileSeo + the sitemap host filter.
+    robots: host.is_indexable === false ? 'noindex,nofollow'
+      : (services || []).length ? 'index,follow' : 'noindex,follow',
     jsonLd,
     // Same templated FAQ the client renders (utils/profileFaqs mirror) — emitted as
     // a second JSON-LD script so non-JS crawlers + AI answer bots get the FAQPage.

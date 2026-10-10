@@ -58,6 +58,7 @@ const HostAgreement  = lazy(() => import('./pages/HostAgreement'));
 const HostFees       = lazy(() => import('./pages/HostFees'));
 const EarningsCalculator = lazy(() => import('./pages/EarningsCalculator'));
 const ToolsIndex = lazy(() => import('./pages/tools/ToolsIndex'));
+const TemplatesIndex = lazy(() => import('./pages/TemplatesIndex'));
 const NoShowCalculator = lazy(() => import('./pages/tools/NoShowCalculator'));
 const GstCalculator = lazy(() => import('./pages/tools/GstCalculator'));
 const Glossary = lazy(() => import('./pages/Glossary'));
@@ -489,6 +490,7 @@ function App() {
           <Route path="/host-fees" element={<HostFees />} />
           <Route path="/earnings-calculator" element={<EarningsCalculator />} />
           <Route path="/tools" element={<ToolsIndex />} />
+          <Route path="/templates" element={<TemplatesIndex />} />
           <Route path="/tools/no-show-cost-calculator" element={<NoShowCalculator />} />
           <Route path="/tools/gst-calculator" element={<GstCalculator />} />
           <Route path="/glossary" element={<Glossary />} />

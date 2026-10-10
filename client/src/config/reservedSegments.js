@@ -17,6 +17,7 @@ export const RESERVED_FIRST_SEGMENTS = [
   'contact', 'get-in-touch', 'enterprise', 'earnings-calculator', 'how-it-works',
   'tools', // free calculators hub (pages/tools/*): /tools, /tools/no-show-cost-calculator, /tools/gst-calculator
   'glossary', // booking & scheduling glossary (pages/Glossary.jsx + /glossary/:slug)
+  'templates', // message & policy templates hub (pages/TemplatesIndex.jsx)
   'press', // press / media kit (pages/Press.jsx)
   'stats', // "by the numbers" fast-facts page (pages/Stats.jsx)
   'appointment-booking-software', // SEO landing (pages/AppointmentBookingSoftware.jsx)

@@ -1672,29 +1672,373 @@ export const PROFESSION_LANDING = {
   },
 };
 
-// doctors-india — identical content to `doctors`, but a blue palette. Built by
-// spreading the doctors entry and overriding only slug + theme + SEO (canonical
-// resolves to /for/doctors-india automatically in ProfessionLanding).
-PROFESSION_LANDING['doctors-india'] = {
-  ...PROFESSION_LANDING.doctors,
-  slug: 'doctors-india',
+// therapists + yoga-instructors — served by the /for/:profession catch-all.
+// Stats and copy use product facts only (no usage numbers); testimonials come
+// from the consented pool via testimonialRoles.
+PROFESSION_LANDING.therapists = {
+  slug: 'therapists',
+  label: 'Therapists & Counsellors',
+  icon: HeartPulse,
+
+  // ── Theme: calm: deep sky base + clear sky blue ─────────────────────────
   theme: {
-    primary: '#12395c',    // deep blue — ink / headings
-    accent: '#2563eb',     // brand blue — signature colour
-    accentCta: '#1d4ed8',  // blue-700, AA-safe for white-text buttons
-    tint: '#eef4fb',        // soft blue wash
-    heroFrom: '#0a2540',   // dark navy
-    heroTo: '#123a5c',     // navy-blue
+    primary: '#082f49',    // sky-950: ink / headings
+    accent: '#0ea5e9',     // sky-500: signature colour
+    accentCta: '#0369a1',  // sky-700, AA-safe for white-text buttons (5.9:1)
+    tint: '#f0f9ff',       // sky-50 wash
+    heroFrom: '#082f49',   // sky-950
+    heroTo: '#0c4a6e',     // sky-900
   },
+
   seo: {
-    ...PROFESSION_LANDING.doctors.seo,
-    title: 'Appointment Booking Software for Doctors in India | Book A Sloth',
-    // Distinct from /for/doctors (they shared one description → duplicate-meta flag)
-    // and kept under ~160 chars so it isn't truncated in results.
+    title: 'Booking & Payments for Therapists in India | Book A Sloth',
     description:
-      'Appointment booking software for doctors and clinics in India — patients self-book, pay upfront, and get reminders that cut no-shows. From ₹10/day.',
-    ogImage: 'https://company-assets.bookasloth.in/images/seo/for-doctors-india-og-1200x630.jpg',
+      'Booking and payments for therapists and counsellors in India. Clients book private sessions, pay upfront by UPI, and get reminders and a Meet link. Start free.',
+    keywords:
+      'booking software for therapists India, therapist booking and payments, counsellor appointment booking, psychologist online booking India, therapy session payment UPI, online counselling booking page, reduce therapy no-shows',
+    ogTitle: 'Still booking therapy sessions over WhatsApp? Fix it for ₹10/day.',
+    ogDescription:
+      'Clients book a private session, pay upfront and get reminded, automatically. The booking page every therapist and counsellor in India should already have.',
   },
+
+  hero: {
+    eyebrow: 'For Psychologists, Counsellors & Therapists',
+    headline: 'Your sessions,',
+    headlineAccent: 'booked and paid',
+    headlineTail: 'before the session begins.',
+    subline:
+      'You hold the space. Book A Sloth handles everything around it: clients pick a private slot, pay upfront by UPI, and get a reminder with the Meet link, so your hours go to clients and the scheduling runs itself.',
+    ctaText: 'Set Up My Booking Page',
+    microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+    mock: {
+      practice: 'Kavya’s Counselling Practice',
+      practiceTag: 'Counselling Psychologist · Online & In-person',
+      services: [
+        { name: 'First Session', meta: '60 min · Google Meet', price: '₹1,500' },
+        { name: 'Follow-up Session', meta: '50 min · Online', price: '₹1,200' },
+      ],
+    },
+  },
+
+  socialProof: 'Built for psychologists, counsellors and therapists across India.',
+
+  trust: [
+    { icon: Lock, label: 'Razorpay-secured payments' },
+    { icon: FileCheck, label: 'Automatic GST invoices' },
+    { icon: ShieldCheck, label: 'Client data encrypted & private' },
+    { icon: BadgePercent, label: '0% commission on Sloth Active' },
+  ],
+
+  // Product facts only: no usage numbers.
+  stats: [
+    { icon: CalendarClock, value: '24/7', label: 'Clients book a private slot, any hour' },
+    { icon: BellRing, value: '24h', label: 'Reminder before every session' },
+    { icon: BadgePercent, value: '0%', label: 'Commission on Sloth Active' },
+    { icon: IndianRupee, value: '₹0', label: 'To start on the free Sloth plan' },
+  ],
+
+  painPoints: [
+    {
+      icon: MessageSquareX,
+      problem: 'Fixing session times over long WhatsApp threads',
+      solution: 'One link. Clients pick a free slot themselves, so your personal number stops being a scheduling line.',
+    },
+    {
+      icon: IndianRupee,
+      problem: 'Awkward fee conversations at the end of a session',
+      solution: 'Clients pay upfront by UPI, card or netbanking when they book. The session ends on the work, with nothing left to ask for.',
+    },
+    {
+      icon: UserX,
+      problem: 'Late cancellations and no-shows on weekly slots',
+      solution: 'Prepaid sessions, automatic reminders and your cancellation terms shown before payment help keep weekly slots filled.',
+    },
+    {
+      icon: ClipboardList,
+      problem: 'Repeating intake questions in the first session',
+      solution: 'Add intake fields to your booking form on Sloth Active and read the answers before you meet.',
+    },
+    {
+      icon: Lock,
+      problem: 'Worrying about where client details live',
+      solution: 'Client details are encrypted, access-controlled and never sold. Your client list and notes are visible only to you.',
+    },
+    {
+      icon: Laptop,
+      problem: 'Sending video links by hand before every session',
+      solution: 'Each online booking gets its own Google Meet link, sent with the confirmation and the reminder.',
+    },
+  ],
+
+  features: [
+    {
+      icon: CalendarCheck,
+      title: 'Weekly slots, easy to rebook',
+      desc: 'Set your weekly hours and blocked dates once. Clients rebook their usual slot from your link, and Sloth Active sends follow-ups that invite them back.',
+    },
+    {
+      icon: Wallet,
+      title: 'Sessions paid upfront',
+      desc: 'Clients pay by UPI, card or netbanking at booking. The booking confirms on payment and a GST invoice is generated automatically.',
+    },
+    {
+      icon: ShieldCheck,
+      title: 'Confidential by default',
+      desc: 'Encrypted, access-controlled and never sold. Your client list, private notes and session history belong to you alone.',
+    },
+    {
+      icon: BellRing,
+      title: 'Reminders and Meet links, sent for you',
+      desc: 'Email and WhatsApp reminders go out 24 hours before each session, plus 1 hour before on Sloth Active. Online sessions get a Google Meet link automatically.',
+    },
+  ],
+
+  pricing: {
+    hook: 'Less than a cup of chai a day.',
+    line: 'Start free on Sloth with 5% per paid booking. Sloth Active is ₹399/month or ₹3,599/year, GST included, with 0% commission.',
+  },
+
+  midCtas: {
+    afterProblems: {
+      text: 'Give your hours to clients. Let one link handle the scheduling.',
+      ctaText: 'Get My Booking Link',
+    },
+    afterHow: {
+      text: 'Your next client is ready to book a session. Make it one tap.',
+      ctaText: 'Set Up My Page Free',
+    },
+  },
+
+  faq: [
+    {
+      q: 'What is the best booking and payment software for therapists in India?',
+      a: 'Book A Sloth is built for Indian therapists, psychologists and counsellors. Clients book a private session from your link, pay upfront by UPI, card or netbanking, and get automatic reminders and a Google Meet link for online sessions. It generates GST invoices and charges 0% commission on Sloth Active.',
+    },
+    {
+      q: 'Can clients pay for therapy sessions in advance?',
+      a: 'Yes. Your fee is shown on each service and collected at checkout through Razorpay by UPI, card or netbanking. The booking confirms automatically once the payment goes through, and a GST invoice is generated.',
+    },
+    {
+      q: 'Can I run weekly recurring sessions?',
+      a: 'You set your weekly hours once, and clients rebook their usual slot from your link after each session, paying for each one upfront. Book A Sloth does not create an automatic repeating series or charge clients on a subscription. On Sloth Active, follow-up messages invite clients to book their next session.',
+    },
+    {
+      q: 'Can I collect intake information before the first session?',
+      a: 'Yes. On Sloth Active you can add custom intake fields to your booking form, so you read the client’s answers before you meet. Sloth Active also keeps a client record with private notes and booking history.',
+    },
+    {
+      q: 'How are client details kept confidential?',
+      a: 'Client details are encrypted, access-controlled and never sold, and only you can see your client list and notes. If clients share a phone with family, use a neutral service name such as “Session”, since the service name can appear in confirmations and reminders.',
+    },
+    {
+      q: 'Can I set a cancellation policy?',
+      a: 'Yes. Write your cancellation and rescheduling terms in each service description so clients see them before they pay. Clients can reschedule from their booking, and if you cancel a session the client is refunded in full, including the booking fee.',
+    },
+    {
+      q: 'How much does it cost?',
+      a: 'You can start free on the Sloth plan, which charges 5% per paid booking. Sloth Active costs ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Clients pay a ₹10 booking fee plus GST on it at checkout, and the payment gateway’s charge applies on both plans.',
+    },
+  ],
+
+  finalCta: {
+    icon: HeartPulse,
+    urgency: 'Every unanswered enquiry is a client who may look elsewhere.',
+    headline: 'More sessions. Less admin.',
+    subline: 'Set up your therapy booking page in minutes. Free to start, no card required, cancel anytime.',
+    ctaText: 'Create My Booking Page',
+  },
+
+  headings: {
+    problems: { eyebrow: 'The daily friction', title: 'Holding space for clients is the job.', titleAccent: 'The scheduling shouldn’t be.' },
+    features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own quiet front desk.' },
+    testimonials: { title: 'Built for how independent practices run.', subtitle: 'Hosts across professions use Book A Sloth to get booked and paid without the admin.' },
+  },
+
+  madeFor: "India's Therapists & Counsellors",
+
+  // No profession-specific quotes: real shared testimonials, nearest role first.
+  testimonialRoles: ['Physiotherapist'],
+};
+
+PROFESSION_LANDING['yoga-instructors'] = {
+  slug: 'yoga-instructors',
+  label: 'Yoga Instructors',
+  icon: Sparkles,
+
+  // ── Theme: grounded: deep forest base + fresh lime ──────────────────────
+  theme: {
+    primary: '#1a2e05',    // lime-950: ink / headings
+    accent: '#84cc16',     // lime-500: signature colour
+    accentCta: '#4d7c0f',  // lime-700, AA-safe for white-text buttons (5.0:1)
+    tint: '#f7fee7',       // lime-50 wash
+    heroFrom: '#1a2e05',   // lime-950
+    heroTo: '#365314',     // lime-900
+  },
+
+  seo: {
+    title: 'Yoga Class Booking for Instructors | Book A Sloth',
+    description:
+      'Yoga class booking for instructors in India. Students book trial and private classes, pay upfront by UPI, and get WhatsApp reminders and Meet links. Start free.',
+    keywords:
+      'yoga class booking for instructors, yoga class booking India, online yoga class booking, yoga trial class booking, collect yoga fees UPI, yoga teacher scheduling software, private yoga session booking',
+    ogTitle: 'Still collecting yoga fees on WhatsApp? Fix it for ₹10/day.',
+    ogDescription:
+      'Students book a class, pay upfront by UPI and get reminded, automatically. The booking page every yoga instructor in India should already have.',
+  },
+
+  hero: {
+    eyebrow: 'For Yoga Instructors & Teachers',
+    headline: 'Your classes,',
+    headlineAccent: 'booked and paid',
+    headlineTail: 'before the first sun salutation.',
+    subline:
+      'You teach the practice. Book A Sloth handles everything around it: students book a trial or private class, pay upfront by UPI, and get a reminder with the Meet link, so your mornings stay on the mat.',
+    ctaText: 'Set Up My Booking Page',
+    microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+    mock: {
+      practice: 'Sunrise Yoga with Neha',
+      practiceTag: 'Yoga Instructor · Hatha & Vinyasa',
+      services: [
+        { name: 'Trial Class', meta: '45 min · Google Meet', price: 'Free' },
+        { name: 'Private Yoga Session', meta: '60 min · In-person', price: '₹800' },
+      ],
+    },
+  },
+
+  socialProof: 'Built for yoga instructors and teachers across India.',
+
+  trust: [
+    { icon: Lock, label: 'Razorpay-secured payments' },
+    { icon: FileCheck, label: 'Automatic GST invoices' },
+    { icon: ShieldCheck, label: 'Student data encrypted & private' },
+    { icon: BadgePercent, label: '0% commission on Sloth Active' },
+  ],
+
+  // Product facts only: no usage numbers.
+  stats: [
+    { icon: CalendarClock, value: '24/7', label: 'Trial and private classes booked, any hour' },
+    { icon: BellRing, value: '24h', label: 'Reminder before every class' },
+    { icon: BadgePercent, value: '0%', label: 'Commission on Sloth Active' },
+    { icon: IndianRupee, value: '₹0', label: 'To start on the free Sloth plan' },
+  ],
+
+  painPoints: [
+    {
+      icon: MessageSquareX,
+      problem: 'Answering “what are your timings?” on WhatsApp all day',
+      solution: 'One link shows your open slots. Students pick a time and book without the back-and-forth.',
+    },
+    {
+      icon: IndianRupee,
+      problem: 'Chasing fees and UPI screenshots every month',
+      solution: 'Students pay by UPI, card or netbanking when they book, and each payment comes with a GST invoice. Nothing is left to chase.',
+    },
+    {
+      icon: UserX,
+      problem: 'Trial students who book and never turn up',
+      solution: 'Trials are booked with a verified phone number, and a reminder goes out 24 hours before class.',
+    },
+    {
+      icon: Laptop,
+      problem: 'Sending Meet links to every student before class',
+      solution: 'Every online booking gets its own Google Meet link, sent with the confirmation and the reminder.',
+    },
+    {
+      icon: CalendarX2,
+      problem: 'Private sessions clashing with your own practice and family time',
+      solution: 'Set weekly hours, block dates and sync Google Calendar, so students only see times you are free.',
+    },
+    {
+      icon: Clock3,
+      problem: 'Late-night enquiries lost by morning',
+      solution: 'Your page takes bookings 24/7. A student signs up at night, and you see it before your first class.',
+    },
+  ],
+
+  features: [
+    {
+      icon: CalendarCheck,
+      title: 'Trial and private classes, one link',
+      desc: 'Offer a free trial alongside paid private and online sessions. Students book from your Instagram bio, WhatsApp or website.',
+    },
+    {
+      icon: Wallet,
+      title: 'Fees paid upfront by UPI',
+      desc: 'Collect each class fee at booking via UPI, card or netbanking. A GST invoice is generated automatically.',
+    },
+    {
+      icon: BellRing,
+      title: 'Reminders and Meet links',
+      desc: 'Email and WhatsApp reminders 24 hours before class, plus 1 hour before on Sloth Active. Online classes get a Google Meet link automatically.',
+    },
+    {
+      icon: Users,
+      title: 'Know your regulars',
+      desc: 'On Sloth Active, your client list keeps each student’s booking history and notes, and shows who has not booked in a while.',
+    },
+  ],
+
+  pricing: {
+    hook: 'Less than a cup of chai a day.',
+    line: 'Start free on Sloth with 5% per paid booking. Sloth Active is ₹399/month or ₹3,599/year, GST included, with 0% commission.',
+  },
+
+  midCtas: {
+    afterProblems: {
+      text: 'Spend your time teaching. Let one link handle bookings and fees.',
+      ctaText: 'Get My Booking Link',
+    },
+    afterHow: {
+      text: 'Your next student is ready to book a class. Make it one tap.',
+      ctaText: 'Set Up My Page Free',
+    },
+  },
+
+  faq: [
+    {
+      q: 'What is the best yoga class booking software for instructors in India?',
+      a: 'Book A Sloth is built for Indian yoga instructors. Students book trial and private classes from your link, pay upfront by UPI, card or netbanking, and get automatic reminders and a Google Meet link for online classes. It generates GST invoices and charges 0% commission on Sloth Active.',
+    },
+    {
+      q: 'Can I offer a free trial class?',
+      a: 'Yes. You can list a free (₹0) trial class next to your paid sessions. The free Sloth plan includes up to 2 free services, and a free booking carries no booking fee or commission.',
+    },
+    {
+      q: 'Can students pay monthly batch fees by UPI?',
+      a: 'Every booking on Book A Sloth is paid upfront by UPI, card or netbanking, with a GST invoice. Each slot takes one booking, and there is no automatic monthly billing, so group batches with shared seats are not supported today. It works best for trial classes, private sessions and 1:1 online classes, where each student books their own slot.',
+    },
+    {
+      q: 'Can I teach online with Google Meet?',
+      a: 'Yes. Connect Google Calendar and every online booking gets its own Google Meet link, added to your calendar and sent to the student. In-person classes show your location instead.',
+    },
+    {
+      q: 'Do students get WhatsApp reminders?',
+      a: 'Yes. Reminders go to you and the student 24 hours before class on every plan, and Sloth Active adds a reminder 1 hour before. On the free plan, WhatsApp reminders run for the first 60 days after signup and then continue by email.',
+    },
+    {
+      q: 'How much does it cost?',
+      a: 'You can start free on the Sloth plan, which charges 5% per paid booking. Sloth Active costs ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Students pay a ₹10 booking fee plus GST on it at checkout for paid classes, and the payment gateway’s charge applies on both plans.',
+    },
+  ],
+
+  finalCta: {
+    icon: Sparkles,
+    urgency: 'Every unanswered enquiry is a student who may join another class.',
+    headline: 'More practice. Less admin.',
+    subline: 'Set up your yoga booking page in minutes. Free to start, no card required, cancel anytime.',
+    ctaText: 'Create My Booking Page',
+  },
+
+  headings: {
+    problems: { eyebrow: 'The daily friction', title: 'Teaching a good class is the job.', titleAccent: 'Fee follow-ups shouldn’t be.' },
+    features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own studio desk.' },
+    testimonials: { title: 'Built for how independent teachers work.', subtitle: 'Hosts across professions use Book A Sloth to get booked and paid without the admin.' },
+  },
+
+  madeFor: "India's Yoga Instructors",
+
+  // No profession-specific quotes: real shared testimonials, nearest role first.
+  testimonialRoles: ['Physiotherapist'],
 };
 
 export const getProfessionLanding = (slug) =>

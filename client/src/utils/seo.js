@@ -152,8 +152,12 @@ export const resolveProfileSeo = ({ host = {}, services = [], siteUrl = SITE_URL
     ogDescription: host.og_description || description,
     image: host.seo_image || host.profile_image || brandCard(site),
     canonical: host.username ? `${site}/${host.username}` : site,
-    indexable: host.is_indexable !== false,
-    robots: robotsFor(host.is_indexable),
+    // A profile with no bookable service is a thin page (name + empty shell), so
+    // keep it out of the index but let crawlers follow its links. Mirrors
+    // prerenderController + the sitemap host filter.
+    indexable: host.is_indexable !== false && (services || []).length > 0,
+    robots: host.is_indexable === false ? robotsFor(false)
+      : (services || []).length ? robotsFor(true) : 'noindex,follow',
   };
 };
 

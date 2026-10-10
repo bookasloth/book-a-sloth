@@ -77,6 +77,25 @@ export function freeCommissionPerYear(earning, sessionsPerMonth) {
   return round2(rate * (Number(earning) || 0) * annualBookings(sessionsPerMonth));
 }
 
+// Topmate's published fees, as stated in the pricing FAQ on topmate.io (checked
+// 10 Oct 2026): 10% of sales through your own link, 20% through its marketplace,
+// with GST charged on Topmate's fee. Gateway charges apply on every platform, so
+// the comparison below leaves them out for all rows. Re-check when Topmate moves.
+export const TOPMATE_FEES = { ownLink: 0.10, marketplace: 0.20, gstOnFee: 0.18, source: 'https://topmate.io/', checked: 'October 2026' };
+
+// What each option costs a host per year in platform fees for the same price and
+// volume — the "per ₹ earned" view people compare Topmate and Book A Sloth on.
+export function platformFeesPerYear(earning, sessionsPerMonth) {
+  const sales = (Number(earning) || 0) * annualBookings(sessionsPerMonth);
+  const topmate = (rate) => round2(sales * rate * (1 + TOPMATE_FEES.gstOnFee));
+  return [
+    { key: 'topmate-own', name: 'Topmate, your own link', fee: topmate(TOPMATE_FEES.ownLink), note: '10% of sales + 18% GST on the fee' },
+    { key: 'topmate-marketplace', name: 'Topmate, marketplace sale', fee: topmate(TOPMATE_FEES.marketplace), note: '20% of sales + 18% GST on the fee' },
+    { key: 'free', name: 'Book A Sloth · Sloth', fee: freeCommissionPerYear(earning, sessionsPerMonth), note: '5% per paid booking' },
+    { key: 'premium', name: 'Book A Sloth · Sloth Active', fee: ANNUAL_FEE.premium, note: 'Flat yearly plan, 0% commission' },
+  ];
+}
+
 // The recommendation's headline number: how much more the winning plan keeps per
 // year than free. 0 when free itself is the winner (nothing to beat).
 export function deltaVsFree(results, winnerKey) {

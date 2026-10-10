@@ -23,6 +23,7 @@ const ROUTES = [
   'earnings-calculator',
   'tools', // free calculators hub — client /tools + /tools/* routes
   'glossary', 'press', 'stats', // client /glossary(+/:slug), /press, /stats routes
+  'templates', // client /templates hub
   'solutions', 'compare', // SEO discovery hubs — client /solutions + /compare routes
   'appointment-booking-software', // SEO landing — client /appointment-booking-software route
   'sitemap', 'robots', 'health', 'manifest', 'favicon', 'get-in-touch',

@@ -5,7 +5,7 @@ import Seo from '../../components/common/Seo';
 import { SITE_URL, faqJsonLd } from '../../utils/seo';
 import ServiceCategoryCard from '../../components/services/ServiceCategoryCard';
 import { getProfessionServices } from '../../services/api';
-import { professionSeo, cardBlurb } from './professionSeoContent';
+import { professionSeo, cardBlurb, withArticle } from './professionSeoContent';
 
 // Slug → Title Case label ("career-coach" → "Career Coach"). Fallback for the meta
 // title before/without the API response, so a real title is always present.
@@ -75,7 +75,7 @@ export default function ProfessionServices() {
     }] : []),
   ] : undefined;
   const seo = (
-    <Seo title={`Book a ${label} online | Book A Sloth`} description={description} canonical={canonical} jsonLd={jsonLd} />
+    <Seo title={`Book ${withArticle(label)} online | Book A Sloth`} description={description} canonical={canonical} jsonLd={jsonLd} />
   );
 
   if (loading) return <div className="app-container py-16">{seo}Loading…</div>;
@@ -87,7 +87,7 @@ export default function ProfessionServices() {
   return (
     <div className="app-container py-12">
       <Seo
-        title={`Book a ${label} online | Book A Sloth`}
+        title={`Book ${withArticle(label)} online | Book A Sloth`}
         description={description}
         canonical={canonical}
         jsonLd={faqLd ? [...jsonLd, faqLd] : jsonLd}
@@ -96,7 +96,7 @@ export default function ProfessionServices() {
         <Link to="/services" className="hover:underline">Services</Link> / {prof.label}
       </nav>
       <h1 className="font-heading text-[2.1rem] font-extrabold leading-[1.12] tracking-tight text-[#1E1E1E] xl:text-[2.7rem]">
-        Book a {prof.label} online
+        Book {withArticle(prof.label)} online
       </h1>
       <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[#475569]">{intro}</p>
 

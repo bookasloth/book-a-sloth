@@ -16,7 +16,7 @@ describe('resolveProfileMeta', () => {
     buildHostProfile.mockResolvedValueOnce({
       payload: {
         host: { username: 'jane', name: 'Jane', is_indexable: true },
-        services: [],
+        services: [{ title: 'Intro call', slug: 'intro' }],
       },
     });
     const m = await resolveProfileMeta('jane');
@@ -122,6 +122,14 @@ describe('resolveProfileMeta', () => {
     });
     const m = await resolveProfileMeta('jane');
     expect(m.buildHtmlArgs.jsonLd.mainEntity).not.toHaveProperty('aggregateRating');
+  });
+
+  test('robots is noindex,follow for a host with no bookable service', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: { host: { username: 'empty', name: 'Empty', is_indexable: true }, services: [] },
+    });
+    const m = await resolveProfileMeta('empty');
+    expect(m.buildHtmlArgs.robots).toBe('noindex,follow');
   });
 
   test('robots is noindex,nofollow when is_indexable is false', async () => {

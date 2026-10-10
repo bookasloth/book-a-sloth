@@ -89,6 +89,10 @@ describe('resolveProfileSeo', () => {
   test('canonical is the profile root URL', () => {
     expect(resolveProfileSeo({ host, siteUrl: SITE }).canonical).toBe('https://bookasloth.com/john-doe');
   });
+  test('index only when the host has a bookable service', () => {
+    expect(resolveProfileSeo({ host, services: [{ title: 'Intro' }], siteUrl: SITE }).robots).toBe('index,follow');
+    expect(resolveProfileSeo({ host, services: [], siteUrl: SITE }).robots).toBe('noindex,follow');
+  });
   test('noindex when host.is_indexable === false', () => {
     expect(resolveProfileSeo({ host: { ...host, is_indexable: false }, siteUrl: SITE }).robots).toBe('noindex,nofollow');
   });
