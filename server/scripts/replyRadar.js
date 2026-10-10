@@ -27,7 +27,7 @@
  *
  * ponytail: Reddit's unauthenticated .json is 403 and new OAuth apps need
  * approval (Responsible Builder Policy, Nov 2025), so this reads the search RSS
- * — one request per subreddit, 7s apart, one 60s back-off on 429. If RSS dies
+ * — subreddits batched into ~2 sitewide queries, 15s apart. If RSS dies
  * entirely it falls back to Claude web_search on reddit.com (titles only).
  */
 const fs = require('fs');
@@ -54,7 +54,7 @@ const SEARCH_TOPICS = [
   'how coaches and therapists in India take paid bookings',
   'Topmate alternative',
 ];
-const REDDIT_DELAY_MS = 7000;
+const REDDIT_DELAY_MS = 15000;
 const UA = 'bookasloth-reply-radar/1.0 (manual review tool)';
 const MODEL = process.env.REPLY_RADAR_MODEL || 'claude-opus-5-5';
 
@@ -118,8 +118,21 @@ function parseArgs(argv) {
   };
 }
 
-// Reddit search ORs quoted phrases: ("a" OR "b").
-const redditQuery = (queries) => `(${queries.map((q) => `"${q}"`).join(' OR ')})`;
+// Sitewide Reddit search queries: (subreddit:a OR subreddit:b) ("x" OR "y"),
+// packing as many subreddits per query as fit Reddit's 512-char query cap —
+// fewer requests is the whole game against the RSS rate limit.
+function redditQueries(subs, phrases, max = 500) {
+  const terms = `(${phrases.map((p) => `"${p}"`).join(' OR ')})`;
+  const build = (group) => `(${group.map((s) => `subreddit:${s}`).join(' OR ')}) ${terms}`;
+  const out = [];
+  let group = [];
+  for (const sub of subs) {
+    if (group.length && build([...group, sub]).length > max) { out.push(build(group)); group = []; }
+    group.push(sub);
+  }
+  if (group.length) out.push(build(group));
+  return out;
+}
 
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
 const decode = (s) => s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (m, e) => (
@@ -151,29 +164,29 @@ function parseRedditAtom(xml, sinceMs) {
 }
 
 // Unauthenticated .json is 403 since 2026; the search RSS still answers but
-// rate-limits hard (429 after a short burst) — so go slow, back off once.
+// rate-limits hard (429 after a short burst, IP-wide, lasting minutes) — so a
+// couple of batched requests, spaced out, no retry storm.
 async function fetchReddit({ days }) {
   const sinceMs = Date.now() - days * 86400e3;
   const t = days <= 1 ? 'day' : days <= 7 ? 'week' : 'month';
-  const q = encodeURIComponent(redditQuery(QUERIES));
+  const queries = redditQueries(SUBREDDITS, QUERIES);
   const posts = [];
   let failed = 0;
-  for (const [i, sub] of SUBREDDITS.entries()) {
+  for (const [i, q] of queries.entries()) {
     if (i) await sleep(REDDIT_DELAY_MS);
-    const url = `https://www.reddit.com/r/${sub}/search.rss?q=${q}&restrict_sr=1&sort=new&t=${t}`;
+    const url = `https://www.reddit.com/search.rss?q=${encodeURIComponent(q)}&sort=new&t=${t}&limit=100`;
     try {
-      let res = await fetch(url, { headers: { 'User-Agent': UA } });
-      if (res.status === 429) { console.warn(`  r/${sub}: 429, waiting 60s`); await sleep(60e3); res = await fetch(url, { headers: { 'User-Agent': UA } }); }
-      if (!res.ok) { failed++; console.warn(`  r/${sub}: HTTP ${res.status}`); continue; }
+      const res = await fetch(url, { headers: { 'User-Agent': UA } });
+      if (!res.ok) { failed++; console.warn(`  batch ${i + 1}/${queries.length}: HTTP ${res.status}${res.status === 429 ? ' (rate-limited — retry in ~15 min)' : ''}`); continue; }
       const found = parseRedditAtom(await res.text(), sinceMs);
-      console.log(`  r/${sub}: ${found.length}`);
+      console.log(`  batch ${i + 1}/${queries.length}: ${found.length}`);
       posts.push(...found);
     } catch (e) {
       failed++;
-      console.warn(`  r/${sub}: ${e.message}`);
+      console.warn(`  batch ${i + 1}/${queries.length}: ${e.message}`);
     }
   }
-  return { posts, allFailed: failed === SUBREDDITS.length };
+  return { posts, allFailed: failed === queries.length };
 }
 
 // Search-result URL → canonical { id, url, where }, or null for non-posts
@@ -330,4 +343,4 @@ if (require.main === module) {
   main().catch((e) => { console.error(e); process.exit(1); });
 }
 
-module.exports = { redditQuery, parseRedditAtom, canonicalPost, toMarkdown };
+module.exports = { redditQueries, parseRedditAtom, canonicalPost, toMarkdown };

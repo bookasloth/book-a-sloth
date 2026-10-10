@@ -1,4 +1,4 @@
-const { redditQuery, parseRedditAtom, canonicalPost, toMarkdown } = require('../scripts/replyRadar');
+const { redditQueries, parseRedditAtom, canonicalPost, toMarkdown } = require('../scripts/replyRadar');
 
 // Trimmed real Reddit search RSS entry (Atom, XML-escaped HTML body).
 const ATOM = `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><title>freelance: search results</title>
@@ -7,8 +7,12 @@ const ATOM = `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.o
 </feed>`;
 
 describe('replyRadar helpers', () => {
-  test('redditQuery ORs quoted phrases', () => {
-    expect(redditQuery(['booking link', 'topmate'])).toBe('("booking link" OR "topmate")');
+  test('redditQueries batches subreddits under the length cap', () => {
+    const qs = redditQueries(['aaaa', 'bbbb', 'cccc'], ['x y', 'z'], 60);
+    expect(qs[0]).toBe('(subreddit:aaaa OR subreddit:bbbb) ("x y" OR "z")');
+    expect(qs).toHaveLength(2);
+    expect(qs.every((q) => q.length <= 60)).toBe(true);
+    expect(redditQueries(['a'], ['b'])).toEqual(['(subreddit:a) ("b")']);
   });
 
   test('parseRedditAtom decodes posts and drops ones older than the window', () => {
