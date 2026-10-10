@@ -6,8 +6,8 @@
  * service_scores.effective_score × search relevance. One DB read on
  * `from('services')` with embedded profiles!inner + service_scores; ranked and
  * paginated (12/page, 96-cap) in memory. Filters: `category` (host profession),
- * `service` (service slug — REQUIRES `category`), `q` (sanitized ilike + relevance
- * gate). Response shape: { services, meta, filters }.
+ * `service` (service slug — REQUIRES `category`), `q` (parsed + matched in memory
+ * by lib/exploreSearch — never reaches SQL). Response shape: { services, meta, filters }.
  */
 
 jest.mock('../../config/supabase', () => require('./helpers').makeSbMock());
@@ -59,7 +59,12 @@ describe('GET /api/explore', () => {
   });
 
   test('category+service returns mapped, denormalized service cards', async () => {
-    const mockQuery = awaitable({ data: [row()], error: null });
+    const mockQuery = awaitable({ data: [
+      row(),
+      // other profession / other service slug → filtered out in memory
+      row({ id: 'x1', slug: 'x1', profiles: { ...row().profiles, primary_category: 'chef' } }),
+      row({ id: 'x2', slug: 'x2', category: 'portrait-photography' }),
+    ], error: null });
     supabaseAdmin.from.mockReturnValueOnce(mockQuery);
 
     const res = await request(app).get('/api/explore?category=photographer&service=wedding-photography');
@@ -78,8 +83,7 @@ describe('GET /api/explore', () => {
     const eqCalls = mockQuery.eq.mock.calls;
     expect(eqCalls).toContainEqual(['is_active', true]);
     expect(eqCalls).toContainEqual(['profiles.is_verified', true]);
-    expect(eqCalls).toContainEqual(['category', 'wedding-photography']);
-    expect(eqCalls).toContainEqual(['profiles.primary_category', 'photographer']);
+    expect(eqCalls).toContainEqual(['profiles.is_banned', false]);
   });
 
   test('no reviews → avgRating null', async () => {
@@ -110,16 +114,29 @@ describe('GET /api/explore', () => {
     expect(res.body.meta.total).toBe(2);
   });
 
-  test('q is sanitized (PostgREST metachars stripped) before ilike .or()', async () => {
-    const mockQuery = awaitable({ data: [], error: null });
+  test('q never reaches a PostgREST filter; metachars are just word breaks', async () => {
+    const mockQuery = awaitable({ data: [row()], error: null });
     supabaseAdmin.from.mockReturnValueOnce(mockQuery);
 
-    const res = await request(app).get('/api/explore?q=' + encodeURIComponent('foo,bar(baz)'));
+    const res = await request(app).get('/api/explore?q=' + encodeURIComponent('wedding,(photo)%'));
 
     expect(res.status).toBe(200);
-    expect(res.body.filters.q).toBe('foobarbaz');
-    expect(mockQuery.or).toHaveBeenCalledWith(
-      'title.ilike.%foobarbaz%,description.ilike.%foobarbaz%,category.ilike.%foobarbaz%');
+    expect(mockQuery.or).not.toHaveBeenCalled();
+    expect(res.body.services.map(s => s.id)).toEqual(['svc1']);
+    expect(res.body.filters.parsed).toEqual({ text: 'wedding photo', location: '', mode: '' });
+    expect(res.body.meta.match).toBe('exact');
+  });
+
+  test('city + mode are parsed off the query and filter the results', async () => {
+    supabaseAdmin.from.mockReturnValueOnce(awaitable({ data: [
+      row({ id: 'pune-off', slug: 'a', meeting_mode: 'offline' }),
+      row({ id: 'pune-on', slug: 'b', meeting_mode: 'online' }),
+      row({ id: 'mum-off', slug: 'c', meeting_mode: 'offline', profiles: { ...row().profiles, location: 'Mumbai' } }),
+    ], error: null }));
+    const res = await request(app).get('/api/explore?q=' + encodeURIComponent('wedding photographer in person pune'));
+    expect(res.status).toBe(200);
+    expect(res.body.services.map(s => s.id)).toEqual(['pune-off']);
+    expect(res.body.filters.parsed).toEqual({ text: 'wedding photographer', location: 'Pune', mode: 'offline' });
   });
 
   test('q under 2 chars is ignored (no ilike filter)', async () => {

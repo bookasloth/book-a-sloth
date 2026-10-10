@@ -7,40 +7,22 @@
 const { supabase, supabaseAdmin } = require('../config/supabase');
 const responseCache = require('../services/responseCache');
 const { setPublicCache } = require('../utils/httpCache');
-const { sanitizeLikeTerm } = require('../utils/searchSanitize');
-const { parseSearchQuery } = require('../services/ai/parseSearchQuery');
+const { search, norm, cityOf } = require('../lib/exploreSearch');
 
-// Read-through cache TTL for the public listing (matches host/service pages).
+// Read-through cache TTL for the public catalog (matches host/service pages).
 const EXPLORE_CACHE_MS = 120 * 1000;
-const MAX_RESULTS = 96;   // hard cap → at most 8 pages of 12
 const DEFAULT_LIMIT = 12;
+// Upper bound on the cached catalog. 59 visible services on prod (2026-10).
+// ponytail: whole catalog cached + searched in memory; move search into Postgres
+// (see lib/exploreSearch.js) well before this cap is reached.
+const CATALOG_CAP = 2000;
+// ONE cache line serves every search: the full visible catalog, searched in
+// memory per request. Replaces the per-query `explore:v3:` keys, so pagination,
+// filters and every query share a single DB read per 120s.
+const CATALOG_KEY = 'explore:v4:catalog';
 
 // ── helpers ───────────────────────────────────────────────────
 const now = () => new Date().toISOString();
-
-// Filter-scoped cache key — deliberately page-INDEPENDENT: we cache the full ranked
-// list (≤96) once per (category, service, parsed query) so all 8 pages share one DB
-// computation and pagination is a pure in-memory slice. Keyed on the PARSED query
-// (text|location|mode) so "Mock Interview Offline Nagpur" and a later identical
-// search share a cache line. (Improves on the old per-page key.)
-const rankKey = (category, service, p) =>
-  `explore:v3:${category}|${service}|${p.text}|${p.location}|${p.mode}`;
-
-// Search relevance multiplier. FTS/tsvector + trigram typo-fallback are DEFERRED
-// (pointless over 35 rows — see PROGRESS.md tripwires); at this scale substring
-// tiers over the small candidate set are exact and free. exact/strong title 1.6,
-// category 1.3, description 1.0, no match → excluded from search results.
-function relevanceMult(row, q) {
-  if (!q) return 1;
-  const ql    = q.toLowerCase();
-  const title = (row.title || '').toLowerCase();
-  const cat   = (row.category || '').toLowerCase();
-  const desc  = (row.description || '').toLowerCase();
-  if (title.includes(ql)) return 1.6;
-  if (cat.includes(ql))   return 1.3;
-  if (desc.includes(ql))  return 1.0;
-  return 0;
-}
 
 const scoreOf = (row) =>
   (Array.isArray(row.service_scores) ? row.service_scores[0] : row.service_scores) || null;
@@ -94,10 +76,10 @@ function logSearchEvent(req, { q, filters, page, results }) {
   } catch { /* best-effort */ }
 }
 
-// Build the base candidate query (all the always-on visibility + category/service
-// filters). Split out so the text-relax fallback below can rebuild it cleanly.
-function baseQuery(category, service) {
-  let sel = supabaseAdmin
+// All always-on visibility filters: active service, verified + unbanned host
+// with a public username. Category/service/text filtering happens in memory.
+function baseQuery() {
+  return supabaseAdmin
     .from('services')
     .select(`id, slug, title, description, short_description, meeting_mode, price, currency, category, thumbnail_url, rating, total_reviews,
              profiles!inner(name, username, profile_image, is_verified, is_banned, location, primary_category, created_at, role),
@@ -107,66 +89,58 @@ function baseQuery(category, service) {
     .eq('profiles.is_verified', true)
     .eq('profiles.is_banned', false)
     .not('profiles.username', 'is', null);
-  if (category) sel = sel.eq('profiles.primary_category', category);
-  if (service)  sel = sel.eq('category', service);
-  return sel;
 }
 
-// Rank the rows for a given text term (substring relevance tiers). Empty text =>
-// every row passes (mult 1) so location/mode filters alone can drive results.
-function rankRows(data, text) {
-  return (data || [])
-    .map((r) => ({ card: toCard(r), mult: relevanceMult(r, text), eff: scoreOf(r)?.effective_score || 0 }))
-    .filter((x) => x.mult > 0)
-    .map((x) => ({ ...x, final: x.mult * x.eff }))
-    .sort((a, b) => b.final - a.final || b.eff - a.eff || (b.card.reviewCount - a.card.reviewCount))
-    .slice(0, MAX_RESULTS)
-    .map((x) => x.card);
-}
-
-// One DB read → rank in memory. Reads precomputed service_scores.effective_score
+// One catalog entry = the card + pre-normalized searchable fields. Labels come
+// from the profession (categories.label) and service category
+// (service_categories.name) so guests can search "Chartered Accountant" or
+// "1:1 Session" rather than slugs. Reads precomputed service_scores.effective_score
 // (quality × penalties, baked at compute time); request time never scores.
-// `p` is the parsed query { text, location, mode }: text drives ilike + relevance,
-// location filters the host's free-text city (ilike, so "Nagpur" matches
-// "Nagpur, Maharashtra"), mode filters meeting_mode (hybrid => no filter, since
-// no service is stored hybrid).
-async function fetchRanked(category, service, p) {
-  const text = p.text || '';
-  const applyFilters = (sel) => {
-    if (p.location) sel = sel.ilike('profiles.location', `%${p.location}%`);
-    if (p.mode === 'online' || p.mode === 'offline') sel = sel.eq('meeting_mode', p.mode);
-    return sel;
+function toEntry(row, profLabel, svcLabel) {
+  const host = row.profiles || {};
+  const prof = host.primary_category || '';
+  const svc  = row.category || '';
+  const card = toCard(row);
+  return {
+    card,
+    eff: Number(scoreOf(row)?.effective_score) || 0,
+    prof,
+    svc,
+    mode: card.meetingMode,
+    title: norm(row.title),
+    labels: norm([svcLabel.get(`${prof}|${svc}`) || svcLabel.get(svc), profLabel.get(prof), svc, prof].join(' ')),
+    host: norm(`${host.name || ''} ${host.username || ''}`),
+    desc: norm(`${row.short_description || ''} ${row.description || ''}`).slice(0, 2000),
+    loc: norm(host.location),
+    city: cityOf(host.location),
   };
+}
 
-  let sel = applyFilters(baseQuery(category, service));
-  if (text) sel = sel.or(`title.ilike.%${text}%,description.ilike.%${text}%,category.ilike.%${text}%`);
-  sel = sel.limit(300); // candidate ceiling before ranking; 96 kept after sort
-
-  const { data, error } = await sel;
-  if (error) throw error; // thrown → not cached; outer catch returns 500
-
-  let ranked = rankRows(data, text);
-
-  // Prioritise exact/topic matches, but never dead-end: if a topic + a
-  // location/mode found nothing (e.g. "Resume Review in Nagpur" with no resume
-  // service there), relax the topic and show the closest relevant — services in
-  // that location/mode — rather than an empty page. (Acceptance criteria.)
-  if (!ranked.length && text && (p.location || p.mode)) {
-    const { data: relaxed, error: relaxErr } = await applyFilters(baseQuery(category, service)).limit(300);
-    if (relaxErr) throw relaxErr;
-    ranked = rankRows(relaxed, '');
+// One DB read (+ two tiny label lookups) builds the whole searchable catalog.
+async function buildCatalog() {
+  const [svcRes, profRes, catRes] = await Promise.all([
+    baseQuery().limit(CATALOG_CAP),
+    supabaseAdmin.from('categories').select('slug, label'),
+    supabaseAdmin.from('service_categories').select('primary_category, slug, name'),
+  ]);
+  if (svcRes.error) throw svcRes.error; // thrown → not cached; outer catch returns 500
+  // Labels are search sugar only: a failed lookup degrades to slug words, never a 500.
+  const profLabel = new Map((profRes.data || []).map((r) => [r.slug, r.label]));
+  const svcLabel = new Map();
+  for (const r of catRes.data || []) {
+    svcLabel.set(`${r.primary_category}|${r.slug}`, r.name);
+    if (!svcLabel.has(r.slug)) svcLabel.set(r.slug, r.name); // slug-only fallback
   }
-
-  return ranked;
+  return (svcRes.data || []).map((row) => toEntry(row, profLabel, svcLabel));
 }
 
 const parseControls = (req) => {
   const category = String(req.query.category || '').trim();
   const service  = String(req.query.service  || '').trim();
-  // Shared sanitizer (strips PostgREST or()/ilike metachars); ignore <2-char terms
-  // (a 1-char `%a%` near-full-scans for a useless result). Under 2 chars → no filter.
-  const cleanQ = sanitizeLikeTerm(String(req.query.q || '').trim());
-  const q = cleanQ.length >= 2 ? cleanQ : '';
+  // Text never reaches SQL (searched in memory), so just cap the length and
+  // ignore <2-char terms. Under 2 chars → no text filter.
+  const rawQ = String(req.query.q || '').trim().slice(0, 80);
+  const q = rawQ.length >= 2 ? rawQ : '';
   const page  = Math.max(1, Math.min(8, parseInt(req.query.page, 10) || 1));
   const limit = Math.min(DEFAULT_LIMIT, Math.max(1, parseInt(req.query.limit, 10) || DEFAULT_LIMIT));
   return { category, service, q, page, limit };
@@ -190,35 +164,24 @@ async function listServices(req, res) {
       return res.status(400).json({ message: 'service filter requires a category (profession)' });
     }
 
-    // Natural-language parse: peel a city + delivery mode off the topic terms
-    // ("Mock Interview Offline Nagpur" → text/location/mode). Fails soft to the
-    // raw text, so search degrades to the old title/desc/category match if the
-    // model is unavailable. Sanitize each part for the ilike/or() builders.
-    const parsedRaw = await parseSearchQuery(q);
-    const parsed = {
-      text: sanitizeLikeTerm(parsedRaw.text || ''),
-      location: sanitizeLikeTerm(parsedRaw.location || ''),
-      mode: parsedRaw.mode || '',
-    };
-
-    // Read-through cache (120s, Redis L1, fail-open) of the full ranked list.
-    const ranked = await responseCache.getOrSet(
-      rankKey(category, service, parsed), EXPLORE_CACHE_MS,
-      () => fetchRanked(category, service, parsed),
-    );
-
-    const { total, totalPages, start, items } = paginate(ranked, page, limit);
+    // Read-through cache (120s, Redis L1, fail-open) of the whole catalog. The
+    // query is parsed deterministically ("Mock Interview offline Nagpur" →
+    // topic/city/mode) and matched in memory — see lib/exploreSearch.js.
+    const catalog = await responseCache.getOrSet(CATALOG_KEY, EXPLORE_CACHE_MS, buildCatalog);
+    const { cards, parsed, match } = search(catalog, { category, service, q });
+    const { total, totalPages, start, items } = paginate(cards, page, limit);
 
     logSearchEvent(req, {
-      q, filters: { category, service, ...parsed }, page,
+      q, filters: { category, service, ...parsed, match }, page,
       results: items.map((c, i) => ({ service_id: c.id, rank: start + i + 1, score: c.score })),
     });
 
     setPublicCache(res, 120);
     return res.json({
       services: items,
-      meta: { page, limit, total, totalPages, hasMore: page < totalPages },
-      // `parsed` lets the client show what it understood ("Showing offline in Nagpur").
+      // `match` tells the client when results are a fallback (partial / relaxed).
+      meta: { page, limit, total, totalPages, hasMore: page < totalPages, match },
+      // `parsed` lets the client show what it understood ("offline · Nagpur").
       filters: { category, service, q, parsed },
     });
   } catch (err) {
@@ -227,22 +190,21 @@ async function listServices(req, res) {
   }
 }
 
-// Rate-limit fail-soft (searchLimiter handler): serve last-good cache if present,
-// else a soft-empty 200 — never a hard 429 into a shared-IP user's face.
+// Rate-limit fail-soft (searchLimiter handler): search the last-good cached
+// catalog if present (pure CPU, no DB — works for every query, not just ones
+// seen before), else a soft-empty 200 — never a hard 429 into a shared-IP user's face.
 async function serveStaleOrEmpty(req, res) {
   try {
     const { category, service, q, page, limit } = parseControls(req);
-    // Rate-limited path: DON'T spend an LLM parse here. Peek the plain-text key
-    // (matches non-NL searches); an NL query misses and falls to soft-empty,
-    // which is the intended fail-soft anyway.
-    const ranked = await responseCache.peek(rankKey(category, service, { text: q, location: '', mode: '' }));
-    if (ranked) {
-      const { total, totalPages, items } = paginate(ranked, page, limit);
+    const catalog = await responseCache.peek(CATALOG_KEY);
+    if (catalog) {
+      const { cards, parsed, match } = search(catalog, { category, service, q });
+      const { total, totalPages, items } = paginate(cards, page, limit);
       setPublicCache(res, 120);
       return res.json({
         services: items,
-        meta: { page, limit, total, totalPages, hasMore: page < totalPages, stale: true },
-        filters: { category, service, q },
+        meta: { page, limit, total, totalPages, hasMore: page < totalPages, match, stale: true },
+        filters: { category, service, q, parsed },
       });
     }
     return res.status(200).json({
@@ -294,7 +256,9 @@ async function getCategories(req, res) {
   try {
     const { data, error } = await supabaseAdmin
       .from('categories')
-      .select('id, label, slug, icon_url')
+      // No icon_url: the column never existed on either DB, so selecting it
+      // 500'd this endpoint and left the Explore category rail empty.
+      .select('id, label, slug')
       .eq('status', 'active')
       .order('label', { ascending: true });
 
