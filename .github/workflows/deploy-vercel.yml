@@ -46,7 +46,12 @@ on:
       # same files) moves on. Every other docs/ directory is still skipped.
       - 'docs/help/**'
       - '.github/workflows/deploy-vercel.yml'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to production (false = dry run: build + prerender only, output uploaded as an artifact)'
+        type: boolean
+        default: true
 
 concurrency:
   group: vercel-production
@@ -125,23 +130,86 @@ jobs:
   # must NEVER block a production deploy — its Chromium apt step is flaky and has
   # hung the pipeline. Trade-off: a brand-new blog post may ship one deploy before
   # its OG card is stamped in the DB; the next deploy backfills it.
+  # Build HERE, upload the finished output (`vercel build` + `deploy --prebuilt`).
+  #
+  # WHY: Vercel kills any build at 45 minutes, and the prerender (~300 pages in a
+  # headless browser, many waiting on the free-tier API) outgrew it — the
+  # 2026-10-10 release timed out twice and shipped nothing. A GitHub job can run
+  # for hours; Vercel now only receives static files + the edge middleware.
+  #
+  # The old reason for building remotely (2026-07-08 white screen): `vercel pull`
+  # can't read env vars marked Sensitive, so the bundle built without VITE_* vars.
+  # Fixed by passing every VITE_* the client reads straight from GitHub secrets
+  # below (they ship inside the public JS bundle anyway — not real secrets), and
+  # vite.config.js refuses to build if the required ones are missing, so a missing
+  # secret fails this job instead of white-screening prod.
+  #
+  # Dry run: Actions → this workflow → Run workflow on a branch with deploy=false
+  # builds + prerenders exactly like prod and uploads the output as an artifact,
+  # without deploying anything.
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      # Build REMOTELY on Vercel (no `vercel build` + `--prebuilt`). Local CI
-      # builds via `vercel pull` cannot access env vars marked Sensitive in the
-      # Vercel dashboard, so the 2026-07-08 deploy shipped a bundle with no
-      # VITE_* vars baked in — a total white screen. Remote builds run inside
-      # Vercel's infra where ALL project env vars (sensitive included) exist,
-      # and run `vercel-build`, so the tests + prerender gate apply here too.
-      - name: Deploy (remote build)
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+      # Project settings (root dir = client, framework, build command) + the
+      # non-sensitive env vars. Sensitive ones come from secrets in the next step.
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      # Runs the project's build command (`vercel-build`: vite build → prerender).
+      # VERCEL_ENV=production is what makes prerender run (it skips non-prod).
+      - name: Build + prerender
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_PUBLIC_SITE_URL: ${{ secrets.VITE_PUBLIC_SITE_URL }}
+          VITE_POSTHOG_HOST: ${{ secrets.VITE_POSTHOG_HOST }}
+          VITE_POSTHOG_PROJECT_TOKEN: ${{ secrets.VITE_POSTHOG_PROJECT_TOKEN }}
+          VITE_GTM_CONTAINER_ID: ${{ secrets.VITE_GTM_CONTAINER_ID }}
+          VITE_GA4_MEASUREMENT_ID: ${{ secrets.VITE_GA4_MEASUREMENT_ID }}
+          VITE_FB_PIXEL_ID: ${{ secrets.VITE_FB_PIXEL_ID }}
+          VITE_CLARITY_PROJECT_ID: ${{ secrets.VITE_CLARITY_PROJECT_ID }}
+          # Tells the API's ipGuard this burst is the trusted build runner.
+          PRERENDER_BUILD_TOKEN: ${{ secrets.PRERENDER_BUILD_TOKEN }}
+          # Same code paths as Vercel's builder: fail-closed blog/host route
+          # fetches, @sparticuz/chromium, and prerender only runs for production.
+          VERCEL: '1'
+          VERCEL_ENV: production
+          # No time budget off Vercel's 45-min clock (prerender.mjs default is 30).
+          PRERENDER_BUDGET_MS: '6000000'
+
+      # Belt-and-braces against the 2026-07-08 white screen: the built bundle must
+      # contain the real API origin, not an unsubstituted %VITE_API_URL% or nothing.
+      - name: Verify env baked into the bundle
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          grep -rqF "$VITE_API_URL" .vercel/output/static/assets || { echo "VITE_API_URL not in bundle — refusing to deploy"; exit 1; }
+          ! grep -rqF "%VITE_" .vercel/output/static/index.html || { echo "unsubstituted %VITE_*% in index.html"; exit 1; }
+
+      - name: Upload build (dry run)
+        if: github.event_name == 'workflow_dispatch' && inputs.deploy == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-output
+          path: .vercel/output
+          retention-days: 3
+
+      - name: Deploy prebuilt output
+        if: github.event_name == 'push' || inputs.deploy == true
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
