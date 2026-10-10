@@ -56,6 +56,27 @@ const DEFAULT_TITLE = 'Book A Sloth — booked & paid at 0% commission';
 const NAV_TIMEOUT_MS = 30000;
 const RETRY_TIMEOUT_MS = 60000;
 
+// Vercel kills a build at 45 minutes and ships NOTHING (the 2026-10-10 release
+// failed twice that way: ~300 routes vs a slow free-tier API). Past this budget
+// the pool stops starting new routes and the run ships what it has — routes not
+// reached keep serving the SPA fallback until the next deploy. A partial
+// prerender beats no deploy. Routes are ordered static → blog → host/service, so
+// what gets dropped first is the long tail of host/service pages.
+// ponytail: wall-clock budget, not per-route accounting; ~13 min headroom covers
+// install + vite build + upload. Override with PRERENDER_BUDGET_MS.
+const BUDGET_MS = Number(process.env.PRERENDER_BUDGET_MS) || 30 * 60 * 1000;
+const STARTED_AT = Date.now();
+const overBudget = () => Date.now() - STARTED_AT > BUDGET_MS;
+
+// One proxied API call must not hang a page past its nav timeout.
+const API_FETCH_TIMEOUT_MS = 15000;
+
+// Images/fonts never change the serialized HTML, but downloading them holds
+// `networkidle0` open on every page. Answer them instantly instead of aborting:
+// an aborted <img> fires onError, and some components swap in a fallback on
+// error — which WOULD change the baked HTML.
+const BLANK_GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+
 const PRERENDER_ROUTES = [
   '/',
   '/pricing',
@@ -317,6 +338,17 @@ function createStaticServer() {
   // own (found by the 2026-07-19 rich-results validation, live on all 67
   // prerendered pages). Seo.jsx can't remove them: it only cleans up nodes it
   // created at runtime, not ones baked into the served HTML.
+  // Every page pulls the same JS/CSS chunks; a sync disk read per request (4 tabs
+  // × ~30 assets × ~300 pages) blocks the event loop that also answers the
+  // request interception. Read each file once. This also keeps '/' (and a deferred
+  // retry of it) rendering from the BARE index.html, not the homepage the first
+  // pass already wrote over it.
+  const files = new Map();
+  const read = (p) => {
+    if (!files.has(p)) files.set(p, readFileSync(p));
+    return files.get(p);
+  };
+
   return createServer((req, res) => {
     let filePath = join(DIST, req.url === '/' ? 'index.html' : req.url);
 
@@ -328,7 +360,7 @@ function createStaticServer() {
     const contentType = mime[ext] || 'application/octet-stream';
 
     try {
-      const content = readFileSync(filePath);
+      const content = read(filePath);
       res.writeHead(200, { 'Content-Type': contentType });
       res.end(content);
     } catch {
@@ -372,36 +404,76 @@ async function prerender() {
   let rendered = 0;
   let failed = 0;
   const errorBaked = []; // routes whose render came back as the branded ErrorPage
+  const skipped = []; // routes not started because the time budget ran out
+
+  // Build-scoped cache of proxied API GETs. ~300 pages ask for the same plans /
+  // categories / stats over and over (~800 fetches a run, the load that used to
+  // rate-ban the build IP); the data can't meaningfully change inside one build.
+  // Only successes are kept, so a failed call is refetched by the next page.
+  const apiCache = new Map(); // url → Promise<{ status, contentType, body }>
+  const fetchApi = (url) => {
+    if (!apiCache.has(url)) {
+      const t0 = Date.now();
+      const p = fetch(url, {
+        signal: AbortSignal.timeout(API_FETCH_TIMEOUT_MS),
+        headers: {
+          Accept: 'application/json',
+          // Identify this as the trusted build runner so ipGuard won't rate-ban
+          // the burst (server/middleware/ipGuard.js isPrerenderBuild).
+          ...(PRERENDER_TOKEN ? { 'x-prerender-token': PRERENDER_TOKEN } : {}),
+        },
+      }).then(async (r) => {
+        const out = { status: r.status, contentType: r.headers.get('content-type') || 'application/json', body: Buffer.from(await r.arrayBuffer()) };
+        if (!r.ok) apiCache.delete(url);
+        // Diagnostics: the 2026-10-10 builds stalled on API-backed pages only on
+        // Vercel's builder, never locally. Name the slow/failing calls in the log.
+        const ms = Date.now() - t0;
+        if (ms > 3000 || !r.ok) console.warn(`[prerender] api ${r.status} ${ms}ms ${url.replace(API_BASE, '')}`);
+        return out;
+      });
+      p.catch((err) => {
+        apiCache.delete(url);
+        console.warn(`[prerender] api FAILED ${Date.now() - t0}ms ${url.replace(API_BASE, '')}: ${err.message}`);
+      });
+      apiCache.set(url, p);
+    }
+    return apiCache.get(url);
+  };
 
   const renderOnce = async (route, navTimeout = NAV_TIMEOUT_MS) => {
     const page = await browser.newPage();
     try {
       // Block analytics/tracking requests — avoids phantom pageviews and speeds up render
       await page.setRequestInterception(true);
+      // In-flight requests, so a nav timeout can say what it was waiting on.
+      // Per-URL counts too: a page can also miss networkidle0 by never going quiet
+      // for 500ms (polling / retry loops) with nothing actually hanging.
+      const inFlight = new Map();
+      const seen = new Map();
+      page.on('requestfinished', (req) => inFlight.delete(req));
+      page.on('requestfailed', (req) => inFlight.delete(req));
       page.on('request', async (req) => {
         const url = req.url();
+        inFlight.set(req, Date.now());
+        const k = url.split('?')[0].slice(0, 100);
+        seen.set(k, (seen.get(k) || 0) + 1);
         if (url.includes('posthog') || url.includes('clarity') || url.includes('google-analytics') || url.includes('facebook')) {
           return req.abort();
         }
+        const type = req.resourceType();
+        if (type === 'image') return req.respond({ status: 200, contentType: 'image/gif', body: BLANK_GIF });
+        if (type === 'font' || type === 'media') return req.respond({ status: 200, body: '' });
         // Proxy the app's API through node (no CORS) so data-driven pages render
         // real content instead of their CORS-blocked notfound fallback. GET-only:
         // prerendered pages never POST. ponytail: on any proxy error, fall back to
         // the browser's own (blocked) request — no worse than before this fix.
         if (API_BASE && url.startsWith(API_BASE) && req.method() === 'GET') {
           try {
-            const r = await fetch(url, {
-              headers: {
-                Accept: 'application/json',
-                // Identify this as the trusted build runner so ipGuard won't rate-ban
-                // the burst (server/middleware/ipGuard.js isPrerenderBuild).
-                ...(PRERENDER_TOKEN ? { 'x-prerender-token': PRERENDER_TOKEN } : {}),
-              },
-            });
-            const body = Buffer.from(await r.arrayBuffer());
+            const r = await fetchApi(url);
             return req.respond({
               status: r.status,
-              headers: { 'content-type': r.headers.get('content-type') || 'application/json', 'access-control-allow-origin': '*' },
-              body,
+              headers: { 'content-type': r.contentType, 'access-control-allow-origin': '*' },
+              body: r.body,
             });
           } catch {
             return req.continue();
@@ -410,7 +482,17 @@ async function prerender() {
         return req.continue();
       });
 
-      await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: navTimeout });
+      try {
+        await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: navTimeout });
+      } catch (err) {
+        const now = Date.now();
+        const open = [...inFlight].map(([r, t]) => `${r.resourceType()} ${Math.round((now - t) / 1000)}s ${r.url().slice(0, 120)}`);
+        const total = [...seen.values()].reduce((a, b) => a + b, 0);
+        const top = [...seen].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([u, n]) => `${n}x ${u}`);
+        err.message += (open.length ? ` | still open: ${open.join(' ; ')}` : ' | nothing in flight')
+          + ` | ${total} requests, most repeated: ${top.join(' ; ')}`;
+        throw err;
+      }
 
       // Wait for Seo.jsx useEffect to fire (title changes from default)
       await page.waitForFunction(
@@ -490,6 +572,10 @@ async function prerender() {
   await Promise.all(
     Array.from({ length: POOL }, async () => {
       while (queue.length > 0) {
+        if (overBudget()) {
+          skipped.push(...queue.splice(0));
+          break;
+        }
         const route = queue.shift();
         try {
           const outPath = await renderOnce(route);
@@ -510,6 +596,10 @@ async function prerender() {
   if (deferred.length > 0) {
     console.log(`[prerender] serial retry of ${deferred.length} deferred: ${deferred.join(', ')}`);
     for (const route of deferred) {
+      if (overBudget()) {
+        skipped.push(route);
+        continue;
+      }
       try {
         const outPath = await renderOnce(route, RETRY_TIMEOUT_MS);
         rendered++;
@@ -533,7 +623,15 @@ async function prerender() {
   await browser.close();
   server.close();
 
-  console.log(`[prerender] Done: ${rendered} rendered, ${failed} failed, ${errorBaked.length} error-baked (${routes.length} routes)`);
+  const mins = ((Date.now() - STARTED_AT) / 60000).toFixed(1);
+  console.log(`[prerender] Done in ${mins} min: ${rendered} rendered, ${failed} failed, ${errorBaked.length} error-baked, ${skipped.length} over budget (${routes.length} routes, ${apiCache.size} distinct API calls)`);
+
+  // Over budget is NOT a failure: those routes serve the SPA fallback until the
+  // next deploy, which beats Vercel killing the whole build at 45 min. Loud, so a
+  // budget that is routinely hit gets noticed (move the build off Vercel's clock).
+  if (skipped.length > 0) {
+    console.error(`[prerender] TIME BUDGET (${BUDGET_MS / 60000} min) hit — ${skipped.length} route(s) left unbaked: ${skipped.join(', ')}`);
+  }
 
   // Routes that came back as the ErrorPage were NOT written, so they fall back to
   // the live page instead of shipping a frozen 500 to crawlers. Surface them loudly
