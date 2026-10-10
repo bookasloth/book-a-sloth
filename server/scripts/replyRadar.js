@@ -261,8 +261,18 @@ async function triage(client, post) {
     return { route: 'skip', score: 0, why: `model stop: ${res.stop_reason}`, reply: '' };
   }
   const text = res.content.find((b) => b.type === 'text');
-  return JSON.parse(text.text);
+  const out = JSON.parse(text.text);
+  return { ...out, reply: tagLinks(out.reply, post.platform) };
 }
+
+// Bare homepage mentions → UTM-tagged link, so sign-ups show under "By UTM
+// source" (utils/attribution.js). NOT ?ref= — that's Refer & Earn: it would be
+// stashed as a referrer username (AuthContext) and credit whoever owns it.
+// Host-page links (bookasloth.com/<username>) are left alone.
+const tagLinks = (reply, platform) => reply.replace(
+  /\b(?:https?:\/\/)?(?:www\.)?bookasloth\.com\/?(?![\w/?#-])/gi,
+  `https://bookasloth.com/?utm_source=${platform}&utm_medium=comment&utm_campaign=reply-radar`,
+);
 
 function toMarkdown(rows, date) {
   const section = (route, heading) => {
@@ -343,4 +353,4 @@ if (require.main === module) {
   main().catch((e) => { console.error(e); process.exit(1); });
 }
 
-module.exports = { redditQueries, parseRedditAtom, canonicalPost, toMarkdown };
+module.exports = { redditQueries, parseRedditAtom, canonicalPost, tagLinks, toMarkdown };
