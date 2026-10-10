@@ -4,6 +4,7 @@ import ChromeContext from './context/ChromeContext';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import PageGuides from './components/common/PageGuides';
 import DashboardLayout from './components/common/DashboardLayout';
 import AdminLayout from './components/common/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -823,6 +824,7 @@ function App() {
           <Route path="*" element={<ErrorPage code={404} />} />
         </Routes>
       </Suspense>
+      <PageGuides pathname={location.pathname} />
       {footerMode === 'minimal'
         ? !chromeHidden && !location.pathname.startsWith('/admin') && <Footer variant="minimal" />
         : !hideFooter && <Footer variant={isBookingPage ? 'minimal' : 'full'} />}
