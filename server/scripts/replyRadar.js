@@ -2,7 +2,7 @@
  * replyRadar.js — find fresh Reddit + Quora posts where Book A Sloth is a
  * genuinely useful answer, and draft a reply for each. It NEVER posts.
  *
- * Flow: Reddit public search JSON (per subreddit, last N days) + Quora
+ * Flow: Reddit search RSS (per subreddit, last N days) + Quora
  * questions via Claude's web_search tool → Claude triages each post
  * (lead | brand | skip) and drafts a reply → a dated markdown file you read,
  * edit and post by hand.
@@ -25,9 +25,10 @@
  *
  * Needs ANTHROPIC_API_KEY in server/.env. REPLY_RADAR_MODEL overrides the model.
  *
- * ponytail: unauthenticated Reddit JSON (~10 req/min, one request per subreddit,
- * 7s apart). Reddit OAuth needs a commercial-use approval — add it only if the
- * public endpoint starts 403-ing.
+ * ponytail: Reddit's unauthenticated .json is 403 and new OAuth apps need
+ * approval (Responsible Builder Policy, Nov 2025), so this reads the search RSS
+ * — one request per subreddit, 7s apart, one 60s back-off on 429. If RSS dies
+ * entirely it falls back to Claude web_search on reddit.com (titles only).
  */
 const fs = require('fs');
 const os = require('os');
@@ -46,16 +47,15 @@ const QUERIES = [
   'booking app', 'collect payment for sessions', 'scheduling tool', 'topmate',
   'charge for calls', 'online consultation',
 ];
-const QUORA_TOPICS = [
+const SEARCH_TOPICS = [
   'best appointment booking app in India',
   'how to charge for online consultations in India',
   'Calendly alternative with UPI / Razorpay payments',
   'how coaches and therapists in India take paid bookings',
   'Topmate alternative',
 ];
-// Skip threads already buried — a reply there won't be read.
-const MAX_COMMENTS = 60;
 const REDDIT_DELAY_MS = 7000;
+const UA = 'bookasloth-reply-radar/1.0 (manual review tool)';
 const MODEL = process.env.REPLY_RADAR_MODEL || 'claude-opus-5-5';
 
 // Product facts the drafter may use. Keep in sync with Pricing.jsx — a wrong
@@ -121,95 +121,112 @@ function parseArgs(argv) {
 // Reddit search ORs quoted phrases: ("a" OR "b").
 const redditQuery = (queries) => `(${queries.map((q) => `"${q}"`).join(' OR ')})`;
 
-// Reddit listing child → post, or null when it's not worth a reply.
-function toRedditPost(child, sinceSec) {
-  const d = child && child.data;
-  if (!d || d.stickied || d.locked || d.archived || d.over_18) return null;
-  if (d.created_utc < sinceSec || d.num_comments > MAX_COMMENTS) return null;
-  return {
-    id: `reddit:${d.id}`,
-    platform: 'reddit',
-    where: `r/${d.subreddit}`,
-    title: d.title,
-    body: d.selftext || '',
-    url: `https://www.reddit.com${d.permalink}`,
-    comments: d.num_comments,
-    created: new Date(d.created_utc * 1000).toISOString().slice(0, 10),
-  };
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+const decode = (s) => s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (m, e) => (
+  e[0] === '#' ? String.fromCodePoint(e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : Number(e.slice(1)))
+    : ENTITIES[e.toLowerCase()] ?? m));
+
+// Atom <content type="html"> is XML-escaped HTML → plain post text (minus the
+// "submitted by /u/x [link] [comments]" footer Reddit appends).
+const htmlToText = (s) => decode(decode(s).replace(/<!--[\s\S]*?-->/g, '').replace(/<\/p>/g, '\n\n').replace(/<br\s*\/?>/g, '\n').replace(/<[^>]+>/g, ''))
+  .split(/\s*submitted by\s/)[0].replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+
+// Reddit search RSS (Atom) → posts newer than sinceMs.
+function parseRedditAtom(xml, sinceMs) {
+  return xml.split('<entry>').slice(1).map((e) => {
+    const tag = (re) => (e.match(re) || [])[1] || '';
+    const id = tag(/<id>t3_([^<]+)<\/id>/);
+    const published = tag(/<published>([^<]+)<\/published>/);
+    if (!id || Date.parse(published) < sinceMs) return null;
+    return {
+      id: `reddit:${id}`,
+      platform: 'reddit',
+      where: `r/${tag(/<category term="([^"]+)"/)}`,
+      title: decode(tag(/<title>([^<]*)<\/title>/)),
+      body: htmlToText(tag(/<content type="html">([\s\S]*?)<\/content>/)),
+      url: decode(tag(/<link href="([^"]+)"/)),
+      created: published.slice(0, 10),
+    };
+  }).filter(Boolean);
 }
 
+// Unauthenticated .json is 403 since 2026; the search RSS still answers but
+// rate-limits hard (429 after a short burst) — so go slow, back off once.
 async function fetchReddit({ days }) {
-  const sinceSec = Date.now() / 1000 - days * 86400;
+  const sinceMs = Date.now() - days * 86400e3;
   const t = days <= 1 ? 'day' : days <= 7 ? 'week' : 'month';
   const q = encodeURIComponent(redditQuery(QUERIES));
   const posts = [];
+  let failed = 0;
   for (const [i, sub] of SUBREDDITS.entries()) {
     if (i) await sleep(REDDIT_DELAY_MS);
-    const url = `https://www.reddit.com/r/${sub}/search.json?q=${q}&restrict_sr=1&sort=new&t=${t}&limit=25`;
+    const url = `https://www.reddit.com/r/${sub}/search.rss?q=${q}&restrict_sr=1&sort=new&t=${t}`;
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': 'bookasloth-reply-radar/1.0 (manual review tool)' } });
-      if (!res.ok) { console.warn(`  r/${sub}: HTTP ${res.status}`); continue; }
-      const json = await res.json();
-      const found = (json.data?.children || []).map((c) => toRedditPost(c, sinceSec)).filter(Boolean);
+      let res = await fetch(url, { headers: { 'User-Agent': UA } });
+      if (res.status === 429) { console.warn(`  r/${sub}: 429, waiting 60s`); await sleep(60e3); res = await fetch(url, { headers: { 'User-Agent': UA } }); }
+      if (!res.ok) { failed++; console.warn(`  r/${sub}: HTTP ${res.status}`); continue; }
+      const found = parseRedditAtom(await res.text(), sinceMs);
       console.log(`  r/${sub}: ${found.length}`);
       posts.push(...found);
     } catch (e) {
+      failed++;
       console.warn(`  r/${sub}: ${e.message}`);
     }
   }
-  return posts;
+  return { posts, allFailed: failed === SUBREDDITS.length };
 }
 
-// Quora question URL → canonical question URL (drop /answer/..., query, hash),
-// or null for profiles/topics/spaces.
-function quoraQuestionUrl(raw) {
+// Search-result URL → canonical { id, url, where }, or null for non-posts
+// (profiles, topics, subreddit front pages).
+function canonicalPost(raw) {
   let u;
   try { u = new URL(raw); } catch { return null; }
-  if (!/(^|\.)quora\.com$/.test(u.hostname)) return null;
-  const slug = u.pathname.split('/').filter(Boolean)[0];
-  if (!slug || ['profile', 'topic', 'q', 'search', 'answer', 'spaces'].includes(slug)) return null;
-  return `https://www.quora.com/${slug}`;
+  const parts = u.pathname.split('/').filter(Boolean);
+  if (/(^|\.)reddit\.com$/.test(u.hostname)) {
+    // /r/<sub>/comments/<id>/<slug>
+    if (parts[0] !== 'r' || parts[2] !== 'comments' || !parts[3]) return null;
+    return { id: `reddit:${parts[3]}`, url: `https://www.reddit.com/r/${parts[1]}/comments/${parts[3]}/`, where: `r/${parts[1]}`, platform: 'reddit' };
+  }
+  if (/(^|\.)quora\.com$/.test(u.hostname)) {
+    const slug = parts[0];
+    if (!slug || ['profile', 'topic', 'q', 'search', 'answer', 'spaces'].includes(slug)) return null;
+    const url = `https://www.quora.com/${slug}`;
+    return { id: `quora:${url}`, url, where: 'Quora', platform: 'quora' };
+  }
+  return null;
 }
 
-// No Quora API — let Claude's web_search find questions, then read the result
-// URLs/titles straight off the tool-result blocks (no JSON parsing of prose).
-async function fetchQuora(client) {
+// No Quora API (and Reddit's may vanish) — let Claude's web_search find
+// threads, then read result URLs/titles straight off the tool-result blocks
+// (no JSON parsing of prose). Titles only: no body text from search results.
+async function webSearchPosts(client, domain, topics) {
   const messages = [{
     role: 'user',
-    content: `Find recent Quora questions (ideally from the last few months) on each of these topics. Run one search per topic.\n- ${QUORA_TOPICS.join('\n- ')}`,
+    content: `Find recent ${domain} threads/questions (ideally from the last few weeks) on each of these topics. Run one search per topic.\n- ${topics.join('\n- ')}`,
   }];
-  const byUrl = new Map();
+  const byId = new Map();
   for (let turn = 0; turn < 4; turn++) {
     const res = await client.messages.create({
       model: MODEL,
       max_tokens: 4000,
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: QUORA_TOPICS.length, allowed_domains: ['quora.com'] }],
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: topics.length, allowed_domains: [domain] }],
       messages,
     });
     for (const block of res.content) {
       // Error results come back as an object, successes as a list.
       if (block.type !== 'web_search_tool_result' || !Array.isArray(block.content)) continue;
       for (const r of block.content) {
-        const url = quoraQuestionUrl(r.url);
-        if (url && !byUrl.has(url)) {
-          byUrl.set(url, {
-            id: `quora:${url}`,
-            platform: 'quora',
-            where: 'Quora',
-            title: (r.title || '').replace(/\s*-\s*Quora\s*$/, ''),
-            body: '',
-            url,
-            comments: null,
-            created: r.page_age || '',
-          });
+        const post = canonicalPost(r.url);
+        if (post && !byId.has(post.id)) {
+          byId.set(post.id, { ...post, title: (r.title || '').replace(/\s*[-:|]\s*(Quora|r\/\w+|Reddit)\s*$/i, ''), body: '', created: r.page_age || '' });
         }
       }
     }
     if (res.stop_reason !== 'pause_turn') break;
     messages.push({ role: 'assistant', content: res.content }); // resume a paused server-tool turn
   }
-  console.log(`  quora: ${byUrl.size}`);
-  return [...byUrl.values()];
+  console.log(`  ${domain} (web search): ${byId.size}`);
+  return [...byId.values()];
 }
 
 async function triage(client, post) {
@@ -240,7 +257,7 @@ function toMarkdown(rows, date) {
     if (!items.length) return '';
     return `## ${heading} (${items.length})\n\n${items.map((r) => [
       `### [${r.score}/10] ${r.title}`,
-      `${r.where} · ${r.created}${r.comments != null ? ` · ${r.comments} comments` : ''} · ${r.url}`,
+      `${r.where} · ${r.created} · ${r.url}`,
       `_Why:_ ${r.why}`,
       '',
       '```text',
@@ -273,10 +290,15 @@ async function main() {
   if (!client && !args.dry) throw new Error('ANTHROPIC_API_KEY missing in server/.env');
 
   console.log('Reddit…');
-  const posts = await fetchReddit(args);
+  const reddit = await fetchReddit(args);
+  const posts = reddit.posts;
+  if (reddit.allFailed && client) {
+    console.log('Reddit RSS unreachable — falling back to web search…');
+    posts.push(...await webSearchPosts(client, 'reddit.com', SEARCH_TOPICS));
+  }
   if (args.quora && client) {
     console.log('Quora…');
-    posts.push(...await fetchQuora(client));
+    posts.push(...await webSearchPosts(client, 'quora.com', SEARCH_TOPICS));
   }
   const fresh = [...new Map(posts.map((p) => [p.id, p])).values()].filter((p) => !seen.has(p.id)).slice(0, args.limit);
   console.log(`${fresh.length} new posts to triage (${posts.length} found, ${seen.size} seen before).`);
@@ -308,4 +330,4 @@ if (require.main === module) {
   main().catch((e) => { console.error(e); process.exit(1); });
 }
 
-module.exports = { redditQuery, toRedditPost, quoraQuestionUrl, toMarkdown };
+module.exports = { redditQuery, parseRedditAtom, canonicalPost, toMarkdown };
