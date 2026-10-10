@@ -450,7 +450,12 @@ async function prerender() {
       // for 500ms (polling / retry loops) with nothing actually hanging.
       const inFlight = new Map();
       const seen = new Map();
-      page.on('requestfinished', (req) => inFlight.delete(req));
+      page.on('requestfinished', (req) => {
+        // Any single request this slow is a third party stalling the build — name it.
+        const ms = Date.now() - (inFlight.get(req) || Date.now());
+        if (ms > 5000) console.warn(`[prerender] slow ${req.resourceType()} ${ms}ms on ${route}: ${req.url().slice(0, 120)}`);
+        inFlight.delete(req);
+      });
       page.on('requestfailed', (req) => inFlight.delete(req));
       page.on('request', async (req) => {
         const url = req.url();
@@ -463,6 +468,11 @@ async function prerender() {
         const type = req.resourceType();
         if (type === 'image') return req.respond({ status: 200, contentType: 'image/gif', body: BLANK_GIF });
         if (type === 'font' || type === 'media') return req.respond({ status: 200, body: '' });
+        // Preloader greeting fonts (fontLoader.js: 11 Noto subsets per page) —
+        // stripped from the baked HTML anyway (see data-preloader-font below), and
+        // from Vercel's builder these Google requests were taking ~30s on 2026-10-10,
+        // holding every host profile page past the nav timeout. Answer instantly.
+        if (url.startsWith('https://fonts.googleapis.com/')) return req.respond({ status: 200, contentType: 'text/css', body: '' });
         // Proxy the app's API through node (no CORS) so data-driven pages render
         // real content instead of their CORS-blocked notfound fallback. GET-only:
         // prerendered pages never POST. ponytail: on any proxy error, fall back to
