@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import LegalLayout, { Section } from '../components/common/LegalLayout';
+import { FREE_PLAN, PREMIUM_PLAN } from '../data/plans';
 
 // /host-fees — Host Fee & Payment Schedule. Annexure A to the Host Services
 // Agreement (/host-agreement), kept as a separate page so charges can be amended
@@ -26,7 +27,7 @@ const Td = ({ children, className = '' }) => (
 const HostFees = () => (
   <LegalLayout
     title="Host Fee & Payment Schedule"
-    updated="12 August 2026"
+    updated="7 October 2026"
     effective="on your acceptance during host onboarding"
     current="/host-fees"
     description="What Book A Sloth charges hosts — booking fee, platform commission, payment processing, TDS/TCS, how and when you are paid, and worked examples."
@@ -56,51 +57,41 @@ const HostFees = () => (
               <Th>Booking Fee</Th>
               <Th>Platform Commission</Th>
               <Th>Payment Processing</Th>
-              <Th>Max price per Service</Th>
             </tr>
           </thead>
           <tbody className="text-gray-600">
             <tr>
-              <Td><strong>Starter</strong> (free)</Td>
+              <Td><strong>{FREE_PLAN.name}</strong> (free)</Td>
               <Td>₹10 + GST</Td>
               <Td><strong>5%</strong> of your price</Td>
               <Td>actual gateway charge</Td>
-              <Td><strong>₹5,000</strong></Td>
             </tr>
             <tr>
-              <Td><strong>Host+</strong></Td>
+              <Td><strong>{PREMIUM_PLAN.name}</strong></Td>
               <Td>₹10 + GST</Td>
               <Td>nil</Td>
               <Td>actual gateway charge</Td>
-              <Td>no limit</Td>
-            </tr>
-            <tr>
-              <Td><strong>Studio</strong></Td>
-              <Td>₹10 + GST</Td>
-              <Td>nil</Td>
-              <Td>actual gateway charge</Td>
-              <Td>no limit</Td>
             </tr>
             <tr>
               <Td className="border-b-0"><strong>Enterprise</strong></Td>
-              <Td className="border-b-0" colSpan={4}>as agreed in your Enterprise order form</Td>
+              <Td className="border-b-0" colSpan={3}>as agreed in your Enterprise order form</Td>
             </tr>
           </tbody>
         </table>
       </div>
       <p className="pt-1">
         The <strong>booking fee</strong> is charged to your Guest on top of your price; the <strong>commission</strong>{' '}
-        (Starter only) is charged to you. Subscription prices for Host+, Studio, and Enterprise are shown on the{' '}
-        <Link to="/pricing" className="text-primary hover:underline">Pricing page</Link> and are charged separately with
-        GST. Studio and Host+ carry the same per-booking charges; Studio differs on Platform features, not on price.
+        ({FREE_PLAN.name} only) is charged to you. Subscription prices for {PREMIUM_PLAN.name} and Enterprise are shown
+        on the <Link to="/pricing" className="text-primary hover:underline">Pricing page</Link> and are charged
+        separately with GST.
       </p>
       <p>
         <strong>Free bookings.</strong> A Service priced at ₹0 attracts no booking fee, no commission, no payment
         processing charge, and no TDS or TCS.
       </p>
       <p>
-        <strong>Minimum price.</strong> A paid Service must be priced at <strong>₹100 or more</strong> on the Starter,
-        Host+, and Studio Plans. Below that, the flat ₹10 booking fee would be too large a share of the price to be fair
+        <strong>Minimum price.</strong> A paid Service must be priced at <strong>₹100 or more</strong> on the{' '}
+        {FREE_PLAN.name} and {PREMIUM_PLAN.name} Plans. Below that, the flat ₹10 booking fee would be too large a share of the price to be fair
         to your Guest. Free (₹0) Services remain available on every Plan, and the <strong>Supreme</strong> Plan has no
         minimum price.
       </p>
@@ -153,7 +144,7 @@ const HostFees = () => (
     </Section>
 
     <Section title="5. Worked examples — you list ₹1,000">
-      <p className="font-semibold text-ink">5.1 Host+ or Studio (no commission)</p>
+      <p className="font-semibold text-ink">5.1 {PREMIUM_PLAN.name} (no commission)</p>
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
           <tbody className="text-gray-600">
@@ -168,7 +159,7 @@ const HostFees = () => (
         </table>
       </div>
 
-      <p className="font-semibold text-ink pt-3">5.2 Starter (5% commission)</p>
+      <p className="font-semibold text-ink pt-3">5.2 {FREE_PLAN.name} (5% commission)</p>
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
           <tbody className="text-gray-600">
