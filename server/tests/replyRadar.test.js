@@ -1,4 +1,4 @@
-const { redditQueries, parseRedditAtom, canonicalPost, toMarkdown } = require('../scripts/replyRadar');
+const { redditQueries, parseRedditAtom, canonicalPost, tagLinks, toMarkdown } = require('../scripts/replyRadar');
 
 // Trimmed real Reddit search RSS entry (Atom, XML-escaped HTML body).
 const ATOM = `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><title>freelance: search results</title>
@@ -37,6 +37,15 @@ describe('replyRadar helpers', () => {
     expect(canonicalPost('https://www.quora.com/profile/Someone')).toBeNull();
     expect(canonicalPost('https://evilquora.com/x')).toBeNull();
     expect(canonicalPost('not a url')).toBeNull();
+  });
+
+  test('tagLinks UTM-tags homepage mentions (never ?ref=), leaves host pages alone', () => {
+    const tagged = 'https://bookasloth.com/?utm_source=reddit&utm_medium=comment&utm_campaign=reply-radar';
+    expect(tagLinks('Try bookasloth.com.', 'reddit')).toBe(`Try ${tagged}.`);
+    expect(tagLinks('see https://www.bookasloth.com/ and BookASloth.com', 'reddit')).toBe(`see ${tagged} and ${tagged}`);
+    expect(tagLinks('bookasloth.com', 'quora')).toContain('utm_source=quora');
+    expect(tagLinks('my page bookasloth.com/jane', 'reddit')).toBe('my page bookasloth.com/jane');
+    expect(tagLinks('x', 'reddit')).not.toContain('ref=');
   });
 
   test('toMarkdown groups by route, sorts by score, counts skips', () => {
