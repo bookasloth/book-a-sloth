@@ -413,6 +413,7 @@ async function prerender() {
   const apiCache = new Map(); // url → Promise<{ status, contentType, body }>
   const fetchApi = (url) => {
     if (!apiCache.has(url)) {
+      const t0 = Date.now();
       const p = fetch(url, {
         signal: AbortSignal.timeout(API_FETCH_TIMEOUT_MS),
         headers: {
@@ -424,9 +425,16 @@ async function prerender() {
       }).then(async (r) => {
         const out = { status: r.status, contentType: r.headers.get('content-type') || 'application/json', body: Buffer.from(await r.arrayBuffer()) };
         if (!r.ok) apiCache.delete(url);
+        // Diagnostics: the 2026-10-10 builds stalled on API-backed pages only on
+        // Vercel's builder, never locally. Name the slow/failing calls in the log.
+        const ms = Date.now() - t0;
+        if (ms > 3000 || !r.ok) console.warn(`[prerender] api ${r.status} ${ms}ms ${url.replace(API_BASE, '')}`);
         return out;
       });
-      p.catch(() => apiCache.delete(url));
+      p.catch((err) => {
+        apiCache.delete(url);
+        console.warn(`[prerender] api FAILED ${Date.now() - t0}ms ${url.replace(API_BASE, '')}: ${err.message}`);
+      });
       apiCache.set(url, p);
     }
     return apiCache.get(url);
@@ -437,8 +445,18 @@ async function prerender() {
     try {
       // Block analytics/tracking requests — avoids phantom pageviews and speeds up render
       await page.setRequestInterception(true);
+      // In-flight requests, so a nav timeout can say what it was waiting on.
+      // Per-URL counts too: a page can also miss networkidle0 by never going quiet
+      // for 500ms (polling / retry loops) with nothing actually hanging.
+      const inFlight = new Map();
+      const seen = new Map();
+      page.on('requestfinished', (req) => inFlight.delete(req));
+      page.on('requestfailed', (req) => inFlight.delete(req));
       page.on('request', async (req) => {
         const url = req.url();
+        inFlight.set(req, Date.now());
+        const k = url.split('?')[0].slice(0, 100);
+        seen.set(k, (seen.get(k) || 0) + 1);
         if (url.includes('posthog') || url.includes('clarity') || url.includes('google-analytics') || url.includes('facebook')) {
           return req.abort();
         }
@@ -464,7 +482,17 @@ async function prerender() {
         return req.continue();
       });
 
-      await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: navTimeout });
+      try {
+        await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: navTimeout });
+      } catch (err) {
+        const now = Date.now();
+        const open = [...inFlight].map(([r, t]) => `${r.resourceType()} ${Math.round((now - t) / 1000)}s ${r.url().slice(0, 120)}`);
+        const total = [...seen.values()].reduce((a, b) => a + b, 0);
+        const top = [...seen].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([u, n]) => `${n}x ${u}`);
+        err.message += (open.length ? ` | still open: ${open.join(' ; ')}` : ' | nothing in flight')
+          + ` | ${total} requests, most repeated: ${top.join(' ; ')}`;
+        throw err;
+      }
 
       // Wait for Seo.jsx useEffect to fire (title changes from default)
       await page.waitForFunction(
