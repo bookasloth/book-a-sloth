@@ -70,6 +70,516 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
 {
+  "slug": "start-private-practice-psychologist-india",
+  "title": "How to Start Private Practice as a Psychologist in India",
+  "date": "Oct 31, 2026",
+  "icons": [
+    "heart",
+    "lock",
+    "calendar"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Growth",
+  "image": null,
+  "excerpt": "How to start a private practice as a psychologist in India: check RCI registration, set fees, run intake, keep bookings private and set WhatsApp boundaries.",
+  "body": [
+    {
+      "p": "To start a private practice as a psychologist in India, first confirm whether your qualification needs RCI registration, then decide online, in-person or both. Fix a short service menu and fees, use a written intake and consent form, take confidential prepaid bookings, set clear WhatsApp boundaries and a cancellation policy, and build referrals with doctors, schools and colleges."
+    },
+    {
+      "p": "Most guides stop at degrees and licences. This one covers the operations that decide whether a new practice survives its first year: intake, confidential booking, fee collection, client messaging and no-shows. It is general information, not legal advice. Check regulatory points with the Rehabilitation Council of India (RCI) or a lawyer for your situation."
+    },
+    {
+      "h2": "RCI registration: what the official guidelines say"
+    },
+    {
+      "p": "The RCI maintains the Central Rehabilitation Register (CRR). Its Norms & Guidelines page, effective 14 October 2025, quotes Section 13 of the RCI Act, 1992. In short, a person without a recognised rehabilitation qualification and CRR enrolment may not practise as a rehabilitation professional anywhere in India ([RCI Norms & Guidelines](https://rehabcouncil.nic.in/norms-guidelines/))."
+    },
+    {
+      "ul": [
+        "Categories listed for registration include Clinical Psychologists, Rehabilitation Psychologists, Vocational Counsellors and Rehabilitation Counsellors.",
+        "Applications are made online through the RCI website, with scans of original documents.",
+        "The page says qualified professionals should register within 6 months of completing an approved course.",
+        "A CRR registration or renewal is valid for 7 years. Renewal needs at least 100 CRE (Continuing Rehabilitation Education) points.",
+        "Late registration or renewal carries a penalty of ₹100 per month of delay, capped at ₹5,000."
+      ]
+    },
+    {
+      "info": {
+        "title": "If you are a counselling psychologist",
+        "text": "The RCI list does not name every counselling title separately. If your degree is in counselling psychology or a related field, check directly with the RCI whether your qualification falls under the CRR before you call yourself a clinical psychologist or advertise clinical services. Use the exact title your qualification supports on your website, booking page and visiting card."
+      }
+    },
+    {
+      "h2": "Online, in-person or both?"
+    },
+    {
+      "table": {
+        "head": [
+          "Setup",
+          "Upfront cost",
+          "Pros",
+          "Watch out for"
+        ],
+        "rows": [
+          [
+            "Online only",
+            "Low",
+            "Clients from any city, no rent, flexible hours",
+            "Privacy at the client's end; crisis handling at a distance"
+          ],
+          [
+            "Rented room by the hour",
+            "Medium",
+            "Professional space without a lease",
+            "Room availability decides your schedule"
+          ],
+          [
+            "Own clinic room",
+            "High",
+            "Full control, walk-in visibility",
+            "Rent, local registrations, slower break-even"
+          ],
+          [
+            "Hybrid",
+            "Medium",
+            "First session in person, follow-ups online",
+            "Two calendars to keep in sync"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Many new practitioners start online or in a shared room while they build a caseload. On local licences: whether you need registration under your state's Shops and Establishments law depends on the state and on whether you run commercial premises. Check your state labour department's portal or ask a local CA."
+    },
+    {
+      "h2": "Set a simple service menu and fees"
+    },
+    {
+      "p": "A short menu makes booking easier for anxious first-time clients. Three or four options are enough."
+    },
+    {
+      "ul": [
+        "First consultation (60 minutes): history, goals and fit.",
+        "Individual session (50 minutes): your core service.",
+        "Couples or family session (75-90 minutes), if you are trained for it.",
+        "Package of 4-6 sessions at a small discount, paid in advance."
+      ]
+    },
+    {
+      "p": "There is no official fee schedule for psychotherapy in private practice, and published fee surveys are thin. A transparent way to set therapist fees is to work out a target hourly rate. Divide your monthly income target by the client hours you can safely hold, since therapy sessions need notes, preparation and supervision time around them. Then compare with practitioners of similar training in your city. Book A Sloth will publish its own aggregated fee data once its booking volume is large enough to be meaningful."
+    },
+    {
+      "p": "Worked example (illustrative numbers only): Dr Ananya in Bengaluru wants ₹80,000 a month and can hold 20 client hours a week, about 80 a month. Her base is ₹1,000 per session. She sets ₹1,200 for individual sessions to cover supervision, rent and no-shows, and ₹1,500 for a longer first consultation. She offers a few reduced-fee slots each week for students."
+    },
+    {
+      "h2": "Intake: what to collect before the first session"
+    },
+    {
+      "p": "Split intake into two parts. The booking form collects only what you need to schedule and contact the client. Clinical history is collected in the session or in a separate, secure form, never in a WhatsApp chat."
+    },
+    {
+      "table": {
+        "head": [
+          "Booking form (short)",
+          "Clinical intake (secure, later)"
+        ],
+        "rows": [
+          [
+            "Name the client wants to be called",
+            "Presenting concern and history"
+          ],
+          [
+            "Phone number and email",
+            "Previous therapy or psychiatric care"
+          ],
+          [
+            "Age (to screen for minors)",
+            "Current medication, if any"
+          ],
+          [
+            "Online or in-person preference",
+            "Risk screening"
+          ],
+          [
+            "Emergency contact (name and number)",
+            "Informed consent and limits of confidentiality"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "For minors, take consent from a parent or guardian and decide in advance what you will and will not share with them. Our list of [client intake form questions](/blog/client-intake-form-questions) has a fuller set you can adapt."
+    },
+    {
+      "h2": "Confidential booking: small details that protect clients"
+    },
+    {
+      "p": "Clients worry about who might see that they are in therapy. A few settings reduce that risk."
+    },
+    {
+      "ul": [
+        "Use neutral service names such as \"Consultation, 50 min\" instead of \"Anxiety therapy\".",
+        "Keep calendar event titles to initials or a code, not full names or concerns.",
+        "Do not add clients to WhatsApp groups. Ever.",
+        "Send reminders that say the time and link, never the reason for the session.",
+        "Use a separate work phone number so personal contacts never see client chats.",
+        "Store session notes in an encrypted folder or password-protected tool, not in chat or email drafts."
+      ]
+    },
+    {
+      "h2": "How to collect therapy fees without awkward conversations"
+    },
+    {
+      "p": "Taking payment at the end of a hard session is uncomfortable for both people. Collecting the fee at booking removes that moment and cuts no-shows. A prepaid booking also gives you a clean record of every session."
+    },
+    {
+      "steps": [
+        "Show the fee clearly on your booking page before the client picks a slot.",
+        "Collect the full fee at booking for individual sessions; collect packages in advance.",
+        "Issue a receipt or invoice for every payment. Clients often need one for reimbursement or records.",
+        "Keep a short note of reduced-fee arrangements so you apply them consistently.",
+        "Review your fees once a year and give existing clients a month's notice of changes."
+      ]
+    },
+    {
+      "p": "On GST, the [CBIC GST FAQ](https://cbic-gst.gov.in/faq.html) says registration is generally required once aggregate turnover crosses ₹20 lakh in a financial year, or ₹10 lakh in special category states. Whether your services are taxable or exempt is a question for a CA."
+    },
+    {
+      "h2": "WhatsApp boundaries for psychologists and counsellors"
+    },
+    {
+      "p": "WhatsApp is how most Indian clients will try to reach you. Without boundaries, it turns into unpaid therapy at 11 pm. Write your policy once and send it after the first booking."
+    },
+    {
+      "ul": [
+        "WhatsApp is for scheduling only: booking, rescheduling, links and receipts.",
+        "You reply within working hours, for example Monday to Saturday, 10 am to 7 pm.",
+        "You do not provide therapy or crisis support over chat.",
+        "Clients in crisis should contact emergency services or a crisis helpline."
+      ]
+    },
+    {
+      "quote": "Thank you for booking with me. A quick note on how I use WhatsApp:\n- This number is for scheduling only (booking, rescheduling, session links).\n- I reply Mon-Sat, 10 am to 7 pm.\n- I cannot offer therapy or crisis support over chat.\n- If you are in crisis, please call your local emergency number or the Tele-MANAS helpline, 14416.\nSee you at our session.",
+      "cite": "Boundary message after the first booking"
+    },
+    {
+      "p": "Tele-MANAS is the Ministry of Health's national mental health helpline. A government release dated 4 April 2025 describes 24x7 tele-mental health counselling on the toll-free number 14416 ([PIB, 4 April 2025](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2118790&reg=48&lang=2)). Check the number before you print it on materials."
+    },
+    {
+      "h2": "A cancellation policy clients will accept"
+    },
+    {
+      "p": "Late cancellations hurt a solo practice because the hour cannot be resold at short notice. Most practitioners use a 24- or 48-hour notice window."
+    },
+    {
+      "quote": "Cancellation policy\n- Reschedule or cancel at least 24 hours before your session at no charge.\n- Cancellations within 24 hours, or missed sessions, are charged in full.\n- I will waive this once for genuine emergencies.\n- If I need to cancel, you will get a full refund or a free reschedule.",
+      "cite": "Session cancellation policy"
+    },
+    {
+      "p": "Share the policy before the first payment and keep it on your booking page. For more variants, see our [cancellation policy templates](/blog/cancellation-policy-template)."
+    },
+    {
+      "h2": "How to get clients as a new psychologist in India"
+    },
+    {
+      "ul": [
+        "Introduce yourself to psychiatrists, GPs, paediatricians and gynaecologists near you. They see patients who need therapy.",
+        "Offer talks to college counselling cells, schools and corporate HR teams.",
+        "Write short, accurate posts on one or two topics you know well, and link to your booking page.",
+        "Ask your supervisor and peers to refer overflow clients in your area of focus.",
+        "Keep a Google Business Profile if you see clients in person, with your title and qualification stated plainly.",
+        "Avoid testimonials that reveal client identity, and do not promise outcomes."
+      ]
+    },
+    {
+      "p": "If you plan to run part or all of your practice online, our guide to [starting an online consultation practice in India](/blog/start-online-consultation-practice-india) covers setup, payments and policies across professions."
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Book A Sloth gives therapists a booking page at bookasloth.com/yourname with fixed-price sessions. Clients pay up-front by UPI, card or netbanking and the booking confirms automatically on payment. Online sessions get auto-generated Google Meet links, Google Calendar syncs both ways, and email and WhatsApp reminders go out on their own. On Sloth Active you can keep client notes and history in a private CRM; send your intake form as a link in the booking confirmation. See the [Book A Sloth page for therapists](/for/therapists) for details."
+    },
+    {
+      "h2": "Private practice FAQs"
+    },
+    {
+      "faq": [
+        {
+          "q": "Do I need RCI registration to start a private practice as a psychologist in India?",
+          "a": "If you practise as a clinical psychologist or rehabilitation psychologist, the RCI's Norms & Guidelines say enrolment on the Central Rehabilitation Register is required to practise as a rehabilitation professional in India. If your qualification is in another area of psychology, confirm with the RCI how it is treated before you advertise clinical services."
+        },
+        {
+          "q": "How much do therapists charge in India?",
+          "a": "There is no official fee scale. Set yours from a target hourly rate based on your income goal and the client hours you can safely hold, then compare with practitioners of similar training in your city. Keep a few reduced-fee slots if you want to serve students or lower-income clients."
+        },
+        {
+          "q": "Should therapy clients pay before the session?",
+          "a": "Prepaying at booking avoids collecting money at the end of an emotional session and reduces no-shows. Show the fee and cancellation policy before payment, and give a receipt for every session."
+        },
+        {
+          "q": "Can I counsel clients over WhatsApp chat?",
+          "a": "It is safer to use WhatsApp only for scheduling and to hold sessions on a video or phone call you control. Tell clients in writing that you do not offer therapy or crisis support over chat, and share a crisis helpline such as Tele-MANAS (14416)."
+        },
+        {
+          "q": "Do counsellors need a shop and establishment licence?",
+          "a": "It depends on your state and your setup. Shops and Establishments rules are state laws and usually apply to commercial premises. If you rent or run a clinic room, check your state labour department's portal or ask a local CA. A purely online practice from home may be treated differently."
+        },
+        {
+          "q": "How do I keep therapy bookings confidential?",
+          "a": "Use neutral service names, put only initials in calendar titles, send reminders without the reason for the session, keep a separate work number, and store notes in an encrypted or password-protected tool rather than in chats."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "doctor-consultation-fee-india",
+  "title": "Consultation Fee for Doctors in India: How to Set Yours",
+  "date": "Oct 31, 2026",
+  "icons": [
+    "money",
+    "scale",
+    "calendar"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Money",
+  "image": null,
+  "excerpt": "Consultation fee for doctors in India: how to set your OPD fee by specialty and city, price follow-ups and online consults, and follow NMC fee-display rules.",
+  "body": [
+    {
+      "p": "There is no government-fixed consultation fee for doctors in private practice in India. You set your own, but NMC's ethics code says you must announce it before treatment and display it in your chamber. Price from your costs and target income, compare with peers in your specialty and city, then decide follow-up and online rates."
+    },
+    {
+      "p": "This guide is written for doctors starting or re-pricing a practice. It covers the rules that apply to fees, a costing method you can run in ten minutes, how to handle follow-up visits, and how to price teleconsultations under the Telemedicine Practice Guidelines. It is general information. Check the current NMC text and your State Medical Council for anything that affects your registration."
+    },
+    {
+      "h2": "What NMC rules say about doctors' consultation fees"
+    },
+    {
+      "p": "The Code of Medical Ethics Regulations, 2002, published on the National Medical Commission's website, sets out several fee-related duties ([NMC: Code of Medical Ethics Regulations, 2002](https://nmc.org.in/page/rules-regulations-rules-regulations-of-erstwhile-mci-code-of-medical-ethics-regulations-2002)). Section 1.8 says \"A physician should announce his fees before rendering service and not after the operation or treatment is under way.\""
+    },
+    {
+      "table": {
+        "head": [
+          "Section",
+          "What it requires",
+          "What it means in practice"
+        ],
+        "rows": [
+          [
+            "1.8",
+            "Announce fees before rendering service; no 'no cure no payment' contracts",
+            "Show the fee at booking or at the front desk, before the consult"
+          ],
+          [
+            "3.7.1",
+            "Clearly display fees and other charges on the board of the chamber",
+            "Put an up-to-date fee board in the clinic"
+          ],
+          [
+            "1.4.1",
+            "Display registration number in the clinic and on prescriptions, certificates and money receipts",
+            "Your receipts and e-prescriptions should carry your registration number"
+          ],
+          [
+            "6.4.1",
+            "No rebates, commission or fee splitting",
+            "Do not pay or accept referral cuts from labs or colleagues"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "NMC can amend or replace these regulations, so check the latest version on the NMC website before you finalise your fee board or receipts."
+    },
+    {
+      "h2": "How much should a new doctor charge for consultation?"
+    },
+    {
+      "p": "Start from your own numbers. A consultation fee has to cover your clinic costs and your time, and still feel fair to patients in your area."
+    },
+    {
+      "steps": [
+        "Add your monthly fixed costs: rent or clinic share, staff, utilities, software, indemnity insurance, loan EMIs on equipment.",
+        "Add the monthly income you need to take home.",
+        "Estimate realistic paid consultations per month. Count only paying visits, not free follow-ups.",
+        "Divide total (costs + income) by paid consultations. That is your break-even fee.",
+        "Compare with three to five doctors of similar qualification and specialty within your locality.",
+        "Set your fee at or slightly above break-even, and below the top of the local range until you have a patient base."
+      ]
+    },
+    {
+      "p": "Worked example (illustrative numbers only): Dr Rohan, a newly practising MD physician in Nagpur, has fixed costs of ₹90,000 a month and wants to take home ₹1,10,000. That is ₹2,00,000 to cover. He expects 400 paid consultations a month, about 16 on each working day. His break-even fee is ₹500 (₹2,00,000 ÷ 400). He sets ₹500 for new patients and reviews the number after six months."
+    },
+    {
+      "p": "Book A Sloth does not publish fee benchmarks yet. It will publish its own aggregated numbers once its booking volume is large enough to be meaningful. For a broader method across professions, see [how much to charge for a consultation in India](/blog/consultation-fees-india)."
+    },
+    {
+      "h2": "Doctor consultation fees by specialty and city: what moves the number"
+    },
+    {
+      "p": "Reliable public data on private OPD fees by specialty and city is scarce, so treat any single number you see online with caution. These factors explain most of the difference between two doctors' fees."
+    },
+    {
+      "table": {
+        "head": [
+          "Factor",
+          "Pushes fee up",
+          "Pushes fee down"
+        ],
+        "rows": [
+          [
+            "Qualification",
+            "DM/MCh super-specialty, fellowships",
+            "MBBS general practice"
+          ],
+          [
+            "City tier",
+            "Metro, premium locality",
+            "Tier-2/3 town, residential area"
+          ],
+          [
+            "Setting",
+            "Hospital OPD, polyclinic with diagnostics",
+            "Standalone neighbourhood clinic"
+          ],
+          [
+            "Time per patient",
+            "Long first visits, counselling-heavy specialties",
+            "Short, high-volume OPD"
+          ],
+          [
+            "Experience and demand",
+            "Long waiting lists",
+            "New practice building a base"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "One public reference point is the Central Government Health Scheme (CGHS) rate list used for empanelled hospitals. A Ministry of Health clarification dated 13 January 2026 discusses OPD consultation rates of ₹350 and ₹700 under the revised list, with ₹700 admissible only for consultations by DM/MCh super-specialists in their super-specialty ([copy of the MoHFW order](https://www.staffnews.in/2026/01/clarification-regarding-opd-consultation-fees.html)). These are reimbursement rates for empanelled hospitals, and private fees are usually set independently. They still show how qualification changes the fee."
+    },
+    {
+      "h2": "Follow-up consultation fee rules"
+    },
+    {
+      "p": "For in-clinic practice, the ethics code does not fix a free follow-up window. It is your policy, so the important thing is to decide it and state it before the first consult, as Section 1.8 requires for fees generally."
+    },
+    {
+      "ul": [
+        "Decide what counts as a follow-up: same patient, same condition, within a set number of days.",
+        "Decide the follow-up fee: free review of reports, a reduced fee, or the full fee.",
+        "Print the rule on your fee board and receipts, for example \"Follow-up for the same complaint within 7 days: ₹200\" (example only).",
+        "Charge the full fee for a new complaint, even within the window.",
+        "Apply the policy to everyone. Exceptions are fine for hardship, but note them."
+      ]
+    },
+    {
+      "p": "For teleconsultations, the Telemedicine Practice Guidelines define a follow-up as a consult with the same doctor within 6 months of the previous in-person consultation, for continuing care of the same condition ([NRCeS: Telemedicine Practice Guidelines](https://www.nrces.in/standards/telemedicine-practice-guidelines)). That definition decides what you may do on a follow-up teleconsult. It does not set the fee."
+    },
+    {
+      "h2": "Online consultation fee for doctors vs in-clinic"
+    },
+    {
+      "p": "The Telemedicine Practice Guidelines say teleconsultations \"should be treated the same way as in-person consultations from a fee perspective\". A registered medical practitioner may charge an appropriate fee and must give a receipt or invoice, per the guideline text on NRCeS."
+    },
+    {
+      "table": {
+        "head": [
+          "Mode",
+          "Pricing approach",
+          "Notes from the guidelines"
+        ],
+        "rows": [
+          [
+            "Video consult",
+            "Same as in-clinic, or close to it",
+            "Give a signed or e-prescription copy; keep a log of the interaction"
+          ],
+          [
+            "Audio consult",
+            "Same as in-clinic or slightly lower",
+            "Same record-keeping duties apply"
+          ],
+          [
+            "Text or chat consult",
+            "Lower, or limited to follow-ups",
+            "Same fee, receipt and record rules apply"
+          ],
+          [
+            "Report review",
+            "Fixed small fee",
+            "Keep the reports used in the consultation on record"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The guidelines also limit what can be prescribed remotely. Schedule X drugs and narcotic or psychotropic substances cannot be prescribed through telemedicine. Read the full guideline before you price a teleconsult that may need such medicines."
+    },
+    {
+      "info": {
+        "title": "Collect online fees before the call",
+        "text": "Unpaid video consults are the most common leak in a small practice. Take the fee at booking, issue the receipt automatically, and send the video link only after payment. Our guide on [how to reduce no-shows](/blog/how-to-reduce-no-shows) covers reminders and prepayment in more detail."
+      }
+    },
+    {
+      "h2": "Fee board and receipt checklist"
+    },
+    {
+      "ul": [
+        "New patient consultation fee.",
+        "Follow-up fee and the window it applies to.",
+        "Teleconsultation fee by mode (video, audio, chat).",
+        "Charges for procedures, dressings or certificates, if any.",
+        "Your registration number and State Medical Council on every receipt and prescription.",
+        "Accepted payment methods: cash, UPI, card."
+      ]
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Book A Sloth gives doctors a booking page at bookasloth.com/yourname with fixed fees per service, such as new consult, follow-up and video consult, so the fee is shown before the patient books. Patients pay up-front by UPI, card or netbanking and the booking confirms on payment. Video consults get auto-generated Google Meet links, and email and WhatsApp reminders go out automatically. GST invoices are generated for payments. It is a booking and payments tool, not an EMR, so keep prescriptions and records in your own system. See the [Book A Sloth page for doctors](/for/doctors)."
+    },
+    {
+      "h2": "Doctor consultation fee FAQs"
+    },
+    {
+      "faq": [
+        {
+          "q": "Is there a fixed consultation fee for doctors in India?",
+          "a": "No. Doctors in private practice set their own fees. NMC's Code of Medical Ethics Regulations, 2002 require the fee to be announced before treatment and displayed on the board of the chamber."
+        },
+        {
+          "q": "How much should a new doctor charge for consultation?",
+          "a": "Add your monthly clinic costs and target take-home income, divide by the number of paid consultations you expect each month, and compare that break-even fee with peers of similar qualification in your locality. Start near break-even and review after six months."
+        },
+        {
+          "q": "Is a follow-up consultation free?",
+          "a": "Only if your clinic policy says so. The NMC Code of Medical Ethics Regulations, 2002 do not fix a free follow-up period for in-clinic practice. State your follow-up window and fee on your fee board and receipts before the first consultation."
+        },
+        {
+          "q": "Can doctors charge for online consultations?",
+          "a": "Yes. The Telemedicine Practice Guidelines say teleconsultations should be treated the same way as in-person consultations from a fee perspective, and the doctor must give a receipt or invoice."
+        },
+        {
+          "q": "What counts as a follow-up in telemedicine?",
+          "a": "Under the Telemedicine Practice Guidelines, a follow-up is a consult with the same doctor within 6 months of the previous in-person consultation, for continuing care of the same condition."
+        },
+        {
+          "q": "Do doctors need to show their registration number on receipts?",
+          "a": "Yes. Section 1.4.1 of the Code of Medical Ethics Regulations, 2002 asks every physician to display their registration number in the clinic and on prescriptions, certificates and money receipts."
+        }
+      ]
+    }
+  ]
+},
+{
   "slug": "iim-resume-template",
   "title": "IIM Resume Template: The One-Page Format That Works",
   "date": "Oct 15, 2026",
@@ -1036,6 +1546,6594 @@ export const BLOG_POSTS = [
         {
           "q": "Can I accept UPI payments for consulting without a company?",
           "a": "Yes. Aggregators and booking tools let individuals accept UPI and card payments without registering a company, though you should still track income for tax and, above the threshold, GST."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "whatsapp-business-away-message",
+  "title": "Away Message for Business: 40 WhatsApp Templates + Setup",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "bell",
+    "calendar",
+    "clipboard"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 11,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Away message for business: 40 WhatsApp Business templates for after-hours, Sunday, Diwali and holidays, by trade, plus setup steps, each with a booking link.",
+  "body": [
+    {
+      "p": "An away message for business is an automatic WhatsApp reply that tells customers you are closed or busy, when you will reply, and what they can do meanwhile. In the WhatsApp Business app you set it under Tools, then Away message, and schedule it for outside business hours. The best ones end with a booking link."
+    },
+    {
+      "p": "Below are the official setup steps, then 40 copy-paste away messages: after-hours, busy, Sunday closed, lunch break, Diwali and other Indian festivals, vacation, and sets for clinics, salons, tutors, coaches, trainers, photographers and consultants. Each template ends with a booking link, so the message keeps taking bookings while you are offline."
+    },
+    {
+      "h2": "How to set an away message on WhatsApp Business"
+    },
+    {
+      "p": "These steps follow WhatsApp's own help page, [How to use away messages](https://faq.whatsapp.com/2565868990219715). They are the same on Android and iPhone, except the button you tap after editing the text (OK on Android, Save on iPhone)."
+    },
+    {
+      "steps": [
+        "Open the WhatsApp Business app and go to the Tools tab.",
+        "Tap Away message and turn on Send away message.",
+        "Tap the message text to edit it. Paste one of the templates below, then tap OK (Android) or Save (iPhone).",
+        "Tap Schedule and choose Always send, Custom schedule, or Outside of business hours.",
+        "Tap Recipients and choose Everyone, Everyone not in address book, Everyone except…, or Only send to….",
+        "Tap Save."
+      ]
+    },
+    {
+      "p": "One catch: WhatsApp's help page says “Your device must have an active internet connection in order to send away messages.” If your phone is switched off at night or on a flight, the away message will not go out. Keep the phone on Wi-Fi and charging, or use a booking page that works without your phone."
+    },
+    {
+      "info": {
+        "title": "Away message vs greeting message",
+        "text": "An away message goes out while you are closed or busy. A greeting message goes to customers who message you for the first time, or after 14 days of no chat, according to WhatsApp's [greeting messages help page](https://faq.whatsapp.com/501866148528310). Use both: the greeting introduces you and the away message handles after-hours."
+      }
+    },
+    {
+      "h2": "Which schedule and recipients to choose"
+    },
+    {
+      "table": {
+        "head": [
+          "Option",
+          "What it does",
+          "Best for"
+        ],
+        "rows": [
+          [
+            "Outside of business hours",
+            "Sends only when you are closed, based on the hours in your business profile",
+            "Clinics, salons, studios with fixed timings"
+          ],
+          [
+            "Custom schedule",
+            "Sends only between a start and end date and time you pick",
+            "Diwali break, vacation, a conference day"
+          ],
+          [
+            "Always send",
+            "Sends every time someone messages, until you turn it off",
+            "A sudden closure or a family emergency"
+          ],
+          [
+            "Everyone not in address book",
+            "Skips saved contacts, replies to new enquiries",
+            "When regulars already know your timings"
+          ],
+          [
+            "Everyone except…",
+            "Skips the contacts you pick",
+            "Keeping family and staff out of auto-replies"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The Outside of business hours option appears only after you set business hours in your business profile, so do that first. If you open late on some days, set the real hours per day rather than one range for the week."
+    },
+    {
+      "h2": "What makes the best away message for WhatsApp Business"
+    },
+    {
+      "ul": [
+        "Say you are away, in one line. No long apology.",
+        "Give a reply time with the day: 'We'll reply by 10 AM Monday', not 'soon'.",
+        "Offer one thing the customer can do now, usually a booking link.",
+        "Give an emergency route if your work needs one (doctors, vets, home repairs).",
+        "Match the language your customers write in: English, Hindi or Hinglish.",
+        "Keep it under five lines so it reads in the notification preview."
+      ]
+    },
+    {
+      "h2": "After-hours away messages"
+    },
+    {
+      "quote": "Hi! Thanks for your message 🙏 We're closed right now. Our hours are Mon–Sat, 10 AM to 7 PM.\nWe'll reply first thing tomorrow. To book a slot now, use: [booking link]",
+      "cite": "1. After hours (standard)"
+    },
+    {
+      "quote": "Thanks for reaching out! It's after hours here, so I'll reply by 10 AM tomorrow.\nIn a hurry? You can see open slots and book directly: [booking link]",
+      "cite": "2. After hours (solo professional)"
+    },
+    {
+      "quote": "Hello! We've received your message. Our team is offline till 9 AM.\nFor prices, timings and bookings, everything is here: [booking link]",
+      "cite": "3. After hours (send people to the page)"
+    },
+    {
+      "quote": "नमस्ते 🙏 आपका मैसेज मिल गया। अभी हम बंद हैं (समय: सोम–शनि, सुबह 10 से शाम 7 बजे)।\nकल सुबह जवाब देंगे। अभी अपॉइंटमेंट बुक करनी हो तो इस लिंक पर करें: [booking link]",
+      "cite": "4. After hours (Hindi)"
+    },
+    {
+      "h2": "Busy away messages (in a session or with a client)"
+    },
+    {
+      "quote": "Hi! I'm with a client right now and will reply within 2 hours.\nIf you'd like to book, you can pick a time here: [booking link]",
+      "cite": "5. Busy with a client"
+    },
+    {
+      "quote": "Thanks for your message! We're fully booked today and replying a little slower than usual.\nThe fastest way to get a slot is here: [booking link]",
+      "cite": "6. Busy day"
+    },
+    {
+      "quote": "Hi! Abhi session mein hoon, 1 ghante mein reply karta hoon 🙂\nBooking ke liye ye link use karein: [booking link]",
+      "cite": "7. Busy (Hinglish)"
+    },
+    {
+      "h2": "Sunday closed and weekend away messages"
+    },
+    {
+      "quote": "Hi! We're closed on Sundays 🌿 We'll reply on Monday morning.\nYou can still book for the week ahead here: [booking link]",
+      "cite": "8. Sunday closed"
+    },
+    {
+      "quote": "Thanks for messaging! I don't work on weekends, so I'll get back to you on Monday by 11 AM.\nTo grab a weekday slot now: [booking link]",
+      "cite": "9. Weekend off"
+    },
+    {
+      "quote": "नमस्ते! रविवार को हमारी छुट्टी रहती है। सोमवार सुबह आपको जवाब देंगे।\nअगले हफ़्ते की बुकिंग अभी कर सकते हैं: [booking link]",
+      "cite": "10. Sunday closed (Hindi)"
+    },
+    {
+      "h2": "Lunch break away messages"
+    },
+    {
+      "quote": "Hi! We're on a lunch break from 1:30 to 2:30 PM. We'll reply right after.\nTo book a slot meanwhile: [booking link]",
+      "cite": "11. Lunch break"
+    },
+    {
+      "quote": "Back at 2:30 PM 🍱 Your message is safe with us. Bookings stay open here: [booking link]",
+      "cite": "12. Lunch break (short)"
+    },
+    {
+      "h2": "Diwali, festival and holiday away messages"
+    },
+    {
+      "p": "Set festival messages with Custom schedule so they switch off on their own. Update your Google listing too: Google's [special hours help page](https://support.google.com/business/answer/6303076?hl=en) says special hours cover closures of up to 6 days in a row, and closures of 7 days or more should be marked as temporarily closed."
+    },
+    {
+      "quote": "Happy Diwali! 🪔 We're closed from [date] to [date] to celebrate with family. We'll be back on [date].\nBookings for after Diwali are open now: [booking link]",
+      "cite": "13. Diwali closure"
+    },
+    {
+      "quote": "दीपावली की हार्दिक शुभकामनाएं 🪔\nहम [तारीख] से [तारीख] तक बंद रहेंगे और [तारीख] से फिर शुरू करेंगे।\nदिवाली के बाद की अपॉइंटमेंट अभी बुक करें: [booking link]",
+      "cite": "14. Diwali closure (Hindi)"
+    },
+    {
+      "quote": "Happy Holi! 🎨 We're closed today and back tomorrow at 10 AM.\nBook your next visit here: [booking link]",
+      "cite": "15. Holi"
+    },
+    {
+      "quote": "Eid Mubarak! 🌙 We're closed for Eid today and will reply tomorrow.\nYou can book your slot for later this week here: [booking link]",
+      "cite": "16. Eid"
+    },
+    {
+      "quote": "Season's greetings! 🎄 We're off from [date] to [date] and back on [date].\nNew year slots are open: [booking link]",
+      "cite": "17. Christmas and New Year"
+    },
+    {
+      "quote": "Ganpati Bappa Morya! 🙏 We're closed for Ganesh Chaturthi on [date] and back on [date].\nBook for after the festival here: [booking link]",
+      "cite": "18. Ganesh Chaturthi"
+    },
+    {
+      "quote": "Shubho Pujo! We're closed for Durga Puja from [date] to [date].\nWe reopen on [date]. Book your slot now: [booking link]",
+      "cite": "19. Durga Puja or Navratri"
+    },
+    {
+      "h2": "Vacation and out-of-office away messages"
+    },
+    {
+      "quote": "Hi! I'm on leave from [date] to [date] with limited access to messages. I'll reply after I'm back on [date].\nBookings for after my return are open: [booking link]",
+      "cite": "20. Vacation"
+    },
+    {
+      "quote": "Thanks for your message! I'm at a training workshop until [date]. Replies may take a day.\nTo book a session from [date] onwards: [booking link]",
+      "cite": "21. Training or conference"
+    },
+    {
+      "quote": "Hi, due to a family emergency we're closed until [date]. Sorry for the delay in replying.\nIf you'd like to book for later, please use: [booking link]",
+      "cite": "22. Unplanned closure"
+    },
+    {
+      "h2": "Away messages by business type"
+    },
+    {
+      "p": "Trade-specific away messages answer the one question each type of customer always asks. A patient wants to know what to do in an emergency, a salon client wants prices, a parent wants batch timings."
+    },
+    {
+      "quote": "Namaste! Dr. Mehta's clinic is closed now. OPD timings: Mon–Sat, 10 AM–1 PM and 6–9 PM.\nFor a medical emergency, please go to the nearest hospital or call 112.\nTo book an OPD appointment: [booking link]",
+      "cite": "23. Doctor or clinic (after hours)"
+    },
+    {
+      "quote": "Hi! The doctor is consulting right now and can't read messages. Our staff will reply after OPD.\nBook or move your appointment here: [booking link]",
+      "cite": "24. Clinic (OPD running)"
+    },
+    {
+      "quote": "Thank you for contacting Smile Dental. We're closed today. For tooth pain or swelling, please call [emergency number].\nBook a check-up for this week: [booking link]",
+      "cite": "25. Dental clinic"
+    },
+    {
+      "quote": "Hi gorgeous! 💇‍♀️ The salon is closed right now (open Tue–Sun, 11 AM–8 PM, Monday off).\nSee the price list and book your slot: [booking link]",
+      "cite": "26. Salon (after hours)"
+    },
+    {
+      "quote": "Thank you for your bridal enquiry 💍 We reply to bridal and party bookings within 24 hours with a full quote.\nTo book a trial session now: [booking link]",
+      "cite": "27. Bridal makeup artist"
+    },
+    {
+      "quote": "Hi! Our therapists are in sessions right now. Walk-ins depend on availability, so booking ahead is best: [booking link]",
+      "cite": "28. Spa or massage centre"
+    },
+    {
+      "quote": "Hello! I'm teaching a batch right now and will reply after 8 PM.\nFor a free demo class, pick a time here: [booking link]",
+      "cite": "29. Home tutor"
+    },
+    {
+      "quote": "नमस्ते! अभी क्लास चल रही है, रात 8 बजे के बाद जवाब देंगे।\nफ्री डेमो क्लास के लिए यहां समय चुनें: [booking link]",
+      "cite": "30. Tutor or coaching class (Hindi, for parents)"
+    },
+    {
+      "quote": "Thank you for your interest in our JEE/NEET batches. The office is closed now and opens at 10 AM.\nBatch timings, fees and demo-class booking are here: [booking link]",
+      "cite": "31. Coaching institute"
+    },
+    {
+      "quote": "Hi, thanks for reaching out. I check messages twice a day and will reply within 24 hours.\nIf you're ready to start, you can book a first session here: [booking link]",
+      "cite": "32. Life or career coach"
+    },
+    {
+      "quote": "Thank you for writing in. I'm in sessions and reply to messages by evening. If you are in crisis, please call Tele-MANAS at 14416 or go to the nearest hospital.\nTo book a session: [booking link]",
+      "cite": "33. Therapist or counsellor"
+    },
+    {
+      "quote": "Hi! I reply to all new enquiries within one working day. To book a 15-minute discovery call now: [booking link]",
+      "cite": "34. Consultant (discovery call)"
+    },
+    {
+      "quote": "Hey! I'm coaching on the floor right now 🏋️ Will reply after 9 PM.\nBook a trial session here: [booking link]",
+      "cite": "35. Personal trainer"
+    },
+    {
+      "quote": "Namaste 🧘 Morning batches are on, I'll reply after 10 AM.\nTo join a batch or book a trial class: [booking link]",
+      "cite": "36. Yoga instructor"
+    },
+    {
+      "quote": "Hi! I'm on a shoot today 📸 and will reply tonight.\nCheck available dates and book a shoot here: [booking link]",
+      "cite": "37. Photographer"
+    },
+    {
+      "quote": "Thank you for your message. Our office hours are Mon–Fri, 10 AM to 6 PM. During ITR season replies may take 1–2 days.\nTo book a consultation slot: [booking link]",
+      "cite": "38. CA or tax consultant"
+    },
+    {
+      "quote": "Thank you for contacting the chambers. We will reply on the next working day. Please don't send case documents over WhatsApp.\nTo book a consultation: [booking link]",
+      "cite": "39. Lawyer"
+    },
+    {
+      "quote": "Hi! We're closed right now. For bookings of the turf, all open slots with prices are here: [booking link]",
+      "cite": "40. Sports turf or court booking"
+    },
+    {
+      "h2": "Why every away message should end with a booking link"
+    },
+    {
+      "p": "An away message without a next step tells the customer to wait. Many will message the next business on their list instead. A [booking link](/glossary/booking-link) gives them something to do while you are offline: see open slots, pick one, and pay. For more on handling the whole flow on WhatsApp, read [how to manage appointments on WhatsApp](/blog/manage-appointments-on-whatsapp), and use the [WhatsApp appointment reminder templates](/blog/appointment-reminder-templates) once the booking is in."
+    },
+    {
+      "p": "On Book A Sloth, your [booking page](/features/booking-pages) lives at bookasloth.com/yourname. Clients pick a slot, verify with a phone OTP and pay up front by UPI, card or netbanking, with no app to download. The booking confirms on payment and the client gets email and WhatsApp confirmations and a reminder. That is the link to paste at the end of every template above. The free Sloth plan has no monthly fee and charges 5% per paid booking only. Add the same link as a Book button on Google too, using [this Google Business Profile guide](/blog/book-button-google-business-profile)."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I set an away message on WhatsApp Business?",
+          "a": "Open the WhatsApp Business app, go to the Tools tab and tap Away message. Turn on Send away message, edit the text, then choose a schedule (Always send, Custom schedule or Outside of business hours) and recipients, and tap Save."
+        },
+        {
+          "q": "What is the best away message for WhatsApp Business?",
+          "a": "The best away message says you are away in one line, gives a specific reply time such as 'by 10 AM Monday', and offers one action the customer can take now, usually a booking link. Keep it under five lines and in the language your customers use."
+        },
+        {
+          "q": "Why is my WhatsApp Business away message not sending?",
+          "a": "WhatsApp says your device must have an active internet connection to send away messages, so check that the phone is on and connected. Also check the schedule (Outside of business hours needs business hours set in your profile) and the recipients setting."
+        },
+        {
+          "q": "Can I schedule a WhatsApp away message for Diwali or a vacation?",
+          "a": "Yes. Choose Custom schedule and set the start and end date and time. The away message sends only during that period and stops on its own, so you do not need to remember to switch it off."
+        },
+        {
+          "q": "What is the difference between an away message and a greeting message?",
+          "a": "An away message is sent while you are closed or busy. A greeting message is sent when a customer messages you for the first time, or after 14 days of no chat. You can run both together in the WhatsApp Business app."
+        },
+        {
+          "q": "Can a customer book an appointment while I am away?",
+          "a": "Yes, if your away message includes a booking link. The customer opens the link, picks an open slot and pays, and the booking is confirmed without you replying. You see it in your calendar when you are back."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "tuition-fee-reminder-message",
+  "title": "Tuition Fee Reminder Message: Hindi & English Templates",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "bell",
+    "wallet",
+    "users"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Tuition fee reminder message templates in Hindi and English for tutors and coaching classes: monthly fees, UPI QR line, polite-to-firm sequence for parents.",
+  "body": [
+    {
+      "p": "A tuition fee reminder message should name the student, the month and the amount, give the due date, and include a UPI ID, QR or payment link so the parent can pay in one tap. Send it to the parent privately on WhatsApp, start polite a few days before the due date, and get firmer only after a week."
+    },
+    {
+      "p": "This guide is for private tutors, home tutors and small coaching classes, not schools. It has a reminder schedule, a full sequence in English, the same sequence in Hindi and Hinglish, and messages for the awkward cases: fee hikes, vacation months, part payments and students who have stopped coming."
+    },
+    {
+      "h2": "Fee reminder schedule for tuition and coaching classes"
+    },
+    {
+      "p": "Most tutors collect a fixed monthly fee at the start of the month. This timetable keeps reminders regular without sounding like a recovery agent. The example uses a ₹2,500 monthly fee due on the 5th."
+    },
+    {
+      "table": {
+        "head": [
+          "When",
+          "Message",
+          "Tone"
+        ],
+        "rows": [
+          [
+            "1st of the month",
+            "Fee notice for the month with UPI details",
+            "Informative"
+          ],
+          [
+            "2 days before due (3rd)",
+            "Friendly reminder",
+            "Polite"
+          ],
+          [
+            "Due date (5th)",
+            "Due today",
+            "Polite"
+          ],
+          [
+            "3 days late (8th)",
+            "Gentle follow-up, ask if there is a problem",
+            "Polite, personal"
+          ],
+          [
+            "7 days late (12th)",
+            "Firm reminder with a clear date",
+            "Firm"
+          ],
+          [
+            "15 days late (20th)",
+            "Final notice before classes are paused",
+            "Firm, respectful"
+          ],
+          [
+            "On payment",
+            "Thank-you and receipt",
+            "Warm"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Write the due date and late rule in your joining message or fee card, once, when the student joins. Then every reminder only repeats a rule the parent already agreed to."
+    },
+    {
+      "h2": "Tuition fee reminder message in English"
+    },
+    {
+      "quote": "Hello Mrs. Sharma,\nThe tuition fee for Aarav (Class 8, Maths and Science) for October is ₹2,500, due by 5 October.\n\nUPI ID: nehatuitions@upi\nOr pay here: [UPI payment link]\nPlease share the payment screenshot or UPI ref no. once done.\n\nThank you,\nNeha Verma",
+      "cite": "Monthly fee notice (1st of the month)"
+    },
+    {
+      "quote": "Hello Mr. Gupta, a gentle reminder that Riya's October fee of ₹2,500 is due on Sunday, 5 October.\nUPI: [UPI ID] | Link: [payment link]\nThank you! 🙏",
+      "cite": "Friendly reminder (2 days before)"
+    },
+    {
+      "quote": "Good morning Mrs. Iyer, Aditya's tuition fee of ₹2,500 for October is due today.\nYou can pay by scanning the attached QR or using this link: [payment link].\nIf it's already done, please ignore this message. Thank you!",
+      "cite": "Due date reminder"
+    },
+    {
+      "quote": "Hello Mrs. Khan, I hope all is well at home. Sara's October fee of ₹2,500 is still pending (due on 5 Oct).\nIf there's any difficulty, please let me know and we can work something out.\nUPI: [UPI ID]",
+      "cite": "Gentle follow-up (3 days late)"
+    },
+    {
+      "quote": "Hello Mr. Reddy, this is a reminder that Kabir's tuition fee of ₹2,500 for October is now a week overdue.\nI request you to clear it by Saturday, 14 October.\nPay here: [payment link]\nThank you for your cooperation.",
+      "cite": "Firm reminder (7 days late)"
+    },
+    {
+      "quote": "Dear Mr. Reddy,\nKabir's October fee of ₹2,500 remains unpaid despite earlier reminders. As per the fee rules shared at admission, classes will be paused from 21 October if the fee is not received by 20 October.\nI would be happy to continue teaching Kabir, so please let me know if you need a few more days, and we can agree on a date.\n\nRegards,\nNeha Verma",
+      "cite": "Final notice before pausing classes (15 days late)"
+    },
+    {
+      "quote": "Thank you, Mrs. Sharma! Received ₹2,500 for Aarav's October fee (UPI ref: [ref no.]).\nSee you in class. 🙂",
+      "cite": "Fee received (thank you and receipt)"
+    },
+    {
+      "h2": "Fee reminder message in Hindi for parents"
+    },
+    {
+      "p": "Many parents, especially grandparents who handle payments, read Hindi more comfortably. Use आप, address the parent as जी, and keep the amount and dates in numerals."
+    },
+    {
+      "quote": "नमस्ते शर्मा जी,\nआरव (कक्षा 8, गणित और विज्ञान) की अक्टूबर महीने की ट्यूशन फीस ₹2,500 है। कृपया 5 अक्टूबर तक जमा कर दें।\n\nUPI ID: nehatuitions@upi\nया इस लिंक से भुगतान करें: [पेमेंट लिंक]\nभुगतान के बाद स्क्रीनशॉट भेज दें।\n\nधन्यवाद,\nनेहा वर्मा",
+      "cite": "Monthly fee notice (Hindi)"
+    },
+    {
+      "quote": "नमस्ते गुप्ता जी,\nयाद दिला रही हूं कि रिया की अक्टूबर की फीस ₹2,500 आज जमा करनी है।\nQR कोड साथ में भेजा है। अगर भुगतान हो चुका है तो कृपया इस मैसेज को नज़रअंदाज़ करें। धन्यवाद 🙏",
+      "cite": "Due date reminder (Hindi)"
+    },
+    {
+      "quote": "नमस्ते रेड्डी जी,\nकबीर की अक्टूबर की फीस ₹2,500 अभी तक जमा नहीं हुई है, जबकि अंतिम तारीख 5 अक्टूबर थी।\nकृपया 14 अक्टूबर तक फीस जमा कर दें। अगर कोई परेशानी है तो मुझे बताएं, हम मिलकर कोई रास्ता निकाल लेंगे।\nपेमेंट लिंक: [लिंक]",
+      "cite": "Overdue reminder (Hindi, firm but polite)"
+    },
+    {
+      "quote": "आदरणीय रेड्डी जी,\nपिछले रिमाइंडर के बाद भी कबीर की अक्टूबर की फीस ₹2,500 बाकी है। प्रवेश के समय बताए गए नियम के अनुसार, अगर 20 अक्टूबर तक फीस नहीं मिली तो 21 अक्टूबर से कक्षाएं रोकनी पड़ेंगी।\nमैं कबीर को पढ़ाना जारी रखना चाहती हूं। अगर कुछ दिन और चाहिए तो कृपया बताएं।\n\nसादर,\nनेहा वर्मा",
+      "cite": "Final notice (Hindi)"
+    },
+    {
+      "quote": "धन्यवाद शर्मा जी! आरव की अक्टूबर की फीस ₹2,500 मिल गई है (UPI ref: [नंबर])। 🙏",
+      "cite": "Fee received (Hindi)"
+    },
+    {
+      "quote": "Namaste Gupta ji, Riya ki October ki fees ₹2,500 aaj due hai.\nUPI: [UPI ID] ya is link se pay kar dijiye: [link]\nAgar pay ho gaya hai toh please ignore karein. Thank you 🙏",
+      "cite": "Due date reminder (Hinglish)"
+    },
+    {
+      "h2": "Fee messages for special situations"
+    },
+    {
+      "quote": "Hello Mrs. Das, welcome to Sharma Tutorials! 🙏\nAnanya's batch: Class 10 Science, Mon/Wed/Fri, 5 to 6:30 PM.\nFee: ₹3,000 per month, due by the 5th of every month. Admission fee: ₹500 (one-time).\nPayment: UPI [UPI ID] or QR attached.\nClasses missed due to absence are not adjusted in the fee, but notes and doubt sessions are always available.",
+      "cite": "New admission (fee rules up front)"
+    },
+    {
+      "quote": "Dear parents,\nFrom 1 April 2027, the monthly fee for Class 9 and 10 batches will be ₹3,000 (currently ₹2,700), as the new syllabus needs two extra classes a month.\nFees already paid for the current session are not affected.\nThank you for your continued trust.\nSharma Tutorials",
+      "cite": "Fee revision notice (sent at least a month ahead)"
+    },
+    {
+      "quote": "Hello Mr. Singh, as discussed, Arjun's June fee can be paid in two parts: ₹1,500 by 5 June and ₹1,500 by 20 June.\nFirst part link: [payment link]\nThank you for letting me know in advance.",
+      "cite": "Part payment or instalments agreed"
+    },
+    {
+      "quote": "Dear parents, classes will be off from [date] to [date] for the Diwali break 🪔\nNovember's fee is ₹2,000 (instead of ₹2,500) because of the shorter month. Due by 5 November.\nHappy Diwali!",
+      "cite": "Holiday or vacation month"
+    },
+    {
+      "quote": "Hello Mrs. Patel, I noticed Dhruv hasn't attended class since 10 September. I hope he is well.\nIf he would like to continue, the September fee of ₹2,500 is pending. If he has decided to stop, please let me know so I can update my records, and the pending amount can be settled for the classes attended.",
+      "cite": "Student stopped coming, fee pending"
+    },
+    {
+      "h2": "How to share a UPI QR or payment link with the reminder"
+    },
+    {
+      "p": "The fastest reminders are the ones a parent can pay from without switching apps. Razorpay's [Payment Links documentation](https://razorpay.com/docs/payments/payment-links/) describes links that work without a website, can carry an expiry date, allow partial payments and can send automated SMS reminders. A plain UPI ID or QR from your bank app also works for a small batch."
+    },
+    {
+      "steps": [
+        "Save your UPI ID and a QR image in one place, for example a starred message in your own WhatsApp chat.",
+        "Put the student's name and the month in the payment note or link description, so you can match payments later.",
+        "Paste the UPI ID, link or QR into every reminder, even the polite ones.",
+        "Ask for the UPI reference number instead of only a screenshot. It is easier to search in your bank statement.",
+        "Mark the student as paid in a simple sheet the same day and send the thank-you message.",
+        "Save each template as a WhatsApp Business quick reply so next month takes a few taps."
+      ]
+    },
+    {
+      "h2": "Parent-friendly etiquette for fee reminders"
+    },
+    {
+      "ul": [
+        "Message the parent one-to-one. Never post pending fees or names in the batch WhatsApp group.",
+        "Send between 9 AM and 8 PM. Late-night fee messages read as rude.",
+        "Never mention fees to the student in class. Children feel it most.",
+        "Use the same date every month, so the reminder is expected.",
+        "Thank parents who pay on time. It sets the tone for the rest of the batch.",
+        "Keep a written fee and refund rule. It helps when a parent disputes a month."
+      ]
+    },
+    {
+      "info": {
+        "title": "Running a coaching centre? Check your state's rules",
+        "text": "The Ministry of Education circulated Guidelines for Regulation of Coaching Center to States and UTs on 16 January 2024. As a [PIB release from August 2026](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2298513&reg=48&lang=2) notes, they expect coaching centres to publish details such as the fees charged, an “easy exit policy, fee refund policy”, and several states now have their own coaching laws or rules. If you run a centre rather than private tuition, check your state's version for fee and refund requirements."
+      }
+    },
+    {
+      "h2": "Where Book A Sloth fits for tutors"
+    },
+    {
+      "p": "Book A Sloth does not run monthly auto-billing, so keep using these reminders for batch fees. Where it helps is the paid one-off sessions around them: demo classes, doubt-clearing sessions, crash-course slots before exams, and one-on-one mentoring. Parents book a slot from your page, verify with a phone OTP and pay up front by UPI, card or netbanking, and the booking confirms on payment with email and WhatsApp messages and a reminder. See the setup for [tutors on Book A Sloth](/for/tutors), and if you are just starting, read [how to start online tuition](/blog/how-to-start-online-tuition)."
+    },
+    {
+      "p": "For clients outside tuition, the [payment reminder message templates](/blog/payment-reminder-message) cover consultants and freelancers, and the [payment reminder message in Hindi](/blog/payment-reminder-message-hindi) has shopkeeper and service-business versions. For parents new to UPI, the [UPI glossary entry](/glossary/upi) is a simple explainer to share."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I write a polite tuition fee reminder message?",
+          "a": "Address the parent by name, mention the student, the month and the amount, give the due date, and add your UPI ID or payment link. Example: 'Hello Mrs. Sharma, Aarav's October fee of ₹2,500 is due on 5 October. UPI: [ID]. Thank you!'"
+        },
+        {
+          "q": "How do I send a fee reminder message in Hindi?",
+          "a": "Use the respectful आप form and जी: 'नमस्ते शर्मा जी, आरव की अक्टूबर की ट्यूशन फीस ₹2,500 है, कृपया 5 अक्टूबर तक जमा कर दें।' Then add the UPI ID or QR and a thank-you line."
+        },
+        {
+          "q": "When should a tutor send a monthly fee reminder?",
+          "a": "Send a fee notice on the 1st, a friendly reminder two days before the due date, one on the due date, a gentle follow-up three days late, and a firm reminder a week late. Send a final notice only after about two weeks."
+        },
+        {
+          "q": "Is it okay to post pending fees in the class WhatsApp group?",
+          "a": "No. Naming families with pending fees in a group embarrasses the parent and the child and often leads to the student leaving. Send fee reminders one-to-one, and use the group only for general notices such as holidays or a fee revision for everyone."
+        },
+        {
+          "q": "What should I do if a parent stops paying and the student stops coming?",
+          "a": "Send one kind message asking whether the student will continue, mention the pending amount, and offer to settle for classes actually attended. Keep it in writing. If you run a registered coaching centre, follow your state's refund and exit rules."
+        },
+        {
+          "q": "Should the fee reminder include a UPI QR code?",
+          "a": "Yes. A UPI ID, QR or payment link in the reminder lets the parent pay immediately instead of asking for details. Put the student's name and month in the payment note so you can match it in your bank statement."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "topmate-commission",
+  "title": "Topmate Commission & Fees (2026): What You Keep per ₹1,000",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "coins",
+    "wallet",
+    "scale"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Comparison",
+  "image": null,
+  "excerpt": "Topmate commission is 10% on sales via your own link and 20% on marketplace sales, plus 2-3% payment charges. See what you keep from every ₹1,000.",
+  "body": [
+    {
+      "p": "Topmate charges a 10% commission on sales through your own profile or link, and 20% on sales to new customers who find you through its marketplace, as of October 2026. Payment gateway charges of about 2% to 3% come on top. On a ₹1,000 own-link booking you keep roughly ₹870 to ₹880, before any GST on fees."
+    },
+    {
+      "p": "There is no subscription, so you only pay when you earn. The real cost depends on where the client came from, which gateway rate applies, and whether GST is added to the fees. Below is each fee with its source, a worked example per ₹1,000 and per month, and a simple formula to price your sessions so you still take home what you planned."
+    },
+    {
+      "h2": "Topmate pricing: commission and charges as of October 2026"
+    },
+    {
+      "p": "All figures come from the [Topmate pricing page](https://topmate.io/pricing), checked on 10 October 2026. The page headline is that Topmate earns only when you earn, with no upfront fees and no recurring charges."
+    },
+    {
+      "table": {
+        "head": [
+          "Topmate fee",
+          "Rate",
+          "When it applies"
+        ],
+        "rows": [
+          [
+            "Commission on your own link",
+            "10%",
+            "Every sale made through your Topmate profile or link that you share"
+          ],
+          [
+            "Marketplace fee",
+            "20%",
+            "Per transaction when a new customer finds and buys from you through Topmate's marketplace"
+          ],
+          [
+            "Transaction (gateway) fees",
+            "2% / 3%",
+            "Listed in the pricing page comparison table; the FAQ says gateways like Stripe and PayPal typically charge around 3%"
+          ],
+          [
+            "Subscription",
+            "None",
+            "No upfront or recurring charges"
+          ],
+          [
+            "Custom plan",
+            "By quote",
+            "Creators earning ₹10 lakh or US$20,000 or more a month, via Topmate's sales team"
+          ],
+          [
+            "GST on fees",
+            "Not stated",
+            "The pricing page does not say whether GST is added to the commission"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Two points the page leaves open. It lists transaction fees as \"2%/3%\" without saying which rate applies when, and its FAQ adds only that \"payment gateways like Stripe and PayPal typically charge around 3% of the transaction amount\". The examples below show both rates. For comparison, [Razorpay's standard pricing](https://razorpay.com/pricing/) for Indian businesses is a 2% platform fee with 18% GST on that fee. The Topmate page also does not mention GST, so we show your take-home with and without 18% GST on the fees. Your payout statement is the final word for your account."
+    },
+    {
+      "h2": "Topmate charges per ₹1,000: what you actually keep"
+    },
+    {
+      "p": "Here is a ₹1,000 session under each combination. Fees are calculated on the full booking amount, which is how commission and gateway fees are normally charged."
+    },
+    {
+      "table": {
+        "head": [
+          "Scenario (₹1,000 booking)",
+          "Commission",
+          "Gateway fee",
+          "Total fees",
+          "You keep (no GST on fees)",
+          "You keep (18% GST on fees)"
+        ],
+        "rows": [
+          [
+            "Own link, 2% gateway",
+            "₹100",
+            "₹20",
+            "₹120",
+            "₹880",
+            "₹858"
+          ],
+          [
+            "Own link, 3% gateway",
+            "₹100",
+            "₹30",
+            "₹130",
+            "₹870",
+            "₹847"
+          ],
+          [
+            "Marketplace, 2% gateway",
+            "₹200",
+            "₹20",
+            "₹220",
+            "₹780",
+            "₹740"
+          ],
+          [
+            "Marketplace, 3% gateway",
+            "₹200",
+            "₹30",
+            "₹230",
+            "₹770",
+            "₹729"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "So the honest range for an own-link booking is ₹847 to ₹880 per ₹1,000, and ₹729 to ₹780 for a marketplace booking. The marketplace rate is double because Topmate found that client for you. Whether that is good value depends on how many of your clients you would not have reached otherwise."
+    },
+    {
+      "h2": "Topmate fees on a month of sessions (worked example)"
+    },
+    {
+      "p": "Example: Rohan is a product-management mentor in Bengaluru. He charges ₹2,000 per 45-minute call and does 25 calls a month, so he bills ₹50,000. About 60% of clients come from his LinkedIn posts through his own link, and 40% find him on Topmate's marketplace. We assume a 2% gateway fee."
+    },
+    {
+      "table": {
+        "head": [
+          "Line",
+          "Own link (₹30,000)",
+          "Marketplace (₹20,000)",
+          "Month total"
+        ],
+        "rows": [
+          [
+            "Commission",
+            "₹3,000 (10%)",
+            "₹4,000 (20%)",
+            "₹7,000"
+          ],
+          [
+            "Gateway fee (2%)",
+            "₹600",
+            "₹400",
+            "₹1,000"
+          ],
+          [
+            "Fees before GST",
+            "₹3,600",
+            "₹4,400",
+            "₹8,000"
+          ],
+          [
+            "Rohan keeps (no GST on fees)",
+            "₹26,400",
+            "₹15,600",
+            "₹42,000 (84%)"
+          ],
+          [
+            "Rohan keeps (18% GST on fees)",
+            "₹25,752",
+            "₹14,808",
+            "₹40,560 (81%)"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "If Rohan moved all 25 calls to his own link, his fees before GST would fall from ₹8,000 to ₹6,000. That ₹2,000 difference is the price of the marketplace's discovery, and it is a fair trade if those 10 clients would not have found him any other way."
+    },
+    {
+      "h2": "Is GST charged on Topmate commission?"
+    },
+    {
+      "p": "Yes. The FAQ on [Topmate's homepage](https://topmate.io/) says that gateway charges and GST on Topmate's fees also apply (checked October 2026), so check your payout statement or invoice for the GST line. If you are GST-registered, GST charged to you on a platform fee can usually be claimed as input tax credit, which takes it out of your real cost. If you are not registered, any GST on the fee is a straight cost, which is why the right-hand column above matters for most new creators. Your own GST obligations on session income are a separate question for your CA; our [GST calculator](/tools/gst-calculator) helps with the arithmetic."
+    },
+    {
+      "h2": "Topmate payout: how you get paid"
+    },
+    {
+      "p": "The Topmate pricing page FAQ says clients can pay from anywhere in their preferred currency, and that payouts are instant through its integrations with Stripe and PayPal. The comparison table also lists instant payouts as a feature. We could not find a published payout schedule, settlement window or minimum payout on the pricing page, so check the payouts section of your Topmate dashboard before you plan cash flow around a specific date."
+    },
+    {
+      "h2": "How to price sessions so Topmate charges do not eat your fee"
+    },
+    {
+      "p": "Work backwards from what you want to take home. Divide your target by (1 minus your total fee rate). The steps below use Topmate's published rates."
+    },
+    {
+      "steps": [
+        "Decide your take-home per session, for example ₹1,500.",
+        "Pick the fee rate for the channel: 12% for own link with a 2% gateway, 22% for marketplace with a 2% gateway.",
+        "Add GST on fees if your statement shows it: 12% becomes about 14.2%, 22% becomes about 26%.",
+        "Divide: ₹1,500 ÷ (1 − 0.142) = about ₹1,748 for own-link bookings.",
+        "Round to a clean price such as ₹1,749 or ₹1,799, and re-check after your first payout statement."
+      ]
+    },
+    {
+      "p": "Two more levers. Share your own link everywhere you already have an audience (LinkedIn, Instagram bio, WhatsApp status), because those sales carry 10% instead of 20%. And if you cross ₹10 lakh a month, Topmate's custom plan is worth a conversation with its sales team."
+    },
+    {
+      "h2": "Topmate vs a flat-fee booking page: per ₹1,000"
+    },
+    {
+      "p": "If most of your clients already come from your own audience, compare Topmate's own-link rate with booking tools that charge a lower commission or a flat monthly fee. This table uses a ₹1,000 booking and leaves out GST on fees for a like-for-like view."
+    },
+    {
+      "table": {
+        "head": [
+          "Option (₹1,000 booking)",
+          "Platform fee",
+          "Gateway fee",
+          "You keep",
+          "Monthly fee"
+        ],
+        "rows": [
+          [
+            "Topmate, own link",
+            "₹100 (10%)",
+            "₹20 to ₹30",
+            "₹870 to ₹880",
+            "None"
+          ],
+          [
+            "Topmate, marketplace",
+            "₹200 (20%)",
+            "₹20 to ₹30",
+            "₹770 to ₹780",
+            "None"
+          ],
+          [
+            "Book A Sloth, free plan",
+            "₹50 (5%)",
+            "about ₹24 (Razorpay)",
+            "about ₹926",
+            "None"
+          ],
+          [
+            "Book A Sloth, Sloth Active",
+            "₹0",
+            "about ₹24 (Razorpay)",
+            "about ₹976",
+            "₹399 (GST included)"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Sloth Active's ₹399 pays for itself once you bill about ₹8,000 a month compared with the 5% free plan. Run your own numbers in the [earnings calculator](/earnings-calculator)."
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Book A Sloth is a booking page for Indian professionals who already have clients and want to keep more of each fee. Clients book at bookasloth.com/yourname and pay upfront by UPI, card or netbanking through Razorpay, and the booking confirms on payment. You get email and WhatsApp confirmations and reminders, two-way Google Calendar sync, Google Meet links and GST invoices. The free plan takes 5% per paid booking with no subscription; Sloth Active is ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Razorpay's gateway fee of about 2.4% applies to both. It is India-focused (rupee payments only) and has no multi-staff calendars. See [pricing](/pricing) or the full [Topmate vs Book A Sloth](/lp/topmate-vs-bookasloth) comparison, and our [best appointment booking apps in India](/blog/best-appointment-booking-apps-india) list for other options."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is Topmate's commission?",
+          "a": "As of October 2026, Topmate charges 10% on every sale made through your own profile or link, and 20% per transaction when a new customer buys from you through the Topmate marketplace. Payment gateway charges of about 2% to 3% are separate. Creators earning ₹10 lakh or more a month can ask for a custom plan."
+        },
+        {
+          "q": "Does Topmate charge a monthly fee?",
+          "a": "No. Topmate's pricing page says there are no upfront fees and no recurring charges. You pay only a commission on each sale (10% own link, 20% marketplace) plus payment gateway charges, so a month with no bookings costs you nothing."
+        },
+        {
+          "q": "What are Topmate's transaction charges?",
+          "a": "Topmate's pricing page lists transaction fees as 2%/3% and its FAQ says payment gateways like Stripe and PayPal typically charge around 3% of the transaction amount. These are on top of the 10% or 20% commission. The page does not say which rate applies to which payment."
+        },
+        {
+          "q": "How much do I keep from a ₹1,000 Topmate booking?",
+          "a": "About ₹870 to ₹880 if the client used your own link, and ₹770 to ₹780 if they came through the marketplace, based on Topmate's 10% and 20% commissions plus a 2% to 3% gateway fee. If 18% GST is added to those fees, the own-link figure falls to about ₹847 to ₹858."
+        },
+        {
+          "q": "Is GST charged on Topmate's commission?",
+          "a": "Yes. Topmate's FAQ says GST on its fees applies, on top of gateway charges (checked October 2026). If you are GST-registered, you can usually claim it as input tax credit; if you are not registered, it is an added cost of about 18% on the fees."
+        },
+        {
+          "q": "When does Topmate pay out?",
+          "a": "Topmate's pricing page FAQ says payouts are instant through its Stripe and PayPal integrations and lists instant payouts as a feature. It does not publish a settlement schedule or minimum payout there, so check the payouts section of your Topmate dashboard for the terms on your account."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "start-online-consultation-practice-india",
+  "title": "How to Start an Online Consultation Business in India",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "rocket",
+    "calendar",
+    "wallet"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Growth",
+  "image": null,
+  "excerpt": "How to start an online consultation business in India: pick one 1:1 offer, price it in ₹, publish a booking page, collect UPI upfront and know the GST limit.",
+  "body": [
+    {
+      "p": "To start an online consultation business in India, pick one clear 1:1 offer, set a fixed ₹ price per session, publish a booking page where clients choose a slot and pay by UPI upfront, send automatic WhatsApp reminders, and write a short cancellation policy. Most service providers do not need GST registration until turnover crosses ₹20 lakh a year."
+    },
+    {
+      "p": "This guide is for 1:1 practitioners: coaches, therapists, tutors, fitness trainers, nutritionists and consultants who sell their time. It is not about opening a coaching institute with batches and classrooms. It walks through the setup in the order you will actually need it, from your first offer to your first ten paying clients."
+    },
+    {
+      "h2": "What is an online consultation business?"
+    },
+    {
+      "p": "An online consultation business is a practice where clients book and pay for a fixed slot of your time, usually 30 to 60 minutes, and meet you on a video call, a phone call or in person. You sell expertise by the session or by the package. Your costs are low: a phone, a laptop, a quiet room, a video tool and a way to take bookings and payments. The hard part is the admin around the session, which is what this guide is about."
+    },
+    {
+      "h2": "How to start an online consultation business: 8 steps"
+    },
+    {
+      "steps": [
+        "Pick one offer people already ask you for, with a clear outcome and a fixed length.",
+        "Set a ₹ price per session using your target income, billable hours and fees.",
+        "Publish a booking page with your services, prices and open slots in IST.",
+        "Collect the full fee upfront through UPI, cards or netbanking at the moment of booking.",
+        "Check where you stand on GST and keep simple records from day one.",
+        "Turn on automatic confirmations and reminders on WhatsApp and email.",
+        "Write your cancellation, reschedule and refund policy and show it before payment.",
+        "Get your first ten clients from people who already know your work, then ask each for a referral."
+      ]
+    },
+    {
+      "h2": "Step 1: Choose your first consultation offer"
+    },
+    {
+      "p": "Start with one offer. A menu of eight services confuses new clients and makes you look unsure. Pick the question people already bring to you on WhatsApp for free, and turn the answer into a paid session with a name, a length and an outcome. “45-minute resume and LinkedIn review” sells better than “career guidance”."
+    },
+    {
+      "table": {
+        "head": [
+          "Profession",
+          "Good first offer",
+          "Length",
+          "Format"
+        ],
+        "rows": [
+          [
+            "Life or career coach",
+            "Clarity session with a written action plan",
+            "60 min",
+            "Google Meet"
+          ],
+          [
+            "Therapist or counsellor",
+            "First consultation and intake",
+            "50 min",
+            "Video or in person"
+          ],
+          [
+            "Tutor",
+            "Paid demo class with a learning plan for parents",
+            "45 min",
+            "Video"
+          ],
+          [
+            "Fitness trainer",
+            "Assessment plus a 4-week plan",
+            "45 min",
+            "Video or at the gym"
+          ],
+          [
+            "Nutritionist",
+            "Diet review with a 7-day meal plan",
+            "45 min",
+            "Video"
+          ],
+          [
+            "Business consultant",
+            "Strategy call on one problem",
+            "60 min",
+            "Video"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Add a second service only after the first one sells. A common second step is a follow-up session at a slightly lower price, or a package of four sessions."
+    },
+    {
+      "h2": "Step 2: Set your consultation fee in rupees"
+    },
+    {
+      "p": "Price from your numbers, not from what a friend charges. Take the monthly income you need, add your monthly costs, and divide by the sessions you can realistically fill. Then add a little for payment fees. For example, if you want ₹50,000 a month, spend ₹5,000 on tools and internet, and can fill 40 sessions, your base price is ₹1,375. Round it to ₹1,400 or ₹1,500. Our full guide on [how much to charge for a consultation in India](/blog/consultation-fees-india) has worked examples by profession."
+    },
+    {
+      "ul": [
+        "Publish one fixed price per service. Clients trust a number they can see.",
+        "Keep a free 15-minute discovery call only if you sell high-ticket packages.",
+        "Raise prices for new clients first, and give existing clients a month's notice."
+      ]
+    },
+    {
+      "h2": "Step 3: Set up your booking page and availability"
+    },
+    {
+      "p": "A booking page replaces the back-and-forth of “Are you free Thursday evening?” on WhatsApp. Clients see your services, pick an open slot and pay in one go. Set your working hours in IST, block personal time, and add buffer time between sessions so you are not running late all day. Add a minimum notice period, such as 12 hours, so nobody books a slot 10 minutes from now."
+    },
+    {
+      "ul": [
+        "Show your name, photo, qualifications and one line on who you help.",
+        "List each service with its length, price and whether it is online or in person.",
+        "Connect your Google Calendar so personal events block out slots automatically.",
+        "Add one or two intake questions so you can prepare before the call."
+      ]
+    },
+    {
+      "h2": "Step 4: Collect consultation fees by UPI before the session"
+    },
+    {
+      "p": "Take the full fee at the time of booking. A session that is already paid for is a session the client turns up to, and you never chase money afterwards. You have two common options in India. The first is sharing your UPI ID or QR and checking screenshots by hand. It is free, but every booking needs you to match a payment to a name and confirm the slot yourself. The second is a payment gateway, which confirms the payment automatically and keeps a record of every transaction."
+    },
+    {
+      "p": "Gateways charge a fee. [Razorpay's pricing page](https://razorpay.com/pricing/) lists a 2% standard platform fee on domestic UPI, cards and netbanking, with zero setup fee, and states that “GST (18%) applies on Razorpay's service fee, not on the underlying transaction amount”. On a ₹1,500 session that works out to ₹30 plus ₹5.40 GST, so you receive about ₹1,464.60. The guide on [how to collect payments from clients in India](/blog/collect-payments-from-clients-india) compares UPI ID, payment links and pay-at-booking in detail."
+    },
+    {
+      "h2": "Step 5: GST for consultants and coaches: when to register"
+    },
+    {
+      "p": "Under GST, a supplier of services must register once aggregate turnover in a financial year crosses ₹20 lakh. The limit is ₹10 lakh for businesses in Manipur, Mizoram, Nagaland and Tripura. Turnover is counted on an all-India basis under your PAN. This is per the GST Council's [registration flyer](https://www.gstcouncil.gov.in/sites/default/files/e-version-gst-flyers/Registration_under_GST_Law_new.pdf), which also says small service providers below this limit are exempt even if they serve clients in other states."
+    },
+    {
+      "p": "The same flyer notes that people supplying services through e-commerce operators are “entitled to avail the Rupees 20/10 lakh threshold exemption for registration”. You can also register voluntarily below the limit, which some consultants do because corporate clients want a GST invoice. Once registered, you charge GST on your fee and file returns. Rules change and some services have special treatment, so confirm your own case on gst.gov.in or with a chartered accountant before you decide."
+    },
+    {
+      "info": {
+        "title": "Keep records from day one",
+        "text": "Track every session, the amount received and any refund in one place. It makes the GST threshold easy to watch, and your CA will thank you at income tax time."
+      }
+    },
+    {
+      "h2": "Step 6: Send booking confirmations and WhatsApp reminders"
+    },
+    {
+      "p": "Every booking should trigger a confirmation with the date, time in IST, the meeting link or address and your reschedule policy. A reminder the day before helps clients who simply forgot. Send reminders on WhatsApp, where Indian clients actually read them, and copy the same details to email so they can find the link later."
+    },
+    {
+      "p": "Set a boundary for WhatsApp too. Tell clients which messages you answer and when, for example within one working day, and that session content stays inside sessions. This protects your evenings and keeps the practice professional."
+    },
+    {
+      "h2": "Step 7: Write your cancellation and refund policy"
+    },
+    {
+      "p": "A policy you write before the first booking saves an awkward conversation later. Keep it to four lines and show it on your booking page before payment. A common structure: free reschedule up to 24 hours before, no refund for cancellations inside 24 hours, a no-show counts as a used session, and a full refund if you cancel. Our [cancellation policy templates](/blog/cancellation-policy-template) have copy-ready versions by profession."
+    },
+    {
+      "quote": "Reschedules are free up to 24 hours before your session.\nCancellations inside 24 hours are not refunded.\nIf you miss the session without notice, it counts as used.\nIf I need to cancel, you get a full refund or a new slot of your choice.",
+      "cite": "Short policy for a 1:1 consultation"
+    },
+    {
+      "h2": "Step 8: How to get your first clients for online consultation"
+    },
+    {
+      "p": "Your first ten clients usually come from people who already trust you. Tell your network clearly what you now offer, what it costs and how to book. One clear post beats ten vague ones."
+    },
+    {
+      "ul": [
+        "Put your booking link in your Instagram bio, WhatsApp Business profile and LinkedIn headline.",
+        "Post on WhatsApp Status once a week with one tip and the link.",
+        "Message past colleagues, students or clients one by one, not as a broadcast.",
+        "After each session, ask for a review and one referral while the result is fresh.",
+        "Write answers to the five questions clients ask you most, and share them."
+      ]
+    },
+    {
+      "h2": "Common mistakes when starting a consultation practice"
+    },
+    {
+      "table": {
+        "head": [
+          "Mistake",
+          "What it costs you",
+          "Fix"
+        ],
+        "rows": [
+          [
+            "Taking payment after the session",
+            "Unpaid sessions and awkward follow-ups",
+            "Collect the full fee at booking"
+          ],
+          [
+            "Booking over WhatsApp chat",
+            "Hours of back-and-forth and double bookings",
+            "Share one booking link"
+          ],
+          [
+            "No written policy",
+            "Refund disputes and last-minute cancellations",
+            "Show a 4-line policy before payment"
+          ],
+          [
+            "Too many services at launch",
+            "Confused clients who do not book",
+            "Launch with one offer"
+          ],
+          [
+            "Pricing by guesswork",
+            "Burnout at a fee that does not cover costs",
+            "Use income ÷ billable sessions + fees"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Book A Sloth gives you a booking page at bookasloth.com/yourname with fixed-price services. Clients book with a phone OTP, pay upfront through Razorpay by UPI, card or netbanking, and the booking confirms on payment. Confirmations and reminders go out on WhatsApp and email, Google Calendar syncs both ways, and online sessions get a Google Meet link automatically. See how [booking pages](/features/booking-pages) work, or [set up your page](/be-a-sloth) on the free Sloth plan, which charges 5% only on paid bookings. Sloth Active is ₹399 a month with 0% commission. Razorpay's gateway fee of about 2.4% applies on both plans."
+    },
+    {
+      "h2": "Online consultation business FAQs"
+    },
+    {
+      "faq": [
+        {
+          "q": "Do I need a licence to start an online consultation business in India?",
+          "a": "Most coaches, tutors, trainers and business consultants do not need a special licence to sell 1:1 sessions online. Regulated professions such as doctors, psychologists and lawyers must follow their own council's rules. Check your state's shop and establishment rules if you open a physical office."
+        },
+        {
+          "q": "Is GST registration compulsory for online consultants?",
+          "a": "No, not below the threshold. A service provider in most states must register once aggregate turnover crosses ₹20 lakh in a financial year, or ₹10 lakh in Manipur, Mizoram, Nagaland and Tripura, according to the GST Council. You can register voluntarily earlier if clients need GST invoices."
+        },
+        {
+          "q": "How much should I charge for my first online consultation?",
+          "a": "Divide the monthly income you need plus your costs by the sessions you can fill, then add about 2.4% for gateway fees. For example, ₹50,000 income plus ₹5,000 costs over 40 sessions gives about ₹1,400 per session. Adjust after your first 20 bookings."
+        },
+        {
+          "q": "How do I take consultation fees online without a website?",
+          "a": "Use a booking page link that shows your services and takes payment by UPI, card or netbanking at booking. You can share it on WhatsApp, Instagram and LinkedIn. It works as a one-page website and confirms bookings automatically once the client pays."
+        },
+        {
+          "q": "Should I offer free consultations to get clients?",
+          "a": "Offer a short free discovery call only if you sell packages worth several sessions. For single sessions, a paid first session filters out people who are not serious and reduces no-shows. A modest first-session price works better than free for most new practices."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "please-share-anything-that-will-help-prepare-for-our-meeting",
+  "title": "'Please Share Anything That Will Help Prepare': 30 Examples",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "clipboard",
+    "calendar",
+    "users"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "What to write in 'Please share anything that will help prepare for our meeting': a 4-part formula and 30 example answers for interviews, demos and intake calls.",
+  "body": [
+    {
+      "p": "In the “Please share anything that will help prepare for our meeting” box, write two to four lines: why you booked, the one outcome you want from the call, any context the host needs (role, company, budget, deadline), and a link if useful. If you have nothing specific, one line about your goal is enough."
+    },
+    {
+      "p": "The question appears on many booking forms because it is a default on Calendly. A Calendly community moderator confirms that name, email and “Please share anything” are [default questions that hosts can change or remove](https://community.calendly.com/how-do-i-40/when-does-please-share-anything-that-will-help-prepare-for-our-meeting-come-up-682). Below are 30 example answers grouped by situation, then a section for hosts on which questions to ask instead."
+    },
+    {
+      "h2": "What to write in 'Please share anything that will help prepare for our meeting'"
+    },
+    {
+      "p": "Use this four-part formula. You rarely need all four. Two good lines beat a paragraph."
+    },
+    {
+      "table": {
+        "head": [
+          "Part",
+          "What it answers",
+          "Example"
+        ],
+        "rows": [
+          [
+            "Context",
+            "Who you are, in one line",
+            "Final-year B.Com student at Symbiosis, Pune"
+          ],
+          [
+            "Goal",
+            "What you want from this call",
+            "I want to know if your CA services cover GST filing for a small café"
+          ],
+          [
+            "Specifics",
+            "Numbers, dates, constraints",
+            "Turnover about ₹40 lakh, need to file by 20 Nov"
+          ],
+          [
+            "Links",
+            "Anything they should glance at first",
+            "Resume, portfolio, website or a short doc"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Write it the way you would message a professional on WhatsApp: polite, short and specific. Avoid “N/A” or a single dot. If you really have nothing to add, “Looking forward to the conversation, no specific agenda” is better than a blank."
+    },
+    {
+      "h2": "Example answers for a job interview"
+    },
+    {
+      "quote": "I applied for the Junior Data Analyst role (Job ID 4521). I have 1.5 years of experience with SQL and Power BI at a logistics firm in Gurugram. Happy to walk through my dashboard project. Resume: [link]",
+      "cite": "Job interview: first round with a recruiter"
+    },
+    {
+      "quote": "Looking forward to discussing the Product Designer role. My portfolio is here: [link]. The fintech onboarding case study is the most relevant to your team.",
+      "cite": "Job interview: hiring manager, design role"
+    },
+    {
+      "quote": "Currently serving a 60-day notice period, with flexibility to buy out 30 days. Would like to understand the team structure and the first 90-day goals for this role.",
+      "cite": "Job interview: notice period and expectations"
+    },
+    {
+      "quote": "I am a fresher (B.Tech CSE, 2026). I completed a 6-month internship in backend development with Node.js. I would appreciate knowing the interview format so I can prepare.",
+      "cite": "Job interview: fresher"
+    },
+    {
+      "quote": "I will be joining from Bengaluru, IST. If there is a technical round, please let me know whether I should keep an IDE or a whiteboard tool ready.",
+      "cite": "Job interview: technical round logistics"
+    },
+    {
+      "quote": "Referred by Neha Sharma from your Pune office. I have 6 years in B2B sales, mostly SaaS. Keen to understand the territory and targets for this role.",
+      "cite": "Job interview: referral"
+    },
+    {
+      "h2": "Example answers for a sales demo"
+    },
+    {
+      "quote": "We are a 12-person clinic chain in Chennai, currently booking appointments on WhatsApp and a paper register. Want to see how reminders and online payment would work for us.",
+      "cite": "Sales demo: small business evaluating software"
+    },
+    {
+      "quote": "Main question: does your tool integrate with Tally and Razorpay? We process about 800 orders a month. Please cover pricing for annual billing.",
+      "cite": "Sales demo: integration and pricing"
+    },
+    {
+      "quote": "I am comparing three vendors and need to share a shortlist with my manager by Friday. A quick view of the admin dashboard and user roles would help most.",
+      "cite": "Sales demo: shortlist deadline"
+    },
+    {
+      "quote": "Team of 5 sales reps. We use Google Workspace. Interested in the lead-tracking features only, not the marketing module.",
+      "cite": "Sales demo: narrow scope"
+    },
+    {
+      "quote": "Our current contract ends in December. Please be ready to discuss data migration from our existing CRM.",
+      "cite": "Sales demo: switching from another tool"
+    },
+    {
+      "quote": "Just exploring for now. We are a two-person agency in Kochi. Want to understand whether the free plan is enough to start.",
+      "cite": "Sales demo: early research"
+    },
+    {
+      "h2": "Example answers for a consultant or expert call"
+    },
+    {
+      "quote": "I run a home bakery in Indore with turnover around ₹25 lakh. Need advice on whether I must register for GST and what records to keep.",
+      "cite": "Chartered accountant consultation"
+    },
+    {
+      "quote": "Property dispute with a co-owner (my cousin) over an ancestral flat in Lucknow. I have the sale deed and mutation records and can share them before the call.",
+      "cite": "Legal consultation"
+    },
+    {
+      "quote": "Early-stage D2C skincare brand, ₹3 lakh monthly revenue, 70% from Instagram. Want a second opinion on whether to start Google Ads or a marketplace listing.",
+      "cite": "Marketing or business consultant"
+    },
+    {
+      "quote": "Planning an MS in Data Science for Fall 2027. Shortlisted 8 universities in the US and Germany. Would like help narrowing the list based on my profile: [link]",
+      "cite": "Education or study-abroad counsellor"
+    },
+    {
+      "quote": "I am 32, salaried, with ₹15,000 a month to invest. Want to understand how to split between my emergency fund and long-term goals. No product pitches, please.",
+      "cite": "Financial planning consultation"
+    },
+    {
+      "quote": "We are renovating a 2BHK in Thane, budget around ₹8 lakh. I have floor plans and a few reference photos: [link]",
+      "cite": "Interior designer or architect"
+    },
+    {
+      "h2": "Example answers for a therapy or coaching intake call"
+    },
+    {
+      "quote": "This is my first time speaking to a therapist. I have been feeling anxious about work for a few months and would like to understand how sessions work.",
+      "cite": "Therapy: first consultation"
+    },
+    {
+      "quote": "Looking for help with stress and sleep. I prefer sessions in Hindi or English, evenings after 7 PM.",
+      "cite": "Therapy: language and timing preferences"
+    },
+    {
+      "quote": "Booking for my 15-year-old son, who has exam stress. I will join the first 10 minutes, then he would like to speak privately.",
+      "cite": "Therapy or counselling for a teenager"
+    },
+    {
+      "quote": "Mid-level manager, 8 years in IT. Considering a move into product management and want an honest view on whether my background fits.",
+      "cite": "Career coaching"
+    },
+    {
+      "quote": "Recently promoted to lead a team of 6. Want to work on giving feedback and handling conflict. Prefer practical exercises over theory.",
+      "cite": "Leadership or life coaching"
+    },
+    {
+      "quote": "Goal: lose 6 kg before a wedding in February. I am vegetarian, work long hours and can train 3 days a week.",
+      "cite": "Fitness or nutrition coaching"
+    },
+    {
+      "h2": "Example answers for a tutor's trial or demo class"
+    },
+    {
+      "quote": "My daughter is in Class 9 (CBSE). She finds algebra difficult and scored 58% in the last unit test. We are looking for 2 classes a week.",
+      "cite": "Maths tutor: parent booking"
+    },
+    {
+      "quote": "Preparing for JEE Main 2027. Physics is my weakest subject, especially mechanics. I can share my last mock test score card.",
+      "cite": "Competitive exam tutoring"
+    },
+    {
+      "quote": "Spoken English for a working professional. I can read and write well but hesitate in meetings. Weekend mornings suit me best.",
+      "cite": "Spoken English trial class"
+    },
+    {
+      "quote": "Beginner, age 10, wants to learn keyboard. We have a 61-key keyboard at home. Please tell us if he needs any books before the trial.",
+      "cite": "Music lesson trial"
+    },
+    {
+      "quote": "Class 12 student, ISC board, needs help with accountancy before the pre-boards in January. Prefer online classes on Google Meet.",
+      "cite": "Commerce tuition"
+    },
+    {
+      "quote": "Child is 6 and just started reading. We want to check if phonics classes suit her attention span. Mother will be present in the trial.",
+      "cite": "Early learning / phonics trial"
+    },
+    {
+      "h2": "What not to write in a booking form notes box"
+    },
+    {
+      "ul": [
+        "Passwords, OTPs, bank account numbers or card details. No genuine professional needs these in a notes field.",
+        "Aadhaar or PAN numbers. Share identity documents only through a channel the professional specifically asks for, and only if needed.",
+        "Your full medical history. Give a one-line reason for the visit; details belong in the session or a secure intake form.",
+        "Long complaints about a previous provider. Keep it to what you need now.",
+        "Just “N/A”, “-” or “nothing”. One line about your goal helps the host more."
+      ]
+    },
+    {
+      "h2": "For hosts: what to ask instead of 'Please share anything'"
+    },
+    {
+      "p": "An open-ended box gets blank or vague answers because clients do not know what you need. Two or three specific questions get you better preparation in less time. A short set of targeted questions is also kinder to privacy: India's DPDP framework lists [data minimisation and purpose limitation](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2190014) among its core principles, so ask only for what you will use."
+    },
+    {
+      "table": {
+        "head": [
+          "If you are a",
+          "Replace 'Please share anything' with"
+        ],
+        "rows": [
+          [
+            "Recruiter",
+            "Which role are you interviewing for? What is your notice period? Link to your resume or portfolio."
+          ],
+          [
+            "Software or SaaS seller",
+            "How many people will use it? What tool do you use today? What is the one thing it must do?"
+          ],
+          [
+            "CA, lawyer or consultant",
+            "What is the issue in one line? Is there a deadline? Which documents can you share before the call?"
+          ],
+          [
+            "Therapist or counsellor",
+            "What brings you here (one line is fine)? Have you had therapy before? Preferred language?"
+          ],
+          [
+            "Coach",
+            "What outcome would make this call worth it? What have you already tried?"
+          ],
+          [
+            "Tutor",
+            "Student's class and board? Subject and topic they find hardest? Preferred days and times?"
+          ]
+        ]
+      }
+    },
+    {
+      "steps": [
+        "Keep it to 2-4 questions. Every extra field lowers the chance a client finishes booking.",
+        "Make one question required and the rest optional.",
+        "Use dropdowns for anything with fixed options, such as class, board or language.",
+        "Ask for sensitive details later, in the session or a secure intake form, not on the booking page.",
+        "Read the answers before the call. Clients notice when you have."
+      ]
+    },
+    {
+      "p": "If you use Calendly, the questions live in the event type under More options, in the [Invitee form section](https://calendly.com/help/advanced-booking-form-features). For a full set of question banks by profession, see our guide to [client intake form questions](/blog/client-intake-form-questions), and the glossary entry on what an [intake form](/glossary/intake-form) is."
+    },
+    {
+      "h2": "Booking, payment and intake with Book A Sloth"
+    },
+    {
+      "p": "Book A Sloth handles the booking and payment part: clients pick a slot on your page at bookasloth.com/yourname, verify with a phone OTP and pay up-front by UPI or card, and the booking confirms on payment. It does not have a built-in intake form builder. For the questions above, keep a short Google Form and share its link in your booking notes or on WhatsApp once the booking confirms. See how [booking pages](/features/booking-pages) work, or the setup for [therapists](/for/therapists)."
+    },
+    {
+      "faq": [
+        {
+          "q": "Is the 'Please share anything that will help prepare for our meeting' field mandatory?",
+          "a": "It depends on how the host set up the booking form. On Calendly it is a default question that hosts can edit, remove or switch off. If it is required and you have nothing to add, write one line about your goal for the meeting."
+        },
+        {
+          "q": "What should I write if I have nothing to share before a meeting?",
+          "a": "Write one polite line that states your purpose, such as: Looking forward to discussing the role, no specific agenda from my side. That is better than N/A or a blank, and it confirms you are a real, engaged attendee."
+        },
+        {
+          "q": "How long should my answer be?",
+          "a": "Two to four lines is ideal. Cover why you booked, what you want from the call and one useful detail such as a deadline, budget or link. Hosts often read these on a phone just before the meeting, so short and specific wins."
+        },
+        {
+          "q": "What should I write for a job interview booking?",
+          "a": "Mention the role you applied for, one line on your relevant experience, your notice period if asked, and a link to your resume or portfolio. You can also ask about the interview format so you can prepare."
+        },
+        {
+          "q": "Should I share personal or medical details in a booking form?",
+          "a": "Keep it to a one-line reason. Do not put passwords, OTPs, bank details, Aadhaar numbers or a full medical history in a notes box. If the professional needs more, they will ask during the session or through a proper intake form."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "personal-trainer-charges-india",
+  "title": "How Much Do Personal Trainers Charge in India? (2026)",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "heart",
+    "coins",
+    "calendar"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Money",
+  "image": null,
+  "excerpt": "How much do personal trainers charge in India? Listings show ₹500 to ₹800 an hour for 1:1 sessions. Build your session, monthly and online rate card here.",
+  "body": [
+    {
+      "p": "Independent personal trainers in India commonly list ₹500 to ₹800 per hour for 1:1 sessions, and up to ₹1,000 for home or online sessions, according to UrbanPro fee estimates. That is roughly ₹6,000 to ₹12,000 a month for 12 sessions. Gym-chain personal training costs more, often ₹12,000 to ₹30,000 a month in metros."
+    },
+    {
+      "p": "Most answers to this question are written for clients hunting for a cheaper trainer. This one is for trainers. It shows the public numbers, then helps you build a rate card for single sessions, monthly packs, home visits and online coaching, with the maths behind each line."
+    },
+    {
+      "h2": "Personal trainer fees per month in India: public benchmarks"
+    },
+    {
+      "p": "We opened these sources on 10 October 2026. Treat them as reference points. Listing sites show what trainers ask, not what every client pays. Book A Sloth will publish its own aggregated numbers once its booking volume is large enough to be meaningful."
+    },
+    {
+      "table": {
+        "head": [
+          "Format",
+          "Per hour",
+          "Per month (12 sessions)",
+          "Source"
+        ],
+        "rows": [
+          [
+            "1:1 at a gym or studio",
+            "₹500 to ₹800",
+            "₹6,000 to ₹9,600",
+            "UrbanPro, Pune (Camp) listing"
+          ],
+          [
+            "Group class",
+            "₹400 to ₹640",
+            "₹4,800 to ₹7,680",
+            "UrbanPro, Pune (Camp) listing"
+          ],
+          [
+            "At the client's home",
+            "₹600 to ₹1,000",
+            "₹7,200 to ₹12,000",
+            "UrbanPro, Pune (Camp) listing"
+          ],
+          [
+            "Online 1:1",
+            "₹500 to ₹1,000",
+            "₹6,000 to ₹12,000",
+            "UrbanPro, Pune (Camp) listing"
+          ],
+          [
+            "Cult.fit PT, Delhi and Mumbai",
+            "Not stated",
+            "₹15,000 to ₹25,000",
+            "magicpin, updated May 2026"
+          ],
+          [
+            "Gold's Gym PT, Delhi, Mumbai, Bangalore",
+            "Not stated",
+            "₹18,000 to ₹30,000",
+            "magicpin, updated May 2026"
+          ],
+          [
+            "Anytime Fitness PT",
+            "Not stated",
+            "₹12,000 to ₹20,000",
+            "magicpin, updated May 2026"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The [UrbanPro Pune listing](https://www.urbanpro.com/pune/personal-trainer/camp) quotes 1:1 monthly fees of “INR 6,000 - INR 9,600 for 12 classes per month” and an average of ₹650 an hour, with individual trainers listed from ₹300 to ₹1,200 an hour. The chain figures come from a [magicpin article on personal trainer fees](https://magicpin.in/blog/personal-trainer-fees-savings), which is a consumer guide rather than official pricing, so check the gym near you."
+    },
+    {
+      "h2": "Personal trainer price per session by city"
+    },
+    {
+      "p": "City matters, but less than you might think for independent trainers. UrbanPro's [gym and trainer fee page](https://www.urbanpro.com/gym-fees) estimates ₹500 to ₹800 per hour across India. Its city estimates are ₹600 to ₹1,000 in Mumbai and New Delhi, ₹500 to ₹800 in Bangalore and Hyderabad, ₹500 to ₹700 in Pune and ₹500 to ₹600 in Chennai. Premium areas such as South Delhi or South Mumbai can sit above these ranges, and smaller cities often below."
+    },
+    {
+      "p": "The better way to set a city rate is to look at five trainers near you with similar experience, note their per-session price, and place yourself in that range based on your certifications, results and niche."
+    },
+    {
+      "h2": "How to calculate your personal training rate"
+    },
+    {
+      "p": "Use the same [consultation fee formula](/blog/consultation-fees-india) any consultant uses: income you want plus monthly costs, divided by the sessions you can deliver, then adjusted for payment fees. Trainers have one extra cost that consultants do not: travel time between clients."
+    },
+    {
+      "steps": [
+        "Set your monthly income target before tax, for example ₹60,000.",
+        "Add monthly costs: certification renewals, equipment, gym floor fee if you pay one, phone, travel and fuel. Say ₹8,000.",
+        "Count sessions you can deliver well. Six sessions a day for 22 days is 132, minus 20% for cancellations and gaps, gives about 105.",
+        "Divide ₹68,000 by 105 to get about ₹648 per session.",
+        "Add about 2.36% for gateway fees (Razorpay lists a 2% platform fee plus 18% GST on that fee). That gives about ₹663.",
+        "Round to ₹700 per session and build your packs from there."
+      ]
+    },
+    {
+      "p": "This is a worked example, not a market rate. If you do home visits, count the travel time as part of the session. A 60-minute session with 30 minutes of travel each way uses two hours of your day, so it needs to be priced closer to two sessions or carry a travel charge."
+    },
+    {
+      "h2": "A sample personal trainer rate card"
+    },
+    {
+      "p": "Here is an example rate card for a certified trainer in a tier-1 city using the ₹700 base above. Change the numbers to fit your maths."
+    },
+    {
+      "table": {
+        "head": [
+          "Plan",
+          "What's included",
+          "Example price",
+          "Effective per session"
+        ],
+        "rows": [
+          [
+            "Single session",
+            "1 session, 60 min",
+            "₹800",
+            "₹800"
+          ],
+          [
+            "Monthly 12",
+            "12 sessions in 30 days",
+            "₹8,400",
+            "₹700"
+          ],
+          [
+            "Monthly 16",
+            "16 sessions in 30 days",
+            "₹10,400",
+            "₹650"
+          ],
+          [
+            "3-month 36",
+            "36 sessions in 90 days",
+            "₹23,400",
+            "₹650"
+          ],
+          [
+            "Online coaching",
+            "8 live video sessions plus a weekly plan",
+            "₹5,600",
+            "₹700"
+          ],
+          [
+            "Home visit add-on",
+            "Travel within 5 km",
+            "₹200 per visit",
+            "Added to any plan"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Notice the single session is priced above the pack rate. That nudges clients toward commitment, which is what gets results and keeps your calendar steady. Keep pack discounts small, around 5% to 10%. A deep discount trains clients to wait for offers."
+    },
+    {
+      "h2": "Online personal trainer charges"
+    },
+    {
+      "p": "Online training removes travel, so you can fit more sessions into a day and coach clients in other cities. UrbanPro's Pune listing shows online 1:1 at ₹500 to ₹1,000 an hour, similar to in-person. Many online trainers mix live sessions with a written plan and check-ins on WhatsApp. If you do that, price the check-in time too. Ten minutes of messages per client per day across 15 clients is 2.5 hours you are not being paid for unless it is in the price."
+    },
+    {
+      "ul": [
+        "Live-only: price per session, same as in person.",
+        "Hybrid: fewer live sessions plus a weekly plan and check-ins, priced per month.",
+        "Plan-only: a written programme with one review call, priced as a fixed fee."
+      ]
+    },
+    {
+      "h2": "How to collect monthly training fees by UPI"
+    },
+    {
+      "p": "Monthly packs work best when the client pays before the month starts. Ask for the full pack fee upfront, send a reminder three days before renewal, and pause sessions if payment has not come in. Put this in writing when a client joins."
+    },
+    {
+      "quote": "Hi Neha, your 12-session pack ends on 30 Oct.\nThe November pack is ₹8,400. You can pay here: [booking link]\nOnce paid, your Mon-Wed-Fri 7 am slots stay reserved for you.",
+      "cite": "Monthly renewal reminder on WhatsApp"
+    },
+    {
+      "p": "Write a short cancellation rule too: sessions cancelled with less than 12 or 24 hours' notice count as used, and unused sessions expire at the end of the pack. Our [cancellation policy templates](/blog/cancellation-policy-template) include a version for trainers."
+    },
+    {
+      "h2": "When to raise your personal training fees"
+    },
+    {
+      "ul": [
+        "Your prime slots, 6 to 9 am and 6 to 9 pm, are full for a month ahead.",
+        "You have finished a new certification or specialisation.",
+        "Clients stay with you for six months or more.",
+        "Your costs, such as fuel or gym floor fees, have gone up."
+      ]
+    },
+    {
+      "p": "Raise prices for new clients first. Give existing clients 30 days' notice and keep them on the old rate until their current pack ends. If you are just starting out, the guide on [how to become a freelance personal trainer](/blog/how-to-become-freelance-personal-trainer) covers certification and getting your first clients."
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Book A Sloth gives trainers a booking page with fixed-price services, so a client can pick a slot and pay by UPI, card or netbanking upfront. The booking confirms on payment, reminders go out on WhatsApp and email, and Google Calendar syncs both ways. It works for gym, home and online sessions. It does not run automatic recurring billing, so each month's pack is a fresh payment. See the setup for [fitness trainers](/for/fitness). The free Sloth plan charges 5% only on paid bookings; Sloth Active is ₹399 a month with 0% commission, and Razorpay's gateway fee of about 2.4% applies on both."
+    },
+    {
+      "h2": "Personal trainer charges FAQs"
+    },
+    {
+      "faq": [
+        {
+          "q": "How much does a personal trainer charge per month in India?",
+          "a": "UrbanPro's Pune listing estimates ₹6,000 to ₹9,600 a month for 12 one-on-one sessions, and ₹7,200 to ₹12,000 for home training. Gym-chain personal training in metros is higher; a magicpin guide updated in May 2026 lists ₹15,000 to ₹25,000 a month at Cult.fit in Delhi and Mumbai."
+        },
+        {
+          "q": "What is a fair price per session for a new personal trainer?",
+          "a": "Start from your costs and income target. A trainer who needs ₹68,000 a month including costs and can deliver about 105 sessions lands near ₹650 per session, or about ₹663 after gateway fees, rounded to ₹700. Check that against five trainers near you with similar experience."
+        },
+        {
+          "q": "Should online personal training cost less than in-person?",
+          "a": "Not necessarily. UrbanPro's Pune listing shows online 1:1 at ₹500 to ₹1,000 an hour, similar to gym sessions. Online saves you travel, but if you add daily WhatsApp check-ins and written plans, that time must be priced in."
+        },
+        {
+          "q": "How should I charge for home visits as a trainer?",
+          "a": "Add your travel time to the session. A 60-minute session with an hour of total travel uses two hours of your day. Either price home sessions higher or add a fixed travel charge by distance, such as a flat amount per visit within 5 km."
+        },
+        {
+          "q": "Should personal training fees be paid in advance?",
+          "a": "Yes. Take the full monthly or pack fee before the first session of the period. Upfront payment removes month-end chasing and keeps clients committed. Send a renewal reminder a few days before the pack ends and pause sessions until it is paid."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "payment-reminder-message",
+  "title": "Payment Reminder Message: 20 WhatsApp & Email Templates",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "bell",
+    "wallet",
+    "clipboard"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Copy-paste payment reminder messages for clients: WhatsApp and email templates from polite to firm, for before the due date, due day, overdue and final notice.",
+  "body": [
+    {
+      "p": "A good payment reminder message states the amount, what it is for, the due date and one way to pay, in two or three short lines. Send it in a sequence: a heads-up before the due date, a nudge on the day, reminders at 3 and 7 days overdue, then a final notice. Templates for each stage are below."
+    },
+    {
+      "p": "Every template ends with a UPI or payment link line, because the easier it is to pay, the faster you get paid. Swap the words in square brackets and save them as quick replies in WhatsApp Business."
+    },
+    {
+      "h2": "The payment reminder schedule: what to send and when"
+    },
+    {
+      "table": {
+        "head": [
+          "When",
+          "Tone",
+          "Channel",
+          "Goal"
+        ],
+        "rows": [
+          [
+            "3 days before the due date",
+            "Friendly",
+            "WhatsApp or email",
+            "Put the date on their radar"
+          ],
+          [
+            "On the due date",
+            "Neutral",
+            "WhatsApp",
+            "A simple nudge with the link"
+          ],
+          [
+            "3 days overdue",
+            "Polite, direct",
+            "WhatsApp and email",
+            "Check it was received"
+          ],
+          [
+            "7 days overdue",
+            "Firm",
+            "Email, then a call",
+            "Ask for a payment date"
+          ],
+          [
+            "14 days overdue",
+            "Final notice",
+            "Email",
+            "State the next step in writing"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Stick to the schedule for every client. Once clients learn that you always follow up on time, most pay before the third message."
+    },
+    {
+      "h2": "Payment due reminder on WhatsApp: 5 templates in sequence"
+    },
+    {
+      "quote": "Hi [Name], a quick heads-up that the payment of ₹[amount] for [service/invoice no.] is due on [date].\nPay by UPI to [your UPI ID] or here: [payment link]\nThank you!",
+      "cite": "1. Three days before the due date"
+    },
+    {
+      "quote": "Hi [Name], just a reminder that ₹[amount] for [service/invoice no.] is due today.\nUPI: [your UPI ID]\nLink: [payment link]\nPlease share a quick message once done. Thanks!",
+      "cite": "2. On the due date"
+    },
+    {
+      "quote": "Hi [Name], following up on ₹[amount] for [service/invoice no.], which was due on [date].\nCould you check that it reached you? Resending the link here: [payment link]\nUPI: [your UPI ID]",
+      "cite": "3. Three days overdue"
+    },
+    {
+      "quote": "Hi [Name], the payment of ₹[amount] for [invoice no.] is now 7 days overdue.\nCould you share the date you will pay it?\nUPI: [your UPI ID] | Link: [payment link]\nIf something is holding it up, tell me and we will sort it out.",
+      "cite": "4. Seven days overdue"
+    },
+    {
+      "quote": "Hi [Name], ₹[amount] for [invoice no.] is now 14 days overdue.\nAs per our agreement, [late fee / pause on further work] applies from [date].\nPlease clear it by [date] using [payment link] or UPI [your UPI ID].\nI am sending the details on email as well.",
+      "cite": "5. Final notice (14 days overdue)"
+    },
+    {
+      "h2": "Payment reminder email templates (polite to firm)"
+    },
+    {
+      "p": "Email is better for the later stages because it leaves a clear record with the invoice attached. Keep the subject line specific so it is easy to search."
+    },
+    {
+      "quote": "Subject: Invoice [no.] for ₹[amount] due on [date]\n\nHi [Name],\n\nA friendly reminder that invoice [no.] for ₹[amount] is due on [date]. I have attached it again for easy reference.\n\nYou can pay by UPI to [your UPI ID] or through this link: [payment link]\n\nThanks,\n[Your name]",
+      "cite": "Email: before the due date"
+    },
+    {
+      "quote": "Subject: Following up: invoice [no.] (₹[amount])\n\nHi [Name],\n\nI am following up on invoice [no.] for ₹[amount], which was due on [date]. Could you confirm it has reached the right person and share an expected payment date?\n\nPayment link: [payment link]\nUPI: [your UPI ID]\n\nHappy to resend anything you need.\n\nRegards,\n[Your name]",
+      "cite": "Email: 3 to 7 days overdue"
+    },
+    {
+      "quote": "Subject: Overdue: invoice [no.], payment needed by [date]\n\nHi [Name],\n\nInvoice [no.] for ₹[amount] is now [number] days overdue. I have sent reminders on [dates].\n\nAs per our agreed terms, [late fee of X% per month / a pause on new work] will apply if the payment is not received by [date].\n\nPayment link: [payment link]\nUPI: [your UPI ID]\n\nIf there is a problem with the invoice, please call me on [number] so we can fix it this week.\n\nRegards,\n[Your name]",
+      "cite": "Email: final notice"
+    },
+    {
+      "h2": "Overdue payment messages for common situations"
+    },
+    {
+      "quote": "Hi [Name], thank you for the ₹[paid amount] received today.\nA balance of ₹[balance] is still pending for [invoice no.].\nYou can pay it here: [payment link] or UPI [your UPI ID].",
+      "cite": "Partial payment received"
+    },
+    {
+      "quote": "Hi [Name], no problem, thanks for letting me know.\nI will note [date] as the payment date for ₹[amount].\nHere is the link so it is handy: [payment link]",
+      "cite": "Client says they will pay later"
+    },
+    {
+      "quote": "Hi [Name], your next session is on [date] at [time] IST.\nThe pending fee of ₹[amount] from [previous date] needs to be cleared before then.\nUPI: [your UPI ID] | Link: [payment link]",
+      "cite": "Regular client with a pending session fee"
+    },
+    {
+      "quote": "Hi [Name], the fee of ₹[amount] for [month] is due by [date].\nPlease pay by UPI to [your UPI ID] or here: [payment link]\nThank you!",
+      "cite": "Monthly fee reminder (classes, retainers, packages)"
+    },
+    {
+      "quote": "Hi [Name], a gentle reminder that the balance of ₹[amount] for [event/shoot] is due on [date], before delivery of the final files.\nLink: [payment link]\nUPI: [your UPI ID]",
+      "cite": "Balance before delivery (photographers, designers)"
+    },
+    {
+      "quote": "Hi [Name], next month's retainer of ₹[amount] for [month] is due on [date], before work starts.\nInvoice attached.\nUPI: [your UPI ID] | Link: [payment link]",
+      "cite": "Retainer due before the month starts (consultants, agencies)"
+    },
+    {
+      "quote": "Hi [Name], I tried calling about ₹[amount] for [invoice no.], now [number] days overdue.\nPlease call or reply with a payment date today.\nLink: [payment link]",
+      "cite": "After a missed call"
+    },
+    {
+      "quote": "Hi [Name], payment of ₹[amount] received. Thank you!\nYour receipt/invoice is attached. Looking forward to our next session on [date].",
+      "cite": "Payment received (always send this)"
+    },
+    {
+      "quote": "Subject: Payment status for invoice [no.] (₹[amount])\n\nHi [Accounts team / Name],\n\nCould you share the payment status of invoice [no.] for ₹[amount], due on [date]? It was approved by [client contact] on [date].\n\nIf you need a PO number, GST details or a revised copy for processing, I can send it today.\n\nBank and UPI details: [details]\n\nThanks,\n[Your name]",
+      "cite": "Email to a company's accounts team"
+    },
+    {
+      "quote": "Hi [Name], thanks for flagging this.\nI will check the [item/hours] on invoice [no.] and send a corrected copy by [date].\nThe undisputed part of ₹[amount] can be paid now here: [payment link]",
+      "cite": "Client questions the invoice"
+    },
+    {
+      "quote": "Hi [Name], the earlier payment link has expired.\nHere is a fresh one for ₹[amount]: [payment link]\nUPI also works: [your UPI ID]",
+      "cite": "Payment failed or the link expired"
+    },
+    {
+      "quote": "[Your name] here. ₹[amount] for [invoice no.] was due on [date].\nPay: [payment link]\nReply if there is an issue. Thanks.",
+      "cite": "SMS: short overdue reminder"
+    },
+    {
+      "h2": "How to write a payment reminder message for a client"
+    },
+    {
+      "p": "Skip the apology opener. A line like “Sorry to bother you, but just checking on the payment” makes the money sound like a favour. Open with the facts instead."
+    },
+    {
+      "ol": [
+        "Lead with the facts: amount, what it is for, invoice number and due date.",
+        "Assume the client forgot. Most late payments are slips, not refusals.",
+        "Give one way to pay inside the message: a UPI ID or a payment link.",
+        "Ask one question in overdue messages: when will you pay?",
+        "Mention a late fee or a pause on work only if it was in your agreed terms.",
+        "Thank them when the money arrives. It makes the next reminder easier."
+      ]
+    },
+    {
+      "p": "A payment link is easier to act on than a bank account number. [Razorpay Payment Links](https://razorpay.com/payment-links/), for example, can be shared on SMS, email or WhatsApp. A plain [UPI](/glossary/upi) ID works too if the client is paying from a phone."
+    },
+    {
+      "info": {
+        "title": "Business clients and the 45-day rule",
+        "text": "If you are a micro or small enterprise with Udyam registration, the MSMED Act limits how long business buyers can take to pay. [MSME Samadhaan](https://samadhaan.msme.gov.in/) says payment is due within 45 days of accepting the goods or service, with compound interest at three times the RBI bank rate after that. New delayed-payment cases are now filed on the MSME ODR portal. Mention this only in a final notice, and only if it applies to you."
+      }
+    },
+    {
+      "h2": "Payment reminders in Hindi and for tuition fees"
+    },
+    {
+      "p": "Many clients reply faster in Hindi or Hinglish. We have a separate set of [payment reminder messages in Hindi](/blog/payment-reminder-message-hindi) with Devanagari and Roman versions of each template. Tutors and coaching classes can use the [tuition fee reminder messages](/blog/tuition-fee-reminder-message) written for parents."
+    },
+    {
+      "p": "If a client has gone quiet after several reminders, read [how to ask a client for payment politely](/blog/how-to-ask-client-for-payment-politely). It includes a phone-call script and a pause-work template."
+    },
+    {
+      "h2": "Stop sending reminders: take payment at booking"
+    },
+    {
+      "p": "For appointment-based work, the best reminder is the one you never send. On Book A Sloth, clients pay up-front through Razorpay by UPI, card or netbanking when they book, and the booking confirms automatically on payment. WhatsApp and email reminders then go out about the appointment itself, not the money. See the [payments feature page](/features/payments) for how it works."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I write a polite payment reminder message?",
+          "a": "State the amount, what it is for and the due date, then add one way to pay, such as a UPI ID or payment link. Keep it to two or three lines, assume the client simply forgot, and end with a thank you. Polite messages work best when they are sent on a regular schedule."
+        },
+        {
+          "q": "When should I send a payment reminder?",
+          "a": "Send a heads-up 3 days before the due date, a nudge on the day, then follow up at 3, 7 and 14 days overdue. A steady schedule works better than one angry message after a month, and clients learn that you always follow up."
+        },
+        {
+          "q": "Is it okay to send payment reminders on WhatsApp?",
+          "a": "Yes. In India, a short WhatsApp message with a payment link usually gets a faster reply than email. Use email as well for the later, firmer reminders so you have a written record with the invoice attached."
+        },
+        {
+          "q": "What should a final payment notice say?",
+          "a": "Repeat the amount, invoice number and how many days it is overdue, list the reminders already sent, and state the next step with a date, such as a late fee or a pause on further work. Only mention penalties that were in your agreed terms."
+        },
+        {
+          "q": "Should I include a UPI ID or a payment link?",
+          "a": "Include at least one. A payment link confirms the payment for you and works for cards and netbanking too. A UPI ID is free and familiar, but you have to check your bank app to confirm the money arrived."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "payment-reminder-message-hindi",
+  "title": "Payment Reminder Message in Hindi: पेमेंट रिमाइंडर मैसेज",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "bell",
+    "wallet",
+    "quote"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Payment reminder message in Hindi: polite WhatsApp templates in Devanagari and Hinglish for service businesses, tutors, clinics and udhaar at the dukaan.",
+  "body": [
+    {
+      "p": "A polite payment reminder message in Hindi greets the client respectfully, states the amount and due date, and gives one easy way to pay, such as a UPI ID or payment link. For example: “नमस्ते [नाम] जी, ₹[राशि] का भुगतान आज देय है। UPI: [आपकी UPI ID]। धन्यवाद!” Ready-to-copy templates follow."
+    },
+    {
+      "p": "Every template below comes in two versions: Devanagari Hindi and Hinglish (Roman script), because many clients type Hindi in English letters on WhatsApp. All use the respectful आप form. Swap the words in square brackets and save them as quick replies."
+    },
+    {
+      "h2": "Payment reminder in Hindi: कब कौन-सा मैसेज भेजें"
+    },
+    {
+      "table": {
+        "head": [
+          "कब (When)",
+          "टोन (Tone)",
+          "मकसद (Goal)"
+        ],
+        "rows": [
+          [
+            "Due date से 3 दिन पहले",
+            "दोस्ताना (Friendly)",
+            "तारीख याद दिलाना"
+          ],
+          [
+            "Due date के दिन",
+            "सीधा (Neutral)",
+            "लिंक के साथ हल्का nudge"
+          ],
+          [
+            "3 दिन बाद",
+            "विनम्र (Polite)",
+            "पूछना कि मैसेज मिला या नहीं"
+          ],
+          [
+            "7 दिन बाद",
+            "दृढ़ (Firm)",
+            "भुगतान की तारीख पूछना"
+          ],
+          [
+            "14 दिन बाद",
+            "आख़िरी नोटिस (Final)",
+            "अगला कदम लिखित में बताना"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "हर client के साथ यही क्रम रखें। जब लोगों को पता होता है कि आप हमेशा समय पर याद दिलाते हैं, तो ज़्यादातर पहले या दूसरे मैसेज पर ही भुगतान कर देते हैं।"
+    },
+    {
+      "h2": "Service business के लिए 5 payment reminder messages"
+    },
+    {
+      "p": "These work for consultants, coaches, freelancers, photographers and any professional who sends an invoice or a bill."
+    },
+    {
+      "quote": "नमस्ते [नाम] जी,\n[सेवा / बिल नंबर] का ₹[राशि] का भुगतान [तारीख] को देय है।\nआप UPI से [आपकी UPI ID] पर या इस लिंक से भुगतान कर सकते हैं: [पेमेंट लिंक]\nधन्यवाद!",
+      "cite": "1. Due date से 3 दिन पहले (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji,\n[Service / bill no.] ka ₹[amount] ka payment [date] ko due hai.\nAap UPI se [aapki UPI ID] par ya is link se pay kar sakte hain: [payment link]\nDhanyavaad!",
+      "cite": "1. Due date se 3 din pehle (Hinglish)"
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, बस याद दिलाना था कि ₹[राशि] का भुगतान आज देय है।\nUPI: [आपकी UPI ID]\nलिंक: [पेमेंट लिंक]\nभुगतान हो जाए तो एक छोटा-सा मैसेज भेज दीजिए। धन्यवाद!",
+      "cite": "2. Due date के दिन (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, bas yaad dilana tha ki ₹[amount] ka payment aaj due hai.\nUPI: [aapki UPI ID]\nLink: [payment link]\nPayment ho jaye to ek chhota sa message bhej dijiye. Dhanyavaad!",
+      "cite": "2. Due date ke din (Hinglish)"
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, [तारीख] को देय ₹[राशि] का भुगतान अभी तक नहीं मिला है।\nशायद ध्यान से निकल गया होगा। लिंक फिर से भेज रहा हूँ: [पेमेंट लिंक]\nUPI: [आपकी UPI ID]",
+      "cite": "3. 3 दिन बाद (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, [date] ko due ₹[amount] ka payment abhi tak nahi mila hai.\nShayad dhyan se nikal gaya hoga. Link fir se bhej raha hoon: [payment link]\nUPI: [aapki UPI ID]",
+      "cite": "3. 3 din baad (Hinglish)"
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, ₹[राशि] का भुगतान अब 7 दिन से बाकी है।\nकृपया बताइए कि आप किस तारीख तक भुगतान कर पाएँगे?\nUPI: [आपकी UPI ID] | लिंक: [पेमेंट लिंक]\nकोई दिक्कत हो तो बताइए, मिलकर हल निकाल लेंगे।",
+      "cite": "4. 7 दिन बाद (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, ₹[amount] ka payment ab 7 din se baaki hai.\nKripya bataiye ki aap kis date tak payment kar payenge?\nUPI: [aapki UPI ID] | Link: [payment link]\nKoi dikkat ho to bataiye, milkar hal nikaal lenge.",
+      "cite": "4. 7 din baad (Hinglish)"
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, बिल नंबर [नंबर] का ₹[राशि] का भुगतान 14 दिन से बाकी है।\nहमारी तय शर्तों के अनुसार, [तारीख] के बाद [लेट फीस / आगे का काम रोकना] लागू होगा।\nकृपया [तारीख] तक भुगतान कर दीजिए: [पेमेंट लिंक]\nधन्यवाद।",
+      "cite": "5. आख़िरी नोटिस, 14 दिन बाद (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, bill no. [number] ka ₹[amount] ka payment 14 din se baaki hai.\nHamari tay sharton ke anusaar, [date] ke baad [late fee / aage ka kaam rokna] laagu hoga.\nKripya [date] tak payment kar dijiye: [payment link]\nDhanyavaad.",
+      "cite": "5. Final notice, 14 din baad (Hinglish)"
+    },
+    {
+      "p": "Write in the feminine form if you are a woman sending these: भेज रही हूँ / bhej rahi hoon. Mention a late fee or a pause on work only if it was in the terms you agreed with the client."
+    },
+    {
+      "h2": "Udhaar reminder message: दुकानदारों के लिए"
+    },
+    {
+      "p": "Kirana, medical and hardware shops often run a khata for regular customers. These udhaar reminders stay warm, because you want the customer back next week."
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, आपके खाते में ₹[राशि] बाकी है (आख़िरी ख़रीद: [तारीख])।\nसुविधा हो तो UPI से [UPI ID] पर भेज दीजिए।\nधन्यवाद, [दुकान का नाम]",
+      "cite": "उधार की हल्की याद (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, aapke khate mein ₹[amount] baaki hai (aakhri kharid: [date]).\nSuvidha ho to UPI se [UPI ID] par bhej dijiye.\nDhanyavaad, [dukaan ka naam]",
+      "cite": "Udhaar ki halki yaad (Hinglish)"
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, [महीना] का हिसाब: कुल ₹[राशि]।\n[तारीख] तक भुगतान कर दें तो अच्छा रहेगा।\nUPI: [UPI ID], या दुकान पर QR से भी कर सकते हैं।\n[दुकान का नाम]",
+      "cite": "महीने के अंत का हिसाब (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, [mahina] ka hisaab: total ₹[amount].\n[date] tak payment kar dein to accha rahega.\nUPI: [UPI ID], ya dukaan par QR se bhi kar sakte hain.\n[dukaan ka naam]",
+      "cite": "Mahine ke ant ka hisaab (Hinglish)"
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, ₹[राशि] का उधार [महीना] से बाकी है।\nकृपया इस हफ़्ते तक चुका दीजिए, ताकि आगे भी खाता चलाना आसान रहे।\nUPI: [UPI ID]\nधन्यवाद, [दुकान का नाम]",
+      "cite": "पुराना उधार, थोड़ा दृढ़ (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, ₹[amount] ka udhaar [mahina] se baaki hai.\nKripya is hafte tak chuka dijiye, taaki aage bhi khata chalana aasaan rahe.\nUPI: [UPI ID]\nDhanyavaad, [dukaan ka naam]",
+      "cite": "Purana udhaar, thoda firm (Hinglish)"
+    },
+    {
+      "info": {
+        "title": "UPI charges for small shops",
+        "text": "The Department of Financial Services [FAQ on UPI merchant charges](https://financialservices.gov.in/sites/default/files/2026-09/FAQs---Merchant-Discount-Rate--MDR--on-Select-UPI--P2M--Transactions_0.pdf) says small merchants receiving up to ₹1 lakh a month through a UPI QR into their own account keep zero MDR. From 15 October 2026, regular merchant accounts pay 0.4% on UPI payments above ₹2,000, capped at ₹300. Customers are never charged for paying by UPI, and merchants cannot pass the charge on."
+      }
+    },
+    {
+      "h2": "Paisa reminder message: tutors, clinics और salons के लिए"
+    },
+    {
+      "quote": "नमस्ते [अभिभावक का नाम] जी,\n[बच्चे का नाम] की [महीना] की ट्यूशन फीस ₹[राशि] [तारीख] तक देय है।\nUPI: [UPI ID] | लिंक: [पेमेंट लिंक]\nधन्यवाद, [आपका नाम]",
+      "cite": "ट्यूशन फीस रिमाइंडर, अभिभावकों के लिए (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Abhibhavak ka naam] ji,\n[Bachche ka naam] ki [mahina] ki tuition fees ₹[amount] [date] tak due hai.\nUPI: [UPI ID] | Link: [payment link]\nDhanyavaad, [aapka naam]",
+      "cite": "Tuition fee reminder, parents ke liye (Hinglish)"
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, [तारीख] की अपॉइंटमेंट का ₹[राशि] बाकी है।\nआप इस लिंक से भुगतान कर सकते हैं: [पेमेंट लिंक]\nअगली अपॉइंटमेंट से पहले क्लियर कर दें तो अच्छा रहेगा।",
+      "cite": "Clinic या salon का बकाया (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, [date] ki appointment ka ₹[amount] baaki hai.\nAap is link se payment kar sakte hain: [payment link]\nAgli appointment se pehle clear kar dein to accha rahega.",
+      "cite": "Clinic ya salon ka baaki (Hinglish)"
+    },
+    {
+      "quote": "नमस्ते [नाम] जी, ₹[राशि] का भुगतान मिल गया। बहुत-बहुत धन्यवाद!\nरसीद / बिल साथ में भेज रहा हूँ।",
+      "cite": "भुगतान मिलने पर धन्यवाद (Devanagari)"
+    },
+    {
+      "quote": "Namaste [Naam] ji, ₹[amount] ka payment mil gaya. Bahut bahut dhanyavaad!\nReceipt / bill saath mein bhej raha hoon.",
+      "cite": "Payment milne par dhanyavaad (Hinglish)"
+    },
+    {
+      "p": "Tutors and coaching classes will find more parent-friendly versions in our [tuition fee reminder messages](/blog/tuition-fee-reminder-message)."
+    },
+    {
+      "h2": "विनम्र लेकिन साफ़ reminder कैसे लिखें"
+    },
+    {
+      "ul": [
+        "नमस्ते और जी से शुरू करें। Respect first, then the facts.",
+        "राशि, किस चीज़ का भुगतान और तारीख, तीनों एक ही मैसेज में लिखें।",
+        "भुगतान का एक ही तरीका दें: UPI ID या पेमेंट लिंक। दो-तीन विकल्प देने से देर होती है।",
+        "Overdue मैसेज में एक ही सवाल पूछें: आप किस तारीख तक भुगतान करेंगे?",
+        "धमकी वाली भाषा से बचें। Late fee का ज़िक्र तभी करें जब वह पहले से तय हो।",
+        "भुगतान मिलते ही धन्यवाद भेजें। अगली बार याद दिलाना आसान हो जाता है।"
+      ]
+    },
+    {
+      "p": "A payment link makes it easier to pay than a bank account number. [Razorpay Payment Links](https://razorpay.com/payment-links/), for example, can be shared on WhatsApp, SMS or email. A plain [UPI](/glossary/upi) ID also works when the client pays from a phone, but you then check your bank app yourself."
+    },
+    {
+      "p": "Need the same templates in English, including email versions? See our [payment reminder messages for clients](/blog/payment-reminder-message). For a client who has stopped replying, [how to ask a client for payment politely](/blog/how-to-ask-client-for-payment-politely) has a phone-call script."
+    },
+    {
+      "h2": "Reminder की ज़रूरत ही न पड़े: booking के समय payment"
+    },
+    {
+      "p": "If you sell appointments, such as consultations, classes, salon services or sessions, you can skip payment reminders entirely. On Book A Sloth, clients pay up-front through Razorpay by UPI, card or netbanking when they book, and the booking confirms automatically on payment. Reminders then go out on WhatsApp and email about the appointment, not the money. See the [payments feature page](/features/payments)."
+    },
+    {
+      "faq": [
+        {
+          "q": "Hindi में payment reminder message कैसे लिखें?",
+          "a": "नमस्ते [नाम] जी से शुरू करें, फिर राशि, किस चीज़ का भुगतान और देय तारीख लिखें। आख़िर में UPI ID या पेमेंट लिंक दें और धन्यवाद के साथ खत्म करें। मैसेज दो-तीन लाइन का रखें और आप वाला सम्मानजनक रूप इस्तेमाल करें।"
+        },
+        {
+          "q": "Udhaar reminder message politely kaise bhejein?",
+          "a": "Customer ka naam aur ji lagakar shuru karein, baaki raashi aur aakhri kharid ki date batayein, aur UPI ID dein. Pehla message halka rakhein, jaise suvidha ho to bhej dijiye. Purane udhaar par thoda firm ho sakte hain, lekin dhamki wali bhasha se bachein."
+        },
+        {
+          "q": "Payment reminder kab bhejna chahiye?",
+          "a": "Due date se 3 din pehle ek friendly yaad, due date ke din ek nudge, phir 3 din, 7 din aur 14 din baad follow-up bhejein. Har client ke saath yahi kram rakhne se zyada log pehle ya doosre message par hi payment kar dete hain."
+        },
+        {
+          "q": "Kya customer se UPI payment par extra charge le sakte hain?",
+          "a": "Nahi. Department of Financial Services ke FAQ ke anusaar consumers se UPI payment par koi charge nahi liya jata, aur merchants MDR customer par nahi daal sakte. Chhote merchants jo apne account mein UPI QR se mahine mein ₹1 lakh tak paate hain, unke liye MDR zero hai."
+        },
+        {
+          "q": "WhatsApp par payment reminder bhejna theek hai?",
+          "a": "Haan. Bharat mein chhota, vinamra WhatsApp message payment link ke saath aksar email se jaldi jawab paata hai. Baad ke firm reminders email par bhi bhejein, taaki bill ke saath likhit record rahe."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "manage-appointments-on-whatsapp",
+  "title": "How to Manage Appointments on WhatsApp: 3 Setups Compared",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "calendar",
+    "bell",
+    "coins"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to manage appointments on WhatsApp: manual chats vs a WhatsApp API bot vs a booking link with WhatsApp reminders, with ₹ costs, time spent and no-show risk.",
+  "body": [
+    {
+      "p": "There are three ways to manage appointments on WhatsApp: book manually in the free WhatsApp Business app, run an automated bot on the paid WhatsApp Business Platform (API), or share a booking link that takes payment and sends WhatsApp confirmations and reminders automatically. Manual works for a few bookings a day; beyond that, a booking link saves the most time."
+    },
+    {
+      "p": "This guide compares the three honestly, with Meta's current India rates for API messages, a worked example of the time manual booking takes, and a setup for clinics, salons, tutors and coaches who want to keep WhatsApp as the place clients talk to them."
+    },
+    {
+      "h2": "Does WhatsApp have appointment booking?"
+    },
+    {
+      "p": "The WhatsApp Business app gives you tools to talk to clients, not a booking calendar. Meta lists [greeting messages, away messages, a business profile, a product showcase and instant replies](https://whatsappbusiness.com/products/business-app/) among its features. These help you respond faster. The scheduling itself, checking your diary, holding a slot, collecting the fee and reminding the client, still sits with you or with another tool."
+    },
+    {
+      "p": "That is why most Indian professionals end up with one of the three setups below."
+    },
+    {
+      "h2": "Option 1: Manual booking in the WhatsApp Business app"
+    },
+    {
+      "p": "This is how most clinics, salons and tutors start. A client messages, you check your diary, offer two slots, confirm, share a UPI ID, wait for the screenshot, then remind them the day before. It costs nothing and feels personal."
+    },
+    {
+      "steps": [
+        "Set up a business profile with address, hours and a short service list.",
+        "Save quick replies for your fee, address, UPI ID and available slots.",
+        "Use labels such as New enquiry, Slot offered, Paid, Confirmed, Completed.",
+        "Keep one calendar (Google Calendar or a diary) as the single source of truth.",
+        "Set an away message for after hours and Sundays.",
+        "Send reminders by hand the evening before."
+      ]
+    },
+    {
+      "p": "The hidden cost is time. A typical booking takes 6-10 messages: enquiry, slot options, choice, payment details, screenshot, confirmation, reminder, and often a reschedule. Worked example: if each booking takes about 8 minutes of your attention across the day and you handle 60 bookings a month, that is 8 hours a month on scheduling chats. Two people messaging for the same slot at the same time is how double-bookings happen."
+    },
+    {
+      "h2": "Option 2: A WhatsApp Business API bot"
+    },
+    {
+      "p": "The WhatsApp Business Platform (often called the WhatsApp API) lets software send and receive messages on your business number. Vendors build booking bots on top of it: the client taps through a menu, picks a slot and gets automated reminders. It is powerful, but it has costs that vendor landing pages tend to bury."
+    },
+    {
+      "p": "Since 1 July 2025, Meta has charged on a [per-message basis](https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing): a business pays when a message is delivered, and the rate depends on the message category and the recipient's country. In Meta's words, it “does not charge for messages from users to businesses”. Meta lists five categories: marketing, utility (such as confirmations and reminders), authentication (OTPs), service (free-form replies within 24 hours of a client's message) and Meta Business Agent, its own AI agent billed per token."
+    },
+    {
+      "table": {
+        "head": [
+          "Category (India, INR)",
+          "Typical use",
+          "Meta rate per delivered message"
+        ],
+        "rows": [
+          [
+            "Marketing",
+            "Offers, festive promotions, broadcast",
+            "₹0.8631"
+          ],
+          [
+            "Utility",
+            "Booking confirmation, reminder, receipt",
+            "₹0.115"
+          ],
+          [
+            "Authentication",
+            "Login OTP",
+            "₹0.115"
+          ],
+          [
+            "Service",
+            "Replies within 24 hours of the client's message",
+            "₹0.115 after the first 1,000 each month per number"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Rates are from Meta's INR rate card effective 1 October 2026 and can change at the start of any quarter. From 1 October 2026, Meta gives each business number 1,000 free service messages a month and charges from the 1,001st. Check the live rate card before you budget."
+    },
+    {
+      "p": "Worked example: a clinic with 200 bookings a month sends a confirmation, a 24-hour reminder and a same-day reminder for each. That is 600 utility messages × ₹0.115 = about ₹69 a month in Meta charges. One festive offer to 500 past patients adds 500 × ₹0.8631 = about ₹432. Meta's fees are small. The bigger costs are elsewhere."
+    },
+    {
+      "ul": [
+        "The provider's own subscription or platform fee, which most API vendors charge on top of Meta's rates. Compare these carefully.",
+        "Setup: a Meta business account, a verified number, and message templates written and categorised before you can send them.",
+        "Bot design: menus that feel natural in English, Hindi or your regional language take time to get right.",
+        "Payments and calendar: many bots still need a separate payment link and calendar integration, so you can end up paying for two tools."
+      ]
+    },
+    {
+      "p": "An API bot makes most sense for a multi-doctor clinic or a large chain with steady volume and someone to manage it. For a solo professional, it is usually more machinery than the problem needs."
+    },
+    {
+      "h2": "Option 3: A booking link plus WhatsApp reminders"
+    },
+    {
+      "p": "Here WhatsApp stays your conversation channel, but booking happens on a page. When a client asks for an appointment, you reply with one quick reply containing your booking link. They see open slots, pick one and pay by UPI. The system confirms the booking and sends WhatsApp reminders, so you only step in when a client needs a human."
+    },
+    {
+      "quote": "Hi! Thanks for reaching out 🙏\nYou can see my open slots and book here: [booking link]\nConsultation: ₹800 (30 min), paid by UPI while booking.\nYou will get a WhatsApp confirmation and a reminder before your visit.\nAny questions, just reply here.",
+      "cite": "Quick reply for appointment enquiries"
+    },
+    {
+      "quote": "Namaste! Aapka message mil gaya.\nAppointment book karne ke liye yeh link use karein: [booking link]\nSlot choose karke UPI se payment karein, confirmation turant WhatsApp par aa jayega.",
+      "cite": "Hinglish quick reply"
+    },
+    {
+      "p": "Pair it with an away message that includes the same link, so enquiries at 11 PM still turn into bookings. Our [WhatsApp Business away message templates](/blog/whatsapp-business-away-message) have versions for holidays and after-hours."
+    },
+    {
+      "h2": "Manual WhatsApp vs API bot vs booking link: comparison"
+    },
+    {
+      "table": {
+        "head": [
+          "",
+          "Manual WhatsApp Business app",
+          "WhatsApp API bot",
+          "Booking link + WhatsApp reminders"
+        ],
+        "rows": [
+          [
+            "Setup",
+            "Minutes",
+            "Days to weeks, with a vendor",
+            "Under an hour"
+          ],
+          [
+            "Monthly cost",
+            "₹0",
+            "Vendor fee + Meta per-message charges",
+            "Free plan or a fixed monthly fee"
+          ],
+          [
+            "Your time per booking",
+            "High (6-10 messages)",
+            "Low once built",
+            "Low (one quick reply)"
+          ],
+          [
+            "Double-booking risk",
+            "High at busy times",
+            "Low if synced to calendar",
+            "Low; one booking per slot"
+          ],
+          [
+            "Payment at booking",
+            "Manual UPI + screenshot check",
+            "Often a separate link",
+            "Built into the booking step"
+          ],
+          [
+            "Reminders",
+            "Sent by hand",
+            "Automated",
+            "Automated"
+          ],
+          [
+            "Personal feel",
+            "Highest",
+            "Can feel robotic",
+            "Personal chat stays; admin is automated"
+          ],
+          [
+            "Best for",
+            "Fewer than 3-4 bookings a day",
+            "Multi-staff clinics and chains",
+            "Solo and small practices"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Why reminders and prepayment matter for no-shows"
+    },
+    {
+      "p": "Automating reminders is not only about saving time. A systematic review of [29 studies of phone and SMS reminders](https://pmc.ncbi.nlm.nih.gov/articles/PMC3188816/) found they reduced missed appointments by about 34% of the baseline rate, and reminders sent the day before worked as well as earlier ones. Manual WhatsApp reminders work too, but they are the first thing that slips on a busy day. Our playbook on [how to reduce no-shows](/blog/how-to-reduce-no-shows) covers the full reminder cadence and policy wording."
+    },
+    {
+      "h2": "WhatsApp booking system for clinics and doctors: practical tips"
+    },
+    {
+      "ul": [
+        "Keep patient conversations in one-to-one chats. Never discuss a patient in a staff WhatsApp group.",
+        "Put timings and token or OPD rules in the confirmation, so patients do not arrive two hours early.",
+        "Use the same booking link on your Google Business Profile, Instagram bio and visiting card.",
+        "Keep one calendar connected to bookings, so walk-ins and online bookings cannot collide.",
+        "Send prescriptions and reports only to the patient's own number, not to a relative's unless the patient asks."
+      ]
+    },
+    {
+      "h2": "How Book A Sloth fits a WhatsApp-first practice"
+    },
+    {
+      "p": "Book A Sloth is the booking-link option. Clients book on your page at bookasloth.com/yourname with a phone OTP and no app download, pay up-front by UPI, card or netbanking through Razorpay, and the booking confirms on payment. Email and WhatsApp confirmations go out instantly, a 24-hour reminder is included on the free plan, clients can reschedule or cancel from the link, and two-way Google Calendar sync prevents [double-booking](/glossary/double-booking). It is not a WhatsApp chatbot; you keep chatting with clients yourself."
+    },
+    {
+      "p": "See how [WhatsApp and email notifications](/features/notifications) work, or how to set up your [booking page](/features/booking-pages)."
+    },
+    {
+      "faq": [
+        {
+          "q": "Can I manage appointments on WhatsApp for free?",
+          "a": "Yes. The WhatsApp Business app lets you use quick replies, labels, greeting and away messages to handle bookings by hand. The cost is your time: each booking can take 6-10 messages, and reminders have to be sent manually. A free booking link with automatic WhatsApp reminders removes most of that work."
+        },
+        {
+          "q": "How much does the WhatsApp Business API cost in India?",
+          "a": "Meta charges per delivered message by category. On its INR rate card effective 1 October 2026, India rates are ₹0.8631 for marketing and ₹0.115 for utility, authentication and service messages, with 1,000 free service messages a month per number. Most API vendors add their own monthly fee on top."
+        },
+        {
+          "q": "Is online booking better than WhatsApp booking?",
+          "a": "For more than a few bookings a day, yes. An online booking page shows only open slots, takes payment at the moment of booking and sends reminders automatically, which cuts double-bookings and chasing. Keep WhatsApp for conversation and share the booking link there."
+        },
+        {
+          "q": "Do I need a WhatsApp chatbot for my clinic?",
+          "a": "Usually not for a solo doctor or small clinic. A quick reply with a booking link, automated confirmations and reminders covers most needs. A WhatsApp API bot makes more sense for multi-doctor clinics or chains with high volume and someone to maintain the bot and templates."
+        },
+        {
+          "q": "How do I stop double-booking when clients book on WhatsApp?",
+          "a": "Use one calendar as the single source of truth and let clients pick from open slots on a booking page instead of negotiating times in chat. A booking tool that syncs with Google Calendar blocks a slot as soon as it is booked, so two clients cannot take it."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-start-online-yoga-classes",
+  "title": "How to Start Yoga Classes Online in India: Batches & UPI",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "heart",
+    "calendar",
+    "wallet"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to start yoga classes online in India: pick a niche, fix batch timings in IST, price monthly batches, collect fees by UPI and share Zoom links safely.",
+  "body": [
+    {
+      "p": "To start yoga classes online in India, choose one style and audience, fix one or two batch timings in IST, and run a free trial class on Zoom or Google Meet. Charge a monthly batch fee collected by UPI, share the class link privately on WhatsApp, and promote with short Instagram videos and student referrals."
+    },
+    {
+      "p": "This guide covers the parts most online yoga guides skip for India: morning batch timings, rupee pricing maths, monthly UPI collection, keeping class links out of forwarded chats, and getting your first 20 students without paid ads."
+    },
+    {
+      "h2": "What you need before you start online yoga classes"
+    },
+    {
+      "ul": [
+        "A teaching qualification you can show students, such as a recognised certificate or diploma.",
+        "A clear floor space, a mat, and a phone or laptop that can frame your full body side-on.",
+        "Good light from the front, and a small Bluetooth mic or earphones so cues are audible over music.",
+        "A video platform account (Zoom or Google Meet).",
+        "A health intake form for new students.",
+        "A way to take bookings and payments, and a WhatsApp Business number for students."
+      ]
+    },
+    {
+      "p": "On qualifications: the Ministry of Ayush's Yoga Certification Board runs a tiered scheme with levels such as Yoga Protocol Instructor, Yoga Wellness Instructor and Yoga Teacher and Evaluator. The Board says certification \"helps in promoting Yoga as career skill which till date is an unorganized career option\" ([Yoga Certification Board](https://yogacertificationboard.nic.in/need-of-certification-accreditation/)). Many students, and most corporate clients, will ask what certificate you hold, so keep a copy ready to share."
+    },
+    {
+      "h2": "Zoom or Google Meet for online yoga classes?"
+    },
+    {
+      "p": "Both work for yoga. The free limits decide which one fits your class length."
+    },
+    {
+      "table": {
+        "head": [
+          "Platform",
+          "Free plan limit (group class)",
+          "Participants on free plan",
+          "Good for"
+        ],
+        "rows": [
+          [
+            "Zoom Basic",
+            "40 minutes per meeting",
+            "100",
+            "Short sessions, gallery view to watch alignment"
+          ],
+          [
+            "Zoom Pro",
+            "30 hours per meeting",
+            "100",
+            "60-75 minute batches, recurring links"
+          ],
+          [
+            "Google Meet (free account)",
+            "1 hour for 3+ participants",
+            "100",
+            "45-60 minute batches"
+          ],
+          [
+            "Google Meet 1:1",
+            "24 hours",
+            "2",
+            "Private and therapy-style sessions"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Sources: [Zoom pricing](https://zoom.us/pricing) lists 40 minutes on Basic and 30 hours on Pro, each with 100 participants. [Google Meet Help](https://support.google.com/meet/answer/13396001?hl=en-GB) lists a one-hour limit for meetings with three or more participants and 24 hours for one-on-one meetings. Check both pages before you plan your schedule, since limits can change."
+    },
+    {
+      "p": "Whatever you pick, ask students to keep their camera on and set it side-on at floor level. You cannot correct a posture you cannot see."
+    },
+    {
+      "h2": "Batch timings that work for Indian students"
+    },
+    {
+      "p": "Most working adults practise before office or after it. Plan around those windows, in IST, and add a weekend slot."
+    },
+    {
+      "table": {
+        "head": [
+          "Batch",
+          "Typical IST slot",
+          "Who joins"
+        ],
+        "rows": [
+          [
+            "Early morning",
+            "6:00-7:00 am",
+            "Working professionals, early risers"
+          ],
+          [
+            "Mid-morning",
+            "10:00-11:00 am",
+            "Homemakers, seniors, freelancers"
+          ],
+          [
+            "Evening",
+            "6:30-7:30 pm",
+            "Office-goers, students"
+          ],
+          [
+            "Weekend",
+            "Saturday or Sunday, 7:30 am",
+            "People who cannot commit to weekdays"
+          ],
+          [
+            "NRI batch",
+            "Set to the student's evening",
+            "Indians abroad who want a teacher from home"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Start with one batch. Add a second only when the first is full. Two half-empty batches tire you out and look less active to new students."
+    },
+    {
+      "h2": "How much to charge for an online yoga class in India"
+    },
+    {
+      "p": "There is no official fee scale for yoga teachers, and rates differ by city, experience and the kind of class. Instead of copying a number, build your price from four inputs: the income you want, the hours you can teach, the batch size you can manage, and what similar teachers charge."
+    },
+    {
+      "steps": [
+        "Write your monthly income target from yoga.",
+        "Count the live teaching hours you can sustain each month, leaving time for your own practice.",
+        "Divide target income by hours to get your hourly rate.",
+        "For a group batch, divide that hourly rate by the number of students you expect, then multiply by the classes per month.",
+        "Set 1:1 sessions at roughly your full hourly rate or more, since they need preparation and full attention.",
+        "Check three or four local teachers' Instagram or WhatsApp rate cards, and adjust."
+      ]
+    },
+    {
+      "p": "Worked example (illustrative numbers only): Priya in Pune wants ₹40,000 a month and can teach 50 live hours. Her hourly rate is ₹800. A 20-class monthly batch with 10 students needs ₹1,600 per student (₹800 x 20 ÷ 10). She prices the batch at ₹1,500 for early sign-ups and ₹1,800 after that, and charges ₹900 for a private 1:1 session."
+    },
+    {
+      "table": {
+        "head": [
+          "Offer",
+          "How to price it",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "Free trial class",
+            "₹0 or a small token",
+            "Token amount cuts no-shows"
+          ],
+          [
+            "Monthly group batch",
+            "Hourly rate x classes ÷ batch size",
+            "Your main income"
+          ],
+          [
+            "Quarterly batch",
+            "Monthly fee x 3, minus a small discount",
+            "Improves retention"
+          ],
+          [
+            "1:1 session",
+            "At or above your hourly rate",
+            "Therapy, prenatal, rehab-style needs"
+          ],
+          [
+            "Corporate session",
+            "Per session, quoted with GST if registered",
+            "Ask for advance payment"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "If your yearly turnover grows large, check GST. The [CBIC GST FAQ](https://cbic-gst.gov.in/faq.html) says registration is generally required once aggregate turnover crosses ₹20 lakh in a financial year, or ₹10 lakh in special category states. Ask a CA how your service is treated."
+    },
+    {
+      "h2": "Monthly UPI batches: collecting fees without chasing"
+    },
+    {
+      "p": "Monthly batches give you predictable income. They also give you a monthly chore: collecting fees from every student. A fixed routine keeps it short."
+    },
+    {
+      "ul": [
+        "Fix one due date, such as the 1st, for every student in a batch.",
+        "Send the fee notice with your UPI ID three days before the due date.",
+        "Ask students to put their name and batch in the UPI note.",
+        "Share the next month's class link only after payment is received.",
+        "Keep one sheet: name, batch, month, amount, date paid.",
+        "Offer a quarterly option for regulars so you collect four times a year instead of twelve."
+      ]
+    },
+    {
+      "quote": "Namaste {Name} ji,\nNovember batch (6 am, Mon-Fri) ki fee ₹1,500 hai, 1 November tak.\nUPI: {your UPI ID}\nNote mein apna naam aur \"6 am batch\" likh dijiye.\nPayment ke baad November ka class link bhej doongi. Dhanyavaad!",
+      "cite": "Monthly fee notice (Hinglish)"
+    },
+    {
+      "p": "For polite reminder wording when someone pays late, see our [payment reminder messages](/blog/payment-reminder-message)."
+    },
+    {
+      "h2": "Sharing Zoom and Meet links on WhatsApp safely"
+    },
+    {
+      "p": "Class links get forwarded. A link that reaches non-paying people fills your gallery with strangers and makes paying students feel cheated."
+    },
+    {
+      "ul": [
+        "Send the link 1:1 or in a members-only WhatsApp group where only you can post.",
+        "Use a passcode and a waiting room on Zoom, and admit only names you recognise.",
+        "Change the link at the start of each month when the new batch list is fixed.",
+        "Ask students to join with their real name so you can admit them quickly.",
+        "Never post the class link on Instagram, a public group or your WhatsApp Status."
+      ]
+    },
+    {
+      "h2": "Health intake: ask before the first class"
+    },
+    {
+      "p": "Online students cannot be adjusted by hand, so you need to know their health history before they start. Keep the form short and ask about recent surgery, back or knee injuries, blood pressure, pregnancy, and any condition a doctor has asked them to watch. Advise anyone with a medical condition to check with their doctor first. Our list of [client intake form questions](/blog/client-intake-form-questions) has a ready set you can adapt."
+    },
+    {
+      "h2": "How to promote online yoga classes with Instagram and WhatsApp"
+    },
+    {
+      "p": "You do not need ads for your first 20 students. You need people to see you teach and a simple way to book a trial."
+    },
+    {
+      "ul": [
+        "Post 30-60 second Reels of one pose with one common mistake and its fix.",
+        "Run a free Sunday community class every month and collect WhatsApp numbers with permission.",
+        "Put a trial-class booking link in your Instagram bio and WhatsApp Business profile.",
+        "Share short student feedback, with consent, on your WhatsApp Status.",
+        "Ask each happy student for one referral, and give both a small discount on the next month.",
+        "Partner with a local gym, physiotherapist or housing society for a demo session."
+      ]
+    },
+    {
+      "p": "Our guide to [putting a booking link in your Instagram bio](/blog/booking-link-instagram-bio) shows how to send profile visitors straight to a trial-class slot."
+    },
+    {
+      "h2": "Yoga teacher income in India: a quick way to estimate yours"
+    },
+    {
+      "p": "Income depends on how full your batches are. A simple estimate: (students per batch x monthly fee x number of batches) plus (1:1 sessions x session fee), minus platform, payment and software costs. With the example above, one full batch of 10 at ₹1,500 plus eight 1:1 sessions at ₹900 comes to ₹22,200 before costs. A second full batch roughly doubles the group income without doubling your preparation."
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Book A Sloth gives yoga teachers a booking page at bookasloth.com/yourname for trial classes, 1:1 sessions and workshops. Students pay up-front by UPI, card or netbanking, the booking confirms automatically on payment, and Google Meet links are generated for online sessions. Email and WhatsApp confirmations and reminders go out automatically, and students book with a phone OTP, with no app to download. See the [Book A Sloth page for yoga instructors](/for/yoga-instructors) for how teachers set it up."
+    },
+    {
+      "h2": "Online yoga class FAQs"
+    },
+    {
+      "faq": [
+        {
+          "q": "Can I start online yoga classes without a certificate?",
+          "a": "You can start teaching, but students and companies often ask for proof of training. The Ministry of Ayush's Yoga Certification Board offers levels such as Yoga Protocol Instructor and Yoga Wellness Instructor, and a recognised certificate makes it easier to win trust and corporate work."
+        },
+        {
+          "q": "Is Zoom or Google Meet better for yoga classes?",
+          "a": "On free accounts, Zoom Basic limits meetings to 40 minutes and Google Meet limits group meetings of three or more people to one hour, per their official pages. For a 60-minute class, free Meet or paid Zoom Pro fits better."
+        },
+        {
+          "q": "How much should I charge for online yoga classes in India?",
+          "a": "Work out your hourly rate from your income target and teaching hours, divide it across your expected batch size, and compare with local teachers. Charge more for 1:1, prenatal or therapy-style sessions than for group batches."
+        },
+        {
+          "q": "How do I stop people sharing my yoga class link?",
+          "a": "Send the link only to paid students, use a passcode and waiting room, admit only names you recognise, and change the link every month when the new batch list is final."
+        },
+        {
+          "q": "What is the best time for online yoga batches in India?",
+          "a": "Early morning (6-7 am IST) and early evening (6:30-7:30 pm IST) suit working adults. A mid-morning batch suits homemakers and seniors, and a weekend batch catches people who cannot commit on weekdays."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-start-online-tuition",
+  "title": "How to Start Online Tuition in India: Batches, Fees & UPI",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "users",
+    "wallet",
+    "bell"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to start online tuition in India: pick one subject, run a free demo, form small batches, collect monthly fees by UPI and remind parents politely.",
+  "body": [
+    {
+      "p": "To start online tuition in India, pick one subject and class you teach well, set a monthly fee per student, and run free demo classes through a booking link. Teach small batches on Google Meet or Zoom, collect fees by UPI in the first week of each month, and send parents one polite reminder schedule."
+    },
+    {
+      "p": "That is the whole business in one paragraph. The rest of this guide covers the details that decide whether parents stay for a full academic year: batch size, the demo class, how you collect fees without awkward calls, and how you talk to parents on WhatsApp."
+    },
+    {
+      "h2": "Is online tuition from home a real business in 2026?"
+    },
+    {
+      "p": "Yes, if you treat it like one. Home tutors who last tend to do three things early. They choose a narrow offer, such as \"Class 10 CBSE Maths, Hindi and English medium\", instead of \"all subjects\". They fix a monthly fee and a due date. And they keep a simple record of who has paid."
+    },
+    {
+      "p": "You do not need a website, an app or an institute name to begin. A phone, a laptop with a stable connection, a writing pad or tablet, and a quiet corner are enough for the first ten students."
+    },
+    {
+      "h2": "Step-by-step: how to start online tuition classes"
+    },
+    {
+      "steps": [
+        "Choose your subject, board and class range. One board and two or three classes is easier to fill than six.",
+        "Decide the format: 1:1, small batch (3-8 students) or larger batch (10-25). Small batches work best for a new tutor.",
+        "Fix the schedule: days, time in IST, and class length. Example: Mon-Wed-Fri, 6:00-7:00 pm.",
+        "Set your monthly fee and the due date (for example, the 5th of every month).",
+        "Create a booking link for a free or low-cost demo class so parents can pick a slot themselves.",
+        "Pick your class platform (Google Meet or Zoom) and test audio, camera and screen sharing.",
+        "Tell people: school WhatsApp groups you are already part of, your society group, Instagram and past students' parents.",
+        "After each demo, send the batch details and fee in one message, and add confirmed students to a batch group.",
+        "Collect fees by UPI, log every payment, and follow a fixed reminder schedule for late fees."
+      ]
+    },
+    {
+      "h2": "How many students per batch for online tuition?"
+    },
+    {
+      "p": "Batch size changes both your income and how much attention each child gets. Parents of younger children usually want smaller groups. Senior classes and competitive-exam batches can run larger because students work more independently."
+    },
+    {
+      "table": {
+        "head": [
+          "Format",
+          "Typical size",
+          "Works best for",
+          "Watch out for"
+        ],
+        "rows": [
+          [
+            "1:1 tuition",
+            "1 student",
+            "Weak students, board-exam revision, NRI families",
+            "Income is capped by your hours"
+          ],
+          [
+            "Small batch",
+            "3-8 students",
+            "Class 6-10, language classes, new tutors",
+            "Mixed levels in one batch"
+          ],
+          [
+            "Large batch",
+            "10-25 students",
+            "Class 11-12, exam prep, crash courses",
+            "Doubts go unanswered; needs a doubt slot"
+          ],
+          [
+            "Doubt-clearing slot",
+            "1-3 students",
+            "Add-on for any batch",
+            "Can eat your evenings if unpriced"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Platform limits matter for large batches. Google's Meet help page says a meeting with three or more participants on a free account has a time limit of one hour, and up to 100 participants ([Google Meet Help](https://support.google.com/meet/answer/13396001?hl=en-GB)). Zoom's free Basic plan lists 40 minutes per meeting and 100 participants, while its Pro plan lists 30 hours ([Zoom pricing](https://zoom.us/pricing)). A 60-minute class fits Meet's free tier. A 40-minute class fits Zoom Basic."
+    },
+    {
+      "h2": "How to set your online tuition fees"
+    },
+    {
+      "p": "There is no official rate card for private tuition, and fees vary a lot by city, board and class. A practical way to set yours is to work backwards from the monthly income you want."
+    },
+    {
+      "ul": [
+        "Write down your target monthly income from tuition.",
+        "Count the teaching hours you can give each month without burning out.",
+        "Divide income by hours to get your target hourly rate.",
+        "For a batch, divide the hourly rate by the expected number of students and round up.",
+        "Compare with what tutors near you charge for the same class, then adjust."
+      ]
+    },
+    {
+      "p": "Worked example (illustrative numbers only): Neha in Indore wants ₹30,000 a month and can teach 60 hours. That is ₹500 per hour. A 12-class-per-month batch of 6 students needs ₹1,000 per student per month to hit ₹500 an hour (₹500 x 12 hours ÷ 6 students). She rounds to ₹1,200 to cover holidays and the odd unpaid month."
+    },
+    {
+      "info": {
+        "title": "GST check",
+        "text": "Under GST, registration is generally required once your aggregate turnover crosses ₹20 lakh in a financial year (₹10 lakh in special category states), according to the [CBIC GST FAQ](https://cbic-gst.gov.in/faq.html). Most new home tutors are far below that. If you grow close to it, ask a CA whether your service is taxable or exempt before you register."
+      }
+    },
+    {
+      "h2": "Run a demo class with a booking link"
+    },
+    {
+      "p": "The demo class is where parents decide. Do not schedule it over twenty WhatsApp messages. Share one booking link that shows your free slots, lets the parent pick one, and sends the class link automatically."
+    },
+    {
+      "ul": [
+        "Keep demos to 20-30 minutes and one topic the child finds hard.",
+        "Ask two questions in the booking form: class and board, and the topic the child is struggling with.",
+        "Make demos free for your first batch. Later, a small paid demo filters out people who only want free help.",
+        "End with a two-line summary to the parent: what you noticed and what the batch would fix."
+      ]
+    },
+    {
+      "p": "If you use Instagram, put the same booking link in your bio so parents who find you there can book without messaging first. Our guide to [adding a booking link to your Instagram bio](/blog/booking-link-instagram-bio) walks through it."
+    },
+    {
+      "h2": "How to collect monthly tuition fees by UPI"
+    },
+    {
+      "p": "Most Indian parents are happy to pay by UPI. Paying is the easy part. Matching payments to students and chasing the ones who forget is where tutors lose time."
+    },
+    {
+      "table": {
+        "head": [
+          "Method",
+          "How it works",
+          "Good for",
+          "Downside"
+        ],
+        "rows": [
+          [
+            "UPI ID or QR",
+            "Parent scans and pays, sends a screenshot",
+            "First few students",
+            "Manual matching; screenshots get lost"
+          ],
+          [
+            "Payment link per student",
+            "You send a link with the amount and student name",
+            "10-30 students",
+            "You create links every month"
+          ],
+          [
+            "Pay at booking",
+            "Parent pays when booking a demo or extra session",
+            "Demos, doubt slots, revision sessions",
+            "Not built for monthly batch fees"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Whatever you use, keep one sheet with student name, parent name, month, amount and date paid. Ask parents to write the student's name in the UPI note. It saves an hour of matching at the end of every month."
+    },
+    {
+      "h2": "Fee reminder cadence that parents do not find rude"
+    },
+    {
+      "p": "Decide the schedule once and follow it for every family. Consistency is what keeps it from feeling personal. Here is a cadence that works for a fee due on the 5th."
+    },
+    {
+      "table": {
+        "head": [
+          "When",
+          "What to send",
+          "Tone"
+        ],
+        "rows": [
+          [
+            "1st of the month",
+            "Fee for the month, amount, due date, UPI ID",
+            "Friendly notice"
+          ],
+          [
+            "5th (due date)",
+            "Short reminder to those who have not paid",
+            "Neutral"
+          ],
+          [
+            "8th",
+            "Personal message to the parent, not the batch group",
+            "Polite, direct"
+          ],
+          [
+            "12th",
+            "Call or voice note; mention the next step",
+            "Firm, kind"
+          ],
+          [
+            "15th",
+            "Pause classes until the fee is cleared, as per your fee policy",
+            "Matter-of-fact"
+          ]
+        ]
+      }
+    },
+    {
+      "quote": "Namaste {Parent name} ji,\nOctober ki tuition fee ₹1,200 ({Student name}, Class 9 Maths) 5 October tak due hai.\nUPI: {your UPI ID}\nPayment ke baad note mein {Student name} likh dijiye. Dhanyavaad!",
+      "cite": "1st of the month notice (Hinglish)"
+    },
+    {
+      "quote": "Hello {Parent name}, a gentle reminder that {Student name}'s October fee of ₹1,200 was due on the 5th. If it is already paid, please ignore this and share the UPI reference so I can update my records. Thank you!",
+      "cite": "Personal reminder on the 8th (English)"
+    },
+    {
+      "p": "For more versions in Hindi and English, including the final reminder before pausing classes, see our [tuition fee reminder messages](/blog/tuition-fee-reminder-message)."
+    },
+    {
+      "h2": "Parent WhatsApp etiquette for tutors"
+    },
+    {
+      "p": "WhatsApp is where tuition is won or lost. Parents judge you on how you message as much as how you teach. A few rules keep things calm."
+    },
+    {
+      "ul": [
+        "Keep two kinds of chat: a batch group for timings and homework, and 1:1 chats for fees and feedback.",
+        "Never discuss one child's fees or marks in the batch group.",
+        "Set message hours, such as 9 am to 8 pm, and say so in your welcome message.",
+        "Ask every parent to save your number. Broadcast messages may not reach people who have not saved it.",
+        "Send a short monthly progress note per child. One line of specific praise does more than a long report.",
+        "Use voice notes for sensitive topics. Tone comes across better than text.",
+        "Write holiday and exam-week schedule changes at least a week in advance."
+      ]
+    },
+    {
+      "quote": "Welcome to the Class 9 Maths (Mon-Wed-Fri, 6 pm) batch!\n- Class link stays the same every day.\n- Homework is posted here after class.\n- For fees or personal questions, please message me directly.\n- I reply between 9 am and 8 pm.\nThank you for trusting me with {Student name}'s maths.",
+      "cite": "Batch group welcome message"
+    },
+    {
+      "h2": "Fee policy: write it once, share it at admission"
+    },
+    {
+      "p": "A one-paragraph fee policy prevents most arguments. Share it with the batch details after the demo, before the first payment. Keep it short and specific."
+    },
+    {
+      "ul": [
+        "Monthly fee, due date and accepted payment methods.",
+        "What happens to missed classes: a recording, a make-up slot, or nothing.",
+        "Whether fees are refunded if a student leaves mid-month.",
+        "When classes pause for unpaid fees.",
+        "How much notice you give before a fee change."
+      ]
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Book A Sloth gives tutors a booking page at bookasloth.com/yourname where parents book demo classes, doubt-clearing slots or revision sessions and pay up-front by UPI, card or netbanking. Bookings confirm automatically on payment, Google Meet links are created for online sessions, and parents get email and WhatsApp confirmations and reminders. Parents book with a phone OTP, with no app to download. See how it works for teachers on the [Book A Sloth page for tutors](/for/tutors), or compare the free and paid plans on [pricing](/pricing)."
+    },
+    {
+      "h2": "Online tuition FAQs"
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I start online tuition from home with no experience?",
+          "a": "Start with the subject and class you scored best in, offer three or four free demo classes to friends' and neighbours' children, and ask parents for honest feedback. Use those demos to fix your teaching pace and class length before you charge a monthly fee."
+        },
+        {
+          "q": "Which is better for online tuition, Google Meet or Zoom?",
+          "a": "Both work. On free accounts, Google Meet allows group meetings of up to one hour and Zoom Basic allows 40 minutes per meeting, each with up to 100 participants, as per their official pages. Pick the one whose free limit matches your class length, or upgrade when your batches grow."
+        },
+        {
+          "q": "How much should I charge for online tuition in India?",
+          "a": "There is no standard rate. Work out your target hourly rate from the income you want and the hours you can teach, divide it across the students in a batch, and compare with local tutors for the same class and board. Charge more for 1:1 and board-exam classes than for group batches."
+        },
+        {
+          "q": "Do I need GST registration for online tuition?",
+          "a": "Usually not at the start. The CBIC GST FAQ says registration is generally required once aggregate turnover crosses ₹20 lakh in a financial year, or ₹10 lakh in special category states. Ask a CA before you approach that level."
+        },
+        {
+          "q": "How do I remind parents about tuition fees without sounding rude?",
+          "a": "Use the same schedule for every family: a notice on the 1st, a short reminder on the due date, a personal message a few days later, and a call before you pause classes. Send fee messages in 1:1 chats, never in the batch group."
+        },
+        {
+          "q": "Should the demo class be free?",
+          "a": "For your first batch, yes, because you need students and feedback. Once your batches fill, a small paid demo reduces no-shows and filters for parents who are serious about joining."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-reduce-no-shows",
+  "title": "How to Reduce No-Shows: A Playbook for Indian Appointments",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "calendar",
+    "bell",
+    "wallet"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "How to reduce no-shows: take payment at booking, send a WhatsApp reminder 24 hours before, make rescheduling easy and publish a clear cancellation policy.",
+  "body": [
+    {
+      "p": "To reduce no-shows, take payment or a deposit when the slot is booked, send a WhatsApp reminder 24 hours before and a short nudge on the day, make rescheduling one tap, and publish a clear cancellation policy. Published research finds reminders alone cut missed appointments by about a third. Prepayment adds a commitment a reminder cannot."
+    },
+    {
+      "p": "This playbook is for Indian clinics, therapists, coaches, tutors and salons who lose money to empty slots. It covers what the research actually says, a reminder cadence you can copy, WhatsApp templates in English and Hinglish, and policy wording by profession. Every number below comes from a cited study or is a clearly labelled worked example."
+    },
+    {
+      "h2": "What does a no-show actually cost you?"
+    },
+    {
+      "p": "A no-show is a booked client who neither turns up nor cancels in time for you to refill the slot. The cost is simple to estimate: monthly loss = appointments per month × no-show rate × average fee. Use the [no-show cost calculator](/tools/no-show-cost-calculator) to run your own numbers."
+    },
+    {
+      "table": {
+        "head": [
+          "Worked example",
+          "Appointments / month",
+          "No-show rate",
+          "Average fee",
+          "Lost per month",
+          "Lost per year"
+        ],
+        "rows": [
+          [
+            "Physiotherapist, Pune",
+            "120",
+            "10%",
+            "₹600",
+            "₹7,200",
+            "₹86,400"
+          ],
+          [
+            "Therapist, Bengaluru (online)",
+            "60",
+            "8%",
+            "₹1,800",
+            "₹8,640",
+            "₹1,03,680"
+          ],
+          [
+            "Home tutor, Jaipur (demo classes)",
+            "40",
+            "20%",
+            "₹500",
+            "₹4,000",
+            "₹48,000"
+          ],
+          [
+            "Salon, Hyderabad (bridal trials)",
+            "30",
+            "12%",
+            "₹2,500",
+            "₹9,000",
+            "₹1,08,000"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "These rows are illustrations, not survey data. Plug in your own rate. Even a small practice with a 10% no-show rate usually loses more in a year than any booking tool costs. The time you spent preparing for a client who never came is extra and does not show up in the formula."
+    },
+    {
+      "h2": "Do appointment reminders reduce no-shows? What the research says"
+    },
+    {
+      "p": "Yes. Reminders are the best-studied fix for missed appointments. A systematic review by Hasvold and Wootton in the Journal of Telemedicine and Telecare pooled [29 studies of phone and SMS reminders](https://pmc.ncbi.nlm.nih.gov/articles/PMC3188816/) and found reminders reduced non-attendance by about 34% of the baseline rate. Manual phone calls did a little better (about 39%) than automated SMS or calls (about 29%), and sending the reminder the day before worked as well as a week before."
+    },
+    {
+      "p": "A separate meta-analysis by Guy and colleagues in Health Services Research looked at [18 studies of SMS reminders](https://pmc.ncbi.nlm.nih.gov/articles/PMC3419880/). Across the 8 randomised trials, people who got an SMS reminder had 1.48 times the odds of attending. The timing of the message (24, 48 or 72+ hours before) made no significant difference."
+    },
+    {
+      "p": "There is Indian evidence too. A study at a dental college in Muradnagar, Ghaziabad, published in the International Dental Journal, sent [SMS reminders to 96 outpatients and compared them with 110 who got none](https://pmc.ncbi.nlm.nih.gov/articles/PMC9374977). On-time attendance was 79.2% with the reminder against 35.5% without. The authors called SMS reminders “an effective strategy to reduce nonattendance rates”. It is a small, single-centre study, so treat the size of the effect with caution."
+    },
+    {
+      "table": {
+        "head": [
+          "Study",
+          "Setting",
+          "What it found"
+        ],
+        "rows": [
+          [
+            "Hasvold & Wootton, 2011 (systematic review)",
+            "29 hospital studies, mixed countries",
+            "Reminders cut non-attendance by about 34% of baseline; manual calls about 39%, automated about 29%"
+          ],
+          [
+            "Guy et al., 2012 (meta-analysis)",
+            "18 studies, 8 randomised trials",
+            "SMS reminder: odds of attending 1.48 times higher; timing made no clear difference"
+          ],
+          [
+            "Prasad & Anand, 2012",
+            "Dental OPD, Ghaziabad, 206 patients",
+            "On-time attendance 79.2% with SMS vs 35.5% without"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The pattern is consistent: almost every study finds reminders help, and a personal touch helps a bit more. Most of these studies used SMS. WhatsApp is where Indian clients actually read messages today, so a WhatsApp reminder is the natural local version of the same intervention."
+    },
+    {
+      "h2": "Does taking advance payment reduce no-shows?"
+    },
+    {
+      "p": "The evidence for deposits is thinner than for reminders, but it points the same way. A quality-improvement project at Ng Teng Fong General Hospital in Singapore (NUHS) added [a deposit for sleep-study appointments](https://child.chi.sg/learn/child-collection/projects/deposit-collection-reduces-no-show-rates-for-sleep-studies/), along with reminders and financial counselling. Monthly no-shows fell from 9.1% to 4.3%. It was a before-and-after project, not a randomised trial, so other changes may have helped."
+    },
+    {
+      "p": "The logic is easy to see in an Indian context. A client who has paid ₹1,500 through UPI has a reason to show up or to reschedule properly. A client who booked with a WhatsApp “ok done” has nothing at stake. Prepayment also changes who books: people who are not serious tend not to complete payment at all."
+    },
+    {
+      "p": "Book A Sloth does not yet have enough booking volume to publish its own no-show rates for prepaid versus unpaid bookings. We will publish aggregated numbers once the sample is large enough to be meaningful."
+    },
+    {
+      "h2": "9 ways to reduce no-shows in your clinic or practice"
+    },
+    {
+      "steps": [
+        "Take payment at booking. Full prepay for single sessions, or a deposit (25-50%) for long or high-value appointments. UPI makes this a 10-second step for the client.",
+        "Confirm instantly. Send the confirmation the moment the slot is booked, with date, time in IST, address or meeting link, and the amount paid.",
+        "Send a 24-hour reminder on WhatsApp. This is the reminder most studies tested. Include a one-tap reschedule link.",
+        "Add a same-day nudge 2-3 hours before. Short and practical: time, place, parking or link.",
+        "Make rescheduling easier than ghosting. If moving a slot takes one tap, clients move it instead of skipping it.",
+        "Publish a cancellation and no-show policy. Put it on the booking page and in the confirmation so nobody is surprised.",
+        "Keep the booking window short. A slot booked three weeks out is easier to forget than one booked for this week. Open your calendar 7-14 days ahead unless you have a reason not to.",
+        "Call first-timers and high-value clients. The research suggests a personal call beats an automated message. Save calls for the bookings that matter most.",
+        "Track repeat no-shows. After a second miss, ask that client to prepay in full before you hold a slot again."
+      ]
+    },
+    {
+      "h2": "A reminder cadence that reduces missed appointments"
+    },
+    {
+      "table": {
+        "head": [
+          "When",
+          "Channel",
+          "Purpose",
+          "Must include"
+        ],
+        "rows": [
+          [
+            "At booking",
+            "WhatsApp + email",
+            "Confirmation and receipt",
+            "Date, time in IST, place or link, amount paid, policy line"
+          ],
+          [
+            "24 hours before",
+            "WhatsApp",
+            "Main reminder",
+            "Time, reschedule link, cancellation cut-off"
+          ],
+          [
+            "2-3 hours before",
+            "WhatsApp",
+            "Same-day nudge",
+            "Time, address or meeting link"
+          ],
+          [
+            "10 minutes after start (if absent)",
+            "WhatsApp or call",
+            "Rescue the session",
+            "Can you still join? Link again"
+          ],
+          [
+            "Same day, after a no-show",
+            "WhatsApp",
+            "Rebook without blame",
+            "Rebooking link, policy reminder"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "For the full set of copy-paste messages by trade, see our [WhatsApp appointment reminder templates](/blog/appointment-reminder-templates). Four that matter most for no-shows are below."
+    },
+    {
+      "quote": "Hi Ananya, a reminder for your physiotherapy session tomorrow, Thu 16 Oct at 6:30 PM IST.\nPlace: Sanjeevani Physio, Baner Road, Pune (Maps pin below)\nPaid: ₹600 via UPI\nNeed to move it? Reschedule here: [link]\nFree reschedule up to 12 hours before.",
+      "cite": "24-hour reminder (clinic, prepaid)"
+    },
+    {
+      "quote": "Hi Rohit, see you at 11:00 AM today for your coaching call.\nGoogle Meet: [link]\nPlease join 2 minutes early so we can start on time.",
+      "cite": "Same-day nudge (online session)"
+    },
+    {
+      "quote": "Namaste Meena ji, kal 4 baje aapka hair spa appointment hai, Glow Studio, Banjara Hills.\nAgar time change karna ho to yahan se reschedule karein: [link]\nDhanyavaad!",
+      "cite": "24-hour reminder in Hinglish (salon)"
+    },
+    {
+      "quote": "Hi Karan, we missed you at today's 5 PM session. No problem, these things happen.\nYou can pick a new slot here: [link]\nAs per our policy, a missed session without notice is not refunded, but your next booking is confirmed as soon as it is paid.",
+      "cite": "After a no-show (polite, firm)"
+    },
+    {
+      "h2": "How to reduce patient no-shows vs client no-shows: what changes by profession"
+    },
+    {
+      "table": {
+        "head": [
+          "Profession",
+          "What to collect at booking",
+          "Reminder focus",
+          "Policy that works"
+        ],
+        "rows": [
+          [
+            "Clinic / doctor",
+            "Consultation fee in full, or a token amount for OPD",
+            "24 hours + 2 hours, with token or timing",
+            "Free reschedule up to 12 hours; late cancel fee adjusts to next visit"
+          ],
+          [
+            "Therapist / counsellor",
+            "Full session fee",
+            "24 hours, discreet wording",
+            "48-hour cancellation; late cancel charged in full"
+          ],
+          [
+            "Coach / consultant",
+            "Full fee or package",
+            "24 hours + meeting link 1 hour before",
+            "24-hour reschedule; no-show counts as a session used"
+          ],
+          [
+            "Tutor",
+            "Monthly fee in advance; small fee for demo class",
+            "Parent reminder the evening before",
+            "Missed classes not carried forward unless informed"
+          ],
+          [
+            "Salon / spa",
+            "Deposit for long services (bridal, colour)",
+            "24 hours + 3 hours",
+            "Deposit forfeited if cancelled under 24 hours"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Want the exact wording? Our [cancellation and no-show policy templates](/blog/cancellation-policy-template) give copy-ready versions for each of these trades with ₹ examples."
+    },
+    {
+      "h2": "How Book A Sloth helps reduce no-shows"
+    },
+    {
+      "p": "Book A Sloth was built around the two fixes with the strongest case: payment at booking and reminders. Clients book from your page at bookasloth.com/yourname, pay up-front by UPI, card or netbanking through Razorpay, and the booking confirms on payment. Confirmations and a 24-hour reminder go out by email and WhatsApp, and clients can reschedule or cancel from the link instead of disappearing. See how [booking notifications and reminders](/features/notifications) work."
+    },
+    {
+      "p": "The free Sloth plan charges 5% only on paid bookings; Sloth Active is ₹399 a month with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. Details are on the [pricing page](/pricing)."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is a normal no-show rate for appointments?",
+          "a": "It varies widely by profession, city and whether clients prepay, so there is no single normal figure. Published studies report very different baselines. Track your own rate for a month: no-shows divided by total booked appointments. That baseline tells you how much reminders and prepayment are worth to you."
+        },
+        {
+          "q": "How far in advance should I send an appointment reminder?",
+          "a": "Send the main reminder about 24 hours before, then a short nudge 2-3 hours before. A meta-analysis of SMS reminder studies found no significant difference between reminders sent 24, 48 or 72+ hours ahead, so the 24-hour reminder plus a same-day nudge is a sensible default."
+        },
+        {
+          "q": "Is WhatsApp better than SMS for appointment reminders in India?",
+          "a": "Most of the published research tested SMS, and it works. In India, WhatsApp is where clients read and reply to messages, and it supports links, locations and quick replies. Use WhatsApp as the main channel and email as the backup with the receipt."
+        },
+        {
+          "q": "Should I charge a no-show fee?",
+          "a": "The simplest version of a no-show fee is prepayment: the client pays when booking and the policy says a missed appointment without notice is not refunded. Chasing a fee after the fact rarely works. Keep the fee proportionate to your actual loss and state it clearly before the client pays."
+        },
+        {
+          "q": "How do I reduce no-shows without upsetting regular clients?",
+          "a": "Offer a free reschedule up to a clear cut-off, such as 12 or 24 hours before, and make rescheduling one tap. Regulars rarely mind a policy that lets them move a slot easily. Reserve strict rules, like full prepayment, for clients who have missed twice."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "how-to-price-coaching-services-india",
+  "title": "How to Price Coaching Services in India (₹ Packages)",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "target",
+    "coins",
+    "users"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Money",
+  "image": null,
+  "excerpt": "How to price coaching services in India: pick session, package or retainer pricing, work out your real hourly rate after prep and fees, and set ₹ packages.",
+  "body": [
+    {
+      "p": "To price coaching services in India, pick a model (session, package or retainer), count every hour a client takes including prep and WhatsApp support, price so your effective hourly rate meets your target, and add about 2.4% for payment fees. Public listings run from about ₹500 a session for some life coaches to ₹20,000 or more for metro executive coaches."
+    },
+    {
+      "p": "Nearly every guide on coaching prices quotes US dollars and US clients. This one uses rupees, Indian payment fees and Indian client habits. It covers life, career, health and business coaching, with worked examples you can copy."
+    },
+    {
+      "h2": "How much do life coaches charge in India?"
+    },
+    {
+      "p": "There is no official rate. What exists are listings and published reports, and they vary widely by niche and experience. These are the public figures we opened on 10 October 2026. Book A Sloth will publish its own aggregated numbers once its booking volume is large enough to be meaningful."
+    },
+    {
+      "table": {
+        "head": [
+          "Type of coaching",
+          "Public ₹ figure",
+          "Source"
+        ],
+        "rows": [
+          [
+            "Life coach, Jaipur (one listing)",
+            "₹500 for a single 1:1 session; ₹3,000 for a month with four sessions",
+            "LifeCoachHub coach profile"
+          ],
+          [
+            "Career counselling",
+            "₹700 to ₹1,000 per hour across India; ₹600 to ₹1,200 by city",
+            "UrbanPro fee estimate page"
+          ],
+          [
+            "Executive coaching, metro cities",
+            "₹20,000 to ₹1,00,000 per session for an experienced coach",
+            "The Ken, Cost to Company podcast, Jan 2023"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The Jaipur figures come from a single [LifeCoachHub profile](https://www.lifecoachhub.com/coach/pooja-maheshwari), so treat them as one data point, not a market rate. UrbanPro's [career counselling fee page](https://www.urbanpro.com/career-counselling-fees) gives the career coaching range. On executive coaching, The Ken reported that a good executive coach in an Indian metro “typically costs between 20 thousand rupees to a lakh a session” in its [Cost to Company episode](https://the-ken.com/podcasts/cost-to-company/executive-coaching-is-true-luxury/). The gap between ₹500 and ₹1 lakh tells you one thing: the niche and the buyer set the price far more than the word “coach”."
+    },
+    {
+      "h2": "Coaching pricing models: session, package, retainer or group"
+    },
+    {
+      "table": {
+        "head": [
+          "Model",
+          "How it works",
+          "Good for",
+          "Watch out for"
+        ],
+        "rows": [
+          [
+            "Single session",
+            "One fixed fee per call",
+            "Career clarity calls, first sessions, one-off reviews",
+            "Clients drift away after one call"
+          ],
+          [
+            "Package",
+            "4 to 12 sessions sold together, paid upfront",
+            "Life, health and career coaching with a clear goal",
+            "Unused sessions and expiry disputes"
+          ],
+          [
+            "Monthly retainer",
+            "Fixed monthly fee for calls plus async support",
+            "Business and executive coaching",
+            "Unlimited WhatsApp creeping into your evenings"
+          ],
+          [
+            "Group programme",
+            "Same content for 6 to 20 people, fixed dates",
+            "Coaches with a repeatable method",
+            "Needs marketing to fill each cohort"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Most new coaches start with single sessions, then move to packages once they know how many sessions a typical client needs. Packages are where coaching income becomes predictable."
+    },
+    {
+      "h2": "How to price a coaching package, step by step"
+    },
+    {
+      "steps": [
+        "Decide the outcome and how many sessions it usually takes, for example six sessions over 12 weeks.",
+        "Count all the hours: live sessions, prep and notes, plus any WhatsApp or email support you promise.",
+        "Set your target effective hourly rate. Use the consultation fee formula: income plus costs divided by billable hours.",
+        "Multiply hours by your hourly rate to get the package base.",
+        "Divide by (1 minus your total fee %) to cover gateway and platform fees.",
+        "Round to a clean number and check it is below six single sessions bought separately."
+      ]
+    },
+    {
+      "h2": "Worked example: a life coach's 6-session package"
+    },
+    {
+      "p": "Meera is a life coach in Bengaluru. This is an example to show the maths, not market data. She sells a 12-week programme with six 60-minute calls. She spends 30 minutes before or after each call on prep and notes, and allows about an hour a month of WhatsApp support."
+    },
+    {
+      "table": {
+        "head": [
+          "Line",
+          "Calculation",
+          "Amount"
+        ],
+        "rows": [
+          [
+            "Live sessions",
+            "6 × 1 hour",
+            "6 hours"
+          ],
+          [
+            "Prep and notes",
+            "6 × 0.5 hour",
+            "3 hours"
+          ],
+          [
+            "WhatsApp support",
+            "3 months × 1 hour",
+            "3 hours"
+          ],
+          [
+            "Total time",
+            "",
+            "12 hours"
+          ],
+          [
+            "Target effective rate",
+            "",
+            "₹1,500 per hour"
+          ],
+          [
+            "Package base",
+            "12 × ₹1,500",
+            "₹18,000"
+          ],
+          [
+            "After 2.36% gateway fee",
+            "₹18,000 ÷ 0.9764",
+            "₹18,435"
+          ],
+          [
+            "Published price",
+            "",
+            "₹18,500"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Her single session is ₹3,500, so six bought separately cost ₹21,000. The package saves the client ₹2,500, about 12%, which is a real reason to commit. Notice what happens if she ignores prep and WhatsApp time: she would price only 6 hours and charge about ₹9,000, half of what the work actually costs her."
+    },
+    {
+      "h2": "Your effective hourly rate after fees"
+    },
+    {
+      "p": "The price a client pays is not what you keep. [Razorpay's pricing page](https://razorpay.com/pricing/) lists a 2% standard platform fee on UPI, cards and netbanking, plus 18% GST on that fee, which is about 2.36%. Some booking platforms also charge a commission. Here is Meera's ₹18,500 package under two setups, rounded to the nearest rupee."
+    },
+    {
+      "table": {
+        "head": [
+          "Setup",
+          "Fees on ₹18,500",
+          "You keep",
+          "Per hour (12 hours)"
+        ],
+        "rows": [
+          [
+            "Gateway fee only (2.36%)",
+            "₹437",
+            "₹18,063",
+            "₹1,505"
+          ],
+          [
+            "Gateway fee + 5% commission",
+            "₹437 + ₹925",
+            "₹17,138",
+            "₹1,428"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Run your own numbers through the [earnings calculator](/earnings-calculator) before you publish a price. A 5% difference looks small on one booking and adds up across a year."
+    },
+    {
+      "h2": "Career coach fees and retainers for business coaching"
+    },
+    {
+      "p": "Career coaches often sell short packages: a resume and LinkedIn review, two mock interviews and a strategy call. Price each piece by time, then bundle. UrbanPro's estimate of ₹700 to ₹1,000 an hour for career counselling is a floor for a generalist; a coach with hiring-manager experience in a niche such as product management or data science can usually charge more."
+    },
+    {
+      "p": "Business and executive coaches usually move to monthly retainers. Example: Arjun, a business coach in Mumbai, charges ₹25,000 a month for two 60-minute calls plus async support capped at two hours a week. That is about 2 hours of calls, 2 hours of prep and 8 hours of support, or 12 hours a month, so roughly ₹2,083 an hour before fees. Write the cap into the agreement. Without it, a retainer slowly becomes an always-on helpline."
+    },
+    {
+      "h2": "Sample coaching packages in rupees"
+    },
+    {
+      "table": {
+        "head": [
+          "Package",
+          "What's included",
+          "Example price"
+        ],
+        "rows": [
+          [
+            "Clarity call",
+            "1 × 60-min call with a written action plan",
+            "₹3,500"
+          ],
+          [
+            "Starter",
+            "3 calls over 6 weeks + notes after each",
+            "₹7,000"
+          ],
+          [
+            "Core",
+            "6 calls over 12 weeks + WhatsApp support (1 hr/month)",
+            "₹18,500"
+          ],
+          [
+            "Premium",
+            "12 calls over 6 months + a 15-min weekly check-in",
+            "₹37,500"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The packages follow Meera’s ₹1,500 effective hourly rate plus gateway fees, and the single call carries a premium so packages are the better deal. Change the rate and the prices move with it. Three options are enough. Put the offer you most want to sell in the middle, where it reads as the sensible choice."
+    },
+    {
+      "h2": "Free discovery call or paid first session?"
+    },
+    {
+      "p": "A free 15 to 20-minute discovery call makes sense when you sell packages of ₹15,000 or more, because one conversion pays for many calls. For lower prices, a paid first session filters out people who are only browsing and reduces no-shows. Some coaches charge a small fee for the first call and adjust it against the package if the client signs up."
+    },
+    {
+      "h2": "How to collect coaching package fees"
+    },
+    {
+      "ul": [
+        "Take the package fee upfront, or split it into two instalments with the second due before session 4.",
+        "State the expiry: for example, six sessions to be used within 16 weeks.",
+        "Write a reschedule rule: free with 24 hours' notice; late cancellations count as a used session.",
+        "Send a GST invoice if you are registered and the client asks for one."
+      ]
+    },
+    {
+      "p": "If you are setting up from scratch, our guide on [how to start an online consultation business in India](/blog/start-online-consultation-practice-india) covers the booking page, UPI collection and GST threshold in order."
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "On Book A Sloth you list each coaching offer, such as a clarity call or a paid first session, as a fixed-price service on your booking page. Clients pick a slot, pay upfront by UPI, card or netbanking through Razorpay, and the booking confirms on payment with a Google Meet link and WhatsApp reminders. Sloth Active adds a client CRM with notes and history. It does not run recurring billing, so monthly retainers are collected as separate payments. See how it works for [life coaches](/for/life-coaches). The free plan charges 5% only on paid bookings; Sloth Active is ₹399 a month with 0% commission, plus Razorpay's fee of about 2.4% on both."
+    },
+    {
+      "h2": "Coaching pricing FAQs"
+    },
+    {
+      "faq": [
+        {
+          "q": "How much do life coaches charge in India?",
+          "a": "Public figures vary widely. One Jaipur life coach on LifeCoachHub lists ₹500 for a single session and ₹3,000 for a month of four sessions, while The Ken reported experienced executive coaches in metros at ₹20,000 to ₹1 lakh a session. Niche, experience and the buyer drive the price."
+        },
+        {
+          "q": "What are typical career coach fees in India?",
+          "a": "UrbanPro estimates career counselling at ₹700 to ₹1,000 per hour across India, with city estimates from ₹600 to ₹1,200. Specialist career coaches with hiring experience in a specific industry often price above this, usually as short packages rather than single hours."
+        },
+        {
+          "q": "Should I charge per session or sell coaching packages?",
+          "a": "Start with single sessions while you learn how many sessions a client needs. Then sell packages built around an outcome, such as six sessions over 12 weeks. Packages make income predictable and clients more committed, as long as you state the expiry and reschedule rules."
+        },
+        {
+          "q": "How do I calculate my effective hourly rate as a coach?",
+          "a": "Add every hour a client takes, including prep, notes and WhatsApp support, then divide what you keep after fees by those hours. A ₹18,500 package that takes 12 hours and loses 2.36% to gateway fees works out to about ₹1,505 an hour."
+        },
+        {
+          "q": "How much should a new coach charge in India?",
+          "a": "Work out your target income plus costs, divide by the hours you can bill, and add about 2.4% for gateway fees. A new coach targeting ₹1,000 an hour might price a 60-minute session at ₹1,000 to ₹1,500 and raise it after the first 20 paying clients."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "consultation-fees-india",
+  "title": "How Much to Charge for Consultation in India (2026)",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "coins",
+    "chart",
+    "scale"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Money",
+  "image": null,
+  "excerpt": "How much to charge for consultation in India: divide target income plus costs by billable sessions, add gateway fees, then check public ₹ rates for your field.",
+  "body": [
+    {
+      "p": "To work out how much to charge for a consultation in India, add the monthly income you want to your monthly business costs, divide by the number of sessions you can realistically fill, then add about 2.4% for payment gateway fees. Check the result against public ₹ rates for your profession and round it to a clean number."
+    },
+    {
+      "p": "Most advice on consultation charges in India comes from Instagram comments and Reddit threads. This page gives you a formula you can run in five minutes, worked examples for coaches, consultants and therapists, and a small set of public price benchmarks with their sources and dates."
+    },
+    {
+      "h2": "The consultation fee formula"
+    },
+    {
+      "p": "Your fee per session has to cover three things: what you take home, what the business spends, and what the payment rails keep. Write it as one line."
+    },
+    {
+      "quote": "Base fee = (target monthly income + monthly costs) ÷ billable sessions per month\nFinal fee = Base fee ÷ (1 − total fee %)",
+      "cite": "Consultation fee formula"
+    },
+    {
+      "ul": [
+        "Target monthly income: what you want to earn before income tax.",
+        "Monthly costs: internet, phone, video tool, software, CA fees, courses, rent if you have a room.",
+        "Billable sessions: sessions you can fill and deliver, not the hours you are awake. Prep, notes, marketing and admin are unpaid time.",
+        "Total fee %: the gateway fee plus any platform commission you pay on each booking."
+      ]
+    },
+    {
+      "p": "On fees: [Razorpay's pricing page](https://razorpay.com/pricing/) lists a 2% standard platform fee on domestic UPI, cards and netbanking, with 18% GST charged on that fee. That makes about 2.36% of each payment. If your booking platform also takes a commission, add it to the same percentage."
+    },
+    {
+      "h2": "How to calculate your fee: step by step"
+    },
+    {
+      "steps": [
+        "Write down the monthly income you need before tax. Be honest about rent, EMIs and savings.",
+        "List every monthly business cost and add them up. Annual costs go in as one-twelfth.",
+        "Estimate billable sessions. Count working days, multiply by sessions per day you can deliver well, then cut 20% for gaps, festivals and no-shows.",
+        "Divide income plus costs by billable sessions to get your base fee.",
+        "Divide the base fee by (1 minus your total fee %) so you still net the base after fees.",
+        "Round to a clean number such as ₹999, ₹1,500 or ₹2,500 and publish it."
+      ]
+    },
+    {
+      "h2": "Worked examples: consultation charges by profession"
+    },
+    {
+      "p": "These are examples to show the maths. They are not market data. Swap in your own numbers."
+    },
+    {
+      "table": {
+        "head": [
+          "Example",
+          "Income + costs / month",
+          "Billable sessions",
+          "Base fee",
+          "After 2.36% gateway",
+          "Published fee"
+        ],
+        "rows": [
+          [
+            "Ananya, career coach, Pune, 60 min",
+            "₹60,000 + ₹6,000",
+            "40",
+            "₹1,650",
+            "₹1,690",
+            "₹1,700"
+          ],
+          [
+            "Rahul, business consultant, Bengaluru, per hour",
+            "₹1,50,000 + ₹15,000",
+            "60",
+            "₹2,750",
+            "₹2,816",
+            "₹2,900"
+          ],
+          [
+            "Farah, counsellor, Lucknow, 50 min",
+            "₹45,000 + ₹5,000",
+            "48",
+            "₹1,042",
+            "₹1,067",
+            "₹1,100"
+          ],
+          [
+            "Vikram, online fitness trainer, Jaipur, 45 min",
+            "₹40,000 + ₹4,000",
+            "80",
+            "₹550",
+            "₹563",
+            "₹600"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Add platform commission if you pay one. If Ananya also paid a 5% commission per booking, her total fee would be 7.36%, and ₹1,650 ÷ 0.9264 gives about ₹1,781. She would publish ₹1,800. At around ₹8,000 a month in bookings, a flat monthly plan usually costs less than a 5% commission, so check which plan fits your volume."
+    },
+    {
+      "h2": "Consultation fee kitna lena chahiye? Public ₹ benchmarks"
+    },
+    {
+      "p": "Once you have a number from the formula, sanity-check it against what clients see elsewhere. The figures below are listing estimates or published ranges we opened on 10 October 2026. They are a reference point, not a rule. Book A Sloth will publish its own aggregated numbers once its booking volume is large enough to be meaningful."
+    },
+    {
+      "table": {
+        "head": [
+          "Profession",
+          "Public range",
+          "Source"
+        ],
+        "rows": [
+          [
+            "Career counselling",
+            "₹700 to ₹1,000 per hour across India; ₹700 to ₹1,200 in Bangalore",
+            "UrbanPro fee estimate page"
+          ],
+          [
+            "Therapy and counselling (private)",
+            "From around ₹800 to ₹3,000 or more per session",
+            "TherapyRoute India guide, reviewed July 2026"
+          ],
+          [
+            "Dermatologist, Bengaluru (in clinic)",
+            "₹600 to ₹1,000 across 10 listed doctors",
+            "Practo listing page"
+          ],
+          [
+            "Personal trainer, 1:1",
+            "₹500 to ₹800 per hour; online ₹500 to ₹1,000",
+            "UrbanPro Pune listing page"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Sources: UrbanPro's [career counselling fee page](https://www.urbanpro.com/career-counselling-fees) gives the national and city estimates. TherapyRoute's [2026 India therapy cost guide](https://www.therapyroute.com/article/how-much-does-therapy-cost-in-india-by-therapyroute) says private sessions “commonly run from around ₹800” and flags that most published ranges come from blogs rather than official data. The dermatologist range is from the [Practo Bengaluru dermatologist listing](https://www.practo.com/bangalore/dermatologist) excluding sponsored clinics. For trainers, see our [personal trainer rate card](/blog/personal-trainer-charges-india)."
+    },
+    {
+      "h2": "How much to charge per hour as a consultant in India"
+    },
+    {
+      "p": "Business, marketing, finance and tech consultants usually charge by the hour or by the project. Hourly pricing is easier to start with. Use the same formula, but count billable hours instead of sessions. Many independent consultants bill far fewer hours than they work, because sales calls, proposals and travel eat the week. If you work 160 hours a month, planning for 60 to 80 billable hours is a cautious starting point."
+    },
+    {
+      "p": "Once clients come back, move repeat work to a fixed project fee or a monthly retainer. You can use the hourly rate to price it: estimate the hours, multiply, and add a margin for revisions. Our guide on [how to price coaching services](/blog/how-to-price-coaching-services-india) covers packages and retainers in more detail."
+    },
+    {
+      "h2": "Online consultation fees vs in-person fees"
+    },
+    {
+      "p": "Online sessions save you travel time and room rent, so you can fit more of them in a day. Some practitioners price online sessions the same as in-person ones, because the expertise is the same. Others charge a little less online to widen the client base. Home visits are the opposite: add the travel time to the session length before you price them, or add a fixed travel charge by area."
+    },
+    {
+      "table": {
+        "head": [
+          "Format",
+          "Your hidden cost",
+          "Pricing approach"
+        ],
+        "rows": [
+          [
+            "Online video",
+            "Video tool, stable internet",
+            "Same as in person, or slightly lower"
+          ],
+          [
+            "In your clinic or studio",
+            "Rent, electricity, travel to work",
+            "Base price"
+          ],
+          [
+            "Home visit",
+            "Travel time and fuel",
+            "Base price plus a travel charge"
+          ],
+          [
+            "Phone consultation",
+            "Very little",
+            "Same as video for advice-led work"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Signs your consultation fee is too low"
+    },
+    {
+      "ul": [
+        "Your calendar is full three weeks out and you still feel short of money.",
+        "Nobody ever questions the price.",
+        "You dread sessions with clients who pushed for a discount.",
+        "You cannot afford a course, a tool or a week off.",
+        "Your fee has not changed in two years while your costs have."
+      ]
+    },
+    {
+      "p": "If two or more apply, raise the price for new clients by 15% to 25% and keep existing clients on the old rate for a month. Publish the new number on your booking page so the change is not a negotiation."
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Once you have a fee, publish it. On Book A Sloth each service has a fixed price on your booking page, and clients pay upfront by UPI, card or netbanking through Razorpay before the slot is confirmed. The free Sloth plan charges 5% only on paid bookings. Sloth Active is ₹399 a month with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. Compare the plans on the [pricing page](/pricing) or estimate your take-home with the [earnings calculator](/earnings-calculator)."
+    },
+    {
+      "h2": "Consultation fees FAQs"
+    },
+    {
+      "faq": [
+        {
+          "q": "How much should I charge for a consultation in India as a beginner?",
+          "a": "Start from your costs and income target, not from senior practitioners' fees. Divide income plus costs by the sessions you can fill and add about 2.4% for gateway fees. A beginner who needs ₹40,000 a month including costs, across 40 sessions, lands near ₹1,000 to ₹1,100 per session."
+        },
+        {
+          "q": "What is a normal online consultation fee in India?",
+          "a": "It depends on the profession. UrbanPro estimates career counselling at ₹700 to ₹1,000 per hour, and TherapyRoute's 2026 guide puts private therapy from around ₹800 to ₹3,000 or more per session. Experience, city and niche move the number a lot."
+        },
+        {
+          "q": "Should I charge GST on my consultation fee?",
+          "a": "Only if you are registered for GST. Service providers in most states must register once aggregate turnover crosses ₹20 lakh in a financial year. Below that you can register voluntarily, often because business clients want a GST invoice. Confirm your case with a CA."
+        },
+        {
+          "q": "How do I include payment gateway fees in my price?",
+          "a": "Divide your base fee by one minus the fee percentage. With Razorpay's 2% fee plus 18% GST on it, the total is about 2.36%. So a ₹1,000 base becomes ₹1,000 ÷ 0.9764, which is about ₹1,024. Round up to ₹1,050."
+        },
+        {
+          "q": "Should I charge per hour or per session?",
+          "a": "Charge per session when the outcome fits a fixed slot, such as a coaching call or a diet review. Charge per hour when the work varies in length, such as consulting or audits. Either way, publish a fixed price for each service so clients can book without asking."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "collect-payments-from-clients-india",
+  "title": "How to Collect Payments from Clients Online in India (2026)",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "wallet",
+    "coins",
+    "calendar"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Money",
+  "image": null,
+  "excerpt": "To collect payments from clients online in India, use a UPI ID, a payment link, a gateway or pay-at-booking. Compare fees, refunds and GST invoices here.",
+  "body": [
+    {
+      "p": "To collect payments from clients online in India, use one of four methods: a UPI ID or QR code, a payment link, a payment gateway checkout, or pay-at-booking through a booking page. UPI straight to your bank is the cheapest. A gateway costs about 2% plus GST on the fee, but it confirms each payment automatically."
+    },
+    {
+      "p": "This guide compares all four on fees, confirmation, refunds and GST invoices. It includes a decision table by profession and the UPI fee rules that start on 15 October 2026."
+    },
+    {
+      "h2": "The 4 ways to collect payment from clients in India"
+    },
+    {
+      "p": "Every method answers the same three questions differently. How much do you lose per payment? Who checks that the money actually arrived? And what happens when you need to refund? Here is the short version."
+    },
+    {
+      "table": {
+        "head": [
+          "Method",
+          "Cost to you",
+          "Confirms payment by itself?",
+          "Refunds",
+          "GST invoice"
+        ],
+        "rows": [
+          [
+            "UPI ID or QR to your own account",
+            "Free for personal transfers; zero MDR for small P2PM merchants up to ₹1 lakh a month",
+            "No. You check your bank app",
+            "You send the money back by UPI",
+            "You make it by hand"
+          ],
+          [
+            "Payment link (Razorpay, Cashfree and others)",
+            "Gateway fee, about 2% plus 18% GST on that fee",
+            "Yes. The link shows as paid",
+            "From the gateway dashboard",
+            "Usually separate"
+          ],
+          [
+            "Gateway checkout on your website",
+            "Same gateway fee plus website cost",
+            "Yes",
+            "From the gateway dashboard",
+            "Depends on your setup"
+          ],
+          [
+            "Pay-at-booking on a booking page",
+            "Gateway fee plus any platform fee or commission",
+            "Yes, and the appointment confirms too",
+            "Through the booking tool",
+            "Often generated for you"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Option 1: Accept UPI payments to your own UPI ID or QR"
+    },
+    {
+      "p": "This is how most Indian professionals start. You share your UPI ID or a QR code on WhatsApp, the client pays from any UPI app, and the money lands in your bank account in seconds. It costs nothing to set up."
+    },
+    {
+      "p": "The fee rules favour small sellers. The Department of Financial Services [FAQ on UPI merchant charges](https://financialservices.gov.in/sites/default/files/2026-09/FAQs---Merchant-Discount-Rate--MDR--on-Select-UPI--P2M--Transactions_0.pdf), dated 15 September 2026, says person-to-person UPI stays free for both sides. It also says small merchants in the P2PM category, who receive up to ₹1 lakh a month through a UPI QR into their own account, keep zero MDR. If inward UPI credits cross ₹1 lakh a month for 3 months in a row, the account moves to the regular P2M category."
+    },
+    {
+      "p": "The cost of UPI-to-self is your time. These are the weak points:"
+    },
+    {
+      "ul": [
+        "Nothing confirms itself. You open the bank app, find the credit, and match it to a client by name or amount.",
+        "A screenshot is not proof. Always check the credit in your own bank app before you confirm a slot or start work.",
+        "Partial or wrong amounts happen. A client pays ₹1,200 instead of ₹1,500 and you now need a second awkward message.",
+        "Refunds are manual. You send the money back yourself and keep your own record of it.",
+        "Records live in your head. At tax time you rebuild a year of payments from bank statements."
+      ]
+    },
+    {
+      "p": "UPI-to-self works well when you have a few regular clients who pay once a month. It breaks down when you take many small bookings a week."
+    },
+    {
+      "h2": "Option 2: Payment links for freelancers and consultants"
+    },
+    {
+      "p": "A payment link is a URL for a fixed amount. You send it on WhatsApp, SMS or email, the client pays by UPI, card, netbanking or wallet, and the gateway marks it paid. [Razorpay Payment Links](https://razorpay.com/payment-links/) can be shared on SMS, email or WhatsApp and support taking an advance or instalments."
+    },
+    {
+      "p": "Fees come from the gateway. Razorpay's [standard pricing page](https://razorpay.com/pricing/) (last updated May 2026) lists a 2% platform fee on domestic cards, UPI, netbanking and wallets, 2.15% on corporate cards, no setup fee, and 18% GST on the fee itself. Cashfree's [gateway charges page](https://www.cashfree.com/payment-gateway-charges/) lists a standard platform fee of 1.95% plus taxes."
+    },
+    {
+      "p": "Here is what that means in rupees. These are worked examples at the standard rates, before any negotiated pricing."
+    },
+    {
+      "table": {
+        "head": [
+          "Client pays",
+          "Razorpay fee (2% + 18% GST)",
+          "You receive",
+          "Cashfree fee (1.95% + 18% GST)",
+          "You receive"
+        ],
+        "rows": [
+          [
+            "₹1,500",
+            "₹35.40",
+            "₹1,464.60",
+            "₹34.52",
+            "₹1,465.48"
+          ],
+          [
+            "₹5,000",
+            "₹118",
+            "₹4,882",
+            "₹115.05",
+            "₹4,884.95"
+          ],
+          [
+            "₹20,000",
+            "₹472",
+            "₹19,528",
+            "₹460.20",
+            "₹19,539.80"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The formula is simple. Fee = amount × rate. GST = fee × 18%. What you keep = amount minus fee minus GST. On a 2% rate the total deduction is 2.36% of the payment."
+    },
+    {
+      "h2": "UPI fee rules from 15 October 2026"
+    },
+    {
+      "p": "The same government FAQ sets out a new merchant discount rate (MDR) for UPI from 15 October 2026. Person-to-merchant UPI payments up to ₹2,000 stay free of MDR. Above ₹2,000, a 0.4% MDR applies, capped at ₹300 for payments of ₹75,000 and above. The FAQ is explicit that “merchants on-boarded cannot pass on MDR charges to customers”, so do not add a UPI surcharge to your price."
+    },
+    {
+      "ul": [
+        "₹2,000 consultation paid by UPI to a merchant account: no MDR.",
+        "₹3,000 session: 0.4% MDR, which is ₹12.",
+        "₹50,000 project milestone: 0.4% MDR, which is ₹200.",
+        "₹1,00,000 payment: capped at ₹300 instead of ₹400."
+      ]
+    },
+    {
+      "p": "MDR is what the acquiring bank charges a merchant. A payment gateway adds its own platform fee on top. Razorpay's page, written before this change, already charged its 2% platform fee on UPI. Check your gateway's revised UPI pricing after 15 October before you compare options again."
+    },
+    {
+      "h2": "Option 3: Website checkout, or accept payment without a website"
+    },
+    {
+      "p": "Yes. You do not need a website to accept online payments in India. A UPI ID, a payment link or a booking page with built-in checkout all work from a WhatsApp chat or an Instagram bio. A website checkout only makes sense if you already run a site with steady traffic and want payments inside it."
+    },
+    {
+      "p": "If you do embed a gateway on your own site, you take on the setup, the testing and the upkeep. For a solo professional selling time, that effort rarely pays back compared with a link."
+    },
+    {
+      "h2": "Option 4: Pay-at-booking (how to take online consultation fees)"
+    },
+    {
+      "p": "If you sell time, such as consultations, sessions, classes or shoots, the cleanest method is to take the fee when the client books. The client picks a slot, pays in the same step, and the appointment confirms only when the payment succeeds. There is no invoice to follow up, and a client who has paid has a reason to turn up."
+    },
+    {
+      "p": "You can take the full fee or a part of it. Our guide on [advance payment for appointments](/blog/advance-payment-for-appointments) covers deposit vs full prepay, how much to charge by profession and how to word the refund policy."
+    },
+    {
+      "h2": "Which payment method fits your profession?"
+    },
+    {
+      "table": {
+        "head": [
+          "Profession",
+          "How you usually bill",
+          "Best fit",
+          "Why"
+        ],
+        "rows": [
+          [
+            "Doctor or clinic",
+            "Per consultation",
+            "Pay-at-booking for online consults; UPI QR at the counter for walk-ins",
+            "Online slots fill only with paid patients"
+          ],
+          [
+            "Therapist or counsellor",
+            "Per session, often weekly",
+            "Pay-at-booking",
+            "Keeps money talk out of the session"
+          ],
+          [
+            "Tutor or coaching class",
+            "Monthly batch fee",
+            "UPI QR or a payment link, plus a monthly reminder",
+            "One payment per student per month"
+          ],
+          [
+            "Life coach or consultant",
+            "Per session or package",
+            "Pay-at-booking for single sessions; payment link for packages",
+            "Fixed prices suit prepay"
+          ],
+          [
+            "Salon or spa",
+            "Per service",
+            "Advance at booking, balance by UPI QR at the counter",
+            "Blocks chair time without full prepay"
+          ],
+          [
+            "Photographer",
+            "Per shoot, high ticket",
+            "Booking amount by link, balance before delivery",
+            "Splits risk on large amounts"
+          ],
+          [
+            "Freelance designer, developer or writer",
+            "Per project or milestone",
+            "Payment link per milestone with an invoice",
+            "Matches how projects are scoped"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "How to set up client payments: step by step"
+    },
+    {
+      "steps": [
+        "Fix your prices. A clear ₹ price per session, package or milestone makes prepayment easy to ask for.",
+        "Choose your method from the table above. Use one main method so clients learn the routine.",
+        "Separate business money. A dedicated bank account or at least a dedicated UPI ID makes records and tax filing easier.",
+        "Write down your terms before work starts: amount, due date, what happens on cancellation, and how refunds work.",
+        "Send one clear request: amount, what it is for, and a single UPI ID or link. Two options create delay.",
+        "Confirm receipt in your bank app or gateway dashboard, never from a screenshot alone.",
+        "Reconcile once a week. Match every credit to a client and an invoice.",
+        "If you are registered for GST, issue a tax invoice for each payment. Ask your CA how to treat advances."
+      ]
+    },
+    {
+      "h2": "What to do when a client pays late"
+    },
+    {
+      "p": "Even with good terms, some invoices slip. Send a short, friendly nudge before the due date, another on the day, and firmer follow-ups after that. Our [payment reminder message templates](/blog/payment-reminder-message) give you copy-paste WhatsApp and email versions for each stage, each with a UPI link line."
+    },
+    {
+      "info": {
+        "title": "A simple rule",
+        "text": "If the work happens at a fixed time, collect before that time. If the work is a project, collect in milestones. Chasing money after delivery is the most expensive way to get paid."
+      }
+    },
+    {
+      "h2": "Collecting payment at booking with Book A Sloth"
+    },
+    {
+      "p": "Book A Sloth is built for the pay-at-booking model. You get a booking page at bookasloth.com/yourname with fixed-price services. Clients pay up-front through Razorpay by UPI, card or netbanking, and the booking confirms automatically once the payment succeeds. Confirmations and reminders go out on email and WhatsApp, and GST invoices are generated for you. You can read how it works on the [payments feature page](/features/payments)."
+    },
+    {
+      "p": "The free Sloth plan charges 5% only on paid bookings. Sloth Active costs ₹399 a month or ₹3,599 a year with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. Compare the two on the [pricing page](/pricing). A [payment gateway](/glossary/payment-gateway) fee is unavoidable for automatic confirmation, so the real choice is how much of the admin you want to keep doing yourself."
+    },
+    {
+      "faq": [
+        {
+          "q": "Can I use my personal UPI ID to collect payments from clients?",
+          "a": "Many small professionals do. The Department of Financial Services says person-to-person UPI is free, and small P2PM merchants receiving up to ₹1 lakh a month through a UPI QR into their own account keep zero MDR. A separate account for business payments still makes your records and tax filing much easier."
+        },
+        {
+          "q": "What does Razorpay charge for UPI payments?",
+          "a": "Razorpay's standard pricing page, last updated May 2026, lists a 2% platform fee on UPI, domestic cards, netbanking and wallets, plus 18% GST on that fee. There is no setup fee. Check the page again after 15 October 2026, when the new UPI MDR framework starts."
+        },
+        {
+          "q": "How do I take online consultation fees before the session?",
+          "a": "Use a booking page that takes payment at the moment of booking, or send a payment link and share the meeting link only after it is paid. Pay-at-booking is cleaner because the slot confirms automatically when the client pays, so you never chase anyone."
+        },
+        {
+          "q": "Do I need a website to accept online payments in India?",
+          "a": "No. A UPI ID, a payment link or a booking page with built-in checkout all work from WhatsApp, Instagram or email. A website checkout is only worth building if you already have a site with steady traffic."
+        },
+        {
+          "q": "Will my clients pay extra if they pay by UPI?",
+          "a": "No. The government FAQ on UPI charges says consumers pay no fee for UPI, and merchants cannot pass the MDR on to customers. Any gateway fee is your cost of doing business, so build it into your price instead of adding a surcharge."
+        },
+        {
+          "q": "Which is cheaper: UPI ID or a payment gateway?",
+          "a": "A UPI ID to your own account is cheaper, usually free for small sellers. A gateway costs about 2% plus GST on the fee. You pay that for automatic confirmation, refunds from a dashboard and clean records, which matters once you have more than a handful of clients."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "client-intake-form-questions",
+  "title": "Client Intake Form Questions: Templates by Profession",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "clipboard",
+    "users",
+    "shield"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Client intake form questions for coaches, therapists, consultants, trainers, tutors and salons, with copy-ready question banks and a DPDP Act privacy note.",
+  "body": [
+    {
+      "p": "A client intake form should cover five things: contact details, the reason for booking and the goal, relevant background, practical preferences, and consent. Keep it to 8-15 questions, ask only for what you will actually use, say why you are asking, and get clear consent before collecting anything sensitive such as health details."
+    },
+    {
+      "p": "Below are copy-ready intake form question banks for coaches, therapists, consultants, fitness trainers, tutors and salons, written for Indian clients. You will also find a short privacy note based on India's Digital Personal Data Protection Act, 2023, a consent line you can adapt, and a simple way to send the form after a client books."
+    },
+    {
+      "h2": "What questions should a client intake form include?"
+    },
+    {
+      "table": {
+        "head": [
+          "Section",
+          "Why you need it",
+          "Example questions"
+        ],
+        "rows": [
+          [
+            "Contact",
+            "To reach the client and send reminders",
+            "Full name, WhatsApp number, email, city"
+          ],
+          [
+            "Reason and goal",
+            "To prepare and to measure progress later",
+            "What made you book now? What would a good outcome look like?"
+          ],
+          [
+            "Background",
+            "To avoid repeating what has been tried",
+            "Have you worked with a coach or therapist before? What helped?"
+          ],
+          [
+            "Preferences",
+            "To run sessions the way the client works best",
+            "Preferred language, online or in person, best days and times"
+          ],
+          [
+            "Consent",
+            "To record that the client agreed, and to what",
+            "I agree to my information being used to provide this service"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "A good test for every question: will I read this answer and use it in the first session? If not, cut it. Shorter forms get finished. If you are unsure what an intake form is or how it differs from a booking form, see our glossary entry on the [intake form](/glossary/intake-form)."
+    },
+    {
+      "h2": "Coaching intake form questions"
+    },
+    {
+      "ol": [
+        "What made you decide to book a coaching session now?",
+        "Which area do you want to focus on: career, leadership, relationships, health, business, or something else?",
+        "What would make these sessions worth it for you in 3 months?",
+        "What have you already tried, and what got in the way?",
+        "On a scale of 1-10, how important is this change to you right now?",
+        "How much time can you give to this each week outside our sessions?",
+        "Have you worked with a coach before? What did you like or dislike?",
+        "How do you prefer feedback: direct, gentle, or a mix?",
+        "Preferred language for sessions (English, Hindi, other)?",
+        "Best days and times for sessions (IST)?",
+        "Is there anything you would rather not discuss?"
+      ]
+    },
+    {
+      "p": "For career or executive coaching, add current role, years of experience and the role you are aiming for. For business coaching, add monthly revenue range, team size and the single biggest bottleneck. More ideas for coaches are on our page for [life coaches](/for/life-coaches)."
+    },
+    {
+      "h2": "Therapy intake form questions"
+    },
+    {
+      "p": "Therapy intake forms collect sensitive personal information, so keep the pre-session form short and leave the detailed history for the first session. Explain who will see the answers and how they are stored."
+    },
+    {
+      "ol": [
+        "What brings you to therapy at this time? (A sentence is enough.)",
+        "How long have you been feeling this way?",
+        "Have you seen a psychologist, counsellor or psychiatrist before?",
+        "Are you currently taking any medication you would like me to know about? (Optional)",
+        "How are your sleep, appetite and energy at the moment?",
+        "Who is your main support at home or among friends?",
+        "Preferred language and pronouns.",
+        "Online or in-person sessions? If online, will you have a private space?",
+        "Emergency contact name and phone number.",
+        "Do you consent to me contacting this person only in an emergency?"
+      ]
+    },
+    {
+      "info": {
+        "title": "Safety and crisis questions",
+        "text": "If you include a question about risk or self-harm, have a plan for what you will do when someone answers yes before the session, and list your local emergency and crisis contacts on the form. Do not ask a question you are not able to act on. More on running a practice is on our page for [therapists](/for/therapists)."
+      }
+    },
+    {
+      "h2": "Consultation form questions for consultants, CAs and lawyers"
+    },
+    {
+      "ol": [
+        "Describe the issue or project in one or two lines.",
+        "Is there a deadline (filing date, hearing date, launch date)?",
+        "What outcome do you want from this consultation?",
+        "Which documents can you share before the call? (Upload link or list)",
+        "Have you consulted anyone else on this? What did they advise?",
+        "Business details if relevant: name, type (proprietor, LLP, Pvt Ltd), city, rough annual turnover.",
+        "Budget range for ongoing work, if any.",
+        "Who else should join the call?"
+      ]
+    },
+    {
+      "h2": "Fitness and nutrition intake form questions"
+    },
+    {
+      "ol": [
+        "Age, height and current weight.",
+        "Main goal: fat loss, strength, mobility, sport, medical recovery, or general fitness.",
+        "Do you have any medical conditions, injuries or surgeries I should know about?",
+        "Has a doctor ever advised you to avoid certain exercise?",
+        "Current activity level and how many days a week you can train.",
+        "Diet type: vegetarian, eggetarian, non-vegetarian, vegan, Jain.",
+        "Food allergies or intolerances.",
+        "Typical work hours and sleep hours.",
+        "Home workouts, gym, or outdoor?"
+      ]
+    },
+    {
+      "p": "For anyone with a heart condition, pregnancy, recent surgery or a doctor's restriction, ask them to get medical clearance before training starts, and note the date you received it."
+    },
+    {
+      "h2": "Student intake form questions for tutors"
+    },
+    {
+      "ol": [
+        "Student's name, class and board (CBSE, ICSE, State, IB, IGCSE).",
+        "Parent or guardian name and WhatsApp number.",
+        "Subjects and topics the student finds hardest.",
+        "Latest marks or a recent test result (optional).",
+        "Target exam or goal (boards, JEE, NEET, Olympiad, school improvement).",
+        "Preferred days, times and mode (online or home tuition).",
+        "Anything that helps the student learn better, such as more examples or shorter sessions."
+      ]
+    },
+    {
+      "p": "For students under 18, address the form to the parent or guardian and collect their consent. The DPDP Act treats anyone below 18 as a child (more on this below)."
+    },
+    {
+      "h2": "Salon and beauty client consultation questions"
+    },
+    {
+      "ol": [
+        "Service you are booking and the look you want (reference photos welcome).",
+        "Hair or skin type, if you know it.",
+        "Any allergies, especially to hair colour, henna or skincare products?",
+        "Have you had a patch test with us before?",
+        "Any recent treatments (keratin, colour, peel, laser) and when?",
+        "Are you pregnant or on any medication that affects skin or hair? (Optional)",
+        "For bridal bookings: event date, number of looks, venue and timing."
+      ]
+    },
+    {
+      "h2": "Intake forms and India's DPDP Act: a short privacy note"
+    },
+    {
+      "p": "India's [Digital Personal Data Protection Act, 2023](https://www.meity.gov.in/static/uploads/2024/06/2bf1f0e9f04e6fb4f8fef35e82c42aa5.pdf) governs how digital personal data is collected and used, and an online intake form collects exactly that. The government notified the DPDP Rules in November 2025 with an [18-month phased compliance timeline](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2190014). The points below are a plain-language summary for small practices, not legal advice."
+    },
+    {
+      "ul": [
+        "Consent must be “free, specific, informed, unconditional and unambiguous”, given by a clear affirmative action, and limited to the data needed for the stated purpose (Section 6). A pre-ticked box is not a clear action.",
+        "Each request for consent must come with a notice saying what data you collect and why, how the client can withdraw consent or exercise their rights, and how to complain to the Data Protection Board (Section 5).",
+        "Clients can withdraw consent at any time, and withdrawing must be as easy as giving it.",
+        "You must take reasonable security safeguards to prevent a breach, and inform affected people and the Board if one happens (Section 8).",
+        "Erase the data when consent is withdrawn or the purpose is no longer served, unless a law requires you to keep it.",
+        "A child is anyone under 18. You need verifiable consent from a parent or lawful guardian before processing a child's data (Section 9).",
+        "Under the Rules, you should respond to requests to access, correct or erase data within a maximum of 90 days."
+      ]
+    },
+    {
+      "quote": "Privacy & consent\nI share these details so that [Your Name / Practice] can prepare for and provide my sessions. They will be used only for this purpose, stored securely, and not shared with anyone without my permission, except in an emergency or where the law requires.\nI can ask to see, correct or delete my information, or withdraw this consent, by writing to [email / WhatsApp number].\n☐ I agree",
+      "cite": "Consent line for the end of an intake form (adapt for your practice)"
+    },
+    {
+      "p": "Practical habits that follow from the Act: collect the minimum, keep forms in one account protected by two-factor login, do not forward intake answers in WhatsApp groups, and delete old forms when a client has finished and you no longer need them."
+    },
+    {
+      "h2": "How to send an intake form after a client books"
+    },
+    {
+      "steps": [
+        "Build the form in a tool you already use, such as Google Forms, with your consent line at the end.",
+        "Keep it to 8-15 questions. Mark only 2-3 as required.",
+        "Send the link once the booking is confirmed, by WhatsApp or in your booking notes, so only paying clients receive it.",
+        "Ask for it back at least 24 hours before the session so you have time to read it.",
+        "Read the answers before the session and refer to one of them in your first five minutes."
+      ]
+    },
+    {
+      "quote": "Hi Aditi, thank you for booking your session on Sat, 18 Oct at 10:00 AM IST.\nTo help me prepare, please fill this short form (5 minutes): [Google Form link]\nYour answers are seen only by me and used only for your sessions.\nSee you on Saturday!",
+      "cite": "WhatsApp message to send your intake form"
+    },
+    {
+      "p": "Clients who book through a public link sometimes face a vague notes box instead. If you want to see what clients typically write there, our guide to [what to write in 'Please share anything that will help prepare for our meeting'](/blog/please-share-anything-that-will-help-prepare-for-our-meeting) has 30 examples."
+    },
+    {
+      "h2": "Where Book A Sloth fits"
+    },
+    {
+      "p": "Book A Sloth handles the booking and payment side: clients choose a slot on your page at bookasloth.com/yourname, verify with a phone OTP and pay up-front by UPI, card or netbanking through Razorpay, and the booking confirms on payment with email and WhatsApp confirmations. It does not include an intake form builder, so keep your Google Form and send its link once the booking is confirmed. See how [booking pages](/features/booking-pages) work."
+    },
+    {
+      "faq": [
+        {
+          "q": "How many questions should a client intake form have?",
+          "a": "Aim for 8-15 questions that take about five minutes to answer, with only two or three marked required. Every extra question lowers the chance a client finishes the form. Collect detailed history in the first session instead."
+        },
+        {
+          "q": "What is the difference between an intake form and a booking form?",
+          "a": "A booking form collects what is needed to confirm the appointment: name, phone, time slot and payment. An intake form comes after booking and collects background, goals and preferences so the professional can prepare. Keeping them separate makes booking faster."
+        },
+        {
+          "q": "Do I need client consent to collect intake form data in India?",
+          "a": "Under the Digital Personal Data Protection Act, 2023, consent must be free, specific, informed and given by a clear affirmative action, with a notice explaining what you collect and why. Add a short consent line and an unticked checkbox at the end of your form."
+        },
+        {
+          "q": "What should a therapy intake form ask?",
+          "a": "Keep it short: what brings the client to therapy, how long they have felt this way, previous therapy, current medication (optional), sleep and appetite, preferred language, session mode and an emergency contact. Leave detailed history and risk assessment for the first session."
+        },
+        {
+          "q": "Can I collect intake forms for children and teenagers?",
+          "a": "Yes, but address the form to the parent or guardian. The DPDP Act defines a child as anyone under 18 and requires verifiable consent from a parent or lawful guardian before processing a child's personal data."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "cancellation-policy-template",
+  "title": "Cancellation Policy for Appointments: Templates + ₹ Examples",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "clipboard",
+    "wallet",
+    "scale"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Cancellation policy for appointments: ready templates with ₹ late-cancel and no-show fees for clinics, therapists, coaches, tutors, salons and photographers.",
+  "body": [
+    {
+      "p": "A cancellation policy for appointments tells clients four things: how late they can cancel or reschedule for free, what a late cancellation costs, what happens if they do not turn up, and how refunds are paid. A common starting point: free changes up to 24 hours before, 50% charge after that, no refund for a no-show."
+    },
+    {
+      "p": "Below are copy-ready cancellation and no-show policy templates for Indian clinics, therapists, coaches, tutors, salons and photographers, each with ₹ examples. You will also find a fee guide, the consumer-protection basics to keep your policy fair, and the simplest way to enforce it: take payment when the slot is booked."
+    },
+    {
+      "h2": "What should a cancellation policy for appointments include?"
+    },
+    {
+      "table": {
+        "head": [
+          "Element",
+          "What to write",
+          "Example"
+        ],
+        "rows": [
+          [
+            "Free change window",
+            "How far ahead a client can cancel or reschedule at no cost",
+            "Up to 24 hours before the appointment"
+          ],
+          [
+            "Late cancellation fee",
+            "What is kept if they cancel inside the window",
+            "50% of the fee (₹750 of ₹1,500)"
+          ],
+          [
+            "No-show rule",
+            "What happens if they do not come and do not inform",
+            "Full fee is not refunded"
+          ],
+          [
+            "Late arrival",
+            "Whether the session runs over or ends on time",
+            "Session ends at the booked time"
+          ],
+          [
+            "Refund method and timeline",
+            "Where the money goes back and how soon",
+            "To the original UPI or card within 7 working days"
+          ],
+          [
+            "Your cancellations",
+            "What you owe the client if you cancel",
+            "Full refund or free reschedule, client's choice"
+          ],
+          [
+            "Exceptions",
+            "Emergencies, illness, one-time waivers",
+            "One free late change per year"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Write it in plain words. A client should understand the whole policy in under 30 seconds on a phone. If you need a longer version for packages or events, keep a short summary on the booking page and link the full text. For the meaning of the term itself, see our glossary entry on [cancellation policy](/glossary/cancellation-policy)."
+    },
+    {
+      "h2": "How much should a late cancellation fee be?"
+    },
+    {
+      "p": "Tie the fee to what you actually lose. If a slot cancelled 3 hours before is almost impossible to refill, keeping 50-100% of the fee is reasonable. If you can usually refill a slot with 24 hours' notice, do not charge anything before that point. The table below is a starting guide, not a rule."
+    },
+    {
+      "table": {
+        "head": [
+          "Notice given",
+          "Clinic / doctor",
+          "Therapist / coach",
+          "Tutor",
+          "Salon / spa",
+          "Photographer"
+        ],
+        "rows": [
+          [
+            "More than 48 hours",
+            "Free",
+            "Free",
+            "Free",
+            "Free",
+            "Advance kept if under 14 days to the shoot"
+          ],
+          [
+            "24-48 hours",
+            "Free",
+            "50%",
+            "Free",
+            "Free",
+            "Advance kept"
+          ],
+          [
+            "Under 24 hours",
+            "₹200 or adjust to next visit",
+            "50-100%",
+            "Class counted",
+            "Deposit kept",
+            "Advance kept"
+          ],
+          [
+            "No-show",
+            "Fee not refunded",
+            "100%",
+            "Class counted",
+            "Deposit kept",
+            "Advance kept; balance waived"
+          ],
+          [
+            "You cancel",
+            "Full refund",
+            "Full refund",
+            "Extra class",
+            "Full refund",
+            "Full refund of advance"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Example: Dr. Sneha Kulkarni in Nagpur charges ₹800 a consultation. Under her policy, a patient who cancels with less than 12 hours' notice pays ₹200, which is adjusted against the next visit. A patient who simply does not come forfeits the ₹800 paid at booking. She refills most late gaps from walk-ins, so she keeps the fee small."
+    },
+    {
+      "h2": "Is a cancellation fee allowed in India? Consumer-protection basics"
+    },
+    {
+      "p": "Yes, you can charge a cancellation or no-show fee, but it has to be fair and disclosed. The Consumer Protection Act, 2019 came into force on 20 July 2020. It defines an [unfair contract](https://www.pib.gov.in/PressReleaseIframePage.aspx?PRID=1657006) to include imposing a penalty that is “wholly disproportionate to the loss” caused, or any unreasonable charge or condition that puts the consumer at a disadvantage. Consumer commissions can declare such terms void."
+    },
+    {
+      "ul": [
+        "Show the policy before the client pays, on the booking page and in the confirmation.",
+        "Keep fees proportionate to your real loss. Keeping 100% of a ₹1,500 session cancelled a week ahead is hard to defend.",
+        "Give the same rights both ways. If you cancel, the client gets a full refund or free reschedule.",
+        "Allow for genuine emergencies, such as hospitalisation or a death in the family.",
+        "Refund promptly to the original payment method and say how long it takes."
+      ]
+    },
+    {
+      "info": {
+        "title": "Not legal advice",
+        "text": "This is a plain-language summary of the Act's definition of unfair contracts, as published by the Ministry of Consumer Affairs. For high-value services such as weddings, retreats or long coaching programmes, have a lawyer review your terms."
+      }
+    },
+    {
+      "h2": "Cancellation policy templates by profession"
+    },
+    {
+      "p": "Copy the template closest to your work, change the brackets, and paste it into your booking page, confirmation message and invoice footer. Each one has been written so a client can read it on WhatsApp without scrolling much."
+    },
+    {
+      "quote": "Cancellation & Rescheduling Policy\n• Free cancellation or rescheduling up to [24] hours before your appointment.\n• Cancellations within [24] hours: [50]% of the fee is kept.\n• No-show without notice: the fee is not refunded.\n• If we cancel, you get a full refund or a free reschedule, your choice.\n• Refunds go to your original payment method within [7] working days.\nTo reschedule, use the link in your confirmation message.",
+      "cite": "General template (any service business)"
+    },
+    {
+      "quote": "Appointment Policy, [Clinic Name]\n• Consultation fee (₹[800]) is paid at booking.\n• Reschedule free up to [12] hours before your slot.\n• Cancel with less than [12] hours' notice: ₹[200] is kept and adjusted against your next visit.\n• Missed appointment without informing us: the fee is not refunded.\n• Arriving more than [15] minutes late may mean waiting for the next free slot.\n• Medical emergencies: call us and we will reschedule at no cost.",
+      "cite": "Clinic / doctor / dentist / physiotherapist"
+    },
+    {
+      "quote": "Session Policy\n• Sessions are ₹[2,000] for [50] minutes, paid at booking.\n• You can reschedule or cancel free of charge up to [48] hours before.\n• Within [48] hours: [50]% of the fee is kept. Within [12] hours or no-show: the full fee is kept.\n• If you join late, the session still ends at the booked time.\n• If I need to cancel, you will get a full refund or the next available slot.\n• One late change per [6 months] is waived, because life happens.",
+      "cite": "Therapist / counsellor / life coach"
+    },
+    {
+      "quote": "Package Refund Policy\n• [6]-session package: ₹[10,800], valid for [90] days from the first session.\n• Unused sessions can be refunded within [14] days of purchase, minus sessions already taken at the single-session rate of ₹[2,000].\n• After [14] days, unused sessions can be rescheduled within the validity period but are not refundable.\n• Each session follows the 24-hour reschedule rule; a no-show counts as a session used.",
+      "cite": "Refund policy for coaching packages"
+    },
+    {
+      "quote": "Class & Fee Policy, [Tutor Name]\n• Monthly fee of ₹[3,000] is due by the [5th] of each month.\n• Demo class: ₹[200], adjusted against the first month's fee if you join.\n• Please inform at least [4] hours before if your child will miss a class.\n• Classes missed with notice: [1] makeup class per month.\n• Classes missed without notice are not carried forward.\n• If I cancel a class, an extra class will be scheduled that month.",
+      "cite": "Tutor / coaching class (message to parents)"
+    },
+    {
+      "quote": "Booking & Deposit Policy, [Salon Name]\n• Services over ₹[2,000] need a deposit of ₹[500] at booking. Bridal packages need [20]% of the package.\n• Reschedule free up to [24] hours before.\n• Cancel within [24] hours or no-show: the deposit is kept.\n• Bridal bookings cancelled less than [30] days before the date: the deposit is not refunded.\n• Arriving more than [15] minutes late may shorten your service.",
+      "cite": "Salon / spa / makeup artist"
+    },
+    {
+      "quote": "Shoot Booking Terms, [Studio Name]\n• A [30]% advance (₹[12,000] on a ₹[40,000] shoot) confirms your date.\n• Cancel more than [30] days before: advance refunded minus ₹[2,000] for admin.\n• Cancel [14-30] days before: [50]% of the advance refunded.\n• Cancel under [14] days: advance kept; the balance is not charged.\n• Date change: free once, subject to availability, if requested [14]+ days ahead.\n• If we cannot attend, you receive a full refund of all payments.",
+      "cite": "Photographer / videographer"
+    },
+    {
+      "quote": "Free to reschedule up to 24 hours before. Late cancellations: 50% kept. No-shows: no refund.",
+      "cite": "One-line version for your booking page or Instagram bio"
+    },
+    {
+      "h2": "Cancellation and no-show policy at a glance"
+    },
+    {
+      "table": {
+        "head": [
+          "Trade",
+          "Collect at booking",
+          "Free window",
+          "Late cancel",
+          "No-show"
+        ],
+        "rows": [
+          [
+            "Clinic",
+            "Full fee (₹500-1,000)",
+            "12 hours",
+            "₹200, adjusted later",
+            "Fee kept"
+          ],
+          [
+            "Therapist / coach",
+            "Full fee (₹1,500-3,000)",
+            "48 hours",
+            "50%",
+            "100%"
+          ],
+          [
+            "Tutor",
+            "Monthly fee in advance",
+            "4 hours",
+            "Class counted",
+            "Class counted"
+          ],
+          [
+            "Salon",
+            "Deposit ₹300-500, or 20% for bridal",
+            "24 hours",
+            "Deposit kept",
+            "Deposit kept"
+          ],
+          [
+            "Photographer",
+            "30% advance",
+            "30 days",
+            "Partial refund",
+            "Advance kept"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The ₹ amounts are worked examples. Set your own based on your fee and how easily you can refill a slot."
+    },
+    {
+      "h2": "How to enforce a cancellation policy without awkward conversations"
+    },
+    {
+      "p": "A policy you have to chase is a policy that will not be followed. The easiest enforcement is to collect the fee or deposit at booking, so the policy decides what is refunded instead of you asking for money afterwards. A hospital in Singapore that started collecting [deposits for sleep-study appointments](https://child.chi.sg/learn/child-collection/projects/deposit-collection-reduces-no-show-rates-for-sleep-studies/) reported monthly no-shows falling from 9.1% to 4.3%, though that was a before-and-after project rather than a trial."
+    },
+    {
+      "steps": [
+        "Collect payment or a deposit when the slot is booked, through UPI or card.",
+        "Show the policy on the booking page, right above the pay button.",
+        "Repeat the one-line version in the confirmation message.",
+        "Send a reminder 24 hours before with a reschedule link, so clients move slots instead of skipping them.",
+        "When someone cancels late, reply with the policy line and a rebooking link. No lectures.",
+        "Use discretion for genuine emergencies and note the waiver in your client records."
+      ]
+    },
+    {
+      "p": "Reminders matter as much as fees. A systematic review of [29 reminder studies](https://pmc.ncbi.nlm.nih.gov/articles/PMC3188816/) found reminders cut non-attendance by about 34% of the baseline rate. Our playbook on [how to reduce no-shows](/blog/how-to-reduce-no-shows) covers the full reminder cadence, and these [cancellation and reschedule message templates](/blog/appointment-cancellation-reschedule-message) cover the replies."
+    },
+    {
+      "h2": "How Book A Sloth applies your policy automatically"
+    },
+    {
+      "p": "On Book A Sloth, clients pay up-front through Razorpay (UPI, cards or netbanking) when they book, and the booking confirms on payment. Confirmations and a 24-hour reminder go out on email and WhatsApp, and clients use the built-in reschedule and cancel flow instead of messaging you. Because the money is already collected, your cancellation policy is something you apply, not something you chase. See how [payments at booking](/features/payments) work."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is a reasonable cancellation policy for appointments?",
+          "a": "A reasonable cancellation policy offers free cancellation or rescheduling up to 24 hours before, keeps around 50% of the fee for later cancellations, and keeps the full fee for no-shows. Adjust the window to how easily you can refill a slot. Always refund in full if you cancel."
+        },
+        {
+          "q": "Can I keep the full fee if a client does not show up?",
+          "a": "Yes, if the policy was shown to the client before they paid and the fee reflects the loss of a slot you could not refill. Under the Consumer Protection Act, 2019, penalties wholly disproportionate to the loss can be treated as unfair contract terms, so keep it to the session fee and avoid extra penalties."
+        },
+        {
+          "q": "How do I write a no-show policy?",
+          "a": "State what counts as a no-show (not attending and not informing before the start time), what happens to the payment (not refunded), and how the client can rebook. One or two sentences is enough. Put it on the booking page and in every confirmation message."
+        },
+        {
+          "q": "Should a cancellation policy be different for packages?",
+          "a": "Yes. For coaching or therapy packages, add a short refund window after purchase, a validity period, and a rule for unused sessions. A common approach is to refund unused sessions within 14 days at the single-session rate, then allow reschedules but no refunds."
+        },
+        {
+          "q": "How quickly should I refund a cancelled appointment?",
+          "a": "Start the refund as soon as the cancellation is confirmed and tell the client the expected timeline. UPI and card refunds go back to the original payment method. Writing a clear timeline, such as within 7 working days, in your policy avoids repeated follow-up messages."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "calendly-upi-payments",
+  "title": "Calendly UPI Payment: Not Native, and 3 Workarounds (2026)",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "wallet",
+    "calendar",
+    "lightning"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Comparison",
+  "image": null,
+  "excerpt": "Calendly UPI payment is not supported: Calendly takes Stripe and PayPal in five currencies, no INR. Compare 3 workarounds on cost, failure points and refunds.",
+  "body": [
+    {
+      "p": "No, Calendly cannot take UPI payments. Its payment feature works only through Stripe and PayPal, in AUD, CAD, EUR, GBP and USD, so there is no INR, no UPI and no built-in Razorpay. Indian professionals use three workarounds: a connector that sends a Razorpay link, a UPI ID checked by hand, or a booking tool with UPI built in."
+    },
+    {
+      "p": "Each workaround has a different cost and a different way of breaking. This guide explains why the gap exists, sets up each option step by step, and compares them on monthly cost, failure points and refunds, with a worked example for a ₹800 consultation. Everything was checked against Calendly, Stripe and connector documentation on 10 October 2026."
+    },
+    {
+      "h2": "Why Calendly can't take UPI or rupee payments"
+    },
+    {
+      "p": "Calendly's [Stripe help article](https://calendly.com/help/calendly-stripe) lists the payment methods it supports: major credit and debit cards, Apple Pay, Google Pay, Link bank payments, and Affirm or Klarna where available. Supported currencies are AUD, CAD, EUR, GBP and USD. INR and UPI are not mentioned. Payments are also limited to paid plans: Professional, Standard, Standard Plus, Teams, Teams Plus and Enterprise."
+    },
+    {
+      "p": "The two gateways Calendly does support are hard to use for Indian clients. Stripe's support page says [Stripe accounts are invite-only in India](https://support.stripe.com/questions/stripe-accounts-are-invite-only-in-india) and Indian businesses cannot sign up for a new account through its website. PayPal shut its domestic payments business in India in April 2021 and now handles cross-border payments only. So even on a paid Calendly plan, a client in Nagpur cannot pay you ₹800 by UPI through Calendly itself."
+    },
+    {
+      "h2": "Workaround 1: Calendly Razorpay integration through a connector"
+    },
+    {
+      "p": "Calendly has no Razorpay integration of its own, but automation tools can join the two. [Integrately's Calendly and Razorpay page](https://integrately.com/integrations/calendly/razorpay) lists the pieces you need: a trigger called \"Invitee is created in Calendly\" and an action called \"Create payment Link in Razorpay\". Zapier and Pabbly Connect can build the same flow."
+    },
+    {
+      "steps": [
+        "Upgrade Calendly to a paid plan. Calendly's API help article says webhooks, which these triggers rely on, are available only on Professional, Standard, Standard Plus, Teams, Teams Plus and Enterprise.",
+        "Create a Razorpay account and complete its KYC so you can create payment links.",
+        "In Integrately, Zapier or Pabbly, set the trigger to a new Calendly invitee for your paid event type.",
+        "Add the action: create a Razorpay payment link, mapping the invitee's name, email, phone and your session price in rupees.",
+        "Add a step to send the link to the client by email or WhatsApp, or paste it into a reminder.",
+        "Watch for Razorpay's payment link paid event and mark the booking as paid in your own sheet or CRM."
+      ]
+    },
+    {
+      "p": "Connector costs as of October 2026: Zapier's free plan gives 100 tasks a month and two-step Zaps only, and its Professional plan starts at US$19.99 a month billed annually. Pabbly Connect's free plan also gives 100 tasks a month. Integrately advertises a free tier. A two-step free Zap can create the link, but messaging it to the client is usually a third step, which needs a paid plan."
+    },
+    {
+      "h2": "Where the connector workflow breaks"
+    },
+    {
+      "ul": [
+        "The booking confirms before the client pays. Calendly blocks the slot the moment someone books, whether or not they open the payment link.",
+        "Unpaid bookings stay on your calendar. Integrately lists only two Calendly actions (create and update an event type), so there is no ready-made action to cancel an unpaid booking. You cancel by hand.",
+        "Reschedules and cancellations do not touch the payment link. If a client cancels, the old link stays live unless you expire it.",
+        "Refunds are manual. You issue them from the Razorpay dashboard and then cancel the Calendly event separately.",
+        "Task limits run out. Each booking uses at least one task, and multi-step flows use more, so a busy month can push you onto a paid connector plan.",
+        "Three bills instead of one: Calendly in dollars, the connector, and Razorpay's 2% fee plus 18% GST on that fee."
+      ]
+    },
+    {
+      "h2": "Workaround 2: Manual UPI ID in the Calendly confirmation"
+    },
+    {
+      "p": "The simplest option is to add your UPI ID or QR code to the event description and confirmation message: \"Please pay ₹800 to priya@okhdfcbank before the session and reply with the UTR number.\" This works on Calendly's Free plan and costs nothing in gateway fees for a direct UPI transfer."
+    },
+    {
+      "ul": [
+        "You check every payment yourself in your UPI app or bank statement. A screenshot alone is not proof, so match the UTR number or amount and time.",
+        "Clients who book and never pay still hold a slot. This is where most advance payment problems start.",
+        "Refunds mean sending money back by UPI and keeping your own record.",
+        "There is no automatic receipt or GST invoice, so you create them yourself if you need them.",
+        "Calendly's Free plan allows one event type, so a free intro call and a paid session cannot both live on it."
+      ]
+    },
+    {
+      "h2": "Workaround 3: A booking tool with UPI at checkout"
+    },
+    {
+      "p": "The third option is to move paid bookings to a scheduler that runs an Indian [payment gateway](/glossary/payment-gateway) inside the booking flow, so the client picks a slot, pays by UPI, card or netbanking, and only then gets a confirmation. Zoho Bookings, for example, lists Razorpay among its payment gateways for India in its help documentation, and its pricing page places online payments on the Premium plan. Book A Sloth takes UPI through Razorpay on every plan. Because payment happens before confirmation, unpaid bookings never reach your calendar."
+    },
+    {
+      "h2": "Calendly UPI workarounds compared: cost, failure points and refunds"
+    },
+    {
+      "table": {
+        "head": [
+          "",
+          "Connector (Calendly + Razorpay)",
+          "Manual UPI ID",
+          "Booking tool with UPI built in"
+        ],
+        "rows": [
+          [
+            "Calendly plan needed",
+            "Standard or higher, about ₹1,190 to ₹1,430 a month",
+            "Free works",
+            "None"
+          ],
+          [
+            "Extra tools",
+            "Zapier, Pabbly or Integrately",
+            "None",
+            "None"
+          ],
+          [
+            "Payment fee",
+            "Razorpay 2% + 18% GST on the fee",
+            "₹0 on a direct UPI transfer",
+            "Gateway fee, plus the tool's commission or subscription"
+          ],
+          [
+            "When the booking confirms",
+            "Before payment",
+            "Before payment",
+            "After payment"
+          ],
+          [
+            "Unpaid bookings",
+            "Cancel by hand",
+            "Cancel by hand",
+            "Not created"
+          ],
+          [
+            "Refunds",
+            "Manual in Razorpay, then cancel in Calendly",
+            "Manual UPI transfer back",
+            "From the tool or gateway dashboard"
+          ],
+          [
+            "Main failure point",
+            "Link sent but never paid",
+            "Payment not verified",
+            "Tool limits (for example, no multi-staff)"
+          ],
+          [
+            "Best for",
+            "Teams already paying for Calendly",
+            "A handful of bookings a month",
+            "Solo professionals paid in rupees"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Worked example: a ₹800 consultation, 30 bookings a month"
+    },
+    {
+      "p": "Example: Priya is a nutritionist in Jaipur. She charges ₹800 per online consultation and takes 30 bookings a month, so she bills ₹24,000. Here is her monthly cost under each setup, using ₹96.73 per US dollar (ECB reference rate for 9 October 2026), 18% GST and a 3.5% card markup on dollar bills, and Razorpay's 2% fee plus GST, about 2.36%."
+    },
+    {
+      "table": {
+        "head": [
+          "Setup",
+          "Subscriptions",
+          "Payment fees on ₹24,000",
+          "Monthly total"
+        ],
+        "rows": [
+          [
+            "Calendly Standard (annual) + free Integrately or Zapier + Razorpay links",
+            "about ₹1,189",
+            "about ₹566",
+            "about ₹1,755, plus time cancelling unpaid slots"
+          ],
+          [
+            "Calendly Free + manual UPI ID",
+            "₹0",
+            "₹0",
+            "₹0, plus time checking 30 payments"
+          ],
+          [
+            "Book A Sloth free plan",
+            "₹0",
+            "₹1,200 commission (5%) + about ₹576 gateway",
+            "about ₹1,776"
+          ],
+          [
+            "Book A Sloth Sloth Active",
+            "₹399",
+            "about ₹576 gateway",
+            "about ₹975"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The full rupee breakdown of each Calendly plan, including GST and card forex markup, is in our [Calendly pricing in India](/blog/calendly-pricing-india) guide."
+    },
+    {
+      "h2": "Which option should you choose?"
+    },
+    {
+      "ul": [
+        "You already pay for Calendly and run a team with shared event types: use a connector, and set a daily reminder to cancel unpaid bookings.",
+        "You take fewer than 10 paid bookings a month and do not mind checking payments: a UPI ID on Calendly's Free plan is fine.",
+        "You are a solo coach, therapist, tutor or consultant paid in rupees: a booking tool with UPI at checkout removes the chasing, because nobody gets a slot without paying."
+      ]
+    },
+    {
+      "h2": "How Book A Sloth handles UPI at booking"
+    },
+    {
+      "p": "Book A Sloth is an India-first booking page. Clients choose a slot at bookasloth.com/yourname, verify their phone by OTP, and pay upfront by UPI, card or netbanking through Razorpay. The booking confirms automatically on payment, and email and WhatsApp confirmations and reminders follow. It syncs both ways with Google Calendar and creates Google Meet links. The free plan has no subscription and takes 5% per paid booking; Sloth Active is ₹399 a month (GST included) with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. It works in rupees only and does not offer multi-staff calendars. See how [payments](/features/payments) work, or the [Calendly alternative](/lp/calendly-alternative) comparison."
+    },
+    {
+      "faq": [
+        {
+          "q": "Does Calendly support UPI payments?",
+          "a": "No. As of October 2026 Calendly collects payments only through Stripe and PayPal, in AUD, CAD, EUR, GBP and USD. UPI and INR are not supported. To take UPI for a Calendly booking, you need a connector that sends a Razorpay payment link, a manual UPI ID, or a different booking tool with UPI at checkout."
+        },
+        {
+          "q": "Can I connect Razorpay to Calendly?",
+          "a": "Not directly. Calendly has no native Razorpay integration. Connectors such as Integrately, Zapier and Pabbly Connect can create a Razorpay payment link when someone books, but this needs a paid Calendly plan for webhooks, and the booking still confirms before the client pays."
+        },
+        {
+          "q": "Can Calendly charge clients in rupees?",
+          "a": "No. Calendly's Stripe and PayPal payments support only AUD, CAD, EUR, GBP and USD. To charge an Indian client in rupees, collect the fee outside Calendly through a Razorpay payment link or UPI ID, or use a booking tool that runs an Indian gateway at checkout."
+        },
+        {
+          "q": "Can I take payments on Calendly's free plan?",
+          "a": "No. Calendly lists payment collection only on paid plans: Professional, Standard, Standard Plus, Teams, Teams Plus and Enterprise. On the Free plan the only option is to share a UPI ID or QR in the event description and verify each payment yourself."
+        },
+        {
+          "q": "What is the cheapest way to take UPI for online consultations in India?",
+          "a": "For a handful of bookings, a UPI ID in your confirmation costs nothing but needs manual checking. For regular paid sessions, a booking tool with UPI at checkout is usually cheaper than paying for Calendly, a connector and Razorpay separately, and it stops unpaid bookings from blocking your calendar."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "calendly-pricing-india",
+  "title": "Calendly Pricing in India (2026): Plans in ₹ with GST",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "wallet",
+    "calendar",
+    "scale"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 8,
+  "category": "Comparison",
+  "image": null,
+  "excerpt": "Calendly pricing in India: Standard is US$10-12 a month, about ₹1,190-1,430 after 18% GST and card forex markup. Free plan limits and UPI, explained.",
+  "body": [
+    {
+      "p": "Calendly pricing in India starts at US$10 per seat per month for the Standard plan on annual billing, or US$12 billed monthly. At ₹96.73 to the dollar that is ₹967 to ₹1,161 before tax. Add 18% GST and a typical card forex markup and Standard costs about ₹1,190 to ₹1,430 a month. The Free plan costs nothing."
+    },
+    {
+      "p": "Calendly bills in US dollars, pounds or euros, never in rupees, so your real cost depends on the exchange rate and your card. This guide converts every plan to ₹, explains how GST works for individuals and GST-registered businesses, lists what the free plan leaves out, and explains why Calendly cannot collect UPI payments. All prices were checked on calendly.com on 10 October 2026."
+    },
+    {
+      "h2": "Calendly plans and prices (as of October 2026)"
+    },
+    {
+      "p": "The [Calendly pricing page](https://calendly.com/pricing) lists a Free plan, two paid self-serve plans (Standard and Teams) and Enterprise. Paid plans are priced per seat, and a seat is needed for each person who connects a calendar and hosts meetings. Calendly also sells Plus versions of Standard and Teams that bundle its AI notetaker and assistant at a higher price. Prices on the page exclude tax."
+    },
+    {
+      "table": {
+        "head": [
+          "Plan",
+          "Annual billing (per seat, per month)",
+          "Monthly billing (per seat)",
+          "Best for"
+        ],
+        "rows": [
+          [
+            "Free",
+            "US$0",
+            "US$0",
+            "One person with one type of meeting"
+          ],
+          [
+            "Standard",
+            "US$10",
+            "US$12",
+            "Solo professionals who need several event types and payments"
+          ],
+          [
+            "Teams",
+            "US$16",
+            "US$20",
+            "Small teams sharing booking pages"
+          ],
+          [
+            "Enterprise",
+            "From US$15,000 a year, starts at 50 seats",
+            "Not offered",
+            "Large organisations"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Annual billing saves about 17% on Standard and 20% on Teams, according to the savings Calendly shows next to each plan. The catch is that you pay the full year upfront: US$120 per Standard seat in one card charge."
+    },
+    {
+      "h2": "Calendly price in rupees: Standard and Teams in ₹"
+    },
+    {
+      "p": "We used ₹96.73 per US dollar, the ECB euro reference rate cross-rate for 9 October 2026 as published by the Frankfurter exchange-rate API. Your bank applies its own rate on the day your card is charged, so treat these as close estimates. The formula is simple: ₹ cost = USD price × exchange rate × 1.18 (GST) × 1.0413 (a 3.5% card markup plus 18% GST on that markup)."
+    },
+    {
+      "table": {
+        "head": [
+          "Plan and billing",
+          "USD",
+          "₹ before tax",
+          "₹ with 18% GST",
+          "₹ with GST + 3.5% card markup"
+        ],
+        "rows": [
+          [
+            "Standard, annual (per month)",
+            "$10",
+            "₹967",
+            "₹1,141",
+            "₹1,189"
+          ],
+          [
+            "Standard, monthly",
+            "$12",
+            "₹1,161",
+            "₹1,370",
+            "₹1,426"
+          ],
+          [
+            "Teams, annual (per month)",
+            "$16",
+            "₹1,548",
+            "₹1,826",
+            "₹1,902"
+          ],
+          [
+            "Teams, monthly",
+            "$20",
+            "₹1,935",
+            "₹2,283",
+            "₹2,377"
+          ],
+          [
+            "Standard, one year paid upfront",
+            "$120",
+            "₹11,608",
+            "₹13,697",
+            "₹14,263"
+          ],
+          [
+            "Teams, one year paid upfront",
+            "$192",
+            "₹18,572",
+            "₹21,915",
+            "₹22,820"
+          ]
+        ]
+      }
+    },
+    {
+      "info": {
+        "title": "Exchange rate used",
+        "text": "₹96.73 = US$1, ECB reference rate for 9 October 2026 via the Frankfurter API, checked on 10 October 2026. If the rupee moves to ₹98, Standard monthly with GST and markup rises from about ₹1,426 to about ₹1,445. Re-run the formula with the rate on your card statement."
+      }
+    },
+    {
+      "h2": "Does Calendly charge GST in India?"
+    },
+    {
+      "p": "Yes. Calendly's [help article on taxes](https://calendly.com/help/taxes-and-your-calendly-subscription) says it is \"required to charge Good and Services Tax (GST) on services provided to certain customers\" in India, and that business customers should add their GST Identification Number (GSTIN) and company details on the Billing page. What that means for you depends on whether you are registered."
+    },
+    {
+      "ul": [
+        "No GSTIN (most freelancers and new coaches): expect 18% GST on top of the listed price, charged in dollars on the same card payment.",
+        "GST-registered business: add your GSTIN in Settings, Billing. Calendly says a valid tax ID stops tax being applied to future invoices. Under India's rules for imported online services, you then usually pay 18% IGST yourself under reverse charge and can claim it back as input tax credit. Confirm the treatment with your CA.",
+        "Either way, the price on the pricing page is before tax."
+      ]
+    },
+    {
+      "h2": "The card forex markup on a dollar subscription"
+    },
+    {
+      "p": "Because Calendly charges in dollars, your Indian card adds a foreign currency markup on every payment. Razorpay's [guide to forex markup fees](https://razorpay.com/blog/forex-markup-fees-how-to-avoid/) says most credit card issuers charge 2% to 3.5% per transaction, debit cards 1% to 3%, and that GST is applied on the markup amount. A 3.5% markup therefore costs about 4.13% once GST is added."
+    },
+    {
+      "ul": [
+        "Check the foreign currency markup in your card's Most Important Terms and Conditions document before you subscribe.",
+        "A low-markup or zero-markup card can save about ₹45 to ₹95 a month on a Standard or Teams seat.",
+        "If a checkout offers to charge you in rupees instead of dollars (dynamic currency conversion), compare the rate before accepting. It is often worse than your bank's rate."
+      ]
+    },
+    {
+      "h2": "Is Calendly free? Free plan limits in 2026"
+    },
+    {
+      "p": "Yes, Calendly has a free forever plan. As of October 2026 it includes one event type, one calendar connection, one-on-one scheduling, a customisable booking page and the browser extension. That is enough for a single kind of meeting, such as a free 20-minute discovery call."
+    },
+    {
+      "p": "The limits start to bite when you charge for your time. Calendly's [Stripe help article](https://calendly.com/help/calendly-stripe) lists payment collection only on paid plans: Professional, Standard, Standard Plus, Teams, Teams Plus and Enterprise. Webhooks, which most automation tools rely on, are also limited to paid plans."
+    },
+    {
+      "table": {
+        "head": [
+          "What you need",
+          "Free plan",
+          "Standard"
+        ],
+        "rows": [
+          [
+            "More than one meeting type (intro call + paid session)",
+            "No, one event type",
+            "Yes"
+          ],
+          [
+            "More than one connected calendar",
+            "No, one calendar",
+            "Yes"
+          ],
+          [
+            "Collect payment at booking (Stripe/PayPal)",
+            "No",
+            "Yes"
+          ],
+          [
+            "Webhooks for Zapier-style automation",
+            "No",
+            "Yes"
+          ],
+          [
+            "Price in ₹ per month (with GST and 3.5% markup)",
+            "₹0",
+            "₹1,189 to ₹1,426"
+          ]
+        ]
+      }
+    },
+    {
+      "h2": "Calendly and Razorpay: can Indian clients pay by UPI?"
+    },
+    {
+      "p": "Not natively. Calendly collects payments only through Stripe and PayPal, and its Stripe help article lists five supported currencies: AUD, CAD, EUR, GBP and USD. INR and UPI are not mentioned. There is no built-in Razorpay option. For Indian professionals this is a double gap: Stripe accounts are invite-only for Indian businesses, and PayPal stopped domestic payments within India in 2021, so even a paid Calendly plan cannot charge an Indian client ₹1,500 by UPI."
+    },
+    {
+      "p": "Most Indian Calendly users work around this with a connector that sends a Razorpay payment link after the booking, or by putting a UPI ID in the confirmation and checking screenshots by hand. We compare both, with their failure points, in [can you take UPI payments on Calendly](/blog/calendly-upi-payments)."
+    },
+    {
+      "h2": "Total cost of Calendly in India: a worked example"
+    },
+    {
+      "p": "Example: Neha is a career coach in Pune. She charges ₹1,500 per session and runs 20 paid sessions a month, so she bills ₹30,000. She needs two event types (a free intro call and a paid session), so the Free plan is out. Because Calendly cannot take rupees, she sends Razorpay payment links separately. Razorpay's standard fee is 2% plus 18% GST on the fee, about 2.36%, or ₹708 on ₹30,000."
+    },
+    {
+      "table": {
+        "head": [
+          "Setup (example: ₹30,000 a month in sessions)",
+          "Subscription per month",
+          "Payment fees",
+          "Total per month",
+          "Share of revenue"
+        ],
+        "rows": [
+          [
+            "Calendly Free + UPI ID checked by hand",
+            "₹0",
+            "₹0",
+            "₹0 plus your time",
+            "0%, but one event type and no auto-confirmation"
+          ],
+          [
+            "Calendly Standard (monthly) + Razorpay links",
+            "₹1,426",
+            "₹708",
+            "₹2,134",
+            "7.1%"
+          ],
+          [
+            "Calendly Standard (annual) + Razorpay links",
+            "₹1,189",
+            "₹708",
+            "₹1,897",
+            "6.3%"
+          ],
+          [
+            "Book A Sloth free plan (5% commission)",
+            "₹0",
+            "₹1,500 + about ₹720",
+            "₹2,220",
+            "7.4%"
+          ],
+          [
+            "Book A Sloth Sloth Active",
+            "₹399",
+            "about ₹720",
+            "₹1,119",
+            "3.7%"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "The numbers move with your volume. At 5 sessions a month, Calendly's fixed subscription weighs more heavily, and a commission-only plan is cheaper. At 40 sessions, a flat fee wins. Plug your own price and session count into the [earnings calculator](/earnings-calculator) to see your break-even."
+    },
+    {
+      "h2": "If you mainly need paid 1:1 bookings in rupees"
+    },
+    {
+      "p": "Calendly is a strong scheduler, especially for teams that work in dollars. If your clients are in India and pay in rupees, Book A Sloth was built for that case. Clients book at bookasloth.com/yourname and pay upfront by UPI, card or netbanking through Razorpay, and the booking confirms on payment. Confirmations and reminders go out on email and WhatsApp, and it syncs both ways with Google Calendar and creates Google Meet links. The free plan has no subscription and takes 5% per paid booking; Sloth Active is ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. It does not do multi-staff calendars or charge in foreign currencies. See [pricing](/pricing) or the [Calendly alternative](/lp/calendly-alternative) page for a side-by-side."
+    },
+    {
+      "p": "Comparing more tools? Our [best appointment booking apps in India](/blog/best-appointment-booking-apps-india) list puts Calendly, Zoho Bookings, Cal.com, Setmore and others in one ₹ table."
+    },
+    {
+      "faq": [
+        {
+          "q": "Is Calendly free in India?",
+          "a": "Yes. Calendly's Free plan costs ₹0 in India and includes one event type, one calendar connection and a customisable booking page. It cannot collect payments, and you cannot offer two different meeting types, so most paid professionals outgrow it quickly."
+        },
+        {
+          "q": "What is Calendly's price in rupees?",
+          "a": "As of October 2026, Calendly Standard is US$10 per seat per month on annual billing or US$12 monthly. At ₹96.73 per dollar that is about ₹967 to ₹1,161 before tax, and about ₹1,190 to ₹1,430 after 18% GST and a 3.5% card forex markup. Teams is US$16 to US$20, about ₹1,900 to ₹2,380 all-in."
+        },
+        {
+          "q": "Does Calendly accept UPI or Razorpay?",
+          "a": "No. Calendly takes payments only through Stripe and PayPal, in AUD, CAD, EUR, GBP or USD. It has no Razorpay integration and no UPI option. Indian users usually add a Razorpay payment link through a connector such as Zapier, Pabbly or Integrately, or use a booking tool that takes UPI at checkout."
+        },
+        {
+          "q": "Do I have to pay GST on a Calendly subscription?",
+          "a": "Yes. Calendly says it charges GST to certain customers in India. If you have no GSTIN, expect 18% on top of the listed price. If you are GST-registered, add your GSTIN in billing settings; you then usually pay 18% IGST under reverse charge and can claim input tax credit. Check with your CA."
+        },
+        {
+          "q": "Is Calendly cheaper if I pay yearly?",
+          "a": "Yes. Standard drops from US$12 to US$10 per month and Teams from US$20 to US$16 when billed annually. The year is charged upfront, so a Standard seat costs about ₹14,263 in one payment after GST and a 3.5% card markup at ₹96.73 per dollar."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "booking-link-instagram-bio",
+  "title": "Booking Link for Instagram Bio: Setup, WhatsApp & UPI",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "calendar",
+    "wallet",
+    "megaphone"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Add a booking link to your Instagram bio in 4 taps: Edit profile, Links, Add link, Done. Then make it take UPI payment so every booking arrives prepaid.",
+  "body": [
+    {
+      "p": "To add a booking link to your Instagram bio, open your profile, tap Edit profile, then Links, then Add link. Paste your booking page URL and tap Done. Put it first of your 5 allowed links. Point it at a page where clients pick a slot and pay by UPI, so each tap becomes a prepaid booking."
+    },
+    {
+      "p": "This guide covers the bio link, Instagram's \"Book now\" action button, the Story link sticker, a WhatsApp handoff for people who would rather chat first, and how to collect the fee before the session. Everything is written for Indian coaches, tutors, trainers, therapists, salons and consultants."
+    },
+    {
+      "h2": "How to add a booking link to your Instagram bio (step by step)"
+    },
+    {
+      "p": "According to [Instagram's Help Center](https://help.instagram.com/362497417173378), you can add up to 5 websites to your profile from the Android or iPhone app, and anyone on or off Instagram can see them. The feature is not available when you use Instagram on a computer, so do this from your phone."
+    },
+    {
+      "steps": [
+        "Open the Instagram app and tap your profile picture at the bottom right.",
+        "Tap Edit profile at the top of your profile.",
+        "Tap Links, then tap Add link.",
+        "Paste your booking page URL, for example bookasloth.com/yourname, and give it a short title such as \"Book a session\".",
+        "Tap Done. To change the order later, go to Edit profile, Links, Options, Reorder links, and drag the booking link to the top."
+      ]
+    },
+    {
+      "info": {
+        "title": "Put the booking link first",
+        "text": "When you have more than one link, the first one is the one people notice. If your profile exists to get bookings, the booking link goes on top and your YouTube or blog links go below it."
+      }
+    },
+    {
+      "p": "Your bio text itself can be up to 150 characters. Use that space to say what you do, who it is for, the starting price and a nudge towards the link. Templates are further down."
+    },
+    {
+      "h2": "Instagram \"Book now\" button: how it works and who can use it"
+    },
+    {
+      "p": "Instagram also offers action buttons for business accounts. The [Help Center page on action buttons](https://help.instagram.com/122793804938499) lists three: Book now (book an appointment), Reserve (restaurant reservations) and Order food. Only one action button can show on your profile at a time."
+    },
+    {
+      "p": "There are two catches. First, the button only works with Instagram's booking partners, and you need an existing account with that partner before you can select it. Instagram says the number of providers is limited and will grow across countries, so the list you see in the app depends on where you are. Second, you need a business account to see the option at all."
+    },
+    {
+      "p": "If you want to try it, switch to a business account, open Edit profile and look for the action buttons or contact options section. Pick Book now and choose your provider. Menu labels change between app versions, so follow what your screen shows. If your booking tool is not in the list, skip the button. The bio link does the same job and works for every account type."
+    },
+    {
+      "h2": "Bio link vs Book now button vs Story sticker: which to use"
+    },
+    {
+      "table": {
+        "head": [
+          "Option",
+          "Who can use it",
+          "What it needs",
+          "Best for"
+        ],
+        "rows": [
+          [
+            "Link in bio",
+            "Any account",
+            "Any URL; up to 5 links",
+            "Your main, always-on booking link"
+          ],
+          [
+            "Book now action button",
+            "Business accounts",
+            "An account with an Instagram booking partner",
+            "Businesses whose booking tool is a listed partner"
+          ],
+          [
+            "Story link sticker",
+            "Most accounts",
+            "Not available to new accounts or accounts with guideline strikes",
+            "Filling this week's open slots"
+          ],
+          [
+            "DM or WhatsApp reply",
+            "Anyone",
+            "Your time",
+            "People with questions before they book"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "A practical setup uses three of these together: the bio link as the permanent door, Stories to announce open slots, and DMs or WhatsApp for the people who want to talk before they pay."
+    },
+    {
+      "h2": "What your Instagram booking link should open"
+    },
+    {
+      "p": "A link in bio is only as good as the page behind it. If the link opens a Google Form, a PDF rate card or a Linktree full of more links, people drop off before they book. The page should let a follower finish the booking in one go, on a phone, in under a minute."
+    },
+    {
+      "ul": [
+        "Your services with a fixed price in ₹, for example \"Trial class, 45 min, ₹300\".",
+        "Live open slots in IST, so nobody has to ask \"kal free ho?\" in your DMs.",
+        "Payment by UPI, cards or netbanking at the moment of booking.",
+        "An automatic confirmation on WhatsApp or email with the time, address or meeting link.",
+        "A reminder before the session and a clear way to reschedule.",
+        "No app download and no long sign-up form for the client."
+      ]
+    },
+    {
+      "p": "If you are still collecting fees by sharing a UPI ID and waiting for a screenshot, read [how we replaced the screenshot dance with pay-at-booking](/blog/advance-payments-without-the-screenshot-dance). The short version: when payment and booking happen in the same step, you stop matching screenshots to names at 11 pm."
+    },
+    {
+      "h2": "Link in bio for coaches, tutors and salons: bio text templates"
+    },
+    {
+      "p": "Each of these fits inside Instagram's 150-character bio limit. Replace the brackets, keep one clear call to action and let the link do the rest."
+    },
+    {
+      "quote": "Life coach for first-time managers 🧭\n1:1 calls on Google Meet · from ₹1,500\nBook & pay below 👇",
+      "cite": "Coach or consultant"
+    },
+    {
+      "quote": "Class 9–12 Maths tutor | Indore + online\nFree demo class, then ₹2,000/month\nPick a demo slot 👇",
+      "cite": "Tutor"
+    },
+    {
+      "quote": "Bridal & party makeup 💄 Jaipur\nTrials ₹1,000, adjusted in final bill\nBook a trial slot below",
+      "cite": "Salon or makeup artist"
+    },
+    {
+      "quote": "Strength training for women 40+ 🏋️\nOnline + Bandra studio · ₹800/session\nBook your first session 👇",
+      "cite": "Personal trainer"
+    },
+    {
+      "quote": "Counselling psychologist · English/Hindi\nOnline sessions, 50 min\nBook privately via the link below",
+      "cite": "Therapist"
+    },
+    {
+      "p": "For therapists and doctors, keep the bio factual and avoid outcome promises. A private booking link also spares clients from having to explain why they are reaching out in a public comment or a DM."
+    },
+    {
+      "h2": "The WhatsApp handoff: for people who want to chat first"
+    },
+    {
+      "p": "Some followers will never tap a booking page cold. They want to ask one question first, usually about price, timing or whether you take beginners. Give them a WhatsApp link as your second bio link, and answer with your booking link in the chat."
+    },
+    {
+      "p": "WhatsApp's [click to chat feature](https://faq.whatsapp.com/5913398998672934) builds that link for you. Use wa.me followed by your full number in international format with no plus sign, zeros, brackets or dashes, for example wa.me/919876543210. Add ?text= and a URL-encoded message to pre-fill what the client types, such as wa.me/919876543210?text=Hi%2C%20I%20saw%20your%20Instagram."
+    },
+    {
+      "p": "Save the replies below as quick replies in the WhatsApp Business app so you can send them in two taps."
+    },
+    {
+      "quote": "Hi [Name], thanks for reaching out! 🙏\nSessions are [45 min] for [₹800]. You can see open slots and book here: [booking link]\nPayment is by UPI on the same page, and you'll get a WhatsApp confirmation straight away.",
+      "cite": "First reply to a DM or WhatsApp enquiry"
+    },
+    {
+      "quote": "Haan ji, available hai! Is week ke slots yahan dikh jaayenge: [booking link]\nSlot select karke UPI se pay kar dijiye, confirmation turant WhatsApp pe aa jaayega. 😊",
+      "cite": "Hinglish reply"
+    },
+    {
+      "quote": "Hi [Name], just checking if you managed to book. This week's last 2 slots are [Thu 7 pm] and [Sat 10 am]: [booking link]",
+      "cite": "Gentle follow-up after 24 hours"
+    },
+    {
+      "p": "For a longer look at running bookings through chat, see [how to manage appointments on WhatsApp](/blog/manage-appointments-on-whatsapp)."
+    },
+    {
+      "h2": "Take UPI payment at the moment of booking"
+    },
+    {
+      "p": "An Instagram follower who books without paying is a soft yes. A follower who pays ₹500 by UPI to hold a slot is a client. Prepayment is one of the most practical ways to cut no-shows from social media leads, because a booking made on impulse late at night is easy to forget by morning."
+    },
+    {
+      "p": "Here is a worked example. Say Sneha, a nutritionist in Hyderabad, charges ₹1,200 per consult and gets 10 bookings a month from Instagram. If 2 of those are no-shows when nobody pays upfront, that is ₹2,400 of empty calendar each month. With pay-at-booking, a no-show still hurts, but the slot is paid for. The numbers here are illustrative. Multiply your own fee by your monthly no-shows to see your figure."
+    },
+    {
+      "p": "Tell clients your cancellation and reschedule rules on the booking page itself, so the payment never feels like a trap. A simple line works: \"Reschedule free up to 12 hours before. Later cancellations are not refunded.\""
+    },
+    {
+      "h2": "Use Stories, Reels and DMs to push the link"
+    },
+    {
+      "p": "A link in bio works best when you send people to it. Instagram's [link sticker](https://about.instagram.com/blog/announcements/expanding-sharing-links-in-stories-to-everyone) lets you put your booking link directly in a Story. Capture or upload the Story, tap the sticker tool, choose Link, paste the URL and tap Done. New accounts and accounts that repeatedly break the Community Guidelines do not get the sticker."
+    },
+    {
+      "ul": [
+        "Post an \"open slots this week\" Story every Monday with the link sticker.",
+        "End Reels with one spoken line: \"Booking link is in my bio.\"",
+        "Pin a highlight called \"Book\" that holds your link sticker Stories.",
+        "Reply to \"price?\" comments with \"Sent you a DM\", then send the first-reply template above."
+      ]
+    },
+    {
+      "p": "If you also want bookings from people who search for you on Google, add the same link to your Google Business Profile. Our guide on [adding a Book button to your Google Business Profile](/blog/book-button-google-business-profile) walks through it."
+    },
+    {
+      "h2": "Common mistakes with Instagram booking links"
+    },
+    {
+      "ul": [
+        "Linking to your WhatsApp number only, which turns every booking into a 10-message conversation.",
+        "Hiding prices until someone DMs. Showing a starting price filters out people who were never going to book.",
+        "Using a link-in-bio page with eight buttons when you sell one service.",
+        "Never testing the link on mobile data from a phone that is not logged in to your account.",
+        "Changing usernames and forgetting the old link is printed on your visiting cards."
+      ]
+    },
+    {
+      "h2": "Setting it up with Book A Sloth"
+    },
+    {
+      "p": "If you need a booking page to put in your bio, [Book A Sloth booking pages](/features/booking-pages) give you a link at bookasloth.com/yourname. You list services with fixed prices, clients pick a slot and pay up-front through Razorpay by UPI, card or netbanking, and the booking confirms automatically on payment. Clients book with a phone OTP and do not need to download an app. Confirmations and reminders go out on WhatsApp and email, and rescheduling and cancellation are built in."
+    },
+    {
+      "p": "The free Sloth plan charges 5% only on paid bookings. Sloth Active costs ₹399 a month with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. See [pricing](/pricing) for details."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I add a booking link to my Instagram bio?",
+          "a": "In the Instagram app, tap your profile picture, then Edit profile, then Links, then Add link. Paste your booking page URL, add a title like \"Book a session\" and tap Done. Instagram allows up to 5 links, and you can reorder them so the booking link appears first."
+        },
+        {
+          "q": "How do I add a Book Now button on Instagram?",
+          "a": "You need a business account and an existing account with one of Instagram's booking partners. Then open Edit profile, find the action buttons section, choose Book now and select your provider. Partner availability is limited and varies by country, so if your tool is not listed, use a booking link in your bio instead."
+        },
+        {
+          "q": "Can I take UPI payments through my Instagram link in bio?",
+          "a": "Instagram does not process payments for appointments itself, but the page your bio links to can. Use a booking page that collects UPI, card or netbanking payment at the moment of booking, so the slot is confirmed only after the client pays."
+        },
+        {
+          "q": "What is the best link in bio for coaches in India?",
+          "a": "A booking page that shows your services with ₹ prices, live slots in IST, UPI payment and automatic WhatsApp confirmations. A plain list of links adds an extra tap before the client reaches the booking step, so link straight to the booking page when booking is the goal."
+        },
+        {
+          "q": "Can I add a WhatsApp link to my Instagram bio?",
+          "a": "Yes. Create a click-to-chat link in the format wa.me/ followed by your number with the country code and no plus sign, for example wa.me/919876543210, and add it as one of your bio links. You can pre-fill a message by adding ?text= followed by URL-encoded text."
+        },
+        {
+          "q": "Why can't I add a link to my Instagram bio from my laptop?",
+          "a": "Instagram's Help Center says adding websites to your profile is not available on computers. Use the Instagram app on an Android phone or iPhone, where you will find it under Edit profile and then Links."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "book-button-google-business-profile",
+  "title": "Booking Button on Google Business Profile: How to Add It",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "calendar",
+    "search",
+    "target"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Add a booking button to your Google Business Profile: open your profile, select Bookings, tap Add link, paste your booking page URL and save. Steps and fixes.",
+  "body": [
+    {
+      "p": "To add a booking button to your Google Business Profile, open your profile on Google Search, select Booking, choose Add link, paste your booking page URL and select Save. On Google Maps, go to Edit profile and pick the booking option instead. Google lets you add up to 10 booking links and mark one as \"Business preferred\"."
+    },
+    {
+      "p": "This guide covers both routes Google offers: your own booking link, and a booking provider connected through Reserve with Google. It also covers removing links you did not add, tracking clicks and the local SEO basics that get the button tapped, for Indian clinics, salons, tutors and consultants."
+    },
+    {
+      "h2": "What the booking button on Google actually is"
+    },
+    {
+      "p": "When someone searches for your business name or \"physiotherapist near me\", your Business Profile appears on Google Search and Maps. If you have added a booking link, the profile shows a Book option. Tapping it opens the page you linked, where the client picks a slot."
+    },
+    {
+      "p": "Google's help page on [managing local business links](https://support.google.com/business/answer/6218037?hl=en) describes two kinds of links. You can add a single link for a menu or a list of services. You can also add up to 10 links per category for booking appointments, making reservations, placing food orders and placing shopping orders. The booking category is the one that matters for service businesses."
+    },
+    {
+      "table": {
+        "head": [
+          "Route",
+          "How it works",
+          "What you need",
+          "Good to know"
+        ],
+        "rows": [
+          [
+            "Your own booking link",
+            "You paste any booking page URL into the Booking section",
+            "A verified profile and a booking page",
+            "Works with any booking tool; Google shows no booking performance data for custom links"
+          ],
+          [
+            "Provider via Reserve with Google",
+            "A scheduling provider connected to Google supplies the booking flow",
+            "An account with a supported provider in your country",
+            "The provider may charge you; it can take up to a week to appear"
+          ],
+          [
+            "Links added by third parties",
+            "Google or partners add booking links automatically",
+            "Nothing; they can appear on their own",
+            "You can remove them, and providers must act within 5 days"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "For most independent professionals in India, the first route is the simplest. You keep your own booking page, collect payment there, and Google simply sends people to it."
+    },
+    {
+      "h2": "Before you start: get your Business Profile verified"
+    },
+    {
+      "p": "Google says customers can only find your profile after you complete verification. If you do not have a profile yet, follow Google's [sign-up steps for Business Profile](https://support.google.com/business/answer/10514137?hl=en): sign in, enter your business name, choose a category, say whether customers visit a location, add a phone number and website, then pick a verification option."
+    },
+    {
+      "ul": [
+        "If clients come to you, such as a clinic in Andheri or a salon in Koramangala, show your address.",
+        "If you travel to clients or work online, mark yourself as a service-area business and hide the address. Google allows up to 20 service areas, set by city or PIN code.",
+        "Choose the most specific category you can, for example \"Physiotherapist\" over \"Health consultant\".",
+        "Create only one profile per business per metropolitan area. Google may suspend accounts with duplicate profiles."
+      ]
+    },
+    {
+      "h2": "How to add a booking link to your Google Business Profile"
+    },
+    {
+      "p": "These steps follow Google's current help article. Labels can differ slightly by business category and device, so match them to what you see."
+    },
+    {
+      "steps": [
+        "Sign in to the Google account that manages your Business Profile and search for your business name on Google, or open it in Google Maps.",
+        "On Google Search, select Booking. On Google Maps, select Edit profile and then the booking option.",
+        "Select Add link. If you already have booking links, select Add another link.",
+        "Paste the URL of your booking page, for example bookasloth.com/yourname. Use the page where clients pick a slot, not your homepage.",
+        "Select Save. Then search for your business from another phone or a private window to check that the Book option shows and opens the right page."
+      ]
+    },
+    {
+      "info": {
+        "title": "Link the booking page itself",
+        "text": "If the button opens your homepage, the client has to hunt for the booking step. Link the exact page where they choose a service and a slot. If that page also takes UPI payment, the Google tap turns into a confirmed, paid booking."
+      }
+    },
+    {
+      "p": "One limit to know: Google says local business links are not available through the Business Profile API or spreadsheet upload. If you manage several branches, add the link to each profile by hand."
+    },
+    {
+      "h2": "Set your preferred booking link"
+    },
+    {
+      "p": "If your profile shows more than one booking link, for example your own page plus a link a directory added, you can choose which one appears first. Google labels it \"Business preferred\"."
+    },
+    {
+      "steps": [
+        "Go to your Business Profile.",
+        "Select the transaction type, in this case Booking.",
+        "Select Set preferred link.",
+        "Choose your own booking link.",
+        "Select Save."
+      ]
+    },
+    {
+      "h2": "\"Book online\" through a provider: Reserve with Google in India"
+    },
+    {
+      "p": "The second route is to connect a booking provider that integrates with Google. Google's page on [setting up bookings through a provider](https://support.google.com/business/answer/7475773?hl=en) says you can find providers available in your country through Reserve with Google. To sign up, go to your Business Profile, select Bookings, select Get started, pick your provider and select Done. Google says the provider will show on your profile within a week."
+    },
+    {
+      "p": "Three things to check before you choose this route. The provider may charge you for bookings that come through Google, so ask about fees. The list of providers depends on your country and category, so the options you see in India may differ from those in a US guide. And you are tied to that provider's booking flow and payment options, which may not include UPI."
+    },
+    {
+      "p": "If your preferred booking tool is not on Google's provider list, add it as your own link using the steps above. Google says this directly: you can also add your own link to your Business Profile."
+    },
+    {
+      "h2": "Remove booking links you did not add"
+    },
+    {
+      "p": "Sometimes a booking link appears on your profile that you never added, usually from a directory or aggregator. Google says these links are provided by third-party partners or automated data. If one sends your clients somewhere you do not control, remove it."
+    },
+    {
+      "steps": [
+        "Go to your Business Profile.",
+        "On Google Search, select Booking, then Remove Provider.",
+        "On Google Maps, select Edit profile, then Booking, then Remove Provider."
+      ]
+    },
+    {
+      "p": "Google says providers must remove third-party links within 5 days of a removal request. If one does not, Google offers a form to report a violation."
+    },
+    {
+      "h2": "Track how many people tap your booking button"
+    },
+    {
+      "p": "Google's help page notes that performance data is not available for custom booking links. To see how many bookings come from Google, add tracking parameters to the URL before you paste it. Google's free [Campaign URL Builder](https://ga-dev-tools.google/campaign-url-builder/) creates the tagged link for you."
+    },
+    {
+      "quote": "https://bookasloth.com/yourname?utm_source=google&utm_medium=business_profile&utm_campaign=book_button",
+      "cite": "Example tagged booking link"
+    },
+    {
+      "p": "Use a different utm_source for each channel, such as instagram for your bio link and whatsapp for links you send in chat. After a month you will know which channel actually fills your calendar."
+    },
+    {
+      "h2": "Make the profile worth tapping: local SEO basics"
+    },
+    {
+      "p": "The booking button only works if people see your profile and trust it. These are the basics that help a local profile get chosen, all of which you control."
+    },
+    {
+      "ul": [
+        "Fill every field: category, hours (including Sunday closures), phone, website and booking link.",
+        "Add your services with ₹ prices that match your booking page, for example \"Physiotherapy session, 45 min, ₹800\".",
+        "Upload real photos of your clinic, studio or work. Stock photos make a profile look generic.",
+        "Ask every client for a Google review after the session and reply to each one, including the critical ones.",
+        "Keep your name, address and phone number identical everywhere: Google, Instagram, Justdial and your booking page.",
+        "Post an update when you add slots or run a festive offer, with the booking link."
+      ]
+    },
+    {
+      "p": "If Instagram brings you clients too, use the same booking page there. Our guide on [adding a booking link to your Instagram bio](/blog/booking-link-instagram-bio) covers the setup and the WhatsApp handoff. For what the booking page itself should include, read [what a booking page needs in India](/blog/what-a-booking-page-needs-in-india)."
+    },
+    {
+      "h2": "Booking button not showing? Common fixes"
+    },
+    {
+      "ul": [
+        "Profile not verified yet: links will not help until verification is complete.",
+        "No Booking option in your dashboard: Google decides which transaction types appear, and it may not be offered for every category. Check that your primary category describes an appointment-based service.",
+        "Wrong page opens: a third-party link may be set as preferred. Set your own link as Business preferred.",
+        "Link was just added: changes can take a little time to appear publicly. Check again later from a logged-out browser.",
+        "Link breaks on mobile: open it on a phone using mobile data. Many people open your profile from Google Maps on a phone, so the page has to work there."
+      ]
+    },
+    {
+      "h2": "Using a Book A Sloth page as your Google booking link"
+    },
+    {
+      "p": "If you need a booking page to link, [Book A Sloth booking pages](/features/booking-pages) give you one at bookasloth.com/yourname. You list services with fixed prices, the client picks a slot in your availability and pays up-front through Razorpay by UPI, card or netbanking, and the booking confirms automatically on payment. Clients get WhatsApp and email confirmations and reminders, can reschedule from the link, and book with a phone OTP without downloading an app. Two-way Google Calendar sync keeps your Google slots and offline appointments from clashing."
+    },
+    {
+      "p": "The free Sloth plan charges 5% only on paid bookings. Sloth Active is ₹399 a month with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. Details are on the [pricing page](/pricing)."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I add a booking button to my Google Business Profile?",
+          "a": "Open your Business Profile on Google Search and select Booking, or on Google Maps select Edit profile and the booking option. Select Add link, paste the URL of your booking page and select Save. Google allows up to 10 booking links, and you can set one as Business preferred."
+        },
+        {
+          "q": "Is the Google booking button free?",
+          "a": "Adding your own booking link to a Google Business Profile does not cost anything. If you connect a booking provider through Reserve with Google instead, Google says that provider might charge you, so check their fees before signing up."
+        },
+        {
+          "q": "Is Reserve with Google available in India?",
+          "a": "Google says you can find booking providers available in your country through Reserve with Google from the Bookings section of your profile. Which providers appear depends on your country and business category. If none suit you, add your own booking link, which works with any booking tool."
+        },
+        {
+          "q": "Why is there no Booking option on my Google Business Profile?",
+          "a": "Your profile may not be verified yet, or Google may not offer the booking transaction type for your business category. Verify the profile first, then check that your primary category describes an appointment-based service such as a clinic, salon or tutor."
+        },
+        {
+          "q": "Can I add booking links to many Google Business Profiles at once?",
+          "a": "No. Google says local business links are not available through the Business Profile API or spreadsheet upload, so each profile has to be updated individually through Edit profile or the Booking section."
+        },
+        {
+          "q": "How do I remove a booking link I did not add on Google?",
+          "a": "On Google Search, open your Business Profile, select Booking and then Remove Provider. On Google Maps, select Edit profile, Booking and Remove Provider. Providers must remove the link within 5 days of the request, and Google offers a violation report if they do not."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "best-appointment-booking-apps-india",
+  "title": "Appointment Scheduling Apps in India: 8 Compared in ₹ (2026)",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "calendar",
+    "scale",
+    "wallet"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 9,
+  "category": "Comparison",
+  "image": null,
+  "excerpt": "The best appointment scheduling app in India depends on UPI, WhatsApp and ₹ cost. We compare 8 apps, from Zoho Bookings to Calendly, with 18% GST added.",
+  "body": [
+    {
+      "p": "The best appointment scheduling app in India depends on how your clients pay. If they pay by UPI before the session, choose a tool with an Indian gateway in the booking flow, such as Zoho Bookings (Premium, via Razorpay) or Book A Sloth. If you only need scheduling, Calendly, Cal.com, Setmore, Picktime and Appointy all have free plans."
+    },
+    {
+      "p": "Most \"best scheduling app\" lists are written for the US and quote dollars. This one converts every price to rupees with 18% GST, and checks three things Indian professionals ask about first: UPI at booking, WhatsApp reminders and commission. All eight tools were checked against their official pricing pages and help docs on 10 October 2026."
+    },
+    {
+      "info": {
+        "title": "Methodology and last checked date",
+        "text": "Last checked: 10 October 2026. We read each vendor's official pricing page and help documentation on that date. We did not buy a paid plan of every tool, so a feature we could not confirm on an official page is marked \"Not stated\" rather than \"No\". USD prices are converted at ₹96.73 per dollar (ECB reference rate for 9 October 2026, via the Frankfurter API) with 18% GST added. Dollar-billed plans also carry your card's forex markup, typically 2% to 3.5% plus GST. Book A Sloth is our product; its limits are listed as plainly as everyone else's."
+      }
+    },
+    {
+      "h2": "Appointment booking apps in India compared: ₹ price, UPI, WhatsApp"
+    },
+    {
+      "table": {
+        "head": [
+          "App",
+          "Free plan",
+          "Cheapest paid plan, ₹ per month incl. 18% GST",
+          "UPI at booking",
+          "WhatsApp reminders",
+          "Commission",
+          "GST invoice for your clients"
+        ],
+        "rows": [
+          [
+            "Book A Sloth",
+            "Yes, 5% per paid booking",
+            "₹399 (Sloth Active, GST included)",
+            "Yes, via Razorpay",
+            "Yes, plus email",
+            "5% free plan, 0% Sloth Active",
+            "Yes"
+          ],
+          [
+            "Zoho Bookings",
+            "Yes, 1 user",
+            "₹425 per user (Basic, yearly) or ₹566 (monthly); Premium ₹637 to ₹850",
+            "Via Razorpay; payments on Premium",
+            "Premium only, with your own WhatsApp Business account",
+            "None",
+            "Not stated"
+          ],
+          [
+            "Calendly",
+            "Yes, 1 event type",
+            "₹1,141 per seat (Standard, yearly) or ₹1,370 (monthly)",
+            "No; Stripe and PayPal, no INR",
+            "Not stated",
+            "None",
+            "Not stated"
+          ],
+          [
+            "Cal.com",
+            "Yes, 1 user, payments included",
+            "₹1,370 per user (Teams, yearly)",
+            "No; Stripe and PayPal",
+            "Not stated; email and SMS on free",
+            "None",
+            "Not stated"
+          ],
+          [
+            "Topmate",
+            "No subscription",
+            "None; commission only",
+            "Not stated on pricing page",
+            "Not stated",
+            "10% own link, 20% marketplace, plus 2% to 3% gateway",
+            "Not stated"
+          ],
+          [
+            "Setmore",
+            "Yes, up to 4 users",
+            "₹571 per user (Pro, yearly) or ₹1,370 (monthly)",
+            "No; Square, Stripe, PayPal",
+            "Not stated; SMS on Pro",
+            "None",
+            "Not stated"
+          ],
+          [
+            "Picktime",
+            "Yes, 3 users",
+            "₹342 per user (Starter, billed yearly)",
+            "No; PayPal, Stripe, Square",
+            "Not stated; SMS on Starter",
+            "None",
+            "Not stated"
+          ],
+          [
+            "Appointy",
+            "Yes, 1 staff, 100 appointments a month",
+            "₹2,282 (Growth, yearly) or ₹3,423 (monthly)",
+            "No; Square, Stripe, PayPal, Authorize.Net",
+            "Not stated",
+            "None",
+            "Not stated"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Zoho shows Indian prices in rupees, and we assumed those exclude GST; confirm at checkout. Everything else is billed in dollars, so your card statement will also show a forex markup."
+    },
+    {
+      "h2": "1. Zoho Bookings: best for Indian teams with several staff"
+    },
+    {
+      "p": "Zoho Bookings shows prices in rupees to Indian visitors. The [Zoho Bookings pricing page](https://www.zoho.com/bookings/pricing.html) lists a Forever Free plan for one user with two-way sync to Zoho, Google and Microsoft calendars. In rupees, Basic is ₹360 per user a month on yearly billing (₹480 monthly) and Premium is ₹540 (₹720 monthly), before GST. Zoho's help docs list Razorpay among its payment gateways, available on Premium for accounts created since July 2020, and WhatsApp is also Premium-only. WhatsApp needs your own WhatsApp Business account and a verified Meta Business Manager. Pricing is per user, so it suits clinics and studios with staff; the Meta setup is more work for a solo coach."
+    },
+    {
+      "h2": "2. Book A Sloth: best for solo professionals paid by UPI"
+    },
+    {
+      "p": "Book A Sloth is an India-first booking page for coaches, therapists, tutors, trainers, consultants, doctors and salons. Clients pick a slot, verify by phone OTP and pay upfront by UPI, card or netbanking through Razorpay; the booking confirms on payment. Email and WhatsApp confirmations and reminders, two-way Google Calendar sync, Google Meet links and GST invoices are included. The free plan has no subscription and takes 5% per paid booking; Sloth Active is ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. Limits: no multi-staff calendars, rupee payments only, and no recurring or subscription billing."
+    },
+    {
+      "h2": "3. Calendly: best free scheduler for meetings and global clients"
+    },
+    {
+      "p": "Calendly is the best-known scheduler and works well for sales calls, interviews and clients abroad. The [Calendly pricing page](https://calendly.com/pricing) lists a Free plan with one event type and one calendar connection. Standard is US$10 per seat a month yearly or US$12 monthly, and Teams US$16 or US$20. Payments run only through Stripe and PayPal in AUD, CAD, EUR, GBP and USD, so there is no UPI. Our [Calendly pricing in India](/blog/calendly-pricing-india) guide breaks down every plan in rupees with GST and card markup."
+    },
+    {
+      "h2": "4. Cal.com: best free plan if you charge in dollars"
+    },
+    {
+      "p": "The [Cal.com pricing page](https://cal.com/pricing) lists a free-forever plan for one user with unlimited event types and calendars, email and SMS notifications, and Stripe and PayPal payments included. Teams is US$12 per user a month on yearly billing and Organizations US$28. It is generous for free, but for Indian clients the same gateway problem applies: Stripe accounts are invite-only for Indian businesses, and PayPal in India handles cross-border payments only. Good for freelancers billing international clients."
+    },
+    {
+      "h2": "5. Topmate: best for creators who want marketplace discovery"
+    },
+    {
+      "p": "Topmate has no subscription. As of October 2026 its pricing page lists a 10% commission on sales through your own link and 20% on sales to new customers from its marketplace, plus transaction fees shown as 2% or 3%. Its pricing page lists 1:1 scheduling, digital products, priority DMs and webinars among its services. The marketplace can bring clients you would not reach alone, which is what the higher rate pays for. See [Topmate commission explained](/blog/topmate-commission) for what you keep per ₹1,000."
+    },
+    {
+      "h2": "6. Setmore: best free plan for a small team"
+    },
+    {
+      "p": "The [Setmore pricing page](https://www.setmore.com/pricing) lists a Free plan for up to 4 users with unlimited appointments and email reminders. Pro is US$5 per user a month on yearly billing or US$12 monthly, and adds SMS reminders with 500 SMS credits per team member each month, though Setmore notes availability varies by country. Payments run through Square, Stripe and PayPal, and deposits are Pro-only. A good fit for a small salon or studio that does not need UPI at booking."
+    },
+    {
+      "h2": "7. Picktime: lowest listed per-user price"
+    },
+    {
+      "p": "Picktime's pricing page lists a Free plan with 3 users, 3 resources, 2 locations, unlimited appointments and PayPal payments. Starter is US$3 per user a month billed yearly, about ₹342 with GST, and adds email and SMS reminders and Stripe and Square. When we checked, Pro (up to 10 users) was listed at US$2.25 per user, billed yearly. It also supports classes, which helps yoga studios and coaching batches. UPI and WhatsApp were not listed."
+    },
+    {
+      "h2": "8. Appointy: best for multi-location service businesses"
+    },
+    {
+      "p": "Appointy's pricing page lists a Free plan with 1 staff, 5 services and 100 appointments a month, with Square payments. Growth is US$19.99 a month on yearly billing (US$29.99 monthly) for 1 staff, Professional is US$49.99 (US$59.99) with 5 staff, and Enterprise is US$79.99 with 2 locations. Extra staff cost US$5 to US$7.50 a month. Stripe, PayPal and Authorize.Net are supported on paid plans. It is the most expensive option here, aimed at salons, spas and clinics with staff logins."
+    },
+    {
+      "h2": "Which appointment booking app should you choose?"
+    },
+    {
+      "ul": [
+        "Solo coach, therapist, tutor or consultant paid in rupees: Book A Sloth, or Zoho Bookings Premium if you want Zoho's wider suite.",
+        "Clinic, salon or studio with several staff on one calendar: Zoho Bookings, Setmore, Picktime or Appointy.",
+        "Clients mostly abroad, paying in dollars: Calendly or Cal.com.",
+        "Creator with an audience who wants extra discovery: Topmate, accepting the 20% marketplace rate on those sales.",
+        "Only need a free scheduling link with no payments: Calendly Free, Cal.com Free or Setmore Free."
+      ]
+    },
+    {
+      "h2": "Free appointment booking apps in India: what free really includes"
+    },
+    {
+      "p": "Every app here has a free option, but free means different things. Calendly Free has one event type. Zoho Bookings Free has one user. Setmore Free covers 4 users but no SMS. Picktime Free takes only PayPal. Appointy Free caps you at 100 appointments a month. Cal.com Free includes payments, but through Stripe and PayPal only. Book A Sloth's free plan includes UPI payments and WhatsApp reminders and charges 5% only on paid bookings. Topmate charges nothing until you sell. Pick the free plan whose limit you are least likely to hit."
+    },
+    {
+      "h2": "Where Book A Sloth fits, and where it doesn't"
+    },
+    {
+      "p": "If you work alone and your clients pay in rupees, Book A Sloth puts the booking, the UPI payment and the WhatsApp reminder in one flow, and a booking only exists once it is paid. See how [payments](/features/payments) work and compare the two plans on the [pricing](/pricing) page. If you run several staff calendars or bill clients in dollars, one of the other tools above will suit you better. For head-to-head pages, see [compare](/compare)."
+    },
+    {
+      "faq": [
+        {
+          "q": "Which is the best appointment scheduling app in India?",
+          "a": "It depends on how you are paid. For solo professionals whose clients pay by UPI, Book A Sloth or Zoho Bookings Premium (with Razorpay) take payment inside the booking flow. For teams with several staff, Zoho Bookings, Setmore or Appointy fit better. For clients abroad paying in dollars, Calendly or Cal.com work well."
+        },
+        {
+          "q": "Is there a free appointment booking app in India?",
+          "a": "Yes. As of October 2026, Calendly, Cal.com, Zoho Bookings, Setmore, Picktime and Appointy all have free plans, and Book A Sloth's free plan has no subscription and takes 5% only on paid bookings. Limits differ: Calendly Free allows one event type, Zoho Free one user, and Appointy Free 100 appointments a month."
+        },
+        {
+          "q": "Which appointment booking apps accept UPI?",
+          "a": "Of the eight apps we checked, Book A Sloth takes UPI on every plan through Razorpay, and Zoho Bookings supports Razorpay for India on its Premium plan. Calendly, Cal.com, Setmore, Picktime and Appointy list only Stripe, PayPal, Square or Authorize.Net. Topmate's pricing page does not name UPI explicitly."
+        },
+        {
+          "q": "Which booking apps send WhatsApp reminders?",
+          "a": "Book A Sloth sends WhatsApp and email confirmations and reminders on its plans. Zoho Bookings sends WhatsApp notifications on Premium, using your own WhatsApp Business account and a verified Meta Business Manager. The other apps we checked list email or SMS reminders but do not mention WhatsApp on their pricing pages."
+        },
+        {
+          "q": "Do I pay GST on a booking app subscription in India?",
+          "a": "Usually yes, at 18%. Foreign tools such as Calendly say they charge GST to certain customers in India; if you are GST-registered and add your GSTIN, you typically pay it yourself under reverse charge and may claim input tax credit. Book A Sloth's ₹399 Sloth Active price already includes GST."
+        },
+        {
+          "q": "Is Zoho Bookings or Calendly better for India?",
+          "a": "For rupee payments, Zoho Bookings, because its Premium plan connects to Razorpay and shows prices in rupees, from ₹540 per user a month on yearly billing before GST. Calendly is a stronger pure scheduler for global meetings but takes payments only in AUD, CAD, EUR, GBP or USD through Stripe or PayPal."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "appointment-confirmation-message",
+  "title": "Appointment Confirmation Message: 15 Templates for India",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "calendar",
+    "bell",
+    "wallet"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 10,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Appointment confirmation message templates for WhatsApp, SMS and email: date, time in IST, place or meeting link, UPI payment receipt and cancellation line.",
+  "body": [
+    {
+      "p": "An appointment confirmation message tells the client five things in one glance: the service, the date and time in IST, the place or meeting link, what they have paid, and how to cancel or reschedule. Send it the moment the booking is made, on WhatsApp first, with an email copy for the receipt."
+    },
+    {
+      "p": "Below are 15 copy-paste templates for Indian service businesses: clinics, salons, tutors, coaches, therapists and consultants. Each one includes the prepaid UPI receipt line and a cancellation-policy line, because those two lines prevent most of the follow-up questions you would otherwise answer by hand. Swap the brackets and send."
+    },
+    {
+      "h2": "What should an appointment confirmation message include?"
+    },
+    {
+      "p": "A good booking confirmation message answers every question a client would otherwise ask you on WhatsApp later. Use this checklist before you save a template."
+    },
+    {
+      "table": {
+        "head": [
+          "Element",
+          "Why it matters",
+          "Example line"
+        ],
+        "rows": [
+          [
+            "Client name and your name",
+            "Shows it is a real person, not spam",
+            "Hi Priya, this is Dr. Mehta's clinic"
+          ],
+          [
+            "Service and duration",
+            "Sets expectations for the session",
+            "Skin consultation (20 min)"
+          ],
+          [
+            "Date, day and time with IST",
+            "Avoids confusion for NRI or travelling clients",
+            "Sat, 18 Oct, 11:30 AM IST"
+          ],
+          [
+            "Address or meeting link",
+            "Removes the 'where do I come?' message",
+            "Google Meet link or a Maps pin"
+          ],
+          [
+            "Payment status and receipt",
+            "Stops 'did my payment go through?' calls",
+            "Paid ₹1,500 via UPI, Ref 4281XXXX"
+          ],
+          [
+            "Cancellation and reschedule line",
+            "Sets the rule before there is a dispute",
+            "Free reschedule up to 24 hours before"
+          ],
+          [
+            "One next step",
+            "Gives the client a single clear action",
+            "Reply YES or fill the 2-minute form"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Keep the whole message under about eight lines on a phone screen. Put the date and time on their own line so the client can find them later when scrolling the chat."
+    },
+    {
+      "h2": "Appointment confirmation WhatsApp message templates (prepaid)"
+    },
+    {
+      "p": "These are for bookings the client has already paid for. The receipt line is what makes them different from generic templates: it confirms the money arrived, so the client does not send you a UPI screenshot and ask you to check."
+    },
+    {
+      "quote": "Hi Priya, your booking is confirmed ✅\n\nService: Career coaching session (45 min)\nDate: Saturday, 18 Oct\nTime: 11:30 AM IST\nJoin: [Google Meet link]\n\nPaid: ₹1,500 via UPI (Ref: [UPI ref no.])\nNeed to change it? Free reschedule up to 24 hours before: [reschedule link]\n\nSee you Saturday,\nAnanya",
+      "cite": "Online session, paid in full"
+    },
+    {
+      "quote": "Hi Rahul, your appointment is confirmed.\n\n[Service] with [Your name]\n[Day, Date] at [Time] IST\n📍 [Address], [Landmark]\nMaps: [Google Maps link]\n\nAdvance received: ₹500 of ₹2,000. Balance ₹1,500 at the visit (UPI or cash).\nPlease arrive 10 minutes early. To cancel or reschedule, reply here at least 24 hours before.",
+      "cite": "In-person visit with a part advance"
+    },
+    {
+      "quote": "Booking confirmed 🙏\n[Service], [Date], [Time] IST\nPaid ₹[amount]. Receipt: [link]\nJoin link: [link]\nReschedule: [link]",
+      "cite": "Short version for repeat clients"
+    },
+    {
+      "h2": "Booking confirmation messages by business type"
+    },
+    {
+      "p": "Each trade has one extra line its clients always ask about. A clinic patient wants to know what to bring. A salon client wants to know how long it takes. A parent wants to know if the demo class is free. Add that line and you save a round of messages."
+    },
+    {
+      "quote": "Namaste Mrs. Sharma, your appointment with Dr. Arjun Rao (General Physician) is confirmed.\n\nDate: Monday, 20 Oct\nTime: 6:15 PM IST (evening OPD)\nClinic: Rao Family Clinic, 2nd floor, Indiranagar, Bengaluru\nFee paid: ₹600 via UPI\n\nPlease bring old prescriptions and reports. If you cannot come, reply here before 2 PM on Monday so another patient can take the slot.",
+      "cite": "Doctor or clinic consultation"
+    },
+    {
+      "quote": "Hi Sneha, you're booked at Glow Studio 💇‍♀️\n\nHair spa + blow-dry (about 90 min)\nSunday, 19 Oct, 4:00 PM\nWith: Kavya\nAdvance paid: ₹500 (adjusted in the final bill)\n\nPlease come with dry, product-free hair. Running late by more than 15 minutes may shorten the service. To reschedule, use [link] up to 12 hours before.",
+      "cite": "Salon or spa booking"
+    },
+    {
+      "quote": "Hello Mr. Iyer, Aarav's demo class is confirmed.\n\nSubject: Class 9 Maths (Algebra basics)\nDay: Wednesday, 22 Oct\nTime: 5:00 to 5:45 PM IST\nMode: Online, link: [Zoom/Meet link]\nDemo fee: Free\n\nPlease keep a notebook and a pencil ready. After the demo I will share the monthly batch fee and timings.\n\nRegards,\nNeha Ma'am",
+      "cite": "Tutor demo class (message to parent)"
+    },
+    {
+      "quote": "Hi Arjun, thank you for booking. Your session is confirmed.\n\nOne-on-one counselling (50 min)\nThursday, 23 Oct, 7:00 PM IST\nLink: [private meeting link]\nPaid: ₹1,800 via UPI\n\nBefore we meet, please fill this short form (3 minutes): [intake form link]. Everything you share stays confidential.\nCancellations made at least 24 hours before are refunded in full.",
+      "cite": "Therapist or counsellor session"
+    },
+    {
+      "quote": "Hi Karan, your consultation is booked.\n\nGST registration consultation (30 min)\nFriday, 24 Oct, 12:00 PM IST\nCall link: [Google Meet link]\nPaid: ₹999 (GST invoice attached)\n\nPlease keep PAN, Aadhaar and your business address proof handy so we can use the 30 minutes well.\n\nCA Meera Joshi",
+      "cite": "Consultant, CA or lawyer consultation"
+    },
+    {
+      "quote": "Hi Pooja, welcome to the 4-week Yoga for Back Pain batch 🧘\n\nStarts: Monday, 3 Nov\nTimings: Mon, Wed, Fri, 7:00 to 8:00 AM IST\nMode: Online, same link every class: [link]\nPaid: ₹2,400 for 12 classes\n\nKeep a mat and a cushion ready. Missed classes cannot be carried forward, but you can join the evening batch once a week instead.",
+      "cite": "Batch, workshop or package booking"
+    },
+    {
+      "h2": "SMS and email confirmation templates with payment receipt"
+    },
+    {
+      "p": "SMS is the fallback for clients who do not use WhatsApp, so keep it to one short message. Email is where the formal receipt and GST invoice belong, because clients search their inbox for it at tax time."
+    },
+    {
+      "quote": "Confirmed: [Service] with [Business] on [Date] at [Time] IST. Paid Rs [amount]. Change: [short link]",
+      "cite": "SMS (fits one message)"
+    },
+    {
+      "quote": "Subject: Confirmed: [Service] on [Day, Date] at [Time] IST\n\nHi [Name],\n\nThank you for booking. Here are your details.\n\nService: [Service], [duration]\nDate and time: [Day, Date], [Time] IST\nWhere: [Address with Maps link / meeting link]\n\nPayment\nAmount paid: ₹[amount]\nMethod: UPI / card / netbanking\nTransaction ref: [ref]\nInvoice: attached (PDF)\n\nNeed to change your plan?\nReschedule free up to [24] hours before: [link]\nCancellation policy: [one line, e.g. full refund up to 24 hours before, no refund after]\n\nSee you soon,\n[Your name]\n[Business name] | [Phone]",
+      "cite": "Email confirmation with receipt"
+    },
+    {
+      "h2": "Hindi and Hinglish appointment confirmation messages"
+    },
+    {
+      "p": "Many clients, and most parents, reply faster to Hindi. Use the respectful आप form, keep English words people actually use (fees, link, reschedule), and keep the date and time in numerals."
+    },
+    {
+      "quote": "नमस्ते प्रिया जी,\nआपकी अपॉइंटमेंट कन्फर्म हो गई है ✅\n\nसेवा: [सेवा का नाम]\nतारीख: शनिवार, 18 अक्टूबर\nसमय: सुबह 11:30 बजे\nजगह/लिंक: [पता या मीटिंग लिंक]\n\nफीस ₹1,500 UPI से प्राप्त हुई।\nसमय बदलना हो तो कृपया 24 घंटे पहले बताएं: [लिंक]\nधन्यवाद 🙏",
+      "cite": "Hindi (Devanagari)"
+    },
+    {
+      "quote": "Namaste Rahul ji, aapki booking confirm ho gayi hai ✅\n[Service]\n[Din, Tareekh], [Time] IST\n[Address / link]\n₹[amount] UPI se mil gaye, thank you.\nTime badalna ho toh 24 ghante pehle yahan reply karein ya is link se reschedule karein: [link]",
+      "cite": "Hinglish (Roman script)"
+    },
+    {
+      "h2": "Confirmation message when the client has not paid yet"
+    },
+    {
+      "p": "Unpaid bookings are where most no-shows come from, because nothing is at stake for the client. If you take pay-later bookings, ask for a reply or an advance in the confirmation itself, and say what happens to the slot if neither arrives."
+    },
+    {
+      "quote": "Hi Aditi, I've pencilled you in for [Service] on [Day, Date] at [Time] IST.\n\nTo confirm the slot, please pay the ₹300 advance here: [UPI payment link]. It is adjusted in your final bill.\nIf the advance isn't received by [6 PM today], the slot will be released for the waiting list.\n\nThank you!",
+      "cite": "Slot held, advance requested"
+    },
+    {
+      "quote": "Hi Vikram, reminder that your [Service] is booked for [Day, Date] at [Time].\nPlease reply YES to confirm or NO if you can't make it, so I can offer the slot to someone else. 🙏",
+      "cite": "Reply-to-confirm for pay-at-visit bookings"
+    },
+    {
+      "p": "If you want to go further, [taking an advance payment for appointments](/blog/advance-payment-for-appointments) covers how much to charge by profession and how to word the refund rule."
+    },
+    {
+      "h2": "How to send confirmation messages without typing each one"
+    },
+    {
+      "p": "If you confirm bookings by hand, save each template once as a WhatsApp Business quick reply. Per the [WhatsApp Business quick replies help page](https://faq.whatsapp.com/1791149784551042), you create them under the Tools tab, call them up in any chat by typing “/”, and the app notes “The maximum number of stored quick replies allowed is 50.” That is plenty for one set per service."
+    },
+    {
+      "steps": [
+        "Open WhatsApp Business, go to the Tools tab and tap Quick replies.",
+        "Tap the add button, paste one template into Message, and give it a shortcut such as /confirm-online or /confirm-clinic.",
+        "Save. Repeat for each service and for the Hindi version.",
+        "When a booking comes in, open the chat, type / and pick the shortcut.",
+        "Replace the brackets: name, date, time, amount and UPI reference. Then send.",
+        "Copy the same text into an email for the receipt if the client needs a GST invoice."
+      ]
+    },
+    {
+      "p": "Manual confirmations work up to a handful of bookings a day. Past that, the risk is a wrong date or a forgotten receipt line. The research on reminders points the same way: a [Cochrane review of 8 trials with 6,615 participants](https://www.cochrane.org/evidence/CD007458_mobile-phone-messaging-reminders-attendance-healthcare-appointments) found text message reminders improved attendance at healthcare appointments compared with no reminder. Consistency is the part that matters, and that is what automation gives you."
+    },
+    {
+      "h2": "Common mistakes in booking confirmation messages"
+    },
+    {
+      "ul": [
+        "Writing 'tomorrow' instead of the day and date. The client reads it a day later and turns up on the wrong day.",
+        "Leaving out IST for online sessions. Clients in Dubai or Singapore will convert the wrong way.",
+        "No payment line. The client sends a screenshot and asks you to check, which costs you one more chat.",
+        "Burying the cancellation rule in a long paragraph. One plain line works better than a policy essay.",
+        "Sending the meeting link only on the day. Put it in the confirmation so the client can test it early.",
+        "Using a personal number for some clients and the business number for others. Keep all confirmations in one place."
+      ]
+    },
+    {
+      "p": "Once the confirmation is out, the next message is the reminder. Use the [WhatsApp appointment reminder templates](/blog/appointment-reminder-templates) for the 24-hour and 1-hour nudges, and keep the [appointment cancellation and reschedule messages](/blog/appointment-cancellation-reschedule-message) ready for when plans change."
+    },
+    {
+      "h2": "Sending confirmations automatically with Book A Sloth"
+    },
+    {
+      "p": "On Book A Sloth, a client books from your page at bookasloth.com/yourname and pays up front by UPI, card or netbanking through Razorpay. The booking confirms automatically when the payment goes through, and the client gets an email and WhatsApp confirmation with the date, time, place or auto-generated Google Meet link. Reminders, reschedule and cancel links follow from the same booking. See how the [booking notifications](/features/notifications) work. The free Sloth plan charges 5% per paid booking only, and you can [create your booking page](/be-a-sloth) in a few minutes."
+    },
+    {
+      "faq": [
+        {
+          "q": "What is an appointment confirmation message?",
+          "a": "An appointment confirmation message is the message a business sends right after a booking. It states the service, date, time in IST, location or meeting link, payment status, and how to cancel or reschedule, so the client has every detail in one place."
+        },
+        {
+          "q": "How do I write a booking confirmation message on WhatsApp?",
+          "a": "Start with the client's name and a clear 'your booking is confirmed'. Put the service, day, date and time on separate lines, add the address or meeting link, state the amount paid with the UPI reference, and end with one line on how to reschedule. Keep it under eight lines."
+        },
+        {
+          "q": "Should a confirmation message include the payment receipt?",
+          "a": "Yes, if the client has paid. A line such as 'Paid ₹1,500 via UPI, Ref 4281XXXX' stops the client from sending a screenshot and asking you to check. For clients who need a GST invoice, attach it to an email copy of the confirmation."
+        },
+        {
+          "q": "How do I confirm an appointment in Hindi?",
+          "a": "Use the आप form and keep it short: 'नमस्ते [नाम] जी, आपकी अपॉइंटमेंट कन्फर्म हो गई है', then the date, time and place on separate lines, the fee received, and a line asking them to inform you 24 hours before if the time needs to change."
+        },
+        {
+          "q": "When should I send an appointment confirmation?",
+          "a": "Send it within minutes of the booking or payment. The client is still looking at their phone and will save the details. Then send reminders closer to the day, typically 24 hours and 1 hour before the appointment."
+        },
+        {
+          "q": "What is the difference between a confirmation and a reminder message?",
+          "a": "A confirmation is sent once, at the time of booking, and carries the full details and the payment receipt. A reminder is sent shortly before the appointment and only repeats the date, time and place with a quick way to reschedule."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "appointment-cancellation-reschedule-message",
+  "title": "Appointment Cancellation Message & Reschedule Templates",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "calendar",
+    "clipboard",
+    "wallet"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 10,
+  "category": "Guide",
+  "image": null,
+  "excerpt": "Appointment cancellation message templates for businesses and clients: reschedule requests, UPI refund wording, late cancellations, Hindi and WhatsApp versions.",
+  "body": [
+    {
+      "p": "A good appointment cancellation message says sorry once, states what is cancelled (service, date, time), explains what happens to the money, and offers a new slot in the same message. Whether you are the business or the client, the goal is the same: one message that closes the old booking and opens the next one."
+    },
+    {
+      "p": "This guide has 18 copy-paste templates for both sides: businesses cancelling or moving a booking, clients asking to cancel or reschedule, and the replies a business sends back. There are short WhatsApp versions, formal email versions, refund lines for UPI payments, and Hindi and Hinglish versions."
+    },
+    {
+      "h2": "What to include in an appointment cancellation message"
+    },
+    {
+      "p": "Most cancellation messages fail because they leave the client with a question: is my money coming back, and when can I come instead? Answer both and you rarely get a follow-up."
+    },
+    {
+      "table": {
+        "head": [
+          "Situation",
+          "Refund or credit",
+          "Line to use"
+        ],
+        "rows": [
+          [
+            "Business cancels, any reason",
+            "Full refund or free reschedule, client's choice",
+            "Your ₹[amount] will be refunded in full, or you can move to any open slot at no charge."
+          ],
+          [
+            "Client cancels within your policy window",
+            "Full refund as per policy",
+            "Cancelled as requested. Your refund of ₹[amount] has been started."
+          ],
+          [
+            "Client cancels late (outside policy)",
+            "Partial refund, credit or none, as your policy states",
+            "As per our 24-hour policy, the fee is non-refundable, but I can move you to another slot this week."
+          ],
+          [
+            "Client reschedules within policy",
+            "Payment carried to the new slot",
+            "Done. Your payment carries over to the new time."
+          ],
+          [
+            "Client does not turn up",
+            "As per your no-show rule",
+            "We missed you today. Here is a link to rebook."
+          ]
+        ]
+      }
+    },
+    {
+      "p": "Write your rule down before you need it. The [cancellation policy templates](/blog/cancellation-policy-template) have ready wording with ₹ examples for clinics, coaches and salons, so the message only has to point to it."
+    },
+    {
+      "h2": "When the business cancels or reschedules an appointment"
+    },
+    {
+      "p": "If you cancel, the client has done nothing wrong, so make it easy: apologise, give a reason in a few words, and offer both a refund and a new slot. Never make the client ask for their money."
+    },
+    {
+      "quote": "Hi Priya, I'm sorry, but I have to cancel your appointment on Thursday, 23 Oct at 6:00 PM because of a medical emergency at the hospital.\n\nYou can choose:\n1. Pick a new slot here, no extra charge: [reschedule link]\n2. Full refund of ₹800 to your UPI account\n\nJust reply 1 or 2. Apologies for the trouble.\nDr. Kavita Menon",
+      "cite": "Doctor or clinic cancels (emergency)"
+    },
+    {
+      "quote": "Hi Rahul, can we move your session from Friday 4 PM to Saturday 11 AM IST? Something urgent has come up on my side.\nIf Saturday doesn't work, pick any time here: [link]. Your payment carries over. Sorry about this!",
+      "cite": "Short WhatsApp reschedule request from business"
+    },
+    {
+      "quote": "Hi Sneha, our stylist Kavya is unwell today, so we need to move your 4:00 PM hair spa.\nOpen slots: Sun 12 PM, Sun 5 PM, Mon 11 AM.\nYour ₹500 advance stays with us for the new slot, or we refund it today. Which would you like?\nGlow Studio",
+      "cite": "Salon or spa (stylist unavailable)"
+    },
+    {
+      "quote": "Dear parents, there will be no Maths class on Monday, 20 Oct because of the Diwali holiday.\nThe make-up class is on Saturday, 25 Oct, 5:00 to 6:00 PM, same link.\nThis month's fee is not affected. Happy Diwali! 🪔\nNeha Ma'am",
+      "cite": "Tutor or coaching class cancelled (holiday)"
+    },
+    {
+      "quote": "Hi everyone, due to the heavy rain alert and waterlogging near the studio, today's 6:30 PM batch is moved online.\nSame time, join here: [meeting link].\nIf you'd rather take it later, reply and I'll add a make-up class to your package.",
+      "cite": "Weather, bandh or local disruption"
+    },
+    {
+      "quote": "Subject: Your appointment on [Date] is cancelled (refund details inside)\n\nDear [Name],\n\nI'm sorry to let you know that I have to cancel your [Service] on [Day, Date] at [Time] IST because [brief reason].\n\nWhat happens next:\n• Your payment of ₹[amount] will be refunded in full to the original payment method. Bank timelines apply, usually within a week to ten working days.\n• If you would rather reschedule, choose any open slot here at no charge: [link]\n\nApologies for the inconvenience. Please reply if you have any questions.\n\nRegards,\n[Your name]\n[Business] | [Phone]",
+      "cite": "Formal cancellation email with refund"
+    },
+    {
+      "h2": "Messages for clients who need to cancel or reschedule"
+    },
+    {
+      "p": "Clients search for this too. If you need to cancel an appointment with a doctor, salon or consultant, the polite version is short: the booking details, one line of reason, and either a new time or a request for refund as per their policy. Send it as early as you can."
+    },
+    {
+      "quote": "Hi, this is Ananya Rao. I have an appointment on Saturday, 18 Oct at 11:30 AM for [service].\nI'm sorry, I won't be able to make it because of a family function. Could you please cancel it? I paid ₹1,500 by UPI on [date].\nThank you.",
+      "cite": "Client cancelling (paid booking)"
+    },
+    {
+      "quote": "Hi, I have a session booked for Friday, 24 Oct at 7 PM. Could we please reschedule to any evening next week after 6 PM? Sorry for the short notice.\nThanks,\nKaran",
+      "cite": "Client asking to reschedule"
+    },
+    {
+      "quote": "Subject: Request to reschedule our meeting on [Date]\n\nHi [Name],\n\nI'm sorry, something has come up and I can't make our meeting on [Day, Date] at [Time]. Would any of these work instead?\n• [Option 1]\n• [Option 2]\n• [Option 3]\n\nIf none of these suit you, please share a time that does, or send me your booking link. Apologies for the change.\n\nBest regards,\n[Your name]",
+      "cite": "Reschedule meeting message (professional email)"
+    },
+    {
+      "quote": "So sorry for the late notice, I'm stuck in traffic and won't make the 5 PM appointment. I understand if the fee can't be refunded. Is there any slot later this week I could move to?",
+      "cite": "Client cancelling at the last minute"
+    },
+    {
+      "h2": "Replies a business sends after a client cancels or reschedules"
+    },
+    {
+      "p": "Your reply decides whether the client comes back. Confirm what was done, state the money clearly, and add a rebook link. The most useful line in any of these is “You can pick a new slot here, no charge: [link]” because it turns a cancellation into a booking."
+    },
+    {
+      "quote": "Hi Ananya, done. Your 18 Oct appointment is cancelled.\nYour refund of ₹1,500 has been started to the same UPI account. Banks usually take a few working days to show it.\nWhenever you're ready, you can book again here: [link] 🙂",
+      "cite": "Cancellation accepted with refund"
+    },
+    {
+      "quote": "Hi Karan, I've moved your session to Tuesday, 28 Oct at 7:00 PM IST. Same link: [meeting link].\nYour payment carries over, nothing more to pay. See you then!",
+      "cite": "Reschedule confirmed"
+    },
+    {
+      "quote": "Hi Vikram, I understand, these things happen. As per our policy, cancellations within 24 hours of the slot are not refundable, since the time was held for you.\nI can still offer you a slot this week at half the fee: [link]. Let me know.",
+      "cite": "Late cancellation (outside policy), offering goodwill"
+    },
+    {
+      "quote": "Hi Meera, we missed you at your 11 AM appointment today. Hope everything is okay.\nAs per our no-show policy the fee for today can't be refunded, but you can book your next visit here: [link].",
+      "cite": "No-show follow-up"
+    },
+    {
+      "quote": "Hi Pooja, you had to cancel your session last week. Would you like to book a new time? Here are my open slots for the next two weeks: [link]. No pressure, just checking in. 🙂",
+      "cite": "Rebook nudge a week after a cancellation"
+    },
+    {
+      "h2": "Hindi and Hinglish cancellation and reschedule messages"
+    },
+    {
+      "quote": "नमस्ते प्रिया जी,\nमाफ़ कीजिए, किसी ज़रूरी कारण से गुरुवार, 23 अक्टूबर शाम 6 बजे की आपकी अपॉइंटमेंट रद्द करनी पड़ रही है।\nआप इस लिंक से नया समय चुन सकती हैं, कोई अतिरिक्त चार्ज नहीं: [लिंक]\nया अगर आप चाहें तो ₹800 की पूरी राशि वापस कर दी जाएगी।\nअसुविधा के लिए खेद है 🙏",
+      "cite": "Business cancels (Hindi)"
+    },
+    {
+      "quote": "नमस्ते, मेरी अपॉइंटमेंट शनिवार, 18 अक्टूबर सुबह 11:30 बजे है। किसी कारण से मैं नहीं आ पाऊंगा। क्या इसे अगले हफ़्ते किसी शाम के लिए बदला जा सकता है?\nधन्यवाद,\nराहुल",
+      "cite": "Client asks to reschedule (Hindi)"
+    },
+    {
+      "quote": "Hi Rahul ji, aapka session Friday 4 PM se Saturday 11 AM pe shift kar sakte hain kya? Mere side se kuch urgent aa gaya hai.\nSaturday nahi chalega toh is link se koi bhi time choose kar lijiye: [link]. Payment carry forward ho jayega. Sorry! 🙏",
+      "cite": "Business reschedule request (Hinglish)"
+    },
+    {
+      "h2": "UPI refund wording: what to promise and what not to"
+    },
+    {
+      "p": "When a client paid by UPI, card or netbanking through a payment gateway, the refund goes back to the same method, and the timing depends on the bank. Razorpay's [normal refunds documentation](https://razorpay.com/docs/payments/refunds/normal/) gives 7-10 business days in general, with UPI refunds at 2-7 days, and notes that the gateway's original transaction fee is not reversed to the merchant. So promise that the refund has been started, not that it will arrive today."
+    },
+    {
+      "ul": [
+        "Say 'refund started' with the date, and the amount in ₹.",
+        "Say where it goes: 'to the same UPI account or card you paid from'.",
+        "Give a range, not a promise: 'banks usually take a few working days'.",
+        "If you were paid to a personal UPI ID, send the refund yourself and share the UPI reference number in the chat.",
+        "Never ask the client for their UPI PIN or an OTP to process a refund. Refunds never need them."
+      ]
+    },
+    {
+      "h2": "How to let clients reschedule an appointment with a link"
+    },
+    {
+      "p": "The fastest reschedule is the one you do not handle at all. A reschedule link lets the client pick a new open slot themselves, so you avoid the back-and-forth of 'is 5 PM okay? no? 6?'. Read what [rescheduling](/glossary/reschedule) means on a booking page, then set it up like this."
+    },
+    {
+      "steps": [
+        "Decide your window, for example free reschedule up to 24 hours before the slot.",
+        "Put the reschedule link in the confirmation and the reminder, not only in the cancellation reply.",
+        "Make the link show only real open slots, so a client cannot move into a time you are busy.",
+        "Carry the payment across automatically, so the client never pays twice or asks for a refund to rebook.",
+        "Send a fresh confirmation for the new time, with the same meeting link or address."
+      ]
+    },
+    {
+      "p": "Typing these replies by hand? Save each template as a quick reply in WhatsApp Business (Tools tab, then Quick replies, as the [WhatsApp help page](https://faq.whatsapp.com/1791149784551042) shows) and call it up by typing / in the chat. The confirmation that goes out first is covered in the [appointment confirmation message templates](/blog/appointment-confirmation-message)."
+    },
+    {
+      "h2": "Cancel and reschedule flows on Book A Sloth"
+    },
+    {
+      "p": "On Book A Sloth, every booking comes with reschedule and cancel flows, so clients can move or cancel within your rules without messaging you. Clients pay up front through Razorpay when they book, and the email and WhatsApp messages for confirmations and reminders go out on their own. Two-way Google Calendar sync keeps the open slots honest when you block time elsewhere. See how [booking notifications](/features/notifications) work, and read [how to reduce no-shows](/blog/how-to-reduce-no-shows) for the reminder and policy side."
+    },
+    {
+      "faq": [
+        {
+          "q": "How do I write a polite appointment cancellation message?",
+          "a": "Say sorry once, name the appointment (service, day, date and time), give a short reason, then offer a new slot and explain what happens to the payment. Example: 'Sorry, I have to cancel your Thursday 6 PM session. Pick a new slot here at no charge, or I can refund ₹800 in full.'"
+        },
+        {
+          "q": "How do I ask a client to reschedule an appointment?",
+          "a": "Ask, do not tell. Offer one or two specific alternatives and a link to pick any open time, and confirm the payment carries over. For example: 'Can we move your session from Friday 4 PM to Saturday 11 AM? If not, choose any time here. Your payment carries over.'"
+        },
+        {
+          "q": "How do I cancel a doctor's appointment by message?",
+          "a": "Send your name, the appointment date and time, and a clear request to cancel, as early as possible so another patient can take the slot. If you paid in advance, mention the amount and date of payment and ask about a refund or a new slot as per the clinic's policy."
+        },
+        {
+          "q": "How long does a UPI refund take after a cancelled appointment?",
+          "a": "If the payment went through a gateway such as Razorpay, refunds go back to the same method and the bank's processing time applies. Razorpay's documentation lists 2-7 days for UPI and 7-10 business days in general. If the client paid to a personal UPI ID, you send the refund yourself and it is usually instant."
+        },
+        {
+          "q": "Should I charge a fee for late cancellations?",
+          "a": "That depends on your written policy. Many service businesses keep the fee for cancellations within 24 hours or for no-shows, since the slot could not be filled. State the rule at booking time, in the confirmation, so the cancellation reply only has to point to it."
+        },
+        {
+          "q": "What is the best way to let clients reschedule?",
+          "a": "Send a reschedule link in the confirmation and reminder that shows only your real open slots and carries the payment to the new time. The client moves the booking in one step and you get a fresh confirmation, with no back-and-forth on WhatsApp."
+        }
+      ]
+    }
+  ]
+},
+{
+  "slug": "advance-payment-for-appointments",
+  "title": "Advance Payment for Appointments: How to Take It in India",
+  "date": "Oct 10, 2026",
+  "icons": [
+    "wallet",
+    "calendar",
+    "shield"
+  ],
+  "author": "Shubham N Datarkar",
+  "readMins": 7,
+  "category": "Money",
+  "image": null,
+  "excerpt": "Take advance payment for appointments by collecting a deposit or the full fee at booking. Amounts by profession, policy wording and refund rules for India.",
+  "body": [
+    {
+      "p": "To take advance payment for appointments, ask for a deposit or the full fee at the moment the client books, and confirm the slot only after the money arrives. Most Indian practices charge between 20% and the full fee. Show your cancellation and refund terms before the client pays, not after."
+    },
+    {
+      "p": "An unpaid booking costs the client nothing to abandon. A paid one does. That small commitment is what fills the slot. Below: deposit vs full prepay, how much to charge by profession, policy wording you can copy, and how to handle refunds."
+    },
+    {
+      "h2": "Booking deposit vs full prepayment: which should you take?"
+    },
+    {
+      "p": "There are three common models. The right one depends on how long the appointment is, how much it costs and how often clients cancel on you."
+    },
+    {
+      "table": {
+        "head": [
+          "Model",
+          "How it works",
+          "Best for",
+          "Downside"
+        ],
+        "rows": [
+          [
+            "Full prepayment",
+            "Whole fee paid at booking",
+            "Online consultations, therapy, coaching, single sessions",
+            "Some first-time clients hesitate"
+          ],
+          [
+            "Booking deposit",
+            "20% to 50% now, balance at the visit",
+            "Salons, spas, photographers, long or high-ticket services",
+            "You still collect the balance"
+          ],
+          [
+            "Token amount",
+            "A small fixed amount, such as ₹200, to hold the slot",
+            "Clinics, first consultations, demo classes",
+            "Weak commitment on expensive slots"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "If the appointment is short and the price is fixed, take the full fee. It is simpler for everyone, and there is no balance to chase. Use a deposit when the service is long, the final price may change, or the amount is large enough that asking for all of it up-front would lose you bookings."
+    },
+    {
+      "h2": "How much advance to charge, by profession"
+    },
+    {
+      "p": "There is no universal number. A useful rule from our own [build-in-public notes on advance payments](/blog/advance-payments-without-the-screenshot-dance) is to charge “enough that abandoning it stings, low enough that it is not a decision”. The ranges below are illustrative starting points, not market data."
+    },
+    {
+      "table": {
+        "head": [
+          "Profession",
+          "Suggested advance",
+          "Worked example"
+        ],
+        "rows": [
+          [
+            "Consultant, coach, mentor",
+            "Full fee",
+            "₹1,500 call: ₹1,500 at booking"
+          ],
+          [
+            "Therapist or counsellor",
+            "Full fee per session",
+            "₹2,000 session: ₹2,000 at booking"
+          ],
+          [
+            "Doctor (online consultation)",
+            "Full fee",
+            "₹600 tele-consult: ₹600 at booking"
+          ],
+          [
+            "Doctor or dentist (in clinic)",
+            "Token or none for regulars",
+            "₹200 to hold a first visit"
+          ],
+          [
+            "Salon or spa (long services)",
+            "25% to 50%",
+            "₹8,000 bridal package: ₹2,000 to ₹4,000"
+          ],
+          [
+            "Photographer",
+            "Booking amount",
+            "₹40,000 wedding shoot: ₹10,000 to block the date"
+          ],
+          [
+            "Tutor",
+            "Monthly fee in advance; demo class free or prepaid",
+            "₹3,000 a month, paid by the 5th"
+          ],
+          [
+            "Personal trainer",
+            "Package prepaid",
+            "12-session pack paid before session one"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "If your no-show rate is high, move up a row and take the full fee. People who intend to come rarely mind paying first. Book A Sloth will publish its own aggregated numbers on prepaid vs unpaid no-shows once its booking volume is large enough to be meaningful. Until then, use your own records."
+    },
+    {
+      "h2": "What a no-show costs you: a quick calculation"
+    },
+    {
+      "p": "Do this sum with your own numbers before you decide. Monthly loss = bookings per month × no-show rate × average fee. Then add the time you spent preparing for sessions that did not happen."
+    },
+    {
+      "ul": [
+        "Example: 60 bookings a month × 10% no-shows × ₹1,000 fee = ₹6,000 lost a month.",
+        "Over a year that example is ₹72,000, before counting the slots you could have sold to someone else.",
+        "If a ₹1,000 advance cuts even half of those no-shows, it recovers ₹3,000 a month in the same example."
+      ]
+    },
+    {
+      "p": "The 10% figure above is a placeholder. Plug your real rate into the [no-show cost calculator](/tools/no-show-cost-calculator) to see your own number."
+    },
+    {
+      "h2": "How to take a booking amount without chasing UPI screenshots"
+    },
+    {
+      "p": "Most professionals start by sharing a UPI ID on WhatsApp and waiting for a screenshot. It works, but every step is yours: send the ID, wait, zoom into the screenshot, check the bank app, confirm the slot, note it somewhere. If you stay with this method, run it like this:"
+    },
+    {
+      "steps": [
+        "Send the slot, the amount and your UPI ID in one message, with a deadline to pay, such as two hours.",
+        "Hold the slot only until that deadline. Release it if the payment has not arrived.",
+        "Check the credit in your own bank app. Do not confirm from a screenshot alone.",
+        "Reply with a confirmation that repeats the date, time, amount received and your cancellation policy.",
+        "Log the payment against the client name the same day."
+      ]
+    },
+    {
+      "p": "The better fix is ordering. The payment should happen inside the booking, before the slot is confirmed, so none of those steps need you. A booking page with built-in checkout or a payment link does this. Our pillar guide on [how to collect payments from clients in India](/blog/collect-payments-from-clients-india) compares every method on fees and refunds."
+    },
+    {
+      "h2": "Advance payment policy wording you can copy"
+    },
+    {
+      "p": "A cancellation policy the client never saw before paying is an argument waiting to happen. Put the wording on your booking page and in the confirmation. Edit the numbers to suit your practice."
+    },
+    {
+      "quote": "Sessions are confirmed on full payment at the time of booking.\nReschedule free up to 24 hours before your slot.\nCancel 24 hours or more before: full refund.\nCancel within 24 hours or miss the session: no refund, but one free reschedule within 7 days.\nIf I cancel, you get a full refund or a new slot of your choice.",
+      "cite": "Full prepayment policy: consultants, coaches, therapists"
+    },
+    {
+      "quote": "A booking amount of 30% is needed to confirm your appointment.\nThe balance is paid at the salon by UPI or card.\nCancel 48 hours or more before: booking amount refunded in full.\nCancel within 48 hours or no-show: booking amount is kept.\nRunning late by more than 15 minutes may shorten your service.",
+      "cite": "Deposit policy: salons and spas"
+    },
+    {
+      "quote": "Your date is blocked once the booking amount of ₹10,000 is received.\nThe balance is due 7 days before the event.\nThe booking amount is non-refundable but can move to a new date within 6 months, subject to availability.\nIf I cannot cover your date, the booking amount is refunded in full.",
+      "cite": "Booking amount: photographers and event services"
+    },
+    {
+      "quote": "Hi Priya, your slot on Thursday 16 Oct at 6:00 pm IST is on hold for you.\nTo confirm it, please pay the advance of ₹500 within 2 hours here: [payment link]\nThe remaining ₹1,500 is paid after the session.\nCancellation policy: free reschedule up to 24 hours before.",
+      "cite": "WhatsApp message asking for an advance"
+    },
+    {
+      "h2": "Refunds: when to return an advance"
+    },
+    {
+      "p": "Decide the rules once, write them down, and apply them the same way to everyone. That consistency is what keeps refund conversations short."
+    },
+    {
+      "table": {
+        "head": [
+          "Situation",
+          "Common approach"
+        ],
+        "rows": [
+          [
+            "Client cancels well before the cut-off",
+            "Full refund or a free reschedule"
+          ],
+          [
+            "Client cancels after the cut-off",
+            "Keep the advance or offer one reschedule, as your policy says"
+          ],
+          [
+            "Client does not turn up",
+            "Keep the advance as per policy"
+          ],
+          [
+            "You cancel or reschedule",
+            "Always offer a full refund"
+          ],
+          [
+            "Genuine emergency (illness, bereavement)",
+            "Use discretion; a reschedule usually keeps the relationship"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "If you took the advance through a gateway, refund it from the gateway dashboard so it returns to the client's original payment method. Razorpay's [standard pricing page](https://razorpay.com/pricing/) lists refund processing at ₹0 and a 2% platform fee plus 18% GST on each successful payment. If you took it by UPI to your own account, send it back by UPI and save the transaction reference."
+    },
+    {
+      "p": "One more cost to note. From 15 October 2026, the Department of Financial Services [FAQ on UPI merchant charges](https://financialservices.gov.in/sites/default/files/2026-09/FAQs---Merchant-Discount-Rate--MDR--on-Select-UPI--P2M--Transactions_0.pdf) sets a 0.4% MDR on person-to-merchant UPI payments above ₹2,000, capped at ₹300. Advances up to ₹2,000 stay free of MDR, and merchants cannot pass the charge on to clients."
+    },
+    {
+      "h2": "Prepaid appointments on Book A Sloth"
+    },
+    {
+      "p": "Book A Sloth makes prepaid booking the default. You list fixed-price services on your booking page, clients pay up-front through Razorpay by UPI, card or netbanking when they book, and the booking confirms automatically once payment succeeds. Email and WhatsApp confirmations and reminders go out on their own, and the client can reschedule or cancel through the same flow. See how it works on the [payments feature page](/features/payments)."
+    },
+    {
+      "p": "Write your policy into the service description and link to it from your [cancellation policy](/glossary/cancellation-policy) so clients agree to it at the point of payment."
+    },
+    {
+      "faq": [
+        {
+          "q": "How much advance should I take for an appointment?",
+          "a": "Most Indian practices take between 20% and the full fee. Take the full fee for short, fixed-price sessions such as consultations, therapy or coaching. Take a 25% to 50% deposit for long or high-ticket services such as bridal makeup or photo shoots, where the balance is paid on the day."
+        },
+        {
+          "q": "Is a booking deposit the same as an advance payment?",
+          "a": "A booking deposit is a type of advance payment. It covers part of the fee to hold the slot, with the balance paid at the appointment. Full prepayment is also an advance, but it covers the whole fee so there is nothing left to collect."
+        },
+        {
+          "q": "Should advance payments be refundable?",
+          "a": "Usually yes, if the client cancels before a clear cut-off such as 24 or 48 hours. After the cut-off or on a no-show, many professionals keep the advance or offer one reschedule. If you cancel, always refund in full. Whatever you choose, show it before the client pays."
+        },
+        {
+          "q": "How do I ask a client for advance payment politely?",
+          "a": "Make it routine, not personal. Send the slot, the amount, one payment link or UPI ID, and a deadline in a single message, then mention your cancellation policy in one line. Clients accept advances easily when every booking works the same way."
+        },
+        {
+          "q": "Do prepaid appointments reduce no-shows?",
+          "a": "Prepayment gives the client a reason to turn up or to cancel in time, because they have something to lose. Track your own no-show rate for a month before and after asking for advances to see the effect on your practice."
         }
       ]
     }
@@ -2627,179 +9725,6 @@ export const BLOG_POSTS = [
   ]
 },
 {
-  "slug": "scheduling-terms-glossary",
-  "title": "Buffer Time Meaning: A Scheduling Terms Glossary",
-  "date": "Oct 3, 2026",
-  "icons": [
-    "calendar",
-    "columns",
-    "clipboard"
-  ],
-  "author": "Shubham N Datarkar",
-  "readMins": 6,
-  "category": "Guide",
-  "image": null,
-  "excerpt": "Buffer time meaning, buffer days, placeholder and recurring meetings, 24/7 availability and availability charts — scheduling terms in plain English.",
-  "body": [
-    {
-      "p": "Buffer time is the empty gap you leave before or after a meeting so you are not sprinting from one call straight into the next. It is a cushion, not wasted time. This glossary defines buffer time and the other scheduling words that get used loosely and understood rarely — so your calendar stops running you."
-    },
-    {
-      "p": "Every term below opens with a one-line definition. Skim to the one you need."
-    },
-    {
-      "h2": "Buffer time and buffer days"
-    },
-    {
-      "p": "Buffer time is a deliberate gap between calendar events that gives you room to breathe, prep, or catch up. It sits before a meeting, after it, or both."
-    },
-    {
-      "p": "Think of it as the shock absorber for your day. Without it, a 3:00 call that runs three minutes long makes you late to your 3:30. Do that four times and you have lost the afternoon."
-    },
-    {
-      "h2": "Before buffer: prep padding"
-    },
-    {
-      "p": "A before buffer is padding added ahead of a meeting so you can prepare instead of joining flustered. Use it to read the client's last email, open the right file, or just refill your water. Ten minutes is usually enough."
-    },
-    {
-      "h2": "After buffer: wrap-up padding"
-    },
-    {
-      "p": "An after buffer is padding added at the end of a meeting for wrap-up — notes, follow-ups, and a mental reset before the next thing. Scheduling tools let you set the before and after buffers independently, so a 30-minute call can quietly own 50 minutes of your calendar. [Cal.com's guide to buffers](https://cal.com/blog/what-is-buffer-time-learn-how-to-use-buffer-times-in-scheduling) shows this: a 10:00 meeting with a 10-minute buffer on each side keeps you clear until 10:40."
-    },
-    {
-      "h2": "How much buffer time should you add between meetings?"
-    },
-    {
-      "p": "A common rule of thumb is 15 to 30 minutes between appointments, though it depends on the work. Back-to-back therapy sessions or coaching calls need more; a quick check-in needs less. [SchedulingKit suggests 15–30 minutes for longer sessions](https://www.schedulingkit.com/how-to/set-up-buffer-time) and 5–10 for short ones. Start with 15 and stretch it if you keep running late."
-    },
-    {
-      "h2": "What is a buffer day?"
-    },
-    {
-      "p": "A buffer day is a full day (or half-day) blocked off with no meetings, used as a catch-up or spillover zone. Freelancers often keep Fridays as a buffer day — no calls, just deep work and the admin that piled up. It absorbs the week's overruns so they do not bleed into the weekend."
-    },
-    {
-      "h2": "Meeting types, explained"
-    },
-    {
-      "p": "A meeting type is the category of a calendar event, defined by how many people join, whether it repeats, and what it is for. Knowing the vocabulary helps you set up the right kind fast."
-    },
-    {
-      "table": {
-        "head": [
-          "Term",
-          "One-line meaning",
-          "Repeats?"
-        ],
-        "rows": [
-          [
-            "One-on-one",
-            "A meeting between two people",
-            "No"
-          ],
-          [
-            "Recurring meeting",
-            "The same meeting repeating on a set schedule",
-            "Yes"
-          ],
-          [
-            "Standing meeting",
-            "A recurring meeting with a fixed time and agenda",
-            "Yes"
-          ],
-          [
-            "Placeholder meeting",
-            "A slot booked to reserve time before details are set",
-            "Usually no"
-          ],
-          [
-            "Group meeting",
-            "Three or more people on one invite",
-            "Either"
-          ]
-        ]
-      }
-    },
-    {
-      "h2": "Recurring meeting"
-    },
-    {
-      "p": "A recurring meeting is one that repeats automatically on a fixed pattern — daily, weekly, or monthly — without you re-inviting anyone. A Monday 10:00 team sync is the classic example: set it once and it lives on everyone's calendar until you cancel the series. Handy, but audit them quarterly. Dead recurring meetings are how calendars rot."
-    },
-    {
-      "h2": "Placeholder meeting"
-    },
-    {
-      "p": "A placeholder meeting is a slot you block to hold time before the full details exist. You know you will meet a client \"sometime Thursday afternoon,\" so you drop a placeholder to protect the window, then firm up the exact time and agenda later. It stops someone else from grabbing the space first."
-    },
-    {
-      "h2": "Standing meeting"
-    },
-    {
-      "p": "A standing meeting is a recurring meeting with a set time and a repeating purpose, like a weekly review. [Lucid Meetings defines it](https://cdn.lucidmeetings.com/glossary/standing-meeting) as a meeting that repeats on a predictable basis and creates an ongoing obligation on calendars. The difference from a plain recurring meeting is intent: a standing meeting has a job it does every time. If yours does not, it is just a recurring one begging to be deleted."
-    },
-    {
-      "h2": "Availability terms: working hours to 24/7"
-    },
-    {
-      "p": "Availability is the set of times you are open to be booked. The rest of these terms describe how you define and show it."
-    },
-    {
-      "h2": "Working hours"
-    },
-    {
-      "p": "Working hours are the daily window you actually take meetings — say 10:00 to 18:00, Monday to Friday. Set them once in your booking tool and it will only offer those slots. This is the single fastest way to stop 8 a.m. calls you never agreed to."
-    },
-    {
-      "h2": "24/7 availability"
-    },
-    {
-      "p": "24/7 availability means you can be booked or reached at any hour, any day of the week. For most solo professionals, this is a trap, not a badge. Real 24/7 availability makes sense for support desks and on-call teams with rotations. For a coach or consultant, defined working hours protect the craft — being reachable at all times is how you [end up the admin instead of the expert](/be-a-sloth)."
-    },
-    {
-      "h2": "Availability chart"
-    },
-    {
-      "p": "An availability chart is a visual grid showing when a person or group is free versus busy, used to find a common slot. You have seen these in group polls — names down the side, time slots across the top, green for free. They shine when [scheduling a group meeting](/blog/scheduling-poll-group-meeting) where twelve calendars need to overlap on one hour."
-    },
-    {
-      "h2": "How these scheduling terms work together"
-    },
-    {
-      "p": "Good scheduling is these pieces stacked: working hours set the outer window, buffer time protects the gaps, recurring meetings handle the repeats, and an availability chart settles the group calls. Miss one and the whole thing wobbles. The catch is that maintaining all of it by hand is its own job — the quiet tax of selling your time, where the machinery starts eating the craft."
-    },
-    {
-      "p": "Book A Sloth handles buffers, availability, and recurring slots for you automatically, so one shareable link does the work. Set your working hours and buffers once, and it offers only the slots you actually want — [set up a bookable slot](/blog/30-minute-call-setup) or read [how to book an appointment online](/blog/how-to-book-an-appointment-online). The craft is yours; the machinery is ours."
-    },
-    {
-      "faq": [
-        {
-          "q": "What does buffer time mean in a calendar?",
-          "a": "Buffer time means a deliberate empty gap before or after a meeting. It gives you room to prepare, wrap up, or reset so appointments do not collide. Most people set 15 to 30 minutes between meetings."
-        },
-        {
-          "q": "What is the difference between a placeholder meeting and a recurring meeting?",
-          "a": "A placeholder meeting reserves a slot before the details are decided and usually happens once. A recurring meeting has full details and repeats automatically on a schedule, like every Monday."
-        },
-        {
-          "q": "Is 24/7 availability a good idea for freelancers?",
-          "a": "Rarely. 24/7 availability suits support teams with rotations, not solo professionals. Defined working hours protect your focus and set client expectations without you having to say no every evening."
-        },
-        {
-          "q": "What is an availability chart used for?",
-          "a": "An availability chart is a grid that shows when people are free versus busy. It is used to find one time slot that works across several calendars, which is why it is common in group scheduling polls."
-        },
-        {
-          "q": "How much buffer time should I put between meetings?",
-          "a": "Start with 15 minutes and adjust. Back-to-back deep sessions like therapy or coaching may need 30 minutes; quick check-ins may need less. If you keep running late, your buffer is too short."
-        }
-      ]
-    }
-  ]
-},
-{
   "slug": "scheduling-poll-group-meeting",
   "title": "Scheduling Poll: Find a Time a Group Can Meet",
   "date": "Oct 3, 2026",
@@ -3465,109 +10390,208 @@ export const BLOG_POSTS = [
 },
 {
   "slug": "meeting-invitation-templates",
-  "title": "Meeting Invitation Templates: Email, SMS & WhatsApp",
+  "title": "Meeting Invitation: Email, WhatsApp, Hindi & RWA Templates",
   "date": "Sep 24, 2026",
   "icons": [
-    "mail",
     "calendar",
-    "users"
+    "users",
+    "megaphone"
   ],
   "author": "Shubham N Datarkar",
-  "readMins": 6,
+  "readMins": 12,
   "category": "Guide",
   "image": null,
-  "excerpt": "Copy-paste meeting invitation templates for email, SMS and WhatsApp, plus a formal sample, a simple format, and a Marathi example. Send in seconds.",
+  "excerpt": "Meeting invitation templates for email, SMS and WhatsApp, in Hindi and Marathi, plus RWA, school PTM and how-to-ask-for-availability messages.",
   "body": [
     {
-      "p": "A meeting invitation is a short message that tells someone who is meeting, why, when, where, and how to join. The best ones answer all five in the first three lines, then get out of the way. Below are copy-paste templates for email, SMS, and WhatsApp — a formal sample, a simple one, and one in Marathi — so you can fill the brackets and send. If you'd rather send a slot than start a thread, [Book A Sloth](/) turns the whole invite into [one scheduling link](/features/online-scheduling)."
+      "p": "A meeting invitation tells people who is meeting, why, when, where and how to confirm. The best ones put the date, time in IST and the place or link in the first three lines. Below are 24 copy-paste meeting invitation templates for email, SMS and WhatsApp, in English, Hindi, Hinglish and Marathi, plus RWA, school PTM and availability requests."
     },
     {
-      "p": "I run Book A Sloth, and I read a lot of invites that bury the time under a paragraph of pleasantries. Don't. Lead with the details. Be warm in one line, not five."
+      "p": "I run Book A Sloth, and I read a lot of invites that bury the time under a paragraph of pleasantries. Lead with the details. Be warm in one line, not five."
     },
     {
       "h2": "What every meeting invitation must include"
     },
     {
-      "p": "Every meeting invitation needs six things: a clear subject, the purpose, the date and time, the location or link, who should come, and how to confirm. Miss one and you get a reply asking for it — which defeats the point of the invite."
+      "p": "Every meeting invitation needs six things. Miss one and you get a reply asking for it, which defeats the point of the invite."
     },
     {
       "steps": [
-        "Subject line — say the meeting and the date. Keep it short.",
-        "Purpose — one sentence on why this meeting exists.",
-        "Date and time — with the time zone (write \"IST\") if anyone is remote.",
-        "Location or link — a room, or a video link that works.",
-        "Attendees — who is required, who is optional.",
-        "A way to confirm — \"reply yes\" or a booking link."
+        "Subject or first line: the meeting name and the date.",
+        "Purpose: one sentence on why the meeting exists.",
+        "Date and time: with \"IST\" if anyone joins from another city or country.",
+        "Place or link: a room with a landmark, or a video link that works.",
+        "Who should attend: required people, and who is optional.",
+        "How to confirm: \"reply yes\", a thumbs-up on WhatsApp, or a booking link."
       ]
     },
     {
-      "p": "A tight subject helps more than people think. Aim to [keep the subject line around 36–50 characters](https://youcanbook.me/blog/meeting-invitation-email) — long enough to be clear, short enough to survive a phone's preview pane."
+      "p": "For anything longer than 30 minutes, add a short agenda. People prepare better when they know what will be decided."
     },
     {
-      "h2": "Meeting invitation email template (formal sample)"
+      "h2": "Meeting invitation email templates"
     },
     {
-      "p": "A formal meeting invitation email opens with the purpose, states the logistics in a scannable block, and closes with a clear confirmation request. Use this for clients, seniors, and anything official."
+      "p": "Use email for clients, seniors, vendors and anything official. Open with the purpose, give the logistics in a scannable block, and close with one clear request."
     },
     {
-      "quote": "Subject: Meeting invitation — Q3 review, Thu 18 Sep, 3 PM IST\n\nDear [Name],\n\nI'd like to invite you to a meeting to review our Q3 numbers and agree next quarter's priorities.\n\nDate: Thursday, 18 September 2026\nTime: 3:00–3:45 PM IST\nLocation: Google Meet (link below)\nAttendees: [Name], [Name], you\n\nAgenda\n1. Q3 results (10 min)\n2. What's working, what isn't (15 min)\n3. Q4 priorities and owners (20 min)\n\nPlease confirm you can make it by end of day Tuesday. If the time doesn't work, tell me two slots that do.\n\nWarm regards,\n[Your name]"
+      "quote": "Subject: Meeting invitation: Q3 review, Thu 16 Oct, 3 PM IST\n\nDear [Name],\n\nI would like to invite you to a meeting to review our Q3 numbers and agree next quarter's priorities.\n\nDate: Thursday, 16 October 2026\nTime: 3:00 to 3:45 PM IST\nPlace: Google Meet (link below)\nAttendees: [Name], [Name], you\n\nAgenda\n1. Q3 results (10 min)\n2. What is working and what is not (15 min)\n3. Q4 priorities and owners (20 min)\n\nPlease confirm by end of day Tuesday. If the time does not suit you, share two slots that do.\n\nWarm regards,\n[Your name]",
+      "cite": "1. Formal meeting invitation email"
     },
     {
-      "p": "This is also a clean invitation-letter format — drop the \"Subject\" line and put it on a letterhead, and it reads as a formal notice."
+      "quote": "Subject: Quick sync: Fri 11 AM\n\nHi [Name],\n\nCan we take 30 minutes on Friday at 11 AM IST to sort out the [project] handover? The Google Meet link is on the calendar invite.\n\nReply \"yes\" and I will lock it in.\n\n[Your name]",
+      "cite": "2. Simple meeting invitation email"
     },
     {
-      "h2": "Simple meeting invitation email sample"
-    },
-    {
-      "p": "A simple meeting invitation email skips the agenda and keeps everything to four lines. Use it for teammates and quick catch-ups where the context is already understood."
-    },
-    {
-      "quote": "Subject: Quick sync — Fri 11 AM\n\nHi [Name],\n\nCan we grab 30 minutes on Friday at 11 AM IST to sort out the [project] handover? Google Meet link is on the calendar invite.\n\nReply \"yes\" and I'll lock it in.\n\n[Your name]"
+      "quote": "Subject: Meeting request: [your company] x [client company], [topic]\n\nDear [Mr/Ms Surname],\n\nThank you for your time on the phone yesterday. As discussed, I would like to set up a 30-minute meeting to walk you through [proposal / demo] and answer your team's questions.\n\nDate: [Tuesday, 21 October]\nTime: [11:00 AM IST]\nPlace: [Your office address / Google Meet link]\n\nIf another time suits you better, you can pick any open slot here: [booking link].\n\nLooking forward to it.\n\nRegards,\n[Your name]\n[Designation], [Company] | [Phone]",
+      "cite": "3. Client meeting invitation email"
     },
     {
       "h2": "Meeting invitation SMS format"
     },
     {
-      "p": "A meeting invitation SMS has to fit on one screen, so it carries only the essentials: what, when, where, and confirm. No greeting paragraph, no signature block."
+      "p": "An SMS carries only what, when, where and confirm. Skip the greeting paragraph and the signature block. A single SMS holds 160 characters of plain English text, but according to [Twilio's SMS length guide](https://www.twilio.com/docs/glossary/what-sms-character-limit), one emoji or one character in a non-Latin script such as Devanagari switches the whole message to Unicode, which cuts the limit to 70 characters. Keep English SMS free of emoji, and keep Hindi SMS very short."
     },
     {
-      "quote": "Hi [Name], meeting on [project] tomorrow, Thu 18 Sep, 3 PM at [office/link]. Please reply Y to confirm. — [Your name], [Company]"
+      "quote": "Hi [Name], meeting on [project] tomorrow, Thu 16 Oct, 3 PM at [office / link]. Please reply Y to confirm. [Your name], [Company]",
+      "cite": "4. Meeting invitation SMS"
     },
     {
-      "p": "For a reminder the day of:"
+      "quote": "Reminder: our meeting is today at 3 PM, [place / link]. See you there. [Your name]",
+      "cite": "5. Same-day SMS reminder"
     },
     {
-      "quote": "Reminder: our meeting is today at 3 PM, [location/link]. See you there. — [Your name]"
+      "h2": "WhatsApp meeting invitation templates"
     },
     {
-      "p": "Keep SMS under about 160 characters so it sends as one message and reads at a glance."
+      "p": "A WhatsApp invitation can be a little warmer than SMS, but it still leads with the details. Bold the date and time with asterisks so they stand out in a busy chat."
     },
     {
-      "h2": "WhatsApp meeting invitation template"
+      "quote": "Hi [Name] 👋\nSetting up a quick meeting on *[topic]*.\n🗓 *Thu, 16 Oct*  ⏰ *3:00 PM IST*\n📍 [Google Meet link / office]\nDoes this work for you? A 👍 is enough to confirm.",
+      "cite": "6. WhatsApp meeting invitation"
     },
     {
-      "p": "A WhatsApp meeting invitation can be a touch warmer than SMS, but it still leads with the details. Bold the time so it's easy to spot in a busy chat."
+      "quote": "*Team meeting: [topic]*\n🗓 *Mon 20 Oct*  ⏰ *10:30 AM*\n📍 Conference room 2 / [Meet link]\nAgenda: [point 1], [point 2], [point 3]\nPlease react ✅ if you're joining. [Name] and [Name], your updates first please.",
+      "cite": "7. WhatsApp group invite for a team meeting"
     },
     {
-      "quote": "Hi [Name] 👋\nSetting up a quick meeting on *[topic]*.\n🗓 *Thu, 18 Sep* · ⏰ *3:00 PM IST*\n📍 [Google Meet link / office]\nDoes this work for you? A thumbs-up is enough to confirm 🙌"
+      "p": "WhatsApp is where many Indian clients and vendors actually reply, so this format often gets the fastest yes."
     },
     {
-      "p": "WhatsApp is where most Indian clients actually reply, so this is often the one that gets a fast yes."
+      "h2": "Meeting invitation in Hindi"
     },
     {
-      "h2": "Meeting invitation in Marathi (example)"
+      "p": "A Hindi meeting invitation follows the same order as English: विषय, उद्देश्य, दिनांक, समय, स्थान and a request to confirm. Use आप throughout and keep dates and times in numerals so they are easy to scan."
     },
     {
-      "p": "A meeting invitation in Marathi follows the same rule: purpose, date and time, place, and a request to attend. Here is a clean, formal example you can adapt."
+      "quote": "विषय: बैठक का निमंत्रण: [विषय], गुरुवार, 16 अक्टूबर\n\nआदरणीय [नाम] जी,\n\n[विषय] पर चर्चा के लिए एक बैठक रखी गई है। आपकी उपस्थिति अपेक्षित है।\n\nदिनांक: गुरुवार, 16 अक्टूबर 2026\nसमय: दोपहर 3:00 बजे\nस्थान: [कार्यालय का पता / Google Meet लिंक]\n\nबैठक के मुख्य बिंदु:\n1. [बिंदु 1]\n2. [बिंदु 2]\n3. [बिंदु 3]\n\nकृपया मंगलवार तक अपनी उपस्थिति की पुष्टि कर दें।\n\nसादर,\n[नाम]\n[पद], [संस्था]",
+      "cite": "8. Formal meeting invitation in Hindi"
     },
     {
-      "quote": "विषय: बैठकीचे निमंत्रण — [विषय], गुरुवार, १८ सप्टेंबर\n\nनमस्कार [नाव],\n\n[विषय] यावर चर्चा करण्यासाठी एक बैठक आयोजित केली आहे.\n\nदिनांक: गुरुवार, १८ सप्टेंबर २०२६\nवेळ: दुपारी ३:०० वाजता\nठिकाण: [कार्यालय / Google Meet लिंक]\n\nकृपया वेळेवर उपस्थित राहावे. उपस्थितीबाबत कळवावे ही विनंती.\n\nआपला विश्वासू,\n[नाव]"
+      "quote": "नमस्ते [नाम] जी 🙏\n[विषय] पर एक छोटी मीटिंग रखनी है।\n📅 *गुरुवार, 16 अक्टूबर*  ⏰ *दोपहर 3 बजे*\n📍 [Google Meet लिंक / ऑफ़िस]\nक्या यह समय आपके लिए ठीक रहेगा? 👍 भेजकर कन्फ़र्म कर दीजिए।",
+      "cite": "9. Hindi WhatsApp meeting invitation"
     },
     {
-      "h2": "Formal vs simple: which template to use"
+      "quote": "Hi [Name] ji, [topic] pe ek quick meeting rakhni hai.\n*Thu 16 Oct, 3 PM* chalega?\nLink: [Meet link]\nConfirm karne ke liye bas 👍 bhej dijiye.",
+      "cite": "10. Hinglish WhatsApp invitation"
     },
     {
-      "p": "The right template depends on who is on the other side and how much context they already have. Use this quick guide."
+      "h2": "Meeting invitation in Marathi"
+    },
+    {
+      "p": "A Marathi meeting invitation uses the same structure: विषय, दिनांक, वेळ, ठिकाण and a polite request to attend. Here is a formal example you can adapt."
+    },
+    {
+      "quote": "विषय: बैठकीचे निमंत्रण: [विषय], गुरुवार, १६ ऑक्टोबर\n\nनमस्कार [नाव],\n\n[विषय] यावर चर्चा करण्यासाठी एक बैठक आयोजित केली आहे.\n\nदिनांक: गुरुवार, १६ ऑक्टोबर २०२६\nवेळ: दुपारी ३:०० वाजता\nठिकाण: [कार्यालय / Google Meet लिंक]\n\nकृपया वेळेवर उपस्थित राहावे. उपस्थितीबाबत कळवावे ही विनंती.\n\nआपला विश्वासू,\n[नाव]",
+      "cite": "11. Formal meeting invitation in Marathi"
+    },
+    {
+      "h2": "Society and RWA meeting invitation templates"
+    },
+    {
+      "p": "Housing societies and resident welfare associations (RWAs) invite members to general body meetings, committee meetings and festival planning meetings. These invitations need a clear agenda, the venue inside the complex, and a simple way for residents to say they are coming. Notice periods, quorum and voting rules come from your society's bye-laws and your state's rules, so check those before you fix the date."
+    },
+    {
+      "quote": "Subject: Invitation: General Body Meeting, [Society Name], Sunday 19 October, 11 AM\n\nDear Members,\n\nThe Managing Committee invites all members of [Society Name] to the [Annual / Special] General Body Meeting.\n\nDate: Sunday, 19 October 2026\nTime: 11:00 AM\nVenue: Clubhouse, ground floor, [Wing]\n\nAgenda\n1. Confirmation of the minutes of the last meeting\n2. Maintenance accounts for April to September 2026\n3. Lift replacement in B wing: quotations and decision\n4. Diwali celebrations and security arrangements\n5. Any other matter, with the Chair's permission\n\nThe accounts and quotations are attached and also displayed on the notice board. Please sign the attendance register at the venue.\n\nRegards,\n[Name]\nHon. Secretary, [Society Name]\n[Date of issue]",
+      "cite": "12. RWA general body meeting invitation (email)"
+    },
+    {
+      "quote": "🏢 *[Society Name] General Body Meeting*\n📅 *Sun 19 Oct*  ⏰ *11 AM*  📍 Clubhouse\nAgenda: maintenance accounts, B-wing lift, Diwali security\nAll members please attend 🙏 Full agenda and accounts attached (PDF).\nReply with your flat number if you're coming, e.g. \"B-304 ✅\"",
+      "cite": "13. RWA WhatsApp group invitation"
+    },
+    {
+      "quote": "🏢 *[सोसाइटी का नाम]: आम सभा की बैठक*\nसभी सदस्यों से निवेदन है कि *रविवार, 19 अक्टूबर* को *सुबह 11 बजे* क्लबहाउस में होने वाली बैठक में ज़रूर आएँ।\nमुख्य विषय: मेंटेनेंस का हिसाब, B विंग की लिफ़्ट, दिवाली की सुरक्षा व्यवस्था।\nआने की पुष्टि के लिए अपना फ़्लैट नंबर लिखें, जैसे \"B-304 ✅\"।\nधन्यवाद,\n[नाम], सचिव",
+      "cite": "14. RWA invitation in Hindi"
+    },
+    {
+      "quote": "Reminder 🔔 General Body Meeting *today at 11 AM* in the Clubhouse. We need enough members present to take decisions on the lift and maintenance, so please come even for 30 minutes 🙏",
+      "cite": "15. RWA same-day reminder"
+    },
+    {
+      "h2": "School PTM invitation templates"
+    },
+    {
+      "p": "A parent-teacher meeting (PTM) invitation has one extra job: spreading parents across the morning so nobody waits an hour in a corridor. Either assign times by roll number or let parents book a 10-minute slot. Tutors and coaching classes can use the same format for parent meetings."
+    },
+    {
+      "quote": "Subject: Parent-Teacher Meeting, Class [6B]: Saturday, 25 October\n\nDear Parents,\n\nWe invite you to the Parent-Teacher Meeting for Class [6B] to discuss your child's progress in the first term.\n\nDate: Saturday, 25 October 2026\nTime: 9:00 AM to 12:30 PM\nVenue: Classroom [6B], [School name]\n\nEach meeting will take about 10 minutes. To avoid waiting, please book a time here: [booking link]. If you cannot book online, roll numbers 1 to 15 may come at 9:00 AM, 16 to 30 at 10:15 AM and 31 onwards at 11:30 AM.\n\nPlease bring your child's school diary.\n\nRegards,\n[Name]\nClass Teacher, [6B]",
+      "cite": "16. School PTM invitation email"
+    },
+    {
+      "quote": "Namaste parents 🙏\nClass [6B] ki PTM *Sat 25 Oct, 9 AM to 12:30 PM* ko hai.\nApna 10-min slot yahan book kar lijiye taaki wait na karna pade: [link]\nDiary saath laaiye. Thank you!\n[Teacher name]",
+      "cite": "17. PTM WhatsApp message to parents (Hinglish)"
+    },
+    {
+      "quote": "आदरणीय अभिभावक,\nकक्षा [6B] की अभिभावक-शिक्षक बैठक (PTM) *शनिवार, 25 अक्टूबर* को *सुबह 9 से दोपहर 12:30 बजे* तक होगी।\nकृपया इस लिंक से अपना 10 मिनट का समय चुन लें: [लिंक]\nबच्चे की डायरी साथ लाएँ।\nधन्यवाद,\n[नाम], कक्षा अध्यापक/अध्यापिका",
+      "cite": "18. PTM invitation in Hindi"
+    },
+    {
+      "h2": "How to ask for availability for a meeting (examples)"
+    },
+    {
+      "p": "When you do not know the other person's schedule, ask for availability before you send a formal invitation. The rule is simple: never ask an open \"when are you free?\". Offer two or three specific windows, say how long the meeting will take, and give them an easy way to suggest something else. Or skip the question and send a booking link that shows your open slots."
+    },
+    {
+      "p": "Short phrases that work in emails and chats:"
+    },
+    {
+      "ul": [
+        "Would Tuesday at 11 AM or Wednesday at 4 PM IST work for a 30-minute call?",
+        "Could you share two slots that suit you this week?",
+        "When would be a good time for a 20-minute call to go over [topic]?",
+        "I am free Thursday afternoon or Friday morning. Does either suit you?",
+        "Please pick any time that works for you here: [booking link]."
+      ]
+    },
+    {
+      "quote": "Subject: Finding a time to discuss [topic]\n\nHi [Name],\n\nI would like to set up a 30-minute call to discuss [topic]. Would any of these work for you?\n\n• Tuesday, 21 October, 11:00 AM IST\n• Wednesday, 22 October, 4:00 PM IST\n• Thursday, 23 October, 10:00 AM IST\n\nIf none of these suit you, share a couple of times that do and I will adjust.\n\nThanks,\n[Your name]",
+      "cite": "19. Email asking for availability"
+    },
+    {
+      "quote": "Dear [Mr/Ms Surname],\n\nI would be grateful for 20 minutes of your time next week to [get your inputs on / present] [topic]. Please let me know a time that is convenient for you, or I can coordinate with [assistant's name] to find a slot.\n\nWith regards,\n[Your name]",
+      "cite": "20. Asking a senior or a client for their availability"
+    },
+    {
+      "quote": "Hi [Name], need 20 min with you on [topic] this week. Kab free ho? 🙂\nI can do *Tue 11 AM* or *Wed 4 PM*, or pick any slot here: [booking link]",
+      "cite": "21. WhatsApp availability check"
+    },
+    {
+      "p": "For a group, a poll beats a 40-message thread. WhatsApp lets you [attach a poll](https://faq.whatsapp.com/453914586839706/) in any individual or group chat from the attachment menu. Put three time options in the poll and fix the meeting on whichever gets the most votes. Our guide to [scheduling polls for group meetings](/blog/scheduling-poll-group-meeting) covers the method in more detail."
+    },
+    {
+      "quote": "Hi all 👋 Planning the [committee / project] meeting next week. Please vote in the poll below for the time that suits you by *Friday 6 PM*. I'll confirm the final slot on Saturday morning.",
+      "cite": "22. Message to send with a WhatsApp poll"
+    },
+    {
+      "quote": "Hi [Name], happy to meet! Here are my open slots for the next two weeks: [booking link]. Pick whatever suits you and you'll get a confirmation with the [meeting link / address] straight away.",
+      "cite": "23. Sending a booking link instead of proposing times"
+    },
+    {
+      "quote": "Thanks for reaching out, [Name]. I can meet on *Thursday at 3 PM* or *Friday at 11 AM IST*. Let me know which works and I'll send the invite with the link.",
+      "cite": "24. Replying when someone asks \"when can we meet?\""
+    },
+    {
+      "h2": "Which meeting invitation format to use"
     },
     {
       "table": {
@@ -3581,69 +10605,85 @@ export const BLOG_POSTS = [
           [
             "Client or senior, official meeting",
             "Email",
-            "Formal sample",
+            "1 or 3",
             "Yes"
           ],
           [
             "Teammate, quick catch-up",
             "Email or WhatsApp",
-            "Simple sample",
+            "2 or 6",
             "No"
           ],
           [
-            "Last-minute or on-site reminder",
+            "Last-minute or day-of reminder",
             "SMS",
-            "SMS format",
+            "5",
             "No"
           ],
           [
-            "Indian clients / vendors",
-            "WhatsApp",
-            "WhatsApp template",
-            "Optional"
+            "Hindi-speaking attendees",
+            "WhatsApp or email",
+            "8 to 10",
+            "If formal"
           ],
           [
-            "Board, RWA, or official body",
-            "Letter",
-            "Formal notice",
+            "Housing society or RWA",
+            "Email plus WhatsApp group",
+            "12 to 15",
             "Yes"
+          ],
+          [
+            "School or tuition PTM",
+            "Email plus WhatsApp",
+            "16 to 18",
+            "No"
+          ],
+          [
+            "You don't know their schedule yet",
+            "Email or WhatsApp",
+            "19 to 23",
+            "No"
           ]
         ]
       }
     },
     {
-      "p": "The pattern behind all of them is the same: video meetings are now the norm, so a working link and a clear time matter more than a polished paragraph."
-    },
-    {
       "h2": "Stop the reply thread: send a booking link"
     },
     {
-      "p": "The fastest invitation isn't a template at all — it's a link that lets the other person pick a slot that works, so nobody trades six emails to find a time. Instead of proposing a time and waiting, you send one link, they book, and the calendar invite and reminders go out on their own."
+      "p": "Free tools can help here. Google Calendar's [appointment schedules](https://support.google.com/calendar/answer/10729749?hl=en) let you publish a booking page, though Google notes you have to create it on a computer, not in the Calendar mobile app, and that it sets a 4-hour minimum lead time by default."
     },
     {
-      "p": "That's exactly what I built [Book A Sloth](/) to do. You share [one scheduling link](/features/online-scheduling), the other person books and pays if it's a paid session, and email plus WhatsApp reminders go out automatically. Inviting someone for a job round? A booking link works there too — pair it with a clean [interview calling message](/blog/interview-calling-message), or see [how to book an appointment online](/blog/how-to-book-an-appointment-online) to set it up. [Start free](/be-a-sloth). The craft is yours; the machinery is ours."
+      "p": "If you meet clients for paid sessions or want WhatsApp confirmations, a [Book A Sloth booking page](/features/booking-pages) gives you one link at bookasloth.com/yourname. The other person picks a slot from your availability and books with a phone OTP, with no app to download. If it is a paid session, they pay by UPI, card or netbanking at the moment of booking and it confirms automatically. Email and WhatsApp confirmations and reminders go out on their own, online meetings get an auto-generated Google Meet link, and two-way Google Calendar sync keeps your calendar clean."
+    },
+    {
+      "p": "Inviting a candidate instead? Pair the booking link with an [interview calling message](/blog/interview-calling-message). You can [start free](/be-a-sloth) and drop the link into any template above."
     },
     {
       "faq": [
         {
-          "q": "What is the best format for a meeting invitation email?",
-          "a": "Lead with the purpose in one line, then a scannable block of date, time, location, and attendees, then a clear request to confirm. Put the agenda in a short numbered list if the meeting needs one."
+          "q": "What should a meeting invitation include?",
+          "a": "A meeting invitation should include the purpose, date, time with time zone (IST), place or video link, who should attend, and how to confirm. Add a short agenda for meetings longer than 30 minutes or where decisions will be taken."
         },
         {
-          "q": "How long should a meeting invitation be?",
-          "a": "As short as the situation allows. A formal invite fits in under 120 words; an SMS in under 160 characters. If the reader has to scroll to find the time, it's too long."
+          "q": "How do I write a meeting invitation on WhatsApp?",
+          "a": "Start with a greeting and the topic, then put the date and time on their own line in bold using asterisks, add the place or Google Meet link, and end with a simple way to confirm, such as a thumbs-up. For groups, ask people to react with a tick or reply with their name."
         },
         {
-          "q": "How do I write a meeting invitation SMS?",
-          "a": "Include only what, when, where, and a one-tap confirm. Skip the greeting paragraph and signature block. Keep it under 160 characters so it sends as a single message."
+          "q": "How do I write a meeting invitation in Hindi?",
+          "a": "Use the order विषय (subject), purpose, दिनांक (date), समय (time) and स्थान (place), then ask for पुष्टि (confirmation). Address the person as आदरणीय or with जी, use आप throughout, and keep dates and times in numerals so they are easy to read."
         },
         {
-          "q": "Should I send meeting invites on WhatsApp in India?",
-          "a": "Yes, for clients and vendors who already chat with you there — it usually gets the fastest reply. Keep the same structure as email: bold the date and time, and ask for a quick confirm."
+          "q": "How do I invite residents to an RWA or society meeting?",
+          "a": "Send an invitation with the meeting type, date, time, venue inside the complex and a numbered agenda, signed by the secretary. Share it by email, on the notice board and in the residents' WhatsApp group, and ask residents to reply with their flat number. Check your bye-laws for the required notice period and quorum."
         },
         {
-          "q": "How do I write a meeting invitation in Marathi?",
-          "a": "Use the same order as English: विषय (subject), दिनांक आणि वेळ (date and time), ठिकाण (place), and a polite request to attend and confirm. Keep it formal for official meetings."
+          "q": "How do you politely ask for someone's availability for a meeting?",
+          "a": "Say what the meeting is about and how long it will take, then offer two or three specific time options with IST and invite them to suggest another time if none work. For example: \"Would Tuesday at 11 AM or Wednesday at 4 PM work for a 30-minute call?\" A booking link with your open slots also works."
+        },
+        {
+          "q": "What is the best way to schedule a meeting with a group?",
+          "a": "Shortlist two or three time options and put them in a poll, such as a WhatsApp group poll, with a deadline for voting. Confirm the winning slot in one message with the date, time, place or link and agenda, then send a reminder on the day."
         }
       ]
     }
@@ -3651,187 +10691,385 @@ export const BLOG_POSTS = [
 },
 {
   "slug": "appointment-reminder-templates",
-  "title": "WhatsApp Reminder Templates for Appointments (Copy-Paste)",
+  "title": "WhatsApp Reminder Message for Appointment: 36 Templates",
   "date": "Sep 26, 2026",
   "icons": [
     "bell",
-    "message-circle",
-    "calendar"
+    "calendar",
+    "users"
   ],
   "author": "Shubham N Datarkar",
-  "readMins": 7,
+  "readMins": 12,
   "category": "Guide",
   "image": null,
-  "excerpt": "Copy-paste WhatsApp, SMS and email appointment reminder templates — booking confirmation, 24h before, 1h before and no-show follow-up. Plus when to send each.",
+  "excerpt": "WhatsApp reminder message for appointment: 36 templates for clinics, salons, tutors and coaches in English and Hindi, plus a timing table for when to send each.",
   "body": [
     {
-      "p": "A WhatsApp reminder is the most reliable way to keep an appointment from being forgotten in India, because it lands where your client already is. Below are copy-paste WhatsApp, SMS, and email templates for every stage — booking confirmation, 24 hours before, 1 hour before, and the no-show follow-up. Take them as they are, swap the brackets, and send — or let [Book A Sloth](/) fire them automatically through its [built-in reminders](/features/notifications)."
+      "p": "A WhatsApp reminder message for an appointment should go out 24 hours before, with a short second nudge 1 to 2 hours before. It names the client, the service, the day, date and time in IST, the address or meeting link, and gives one easy way to confirm or reschedule. Keep it under six lines."
     },
     {
-      "h2": "Why appointment reminders work"
+      "p": "Below are 36 copy-paste reminder templates: general ones, then sets for doctors and clinics (with OPD token timing), salons (including festive and bridal), tutors, coaches and therapists, and trainers, plus Hindi and Hinglish versions, SMS and email backups, and no-show follow-ups. There is a timing table by trade and a simple workflow for sending them from the free WhatsApp Business app or automating them."
     },
     {
-      "p": "Appointment reminders work because most no-shows are forgetfulness, not flaking — and a well-timed nudge fixes forgetfulness. The numbers back it up."
+      "h2": "Do appointment reminder messages reduce no-shows?"
     },
     {
-      "p": "Text reminders reduce no-shows by [38%, according to an Imperial College London study](https://www.klara.com/blog/text-message-appointment-reminders-reduce-no-shows-by-38-study-finds) that compared reminded patients against a group who got nothing. That is not a rounding error — that is one in three missed slots recovered."
+      "p": "Yes, and the evidence is reasonably strong. A [Cochrane review](https://www.cochrane.org/evidence/CD007458_mobile-phone-messaging-reminders-attendance-healthcare-appointments) pooled 8 randomised trials with 6,615 participants and found text message reminders improved attendance at healthcare appointments compared with no reminder (risk ratio 1.14, moderate-quality evidence). Text reminders did about as well as phone call reminders, which cost far more staff time."
     },
     {
-      "p": "And the problem is bigger than most people think. The [average no-show rate sits around 23%](https://appointmentreminder.com/guides/no-show-statistics/), with salons, spas, and personal training running higher at 25–30%. Every one of those is time you set aside and money you did not make. A reminder is the cheapest insurance you can send."
+      "p": "Those trials were about SMS in healthcare, not WhatsApp or salons, so treat the size of the effect as a guide. The mechanism carries over: most missed appointments are forgotten ones, and a timely reminder fixes forgetting. A reminder also gives the client an easy moment to cancel early, so you can fill the slot instead of waiting for someone who is not coming. Book A Sloth will publish its own aggregated reminder and no-show numbers once its booking volume is large enough to be meaningful."
     },
     {
-      "h2": "WhatsApp reminder templates"
+      "h2": "When to send appointment reminders: timing by trade"
     },
     {
-      "p": "WhatsApp reminders lead in India because open rates are high and clients reply in the same thread. Keep them short, warm, and easy to answer."
-    },
-    {
-      "p": "**Booking confirmation (send immediately)**"
-    },
-    {
-      "quote": "Hi [Name], you're booked! ✅\n📅 [Service] with [Your Name]\n🗓️ [Day, Date] at [Time]\n📍 [Location / video link]\nNeed to change it? Just reply here. See you soon!"
-    },
-    {
-      "p": "**24 hours before**"
-    },
-    {
-      "quote": "Hi [Name], quick reminder — your [Service] is tomorrow, [Day] at [Time]. 🗓️\nReply YES to confirm, or let me know if you need to reschedule. Thanks!"
-    },
-    {
-      "p": "**1 hour before**"
-    },
-    {
-      "quote": "Hi [Name], see you in about an hour for your [Service] at [Time]. 🙂\n[Location / here's your link: [Meet link]]. Running late? Just ping me here."
-    },
-    {
-      "p": "**No-show follow-up (send 15–30 min after)**"
-    },
-    {
-      "quote": "Hi [Name], looks like we missed each other today — no worries, it happens. 🙂\nWant to grab another slot? Here's my calendar: [booking link]. Would love to still help."
-    },
-    {
-      "p": "The no-show message matters most. Keep it kind. A guilt trip loses the client; a warm door often wins the rebooking."
-    },
-    {
-      "h2": "SMS reminder templates"
-    },
-    {
-      "p": "SMS reminders are the reliable backup for anyone not active on WhatsApp, and they must stay under one message length. Cut every spare word."
-    },
-    {
-      "quote": "Booked! [Service] with [Your Name] on [Date] at [Time]. Reply to change. — [Business]"
-    },
-    {
-      "quote": "Reminder: [Service] tomorrow [Date] at [Time]. Reply Y to confirm or C to reschedule. — [Business]"
-    },
-    {
-      "quote": "Hi [Name], your [Service] is at [Time] today. [Address / link]. See you soon! — [Business]"
-    },
-    {
-      "quote": "Hi [Name], sorry we missed you today. Rebook anytime here: [link]. — [Business]"
-    },
-    {
-      "p": "For daily text reminders — a trainer confirming tomorrow's 6 a.m. clients, say — send the batch the evening before, not at dawn. People decide the night before, and a morning text arrives after they have already skipped."
-    },
-    {
-      "h2": "Meeting reminder email templates"
-    },
-    {
-      "p": "An email reminder suits longer, formal, or work appointments where a client wants the details in writing. Use a clear subject line and a scannable body."
-    },
-    {
-      "quote": "Subject: Confirmed: [Service] on [Date] at [Time]\n\nHi [Name],\n\nYour [Service] with [Your Name] is confirmed.\n\nWhen: [Day, Date] at [Time]\nWhere: [Location / video link]\n\nAdd it to your calendar with the invite attached. Need to reschedule? Reply to this email or use [booking link].\n\nLooking forward to it,\n[Your Name]"
-    },
-    {
-      "quote": "Subject: Reminder: your [Service] is tomorrow\n\nHi [Name],\n\nA quick reminder that your [Service] is tomorrow, [Day] at [Time], at [Location / link].\n\nIf anything's changed, just reply and we'll sort it. Otherwise, see you then.\n\n[Your Name]"
-    },
-    {
-      "p": "The same warm, direct tone carries over to other client messages too — see how it reads in these [interview and calling message templates](/blog/interview-calling-message) if you send those as well."
-    },
-    {
-      "h2": "When to send each reminder"
-    },
-    {
-      "p": "Send a confirmation the moment someone books, a nudge 24 hours before, and a final one about an hour before. Three touches is the sweet spot — enough to stick, not so many you annoy."
+      "p": "One reminder 24 hours before suits most bookings. Add a second, shorter one for early-morning slots, long procedures and online sessions where the client needs the link."
     },
     {
       "table": {
         "head": [
-          "Reminder",
-          "When to send",
-          "Best channel"
+          "Business",
+          "First reminder",
+          "Second reminder",
+          "What to include"
         ],
         "rows": [
           [
-            "Booking confirmation",
-            "Instantly on booking",
-            "WhatsApp + email"
+            "Doctor or clinic (OPD)",
+            "Evening before",
+            "2 hours before, with token or expected time",
+            "Old reports, fasting instructions if any"
           ],
           [
-            "First reminder",
+            "Dentist (long procedure)",
+            "48 hours before",
+            "Morning of the visit",
+            "Duration, eat before coming if advised"
+          ],
+          [
+            "Salon or spa",
             "24 hours before",
-            "WhatsApp"
+            "2 hours before",
+            "Stylist name, arrive-early note"
           ],
           [
-            "Final reminder",
-            "1 hour before",
-            "WhatsApp or SMS"
+            "Bridal makeup",
+            "7 days before (trial or prep)",
+            "Day before, plus morning of",
+            "Arrival time, skin prep, venue"
           ],
           [
-            "No-show follow-up",
-            "15–30 min after miss",
-            "WhatsApp"
+            "Tutor (demo or class)",
+            "Evening before, to the parent",
+            "30 minutes before (online)",
+            "Subject, link, what to keep ready"
+          ],
+          [
+            "Coach or therapist",
+            "24 hours before",
+            "1 hour before, with link",
+            "Link, quiet space, intake form"
+          ],
+          [
+            "Trainer or yoga (early morning)",
+            "Night before, by 9 PM",
+            "None",
+            "Time, place or link, what to bring"
+          ],
+          [
+            "Workshop or group batch",
+            "3 days before",
+            "Day before and 1 hour before",
+            "Link, materials, start time"
           ]
         ]
       }
     },
     {
-      "p": "Layering these touchpoints is what drives the drop in missed slots. Sending them by hand every day, though, is exactly the admin that eats your week."
+      "p": "Send evening reminders between 6 and 9 PM IST. Clients decide the night before, and a 6 AM reminder for a 7 AM session arrives after they have already decided to skip."
+    },
+    {
+      "h2": "General WhatsApp appointment reminder templates"
+    },
+    {
+      "quote": "Hi Priya, a reminder that your [Service] with [Your name] is tomorrow, Saturday 18 Oct, at 11:30 AM IST.\n📍 [Address / Maps link]\nReply YES to confirm, or reschedule here: [link]",
+      "cite": "1. 24 hours before (in person)"
+    },
+    {
+      "quote": "Hi Rahul, see you in about an hour for your [Service] at 4:00 PM.\nJoin here: [Google Meet link]\nRunning late? Just reply here.",
+      "cite": "2. 1 hour before (online)"
+    },
+    {
+      "quote": "Hi Sneha, just confirming your appointment tomorrow at 5:30 PM.\nPlease reply 1 to confirm or 2 to reschedule. 🙏",
+      "cite": "3. Reply-to-confirm (unpaid bookings)"
+    },
+    {
+      "quote": "Reminder: [Service], [Day, Date], [Time] IST.\n[Address / link]\nChange of plan? [reschedule link]",
+      "cite": "4. Short version for regulars"
+    },
+    {
+      "h2": "Doctor appointment reminder messages for clinics"
+    },
+    {
+      "p": "Clinic reminders work best when they give the patient a realistic arrival time. If you run OPD on tokens, share the token number and the expected time, not only the OPD start time."
+    },
+    {
+      "quote": "Namaste Mrs. Sharma, your appointment with Dr. Arjun Rao is tomorrow, Monday 20 Oct, in the evening OPD (6 to 9 PM).\nYour token: 14. Expected time: around 7:15 PM.\nPlease bring old prescriptions and reports.\nCan't come? Reply here so we can give the slot to another patient.",
+      "cite": "5. Clinic OPD, evening before (with token)"
+    },
+    {
+      "quote": "Good morning! OPD is running about 20 minutes late today. Token 14 is now expected at around 7:35 PM. Sorry for the wait. Rao Family Clinic",
+      "cite": "6. Running-late update on the day"
+    },
+    {
+      "quote": "Hi Mr. Kulkarni, reminder of your blood test tomorrow, Tuesday 21 Oct, at 8:00 AM at [Lab name], [address].\nPlease come fasting as advised by your doctor (no food after [time] tonight). Water is fine unless told otherwise.",
+      "cite": "7. Lab test or fasting procedure"
+    },
+    {
+      "quote": "Hello Mrs. Nair, Dr. Rao had asked to see you for a follow-up 7 days after your last visit. That falls on Friday, 24 Oct.\nBook a follow-up slot here: [link]",
+      "cite": "8. Follow-up visit due"
+    },
+    {
+      "quote": "Hello! This is a reminder that Ishaan's next vaccination is due on [date] as per the schedule given by the doctor.\nPlease book a slot here: [link] and bring the vaccination card.",
+      "cite": "9. Paediatric vaccination due"
+    },
+    {
+      "quote": "Hi Karan, your root canal (second sitting) is on Thursday, 23 Oct at 11:00 AM at Smile Dental. It will take about 60 minutes.\nPlease have a light meal before you come. Reply here if you need to move it.",
+      "cite": "10. Dentist, long procedure"
+    },
+    {
+      "h2": "Salon appointment reminder messages (including bridal and festive)"
+    },
+    {
+      "quote": "Hi Sneha! 💇‍♀️ See you tomorrow, Sunday 19 Oct at 4:00 PM for your hair spa with Kavya.\nPlease come with dry, product-free hair.\nNeed a different time? [link]",
+      "cite": "11. Salon, 24 hours before"
+    },
+    {
+      "quote": "Hi Ananya, your manicure is at 2:00 PM today ✨ Please arrive 5 minutes early. See you soon!",
+      "cite": "12. Salon, 2 hours before"
+    },
+    {
+      "quote": "Hi Meera! Your bridal makeup trial is on Saturday, 25 Oct at 11:00 AM 💍\nPlease bring photos of your outfit and jewellery, and come with a clean, moisturised face.\nReply here if you'd like to move it.",
+      "cite": "13. Bridal trial, 7 days before"
+    },
+    {
+      "quote": "Hi Meera! Big day tomorrow 💐\nOur team will reach [venue] at 5:00 AM. Please keep a well-lit room with a plug point and a mirror ready.\nSleep early and drink water. See you tomorrow!",
+      "cite": "14. Bridal, day before"
+    },
+    {
+      "quote": "Hi Pooja! Diwali week slots are filling fast 🪔 Your appointment is on Wednesday, 5 Nov at 3:00 PM.\nIf you can't make it, please tell us by Monday so we can give it to someone on the waiting list.",
+      "cite": "15. Festive rush (Diwali, Karva Chauth, wedding season)"
+    },
+    {
+      "quote": "Hi Riya, it's been about 5 weeks since your last haircut ✂️ Want to book your next trim?\nOpen slots this week: [booking link]",
+      "cite": "16. Rebooking nudge"
+    },
+    {
+      "h2": "Tutor and coaching class reminder messages"
+    },
+    {
+      "quote": "Hello Mr. Iyer, reminder of Aarav's free demo class tomorrow, Wednesday 22 Oct, 5:00 to 5:45 PM.\nLink: [Zoom/Meet link]\nPlease keep a notebook and pencil ready.\nNeha Ma'am",
+      "cite": "17. Demo class, evening before (to parent)"
+    },
+    {
+      "quote": "Class starts in 30 minutes (6:00 PM) 📚 Same link as always: [link]. Please join 2 minutes early.",
+      "cite": "18. Online class, 30 minutes before"
+    },
+    {
+      "quote": "Dear parents, the monthly test for Class 10 Science is on Saturday, 25 Oct, 10 to 11 AM. Chapters 1 to 4.\nPlease make sure your child brings a blue pen and the test notebook.",
+      "cite": "19. Test or exam reminder"
+    },
+    {
+      "quote": "Hi everyone, the make-up class for Monday's holiday is on Saturday, 25 Oct, 5 to 6 PM, same link. See you there!",
+      "cite": "20. Make-up class"
+    },
+    {
+      "h2": "Coach and therapist session reminder messages"
+    },
+    {
+      "quote": "Hi Arjun, looking forward to our coaching session tomorrow, Thursday 23 Oct at 7:00 PM IST.\nLink: [Meet link]\nIf you have a topic you'd like to focus on, just reply with it. See you then!",
+      "cite": "21. Coaching session, 24 hours before"
+    },
+    {
+      "quote": "Hi, a gentle reminder of your session tomorrow at 6:00 PM. If you can, find a quiet, private space with headphones.\nIf you need to reschedule, you can do it here: [link]. Take care.",
+      "cite": "22. Therapy session (discreet wording)"
+    },
+    {
+      "quote": "Hi Neha, our session starts in 1 hour (7:00 PM). Here is the link: [link]. See you soon.",
+      "cite": "23. Coach or therapist, 1 hour before"
+    },
+    {
+      "quote": "Hi Karan, reminder of our GST consultation tomorrow, Friday 24 Oct at 12:00 PM.\nPlease keep your PAN, last 3 months' invoices and bank statement handy so we can finish in 30 minutes.\nLink: [Meet link]",
+      "cite": "24. Consultant, CA or lawyer (documents to bring)"
+    },
+    {
+      "h2": "Daily text reminders for trainers and yoga batches"
+    },
+    {
+      "p": "Daily text reminders suit early-morning batches. Send them the night before, as one message per client or a single broadcast to clients who have saved your number."
+    },
+    {
+      "quote": "Hi Vikram 💪 Tomorrow, 6:30 AM, legs day at the park gate. Bring water and a towel. Reply if you can't make it.",
+      "cite": "25. Personal trainer, night before"
+    },
+    {
+      "quote": "Namaste 🧘 Tomorrow's batch: 6:00 AM, same link: [link]. Keep your mat and a cushion ready. Have a restful night.",
+      "cite": "26. Online yoga batch, night before"
+    },
+    {
+      "h2": "Appointment reminder messages in Hindi and Hinglish"
+    },
+    {
+      "p": "Hindi reminders are often read faster, especially by older patients and parents. Use आप, keep English words people already use (appointment, link, token), and write the time in numerals."
+    },
+    {
+      "quote": "नमस्ते शर्मा जी,\nडॉ. राव के साथ आपकी अपॉइंटमेंट कल, सोमवार 20 अक्टूबर, शाम की OPD में है।\nटोकन नंबर: 14, अनुमानित समय: शाम 7:15 बजे।\nकृपया पुरानी पर्चियां और रिपोर्ट साथ लाएं। न आ पाएं तो यहां बता दें।",
+      "cite": "27. Doctor (Hindi)"
+    },
+    {
+      "quote": "नमस्ते स्नेहा जी 💇‍♀️\nकल रविवार, 19 अक्टूबर को शाम 4 बजे आपकी हेयर स्पा अपॉइंटमेंट है।\nसमय बदलना हो तो इस लिंक से बदल लें: [लिंक]",
+      "cite": "28. Salon (Hindi)"
+    },
+    {
+      "quote": "नमस्ते अय्यर जी,\nआरव की फ्री डेमो क्लास कल, बुधवार 22 अक्टूबर, शाम 5 से 5:45 बजे तक है।\nलिंक: [लिंक]\nकृपया कॉपी और पेंसिल तैयार रखें।",
+      "cite": "29. Tutor demo class (Hindi, to parent)"
+    },
+    {
+      "quote": "नमस्ते प्रिया जी,\nयाद दिला दें कि कल, शनिवार 18 अक्टूबर, सुबह 11:30 बजे आपकी [सेवा] की अपॉइंटमेंट है।\nपुष्टि के लिए YES लिखें, या नया समय यहां चुनें: [लिंक]",
+      "cite": "30. General 24-hour reminder (Hindi)"
+    },
+    {
+      "quote": "Hi Rahul ji, kal 11:30 AM pe aapka [service] appointment hai.\nConfirm karne ke liye YES reply karein, ya time badalna ho toh is link pe jaayein: [link] 🙏",
+      "cite": "31. General reminder (Hinglish)"
+    },
+    {
+      "h2": "SMS and email appointment reminder templates"
+    },
+    {
+      "p": "Keep SMS as the backup for clients who do not use WhatsApp, and use email when the client needs details in writing, such as a GST invoice or a long preparation list."
+    },
+    {
+      "quote": "Reminder: [Service] at [Business] tomorrow [Date] [Time] IST. Reply Y to confirm or call [phone] to change.",
+      "cite": "32. SMS, 24 hours before"
+    },
+    {
+      "quote": "Hi [Name], your [Service] is today at [Time]. [Address or link]. See you soon. - [Business]",
+      "cite": "33. SMS, same day"
+    },
+    {
+      "quote": "Subject: Reminder: your [Service] is tomorrow at [Time] IST\n\nHi [Name],\n\nA quick reminder of your appointment.\n\nWhen: [Day, Date], [Time] IST\nWhere: [Address with Maps link / meeting link]\nPlease bring: [documents, reports, materials]\n\nNeed to change it? Reschedule here: [link]\n\nSee you tomorrow,\n[Your name]\n[Business] | [Phone]",
+      "cite": "34. Email reminder"
+    },
+    {
+      "h2": "No-show follow-up messages"
+    },
+    {
+      "quote": "Hi Meera, we missed you at your 11 AM appointment today. Hope everything is okay.\nWhenever you're ready, you can book a new slot here: [link]",
+      "cite": "35. Missed appointment, same day"
+    },
+    {
+      "quote": "Hi Aditya, you missed today's session. That's the second time this month, so from the next booking I'll need the fee paid in advance to hold the slot.\nYou can book and pay here: [link]. Hope to see you soon.",
+      "cite": "36. Repeat no-show (move to prepaid)"
+    },
+    {
+      "p": "The kinder first follow-up keeps the client. The second one sets a rule. For the full set of cancel, reschedule and refund replies, use the [appointment cancellation and reschedule messages](/blog/appointment-cancellation-reschedule-message)."
+    },
+    {
+      "h2": "Free WhatsApp Business app vs automated reminders"
+    },
+    {
+      "p": "You can run reminders by hand from the free WhatsApp Business app, through a WhatsApp Business API provider, or through a booking tool that sends them for you. Here is how they compare for a small practice."
+    },
+    {
+      "table": {
+        "head": [
+          "Method",
+          "Cost",
+          "Effort",
+          "Best for"
+        ],
+        "rows": [
+          [
+            "WhatsApp Business app with quick replies",
+            "Free",
+            "You send each reminder by hand every day",
+            "Up to a handful of appointments a day"
+          ],
+          [
+            "WhatsApp Business API provider",
+            "Provider fees plus message charges",
+            "Setup, approved templates, a provider dashboard",
+            "Clinics and chains with high volume"
+          ],
+          [
+            "Booking tool with built-in reminders",
+            "Plan or commission, depending on the tool",
+            "None after setup; reminders follow each booking",
+            "Solo professionals who want it off their plate"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "If you go manual, the WhatsApp Business app's quick replies make it much faster. WhatsApp's [quick replies help page](https://faq.whatsapp.com/1791149784551042) notes that “The maximum number of stored quick replies allowed is 50,” and you pull any one into a chat by typing /. That is enough to save every template above that you use."
+    },
+    {
+      "steps": [
+        "In WhatsApp Business, go to the Tools tab, then Quick replies, and save your 24-hour and 1-hour templates with shortcuts such as /rem24 and /rem1.",
+        "Every evening at 7 PM, open tomorrow's list from your diary or calendar.",
+        "For each client, open the chat, type /rem24, fill in the name, time and place, and send.",
+        "Mark who replied YES. Call or message anyone who has not replied by 9 PM if the slot is valuable.",
+        "On the day, send /rem1 to online clients with the link.",
+        "Move anyone who cancels to a new slot straight away and offer the free slot to your waiting list."
+      ]
     },
     {
       "h2": "How to write a reminder that gets read"
     },
     {
-      "p": "A reminder gets read when it names the person, states the exact date and time, and makes replying effortless. Skip those and it reads like spam."
-    },
-    {
-      "steps": [
-        "Lead with their name and your name. No mystery numbers.",
-        "Put the date, time, and place in one glance. Bold or emoji-mark them.",
-        "Give one clear action. \"Reply YES,\" or one link. Not three.",
-        "Stay warm. You are helping someone keep a plan, not chasing a debt."
+      "ul": [
+        "Lead with the client's name and your business name, so the message does not look like spam.",
+        "Use the day and date, not only 'tomorrow'. People read messages late.",
+        "Add IST for online sessions, especially with NRI clients.",
+        "Give one action: reply YES, or one reschedule link. Not both a call and a form and a link.",
+        "Keep it under six lines so it fits the notification preview.",
+        "For health and therapy, keep the wording discreet. The preview may be seen by others."
       ]
     },
     {
-      "h2": "Never send one manually again"
+      "p": "The reminder only works if the first message was clear. Pair these with the [appointment confirmation message templates](/blog/appointment-confirmation-message), and see [how to reduce no-shows](/blog/how-to-reduce-no-shows) for policies and prepayment."
     },
     {
-      "p": "You can copy these templates forever, or you can set them once and forget them. Manually sending confirmations, 24-hour nudges, and no-show follow-ups is a second job you did not sign up for."
+      "h2": "Sending appointment reminders automatically with Book A Sloth"
     },
     {
-      "p": "Or never send one manually again — [Book A Sloth](/) fires [WhatsApp and email reminders automatically](/features/notifications) and cuts no-shows, so the slot fills and you just show up. See [how to book an appointment online](/blog/how-to-book-an-appointment-online) to turn it on, or compare it as a [Topmate alternative](/blog/topmate-alternative) built for India. When the reminder is late, [asking a client for payment politely](/blog/how-to-ask-client-for-payment-politely) gets easier too. [Start free](/be-a-sloth). The craft is yours; the machinery is ours."
+      "p": "Copying templates every evening works until a busy week. On Book A Sloth, clients book and pay up front from your page, and each booking gets an email and WhatsApp confirmation plus a [WhatsApp reminder](/glossary/whatsapp-reminder), with a 24-hour reminder included on the free plan. Reschedule and cancel links come with every booking, and online sessions get an auto-generated Google Meet link. See how [booking notifications](/features/notifications) work. The free Sloth plan charges 5% per paid booking only; Sloth Active is ₹399 a month with 0% commission."
     },
     {
       "faq": [
         {
-          "q": "Do appointment reminders actually reduce no-shows?",
-          "a": "Yes. Text reminders cut no-shows by around 38% in a controlled study, and layering a confirmation with 24-hour and 1-hour nudges pushes the drop further. Most no-shows are simple forgetfulness, which a timed nudge fixes."
+          "q": "How do I write a WhatsApp reminder message for an appointment?",
+          "a": "Start with the client's name, then the service, the day, date and time in IST, and the address or meeting link. End with one action, such as 'Reply YES to confirm' or a reschedule link. Example: 'Hi Priya, reminder of your hair spa tomorrow, Sunday 19 Oct at 4 PM. Reply YES to confirm.'"
         },
         {
           "q": "When should I send an appointment reminder?",
-          "a": "Send a confirmation the moment someone books, a reminder 24 hours before, and a final one about an hour before. For a missed appointment, follow up warmly within 15 to 30 minutes."
+          "a": "Send the main reminder 24 hours before, ideally between 6 and 9 PM the evening before. Add a short second reminder 1 to 2 hours before for online sessions, early-morning slots and long procedures. Bridal and big events need one about a week ahead too."
         },
         {
-          "q": "Is WhatsApp or SMS better for appointment reminders in India?",
-          "a": "WhatsApp usually wins in India — high open rates and clients reply in the same thread. Keep SMS as the backup for anyone not on WhatsApp, since it reaches any phone without data."
+          "q": "Do appointment reminders really reduce no-shows?",
+          "a": "A Cochrane review of 8 randomised trials with 6,615 participants found SMS reminders improved attendance at healthcare appointments compared with no reminder, and worked about as well as phone calls. The trials were in healthcare, but the main cause they address, forgetting, applies to any appointment."
         },
         {
-          "q": "How do I write a no-show follow-up message?",
-          "a": "Keep it kind and short. Acknowledge the miss without blame, then hand over a booking link so rebooking takes one tap. A warm door recovers more clients than a guilt trip."
+          "q": "How do I write a doctor appointment reminder message?",
+          "a": "Give the doctor's name, the date, the OPD session and, if you use tokens, the token number with an expected time. Ask the patient to bring old prescriptions and reports, and to reply if they cannot come so the slot can go to someone else."
         },
         {
-          "q": "How many reminders should I send before an appointment?",
-          "a": "Three is the sweet spot: an instant confirmation, a 24-hour nudge, and a 1-hour final reminder. More than that starts to feel like spam and gets muted or ignored."
+          "q": "Can I send appointment reminders in Hindi?",
+          "a": "Yes. Use the respectful आप form and keep numbers in numerals, for example: 'नमस्ते प्रिया जी, कल शनिवार 18 अक्टूबर सुबह 11:30 बजे आपकी अपॉइंटमेंट है। पुष्टि के लिए YES लिखें।' Many clinics send English and Hindi versions to different patients."
+        },
+        {
+          "q": "Can I automate WhatsApp appointment reminders for free?",
+          "a": "With the free WhatsApp Business app you send reminders yourself, and quick replies make that fast. Fully automatic WhatsApp reminders need either a WhatsApp Business API provider, which charges for messages, or a booking tool that includes reminders with each booking."
         }
       ]
     }
@@ -4539,7 +11777,7 @@ export const BLOG_POSTS = [
 },
 {
   "slug": "interview-calling-message",
-  "title": "Interview Calling Message: 20+ Templates (Email & SMS)",
+  "title": "Interview Calling Message: 30 Templates (WhatsApp, Hindi)",
   "date": "Sep 12, 2026",
   "icons": [
     "clipboard",
@@ -4547,181 +11785,315 @@ export const BLOG_POSTS = [
     "calendar"
   ],
   "author": "Shubham N Datarkar",
-  "readMins": 7,
+  "readMins": 14,
   "category": "Guide",
   "image": null,
-  "excerpt": "20+ copy-paste interview calling message templates for email, SMS and WhatsApp, plus the fastest way to schedule interviews without the back-and-forth.",
+  "excerpt": "30 interview calling message templates for WhatsApp, SMS and email, in English, Hindi and Hinglish, plus walk-in, reminder and pick-your-slot formats.",
   "body": [
     {
-      "p": "An interview calling message is a short, clear note that invites a candidate to interview — it names the role, the format (phone, video, or in-person), and the time, then asks them to confirm. A good one is warm, specific, and takes under 30 seconds to read. Below are 20+ copy-paste templates for email, SMS, and WhatsApp, plus a phone script and the fastest way to schedule without the endless back-and-forth."
+      "p": "An interview calling message invites a shortlisted candidate to an interview. It names the company and role, gives the format (phone, video or in-person), the date and time in IST, the address or link, and asks the candidate to confirm. Below are 30 copy-paste templates for WhatsApp, SMS and email, in English, Hindi and Hinglish."
     },
     {
-      "p": "Recruiters send this message dozens of times a week. The difference between a reply rate of 30% and 70% is usually just clarity and speed. Here's how to get both."
+      "p": "You will also find a walk-in interview template with a documents list, reminder messages, a phone script, and a \"pick your interview slot\" template that replaces the back-and-forth with one booking link."
     },
     {
       "h2": "What is an interview calling message?"
     },
     {
-      "p": "An interview calling message is any short communication — email, SMS, WhatsApp, or a phone call — that invites a shortlisted candidate to attend an interview. Its only job is to get a fast \"yes, I'll be there\" with a confirmed slot. Speed matters: [67% of HR managers say they lose qualified candidates to a slow hiring process](https://simpletexting.com/blog/sample-sms-for-interview-invitation/), and a message that's hard to reply to is part of that slowness."
+      "p": "An interview calling message (also called an interview call letter or interview invitation message) is the first note a recruiter or hiring manager sends after shortlisting a candidate. It can go by email, SMS, WhatsApp or a phone call. Its job is simple: get a quick \"yes, I'll be there\" with a confirmed slot."
     },
     {
-      "p": "The best channel depends on urgency. Email suits formal roles and detailed logistics. SMS and WhatsApp suit high-volume hiring and hourly roles, where candidates reply from their phones in minutes."
+      "p": "In India, WhatsApp is usually the fastest channel because candidates read it on the phone they already have in hand. Email still matters for senior roles, campus hiring and anything that needs a paper trail. Many recruiters send both: a short WhatsApp message and a detailed email."
     },
     {
-      "h2": "What every interview invitation message should include"
+      "h2": "What to include in an interview invitation message"
     },
     {
-      "p": "Every strong interview message answers six questions before the candidate has to ask. Miss one and you trigger a reply-and-wait loop that costs you a day."
+      "p": "Every good interview message answers six questions before the candidate has to ask them. Miss one and you get a reply asking for it, which costs a day."
     },
     {
       "steps": [
-        "Who you are — recruiter name and company.",
-        "What role — the exact position title.",
-        "Format — phone, video, or in-person.",
-        "When — specific date/time options, not \"let me know your availability.\"",
-        "Where / how — address, meeting link, or a booking link.",
-        "Confirm — one clear ask: reply YES, or pick a slot."
+        "Who you are: your name, designation and company.",
+        "Which role: the exact job title, so candidates applying to several roles know which one this is.",
+        "Format: phone, video (Google Meet, Zoom, Teams) or in-person.",
+        "When: a specific date and time in IST, or two fixed options, or a booking link.",
+        "Where: the full address with a Google Maps pin, or the video link.",
+        "Confirm: one clear ask, such as \"reply YES\" or \"pick a slot here\"."
       ]
     },
     {
-      "p": "Give candidates two or three fixed slots, or a self-booking link. Open-ended \"when are you free?\" is the single biggest cause of scheduling ping-pong."
+      "info": {
+        "title": "Avoid \"let me know your availability\"",
+        "text": "Open-ended availability questions start a scheduling thread. Offer two fixed slots or a self-booking link instead. Also, never ask for a fee in an interview message. Candidates are wary of job scams, and a payment request makes a genuine invite look fake."
+      }
     },
     {
-      "h2": "Interview calling message templates — email"
+      "h2": "Interview mail format: email templates"
     },
     {
-      "p": "Use email for professional and senior roles where the candidate expects detail and a paper trail. Keep the subject line specific so it gets opened."
+      "p": "Use email for professional and senior roles, campus drives and any interview where the candidate needs details to refer back to. Keep the subject line specific so it gets opened."
     },
     {
-      "p": "**1. Standard interview invitation**"
+      "quote": "Subject: Interview invitation: [Role] at [Company]\n\nDear [Name],\n\nThank you for applying for the [Role] position at [Company]. We would like to invite you for an interview.\n\nPlease choose one of these slots:\n• [Tuesday, 14 October, 11:00 AM IST]\n• [Wednesday, 15 October, 3:00 PM IST]\n\nThe interview will be a [45-minute video call] with [Interviewer, Designation]. Reply with your preferred slot and I will send the calendar invite.\n\nRegards,\n[Your name]\n[Designation], [Company]\n[Phone]",
+      "cite": "1. Standard interview invitation email"
     },
     {
-      "quote": "Subject: Interview invitation — [Role] at [Company]\n\nHi [Name],\n\nThanks for applying for the [Role] position at [Company]. We'd like to invite you for an interview.\n\nCould you make one of these?\n• [Tue, 12th — 11:00 AM]\n• [Wed, 13th — 3:00 PM]\n\nIt'll be a [30-minute video] call with [Interviewer, Title]. Reply with your preferred slot and I'll send the calendar invite.\n\nBest,\n[Your name]"
+      "quote": "Subject: Pick your interview slot: [Role], [Company]\n\nHi [Name],\n\nWe would like to interview you for [Role]. To save us both a few emails, please pick a time that suits you here: [booking link]\n\nIt is a [30-minute] [video] interview with [Interviewer]. You will get a confirmation and the meeting link as soon as you book.\n\nBest,\n[Your name]",
+      "cite": "2. Email with a self-scheduling link"
     },
     {
-      "p": "**2. With a self-scheduling link (recommended)**"
+      "quote": "Subject: Interview: [Role], [Company]\n\nDear [Mr/Ms Surname],\n\nFollowing our review of your application for [Role], we are pleased to invite you to a [first-round] discussion with [Interviewer, Designation].\n\nPlease share two or three slots that suit you between [Thursday and Friday next week], and we will confirm the final time and details.\n\nWarm regards,\n[Your name], [Company]",
+      "cite": "3. Formal email for a senior role"
     },
     {
-      "quote": "Subject: Let's schedule your [Role] interview\n\nHi [Name],\n\nGreat news — we'd like to interview you for [Role]. Rather than trade emails, just pick a slot that works for you here: [booking link].\n\nIt's a [30-minute] [video] interview with [Interviewer]. See you soon!\n\n[Your name]"
+      "quote": "Subject: Video interview for [Role]: [Date], [Time] IST\n\nHi [Name],\n\nYour video interview for [Role] is confirmed.\n\nDate: [Tuesday, 14 October]\nTime: [11:00 AM IST]\nLink: [Google Meet / Zoom link]\nDuration: [45 minutes]\nPanel: [Names, designations]\n\nPlease join from a quiet place with a stable connection, and test your camera and microphone 10 minutes before. Keep a copy of your resume handy.\n\nIf you need to reschedule, reply by [date].\n\nRegards,\n[Your name]",
+      "cite": "4. Video interview details email"
     },
     {
-      "p": "**3. Formal / senior role**"
-    },
-    {
-      "quote": "Subject: Interview — [Role], [Company]\n\nDear [Name],\n\nFollowing the review of your application for [Role], we would be pleased to invite you to a [first-round] interview with [Interviewer, Title].\n\nPlease let us know your availability across [Thursday–Friday next week], and we will confirm the final time and details.\n\nWarm regards,\n[Your name], [Company]"
+      "quote": "Subject: Telephonic interview for [Role]\n\nHi [Name],\n\nThank you for your interest in [Role]. [Interviewer] will call you on [phone number] on [Monday, 13 October] at [4:00 PM IST] for a 20-minute telephonic round.\n\nIf this number or time does not work, please reply with an alternative.\n\nThanks,\n[Your name]",
+      "cite": "5. Telephonic interview email"
     },
     {
       "h2": "Interview invitation SMS templates"
     },
     {
-      "p": "Use SMS for hourly, retail, field, and high-volume hiring, where candidates may not check email daily. Keep it under two lines and always include the company name so it doesn't read as spam."
+      "p": "Use SMS for hourly, retail, field and high-volume hiring, or when a candidate is not on WhatsApp. Keep it to two lines and always include the company name so it does not look like spam."
     },
     {
-      "p": "**4. Short invite**"
+      "quote": "Hi [Name], this is [You] from [Company] about the [Role] job. Can you come for an interview on [Tue 11 AM] or [Wed 3 PM]? Reply with a time. Thanks",
+      "cite": "6. Short SMS invite"
     },
     {
-      "quote": "Hi [Name], this is [You] from [Company] about the [Role] role. Can you interview [Tue 11 AM or Wed 3 PM]? Reply with a time. Thanks!"
+      "quote": "[Company]: Hi [Name], you are shortlisted for [Role]. Pick your interview slot here: [link]. Questions? Call [phone].",
+      "cite": "7. SMS with booking link"
     },
     {
-      "p": "**5. With booking link**"
+      "quote": "Hi [Name], [Company] here. An interview slot for [Role] opened today at [4 PM]. Can you make it? Reply YES or NO.",
+      "cite": "8. Same-day SMS"
     },
     {
-      "quote": "Hi [Name] — [Company] here. We'd love to interview you for [Role]. Pick a slot: [link]. Reply if you need help."
+      "quote": "[Company]: Interview for [Role] on [Fri 17 Oct, 10 AM] at [short address]. Map: [link]. Bring resume and ID. Reply YES to confirm.",
+      "cite": "9. In-person SMS with address"
     },
     {
-      "p": "**6. Same-day / urgent**"
+      "h2": "WhatsApp interview calling message templates"
     },
     {
-      "quote": "Hi [Name], [Company] here. A [Role] interview slot opened today at [4 PM]. Can you make it? Reply YES/NO."
+      "p": "WhatsApp lets you be slightly warmer, add a location pin, and attach the job description as a PDF. Bold the date and time with asterisks so they stand out in a busy chat."
     },
     {
-      "h2": "WhatsApp interview message templates"
+      "quote": "Hi [Name] 👋 This is [You] from [Company].\nWe'd like to interview you for the *[Role]* position.\nAre you free on *[Tue 14 Oct, 11 AM]* or *[Wed 15 Oct, 3 PM]*?\nJust reply with the time that suits you 🙂",
+      "cite": "10. Friendly WhatsApp invite"
     },
     {
-      "p": "WhatsApp is ideal for Indian hiring — read rates are high and candidates reply fast, often within minutes. Keep it friendly, add the company name, and attach the JD or location pin where useful."
+      "quote": "Hi [Name], congratulations! 🎉 You're shortlisted for *[Role]* at [Company].\nPlease pick an interview slot here: [booking link]\nYou'll get a confirmation on WhatsApp as soon as you book.",
+      "cite": "11. WhatsApp shortlist message with booking link"
     },
     {
-      "p": "**7. Friendly invite**"
+      "quote": "Hi [Name], your interview for *[Role]* is confirmed ✅\n📅 *[Tue 14 Oct]*  ⏰ *[11:00 AM IST]*\n💻 [Google Meet link]\n👤 With [Interviewer, Designation]\nPlease join 5 minutes early. Reply here if anything changes.",
+      "cite": "12. WhatsApp video interview confirmation"
     },
     {
-      "quote": "Hi [Name] 👋 This is [You] from [Company]. We'd like to interview you for the [Role] position. Are you free [Tue 11 AM] or [Wed 3 PM]? Just reply with a time 🙂"
+      "quote": "Hi [Name], [Company] here. Your interview for *[Role]* is on *[Fri 17 Oct, 10 AM]*.\n📍 [Full address]\n🗺 [Google Maps pin]\nAsk for [Contact person] at reception. Reply YES to confirm 🙏",
+      "cite": "13. WhatsApp in-person interview"
     },
     {
-      "p": "**8. With booking link**"
+      "h2": "Interview calling message in Hindi (WhatsApp)"
     },
     {
-      "quote": "Hi [Name], congrats — you're shortlisted for [Role] at [Company]! Pick an interview slot here: [link]. Reply if you have any questions."
+      "p": "For roles where candidates are more comfortable in Hindi, such as field sales, retail, delivery, support and many roles in Tier 2 and Tier 3 cities, a Hindi message gets clearer replies. Keep it polite, use आप, and keep the key details in numerals."
     },
     {
-      "p": "**9. Walk-in / in-person**"
+      "quote": "नमस्ते [नाम] जी,\nमैं [कंपनी] से [आपका नाम] बोल रहा/रही हूँ। [पद] के लिए आपका आवेदन शॉर्टलिस्ट हुआ है। 🎉\nहम आपको इंटरव्यू के लिए बुलाना चाहते हैं:\n📅 तारीख: [मंगलवार, 14 अक्टूबर]\n⏰ समय: [सुबह 11:00 बजे]\n📍 जगह: [पता / Google Meet लिंक]\nकृपया \"हाँ\" लिखकर कन्फ़र्म करें। अगर यह समय ठीक नहीं है, तो बताइए, हम दूसरा समय तय कर देंगे।\nधन्यवाद,\n[आपका नाम], [कंपनी]",
+      "cite": "14. Hindi interview invitation"
     },
     {
-      "quote": "Hi [Name], [Company] here. Interview for [Role] on [Fri 10 AM] at [address / 📍pin]. Please bring [ID + resume]. Reply YES to confirm."
+      "quote": "नमस्ते [नाम] जी,\n[पद] के इंटरव्यू के लिए आप अपना पसंदीदा समय इस लिंक से चुन सकते हैं: [बुकिंग लिंक]\nस्लॉट बुक होते ही आपको WhatsApp पर कन्फ़र्मेशन मिल जाएगा।\nकोई सवाल हो तो इसी नंबर पर मैसेज करें। 🙏",
+      "cite": "15. Hindi message with booking link"
     },
     {
-      "h2": "The interview call script (when you actually phone them)"
+      "quote": "नमस्ते [नाम] जी, याद दिला रहे हैं कि कल [सुबह 11 बजे] [कंपनी] में आपका इंटरव्यू है।\n📍 [पता / लिंक]\nकृपया 10 मिनट पहले पहुँचें और बायोडाटा की एक कॉपी साथ लाएँ। समय बदलना हो तो आज शाम तक बता दें।\nशुभकामनाएँ! 🙏",
+      "cite": "16. Hindi interview reminder"
     },
     {
-      "p": "When you call a candidate directly, state your name, company, and role in the first line, then confirm they can talk. A clear opener respects their time and doubles your connect rate."
+      "h2": "Hinglish interview messages for WhatsApp"
     },
     {
-      "quote": "\"Hi [Name], this is [You] calling from [Company] about your application for [Role]. Is this a good time for a quick minute? … Great — we'd like to invite you for an interview. Would [Tuesday at 11] or [Wednesday at 3] work better? … Perfect, I'll send you a confirmation on WhatsApp/email with the details right now.\""
+      "p": "Hinglish in Roman script is how many candidates actually type on WhatsApp. It reads friendly without being casual, and it works well for high-volume hiring."
     },
     {
-      "p": "Always follow a call with a written confirmation. A verbal \"yes\" without a message is a no-show waiting to happen."
+      "quote": "Hi [Name] ji, main [Company] se [Your name] bol rahi hoon. [Role] ke liye aapka profile shortlist hua hai 🎉\nKya aap *[Tue 14 Oct, 11 AM]* ko interview ke liye aa sakte hain?\n📍 [Address / Meet link]\n\"Haan\" reply karke confirm kar dijiye. Time suit na kare toh bata dijiye.",
+      "cite": "17. Hinglish interview invite"
     },
     {
-      "h2": "Stop sending 40 of these by hand"
+      "quote": "Hi [Name] ji, congratulations! 🎉 [Role] interview ke liye apna slot yahan se choose kar lijiye: [booking link]\nSlot book karte hi WhatsApp pe confirmation aa jaayega. Koi doubt ho toh isi number pe message kariye.",
+      "cite": "18. Hinglish pick-your-slot message"
     },
     {
-      "p": "The fastest way to schedule interviews is to stop proposing times entirely and let candidates book their own slot. Sending individual messages to 40 shortlisted candidates — then juggling their replies — is the real time sink, not writing the message."
+      "quote": "Hi [Name] ji, reminder: kal *[11 AM]* baje aapka interview hai, [Company], [address / link].\nPlease 10 min pehle pahunch jaiye aur resume ki ek copy saath laaiye. All the best! 👍",
+      "cite": "19. Hinglish reminder"
     },
     {
-      "p": "This is exactly what a booking link fixes. Instead of \"are you free Tuesday or Wednesday?\", you share one link. Candidates see your live availability, pick a slot, and get an instant confirmation and reminder. No double-booking, no back-and-forth, no chasing."
+      "h2": "Walk-in interview message with documents list"
     },
     {
-      "p": "That's how [Book A Sloth](/) is built: [set up a booking page in about five minutes](/blog/how-to-book-an-appointment-online), drop the link into any of the templates above, and let candidates self-schedule while automated WhatsApp and email reminders cut your no-show rate. Pair it with a clean interview schedule template and the whole round runs itself. [Start free on Book A Sloth](/be-a-sloth)."
+      "p": "Walk-in drives need more detail than a scheduled interview: a time window, the exact entry point, a contact person and a documents list. Candidates who arrive without photos or certificates waste a trip, and so do you."
     },
     {
-      "h2": "Conclusion: clarity first, then automate"
+      "quote": "Subject: Walk-in interview for [Role] on [Saturday, 18 October]\n\nDear [Name],\n\n[Company] is holding a walk-in interview for [Role] ([number] openings).\n\nDate: [Saturday, 18 October 2026]\nTime: [10:00 AM to 2:00 PM IST]\nVenue: [Full address, floor, landmark]\nMap: [Google Maps pin]\nContact: [Name, phone]\n\nPlease bring:\n• Updated resume (2 copies)\n• 2 recent passport-size photographs\n• Photo ID: Aadhaar (masked copy is fine), PAN, voter ID, driving licence or passport\n• Educational certificates and mark sheets (originals and one set of photocopies)\n• Experience or relieving letters from previous employers, if any\n• Last 3 months' salary slips, if you are currently working\n• A pen\n\nThe process includes [a written test and a face-to-face interview] and may take [2 to 3 hours].\n\nRegards,\n[Your name], [Company]",
+      "cite": "20. Walk-in interview email with documents list"
     },
     {
-      "p": "My honest take after building scheduling tools: the template matters less than the friction around it. A perfectly worded email that ends in \"let me know your availability\" still triggers three days of ping-pong. A plain one with a booking link gets you a confirmed slot in minutes."
+      "quote": "Hi [Name] 👋 *Walk-in interview* for *[Role]* at [Company]\n📅 *[Sat 18 Oct]*  ⏰ *10 AM to 2 PM*\n📍 [Address] | 🗺 [Map pin]\n\n*Please bring:*\n✅ Resume (2 copies)\n✅ 2 passport-size photos\n✅ Photo ID (Aadhaar / PAN / voter ID)\n✅ Certificates + mark sheets (original + photocopy)\n✅ Experience letter (if any)\n\nAsk for [Contact] at reception. Reply YES if you're coming 🙏",
+      "cite": "21. WhatsApp walk-in message"
     },
     {
-      "p": "Three things to do this week:"
+      "p": "On Aadhaar: UIDAI offers a free [masked Aadhaar download](https://uidai.gov.in/en/my-aadhaar) where only the last 4 digits of the number are visible. Asking for a masked copy, or for originals to be shown and returned, means you do not end up storing full Aadhaar numbers you never needed."
     },
     {
-      "steps": [
-        "Save the templates above as canned responses in email, SMS, and WhatsApp so an invite takes seconds.",
-        "Kill \"when are you free?\" — always offer two fixed slots or a self-booking link.",
-        "For high-volume rounds, use one booking link so candidates schedule themselves and you stop being the calendar."
-      ]
+      "h2": "Interview reminder message templates"
     },
     {
-      "p": "Send fewer messages. Fill more slots."
+      "p": "A confirmed interview can still turn into a no-show. A reminder 24 hours before and a short nudge on the day catches many of the people who simply forgot. If you schedule interviews often, the timing logic in our [appointment reminder templates](/blog/appointment-reminder-templates) applies here too."
+    },
+    {
+      "quote": "Hi [Name], a quick reminder of your interview for *[Role]* tomorrow, *[Tue 14 Oct] at [11 AM IST]*.\n📍 [Address / link]\nPlease reply *YES* to confirm, or let me know today if you need to reschedule.",
+      "cite": "22. Reminder 24 hours before"
+    },
+    {
+      "quote": "Hi [Name], see you at [11 AM] today for your [Role] interview 🙂 Here's the link again: [Meet link]. Call me on [phone] if you have trouble joining.",
+      "cite": "23. Same-day reminder for a video interview"
+    },
+    {
+      "quote": "Hi [Name], your [Role] interview starts in 2 hours at [address]. Parking is at [location]; the entrance is at [gate]. See you soon!",
+      "cite": "24. Two-hour reminder for an in-person interview"
+    },
+    {
+      "h2": "\"Pick your interview slot\" booking link templates"
+    },
+    {
+      "p": "When you are interviewing 20 or 40 candidates for one role, proposing times one by one becomes the real work. A booking link fixes that. You open slots once, share one link, and candidates pick a time from your live availability. Each booking blocks the slot, so two candidates cannot take the same one, and confirmations and reminders go out without you typing them."
+    },
+    {
+      "quote": "Hi [Name], congratulations on being shortlisted for *[Role]* at [Company]! 🎉\nPlease pick a 30-minute interview slot that suits you: [booking link]\nSlots are open from *[Mon 13 Oct to Fri 17 Oct]*. Once you book, you'll get a confirmation and the [Google Meet link / address] on WhatsApp and email.",
+      "cite": "25. WhatsApp: pick your interview slot"
+    },
+    {
+      "quote": "Subject: Book your interview slot: [Role], [Company]\n\nHi [Name],\n\nYou have been shortlisted for [Role]. We have opened interview slots from [13 to 17 October]. Please book one here by [Friday, 10 October]: [booking link]\n\nYou will get a confirmation with the [meeting link / address] and a reminder before the interview. If none of the slots work, reply to this email and we will find another time.\n\nRegards,\n[Your name]",
+      "cite": "26. Bulk email for a hiring drive"
+    },
+    {
+      "quote": "Hi [Name], no problem at all. You can move your interview to any open slot here: [booking link]. Your earlier slot will be released once you pick a new one.",
+      "cite": "27. Reschedule via link"
+    },
+    {
+      "p": "A tip for the email version: add a WhatsApp click-to-chat link so candidates can reply from their phone. WhatsApp's [click to chat format](https://faq.whatsapp.com/5913398998672934) is wa.me followed by your number with the country code and no plus sign, for example wa.me/919876543210."
+    },
+    {
+      "h2": "Follow-up messages when a candidate does not reply"
+    },
+    {
+      "quote": "Hi [Name], following up on the interview invite for *[Role]* at [Company]. Are you still interested? If yes, please pick a slot here: [booking link] or reply with a time that suits you.",
+      "cite": "28. Follow-up after 2 days of no reply"
+    },
+    {
+      "quote": "Hi [Name], we haven't heard back, so I'll assume the timing isn't right for you now. If you're still interested in [Role], reply here by [date] and I'll share fresh slots. All the best!",
+      "cite": "29. Closing follow-up"
+    },
+    {
+      "p": "If a candidate replies with a question or a confirmation, our guide on [how to acknowledge an interview email](/blog/how-to-acknowledge-interview-email) shows the candidate side of the same exchange."
+    },
+    {
+      "h2": "Interview call script for when you phone the candidate"
+    },
+    {
+      "p": "When you call, say your name, company and the role in the first sentence, then check they can talk. A candidate who picks up on a crowded bus will remember little of what you say, so always follow the call with a written message."
+    },
+    {
+      "quote": "Hi, am I speaking with [Name]? This is [You] calling from [Company] about your application for [Role]. Is this a good time for two minutes?\n\n(If yes) Great. We've reviewed your profile and would like to invite you for an interview. Would [Tuesday at 11] or [Wednesday at 3] work better for you?\n\n(After they choose) Perfect. I'll send the details on WhatsApp and email right after this call, with the [address / meeting link]. Please reply YES there once you get it.\n\n(If no) No problem. When is a better time to call you back today?",
+      "cite": "30. Phone script"
+    },
+    {
+      "h2": "Which channel to use for an interview call message"
+    },
+    {
+      "table": {
+        "head": [
+          "Hiring situation",
+          "Best channel",
+          "Template to start with"
+        ],
+        "rows": [
+          [
+            "Senior or corporate role",
+            "Email, then WhatsApp confirmation",
+            "1, 3, 4"
+          ],
+          [
+            "High-volume or hourly roles",
+            "WhatsApp or SMS",
+            "7, 11, 25"
+          ],
+          [
+            "Walk-in drive",
+            "WhatsApp plus email",
+            "20, 21"
+          ],
+          [
+            "Hindi-speaking candidates",
+            "WhatsApp in Hindi or Hinglish",
+            "14 to 19"
+          ],
+          [
+            "Candidate unreachable on chat",
+            "Phone call, then SMS",
+            "30, then 6"
+          ],
+          [
+            "20+ candidates for one role",
+            "Booking link by WhatsApp and email",
+            "25, 26"
+          ]
+        ]
+      }
+    },
+    {
+      "p": "For the interview day itself, pair these messages with a clean [interview schedule template](/blog/interview-schedule-template) so panel members know who is coming when."
+    },
+    {
+      "h2": "Send one link instead of 40 messages"
+    },
+    {
+      "p": "If you interview regularly, set up an interview slot on a [Book A Sloth booking page](/features/booking-pages) and drop that link into templates 2, 11, 15, 18, 25 and 26. Candidates pick a slot from your availability and book with a phone OTP, with no app to download. They get a WhatsApp and email confirmation, a reminder before the interview, and a reschedule link. Online interviews get an auto-generated Google Meet link, and two-way Google Calendar sync keeps interview slots from clashing with your other meetings."
+    },
+    {
+      "p": "You can [start free on Book A Sloth](/be-a-sloth) and have the link ready before your next shortlist goes out."
     },
     {
       "faq": [
         {
-          "q": "What is a good interview calling message?",
-          "a": "A good interview calling message names the recruiter and company, states the role and interview format, offers specific time slots (or a booking link), and asks for a quick confirmation. It should be readable in under 30 seconds."
+          "q": "What is an interview calling message?",
+          "a": "An interview calling message is a short note sent by email, SMS, WhatsApp or phone that invites a shortlisted candidate to an interview. It names the company and role, the format, the date and time, the address or link, and asks the candidate to confirm."
         },
         {
-          "q": "Should I invite candidates to an interview by email, SMS, or WhatsApp?",
-          "a": "Use email for senior or formal roles, and SMS or WhatsApp for high-volume and hourly hiring where candidates reply faster from their phones. In India, WhatsApp usually gets the quickest response."
+          "q": "How do I write an interview invitation message on WhatsApp?",
+          "a": "Start with your name and company, name the role, give the date and time in bold with IST, add the address with a Google Maps pin or the video link, and end with one clear ask such as \"reply YES to confirm\" or a booking link to pick a slot."
         },
         {
-          "q": "How do I write an interview invitation without back-and-forth scheduling?",
-          "a": "Offer two or three fixed time slots, or share a self-scheduling link so candidates pick from your live availability. Open-ended \"let me know when you're free\" is the main cause of scheduling delays."
+          "q": "How do I write an interview message in Hindi?",
+          "a": "Use the respectful आप form, start with नमस्ते and the candidate's name with जी, then give the पद (role), तारीख, समय and जगह on separate lines. End with a request to confirm by replying हाँ, and offer to change the time if needed."
         },
         {
-          "q": "How far in advance should I send an interview invitation?",
-          "a": "Send it as soon as the candidate is shortlisted, and aim to give at least 24–48 hours' notice for the slot. Speed protects you — good candidates get hired quickly elsewhere."
+          "q": "What documents should a candidate bring to a walk-in interview?",
+          "a": "Usually an updated resume (2 copies), 2 passport-size photos, a photo ID such as Aadhaar, PAN, voter ID or passport, educational certificates and mark sheets with photocopies, and experience or relieving letters if the candidate has worked before. List them in the invite so nobody makes a wasted trip."
         },
         {
-          "q": "Do I need to confirm after the candidate replies?",
-          "a": "Yes. Always send a written confirmation with the date, time, format, and location or link. A verbal or one-word \"yes\" without a confirmation message is the leading cause of interview no-shows."
+          "q": "Should I send an interview reminder?",
+          "a": "Yes. Send a reminder 24 hours before with the date, time, address or link and a request to reply YES, and a short message on the day. Reminders catch candidates who confirmed but forgot, and they give people a chance to reschedule instead of not turning up."
+        },
+        {
+          "q": "How can candidates choose their own interview slot?",
+          "a": "Share a booking link that shows your open interview slots. The candidate picks a time, the slot is blocked for everyone else, and a confirmation goes out automatically. This removes the back-and-forth of proposing times to each candidate separately."
         }
       ]
     }
@@ -4877,7 +12249,7 @@ export const BLOG_POSTS = [
 },
 {
   "slug": "how-to-ask-client-for-payment-politely",
-  "title": "How to Ask a Client for Payment Politely (Templates)",
+  "title": "How to Ask a Client for Payment Politely (+ Call Script)",
   "date": "Sep 10, 2026",
   "icons": [
     "wallet",
@@ -4885,186 +12257,228 @@ export const BLOG_POSTS = [
     "money"
   ],
   "author": "Shubham N Datarkar",
-  "readMins": 7,
+  "readMins": 10,
   "category": "Money",
   "image": null,
-  "excerpt": "How to ask a client for payment politely: copy-paste email, WhatsApp and SMS scripts, a follow-up timeline, and the one setup that ends chasing for good.",
+  "excerpt": "How to ask a client for payment politely: email, WhatsApp and phone-call scripts, a pause-work template, and the MSME 45-day rule for Indian businesses.",
   "body": [
     {
-      "p": "To ask a client for payment politely, send a short, friendly message that states the invoice number, the amount, the original due date, and one clear next step to pay. Keep it warm, assume the best, and make paying easier than replying. The scripts below are copy-paste ready for email, WhatsApp, and SMS."
+      "p": "To ask a client for payment politely, send a short, friendly message that states the invoice number, the amount, the original due date and one clear way to pay. Assume the client forgot, keep the tone warm, and make paying easier than replying. Copy-paste email, WhatsApp and phone-call scripts follow below."
     },
     {
-      "p": "I run a business where people book and pay for time. So I've written this exact message more times than I'd like to admit — and I've watched hundreds of freelancers do the same. The awkwardness is real, but it's fixable. Here's how to ask without sounding desperate, and how to stop needing to ask at all."
+      "p": "I run a business where people book and pay for time, so I have written this message myself more often than I would like. The awkwardness is real but fixable. Here is how to ask without sounding desperate, what to do when polite stops working, and how to stop needing to ask at all."
     },
     {
-      "h2": "Why asking for payment feels so awkward (and why it isn't your fault)"
+      "h2": "Why asking a client for payment feels so awkward"
     },
     {
-      "p": "Chasing payment feels bad because the system is quietly stacked against you, not because you're doing something wrong. You did the work. You're the one who has to beg for the money. That's backwards."
+      "p": "Chasing payment feels bad because the system is stacked against you. You did the work, and now you have to ask for the money. That is backwards, and it is common."
     },
     {
-      "p": "The data backs up how common this is. Roughly [29% of freelancer invoices are paid at least a day late, and 71% of freelancers have hit a stalled payment at least once](https://clockify.me/late-invoice-statistics) — with the average freelancer losing more than a full working day every month just to chasing. So if it feels like a second job, that's because it is one."
+      "p": "Global figures collected by [Clockify's late invoice statistics](https://clockify.me/late-invoice-statistics) show the scale. A 2026 Bonsai study of 100,000 independent contractors found 29% of freelancer invoices are at least a day late. A Freelancers Union survey found 71% of freelancers have had a stalled payment. A Jobbers.io report says freelancers spend more than one full workday a month securing late payments. These are not India-specific, but the pattern will feel familiar."
     },
     {
-      "p": "The goal is to make the ask feel routine, not personal. A polite payment reminder is a business function, like sending an invoice. Treat it that way and the awkwardness drops."
+      "p": "The fix is to make the ask routine, not personal. A payment reminder is a business task, like sending an invoice. Treat it that way and the awkwardness drops."
     },
     {
-      "quote": "Politeness isn't what gets you paid — systems are. A warm tone protects the relationship; a predictable schedule and up-front collection move the money.",
+      "quote": "Politeness isn't what gets you paid. Systems are. A warm tone protects the relationship; a predictable schedule and up-front collection move the money.",
       "cite": "Shubham N Datarkar, Founder of Book A Sloth"
     },
     {
       "h2": "The 5 rules of a polite payment request"
     },
     {
-      "p": "A good payment request is short, specific, warm, and ends with one obvious action. Follow these five rules and almost any message works."
+      "p": "A good payment request is short, specific and warm, and ends with one obvious action. Skip openers like “So sorry to bother you about this again”, which make your fee sound like a favour."
     },
     {
       "ol": [
-        "Lead with the facts, not an apology. Invoice number, amount, due date. Don't open with so-sorry-to-bother-you.",
-        "Assume good faith. Most late payments are forgetfulness, not malice. A this-may-have-slipped-through line gives them an easy out.",
-        "Make one clear ask. One amount, one link or account, one deadline. Choices create delay.",
-        "Keep the door warm. You want the next project too. Firm and friendly beat cold and legal — until they don't (see the timeline below).",
-        "Remove the friction. Attach the invoice again. Include the UPI ID or payment link right in the message. Every extra step is an extra day."
+        "Lead with the facts, not an apology. Invoice number, amount, due date.",
+        "Assume good faith. Most late payments are forgetfulness. A this-may-have-slipped-through line gives the client an easy way out.",
+        "Make one clear ask. One amount, one link or UPI ID, one deadline.",
+        "Keep the door warm. You want the next project too, so stay firm and friendly for as long as you can.",
+        "Remove friction. Attach the invoice again and put the UPI ID or payment link inside the message."
       ]
     },
     {
-      "h2": "The follow-up timeline: what to send and when"
+      "h2": "Payment follow-up timeline: what to send and when"
     },
     {
-      "p": "Send four touches on a predictable schedule — a heads-up before the due date, a nudge on the day, a firm reminder a week late, and a final notice at two weeks. Consistency does the heavy lifting, so the client learns you always follow up."
+      "p": "Send four written touches on a predictable schedule, then pick up the phone. Consistency does the heavy lifting, because the client learns that you always follow up."
     },
     {
       "table": {
         "head": [
           "When",
+          "Channel",
           "Tone",
           "Goal"
         ],
         "rows": [
           [
-            "3 days before due date",
+            "3 days before the due date",
+            "Email or WhatsApp",
             "Friendly heads-up",
-            "Get it on their radar early"
+            "Get it on their radar"
           ],
           [
             "On the due date",
-            "Neutral reminder",
-            "Just a nudge — due today"
+            "WhatsApp",
+            "Neutral",
+            "A nudge with the link"
           ],
           [
             "7 days late",
+            "Email",
             "Polite but firm",
-            "Confirm they got it, restate amount"
+            "Confirm receipt, ask for a date"
+          ],
+          [
+            "10 days late",
+            "Phone call",
+            "Calm, direct",
+            "Agree a date out loud"
           ],
           [
             "14 days late",
-            "Firm, with next step",
-            "Mention late fee / pause on work"
+            "Email",
+            "Firm, with a next step",
+            "Late fee or pause on work, as agreed"
           ]
         ]
       }
     },
     {
-      "p": "Most invoices clear inside this window — over 75% of late freelancer invoices get paid within 14 days of the due date — which is exactly why a steady four-touch rhythm works better than one angry email at day 30."
+      "p": "The same Bonsai data quoted on Clockify found over 75% of late invoices were paid within 14 days of the due date. That is why a steady rhythm works better than one angry email at day 30."
     },
     {
-      "h2": "Copy-paste email templates"
+      "h2": "Polite payment reminder email templates"
     },
     {
-      "info": {
-        "title": "1. Before the due date (friendly heads-up)",
-        "text": "Subject: Invoice #1024 — due Friday 12th. Hi [Name], quick heads-up that invoice #1024 for ₹15,000 is due on Friday the 12th. I've attached it again here for easy reference. You can pay by UPI to yourname@upi or via the link below. Anything you need from my side, just say the word. Thanks! [Your name]"
-      }
+      "quote": "Subject: Invoice #1024 due Friday 12th\n\nHi [Name],\n\nA quick heads-up that invoice #1024 for ₹15,000 is due on Friday the 12th. I have attached it again for easy reference.\n\nYou can pay by UPI to [your UPI ID] or via this link: [payment link]\n\nAnything you need from my side, just say the word.\n\nThanks,\n[Your name]",
+      "cite": "1. Before the due date (friendly heads-up)"
     },
     {
-      "info": {
-        "title": "2. On the due date",
-        "text": "Subject: Invoice #1024 due today. Hi [Name], just a gentle nudge — invoice #1024 for ₹15,000 is due today. Payment link and UPI ID are below. Let me know if anything's holding it up. Best, [Your name]"
-      }
+      "quote": "Subject: Invoice #1024 due today\n\nHi [Name],\n\nJust a gentle nudge that invoice #1024 for ₹15,000 is due today. The payment link and UPI ID are below.\n\nLet me know if anything is holding it up.\n\nBest,\n[Your name]",
+      "cite": "2. On the due date"
     },
     {
-      "info": {
-        "title": "3. One week late (polite but firm)",
-        "text": "Subject: Following up — Invoice #1024. Hi [Name], following up on invoice #1024 for ₹15,000, now a week past due. I wanted to check this reached you and didn't slip through. Could you confirm a payment date? Happy to resend anything you need. Thanks, [Your name]"
-      }
+      "quote": "Subject: Following up: invoice #1024\n\nHi [Name],\n\nFollowing up on invoice #1024 for ₹15,000, now a week past due. I wanted to check it reached you and did not slip through.\n\nCould you confirm a payment date? Happy to resend anything you need.\n\nThanks,\n[Your name]",
+      "cite": "3. One week late (payment follow-up email)"
     },
     {
-      "info": {
-        "title": "4. Two weeks late (firm, with a next step)",
-        "text": "Subject: Overdue — Invoice #1024, action needed. Hi [Name], invoice #1024 for ₹15,000 is now two weeks overdue. As per our agreement, a late fee of 2% per month applies from today, and I'll be pausing new work until the balance clears. Please settle at your earliest — link and UPI details below. If there's a genuine issue, call me and we'll sort it. Regards, [Your name]"
-      }
+      "quote": "Subject: Overdue: invoice #1024, action needed\n\nHi [Name],\n\nInvoice #1024 for ₹15,000 is now two weeks overdue. As per our agreement, a late fee of [X]% per month applies from today.\n\nPlease settle it by [date] using the link or UPI details below. If there is a genuine issue, call me and we will sort it out.\n\nRegards,\n[Your name]",
+      "cite": "4. Two weeks late (firm, with a next step)"
     },
     {
-      "h2": "WhatsApp and SMS scripts (short and India-friendly)"
+      "h2": "WhatsApp and SMS scripts for Indian clients"
     },
     {
-      "p": "For WhatsApp, keep it to two lines and attach the invoice PDF — most Indian clients reply faster there than on email. A short, respectful WhatsApp nudge lands as a normal business message, not a confrontation."
+      "p": "For WhatsApp, keep it to two lines and attach the invoice PDF. Many Indian clients reply faster there than on email. For Hindi and Hinglish versions, see our [payment reminder messages in Hindi](/blog/payment-reminder-message-hindi)."
     },
     {
-      "ul": [
-        "WhatsApp (gentle nudge): Hi [Name], just a reminder that invoice #1024 for ₹15,000 was due the 12th. UPI: yourname@upi or link below. Thanks!",
-        "WhatsApp (one week late): Hi [Name], following up on invoice #1024 (₹15,000, now a week overdue). Could you share a payment date? Resending the invoice here.",
-        "SMS (short reminder): [Your name] here — invoice #1024 for ₹15,000 is overdue. Pay via UPI yourname@upi or the link. Reply if any issue. Thanks."
-      ]
+      "quote": "Hi [Name], just a reminder that invoice #1024 for ₹15,000 was due on the 12th.\nUPI: [your UPI ID] or link: [payment link]\nThanks!",
+      "cite": "WhatsApp: gentle nudge"
     },
     {
-      "p": "Keep names in brackets so you can save these as templates and swap the details in ten seconds."
+      "quote": "Hi [Name], following up on invoice #1024 (₹15,000, now a week overdue).\nCould you share a payment date? Resending the invoice here.",
+      "cite": "WhatsApp: one week late"
+    },
+    {
+      "quote": "[Your name] here. Invoice #1024 for ₹15,000 is overdue.\nPay via UPI [your UPI ID] or [payment link]. Reply if there is any issue. Thanks.",
+      "cite": "SMS: short reminder"
+    },
+    {
+      "p": "For a full sequence of reminders from before the due date to the final notice, use our [payment reminder message templates](/blog/payment-reminder-message)."
+    },
+    {
+      "h2": "Phone call script: how to ask a client for payment on a call"
+    },
+    {
+      "p": "If two written reminders get no reply, call. A two-minute call often settles what five messages could not, because it is harder to ignore a person than a notification. Keep it short, ask one question, and confirm in writing afterwards."
+    },
+    {
+      "quote": "You: Hi [Name], this is [your name]. Is this a good time for two minutes?\n\nYou: I am calling about invoice #1024 for ₹15,000, which was due on the 12th. I wanted to check it reached you and that nothing is holding it up.\n\n(Pause. Let them answer. Do not fill the silence.)\n\nIf it is in process: Thanks. Could you give me a date I can note down? I will resend the link on WhatsApp right after this call.\n\nIf they raise an issue: Thanks for telling me. I will fix [issue] by [date]. Can the undisputed part of ₹[amount] be paid today?\n\nIf they need time: I understand. Could we split it, ₹[part] by [date] and the rest by [date]?\n\nClose: So we are agreed on ₹[amount] by [date]. I will confirm this on WhatsApp now. Thank you, [Name].",
+      "cite": "Phone call script (10 days late)"
+    },
+    {
+      "quote": "Thanks for your time on the call, [Name].\nAs discussed: ₹15,000 for invoice #1024 by [date].\nLink: [payment link] | UPI: [your UPI ID]",
+      "cite": "WhatsApp right after the call"
+    },
+    {
+      "h2": "When to pause work: a polite 'pause work' template"
+    },
+    {
+      "p": "If a client on an ongoing project stops paying, keep working only up to the amount you can afford to lose. Pausing is fair when it was in your agreement and you have given clear notice. Say what pauses, from when, and exactly what restarts it. Keep the tone calm so the client can pay without losing face."
+    },
+    {
+      "quote": "Subject: Pausing work on [project] until invoice #1024 is cleared\n\nHi [Name],\n\nInvoice #1024 for ₹15,000 is now [number] days overdue, and I followed up on [dates].\n\nAs per clause [X] of our agreement, I will pause work on [project] from [date] until the balance is cleared. Everything already delivered stays as it is, and I will restart within one working day of payment.\n\nPayment link: [payment link]\nUPI: [your UPI ID]\n\nI would much rather keep going. If there is a problem on your side, call me on [number] and we will work it out.\n\nRegards,\n[Your name]",
+      "cite": "Pause-work email"
+    },
+    {
+      "quote": "Hi [Name], invoice #1024 (₹15,000) is still pending after my reminders.\nAs agreed, I am pausing work on [project] from [date] until it is cleared, and will restart within a day of payment.\nLink: [payment link]",
+      "cite": "Pause-work WhatsApp"
+    },
+    {
+      "h2": "The MSME 45-day payment rule for Indian businesses"
+    },
+    {
+      "p": "If you are a micro or small enterprise with Udyam registration and your client is a business, the law is on your side. [MSME Samadhaan](https://samadhaan.msme.gov.in/), run by the Ministry of MSME, says buyers must pay within 45 days of accepting the goods or service under the MSMED Act, 2006. After that, the buyer owes compound interest with monthly rests at three times the bank rate notified by the RBI."
+    },
+    {
+      "p": "Samadhaan also states that new delayed-payment applications must now be filed on the MSME ODR portal, and only micro or small enterprises with valid Udyam registration can apply. Treat this as a last resort and get advice for your specific case. Mentioning it calmly in a final notice is often enough."
+    },
+    {
+      "quote": "As a Udyam-registered micro enterprise (Udyam no. [number]), I would also note that under the MSMED Act, 2006, payments to micro and small enterprises are due within 45 days of acceptance, with interest payable after that.\nI would prefer to settle this directly. Please clear ₹15,000 by [date] using [payment link].",
+      "cite": "Optional line for a final notice to a business client"
     },
     {
       "h2": "The best way to ask for payment is to not have to"
     },
     {
-      "p": "The single biggest fix is to collect payment when the client books, not weeks after the work — so there's no invoice to chase in the first place. If money changes hands before your calendar does, the awkward email never gets written."
+      "p": "The biggest fix is to collect payment when the client books, not weeks after the work, so there is no invoice to chase. If money changes hands before your calendar does, the awkward email never gets written. Our guide on [how to collect payments from clients in India](/blog/collect-payments-from-clients-india) compares UPI, payment links and pay-at-booking."
     },
     {
-      "p": "That's the whole idea behind how I built [Book A Sloth](/): you share one link, the client picks a slot, and they pay at the moment they book. UPI and Razorpay, an auto GST invoice, no front desk, no follow-ups. The craft stays yours; the machinery is ours."
+      "p": "That is the idea behind Book A Sloth. You share one booking link, the client picks a slot and pays up-front through Razorpay by UPI, card or netbanking, and the booking confirms automatically. GST invoices are generated for you, and confirmations and reminders go out on email and WhatsApp. It suits anything you would otherwise invoice afterwards, such as a 30-minute consulting call, a tutoring session or a coaching package. See how it works on the [payments feature page](/features/payments)."
     },
     {
-      "p": "It works cleanly for anything you'd otherwise invoice for after the fact: a consultant selling a bookable 30-minute call collects the fee up front instead of billing later; a tutor or coach uses [an online booking page](/blog/how-to-book-an-appointment-online) so every session is prepaid; and automated [reminders that actually arrive](/blog/notifications-that-actually-arrive) cut no-shows, so you're not chasing time and money."
-    },
-    {
-      "p": "Chasing invoices [costs freelancers a full working day every month](https://www.plutio.com/freelancer-magazine/late-invoice-payments). Booking-and-paying in one step gives it back. If you've been weighing tools, [here's how Book A Sloth compares to Topmate and Calendly](/blog/topmate-alternative) for exactly this."
-    },
-    {
-      "h2": "Conclusion: chase less, get paid faster"
-    },
-    {
-      "p": "Here's my honest take after watching this play out hundreds of times: politeness isn't what gets you paid — systems are. A warm tone stops you from burning the relationship, but a predictable four-touch timeline and up-front collection are what actually move the money."
-    },
-    {
-      "p": "Three things you can do this week:"
+      "h2": "Chase less, get paid faster"
     },
     {
       "ol": [
-        "Save the four scripts above as templates in your email and WhatsApp so a reminder takes ten seconds, not ten minutes of dread.",
-        "Set a calendar rule: heads-up at minus-3 days, reminders at day 0, day 7, day 14. Make chasing automatic and boring.",
-        "For anything you can, collect at booking. Move even one recurring service to prepaid and you'll feel the difference in a month."
+        "Save the templates above as email and WhatsApp quick replies so a reminder takes ten seconds.",
+        "Set calendar reminders: heads-up at minus 3 days, then day 0, day 7, a call at day 10 and a final email at day 14.",
+        "Put a late-fee or pause-work clause in your next agreement, so the firm step is already agreed.",
+        "Move at least one recurring service to prepaid and see the difference within a month."
       ]
     },
     {
-      "p": "You did the work. Getting paid for it shouldn't be the hardest part of your week."
+      "p": "You did the work. Getting paid for it should not be the hardest part of your week."
     },
     {
       "faq": [
         {
-          "q": "How do I ask for payment without sounding rude?",
-          "a": "Lead with facts, not apologies — invoice number, amount, due date — and assume the client simply forgot. A line like this-may-have-slipped-through keeps it warm while still being direct. Firmness comes from clarity, not tone."
+          "q": "How do I ask a client for payment without sounding rude?",
+          "a": "Lead with facts, not apologies: invoice number, amount and due date. Assume the client simply forgot, and add one way to pay inside the message. Firmness comes from clarity and a regular schedule, not from a harsh tone."
         },
         {
           "q": "How long should I wait before sending a payment reminder?",
-          "a": "Don't wait. Send a friendly heads-up a few days before the due date, a nudge on the day, then follow up at 7 and 14 days late. Most invoices clear inside two weeks when you follow up on a steady schedule."
+          "a": "Do not wait. Send a friendly heads-up a few days before the due date, a nudge on the day, a follow-up at 7 days, a phone call around day 10 and a firm email at day 14. Most late invoices clear within two weeks when you follow up steadily."
         },
         {
-          "q": "Should I charge a late fee?",
-          "a": "Only if it was in your contract or invoice terms from the start. A common rate is 2% per month. Mention it in the two-weeks-late message, not before — it's an escalation tool, not an opener."
+          "q": "What should I say on a phone call asking for payment?",
+          "a": "Ask if it is a good time, state the invoice number, amount and due date, and ask whether anything is holding it up. Then stay quiet and listen. Agree a specific date before you hang up, and confirm that date on WhatsApp or email straight after the call."
+        },
+        {
+          "q": "Can I stop work if a client does not pay?",
+          "a": "You can pause work if your agreement allows it and you give clear written notice. Say what pauses, from which date, and that you will restart once the balance is cleared. Keep delivered work unchanged and the tone calm, so the client can pay without a fight."
+        },
+        {
+          "q": "What is the MSME 45-day payment rule?",
+          "a": "Under the MSMED Act, 2006, business buyers must pay micro and small enterprises within 45 days of accepting the goods or service, according to the Ministry of MSME's Samadhaan portal. Late payment attracts compound interest at three times the RBI bank rate. It applies only to suppliers with valid Udyam registration."
         },
         {
           "q": "Is it okay to ask for payment on WhatsApp in India?",
-          "a": "Yes. For most Indian clients, a short, polite WhatsApp message with the invoice attached gets a faster reply than email. Keep it to two lines and include your UPI ID or a payment link."
-        },
-        {
-          "q": "How can I stop chasing payments altogether?",
-          "a": "Collect payment at the point of booking instead of invoicing after the work. When the client pays as they book the slot, there's no overdue invoice to chase — which is exactly what a tool like Book A Sloth automates for you."
+          "a": "Yes. For most Indian clients, a short, polite WhatsApp message with the invoice attached gets a faster reply than email. Keep it to two lines and include your UPI ID or a payment link, then use email for the firmer, later reminders."
         }
       ]
     }
@@ -5235,187 +12649,6 @@ export const BLOG_POSTS = [
         {
           "q": "Does online booking reduce no-shows?",
           "a": "Yes. Online booking with automated email, SMS, or WhatsApp reminders reduces no-shows significantly — studies show text reminders cut them by up to 38% — because clients get confirmations and nudges before the appointment."
-        }
-      ]
-    }
-  ]
-},
-{
-  "slug": "topmate-alternative",
-  "title": "Topmate & Calendly Alternative in India: Book A Sloth",
-  "date": "Sep 8, 2026",
-  "icons": [
-    "scale",
-    "money",
-    "trophy"
-  ],
-  "author": "Shubham N Datarkar",
-  "readMins": 6,
-  "category": "Comparison",
-  "image": null,
-  "excerpt": "Looking for a Topmate or Calendly alternative in India? Compare fees, payments and features — and see why Book A Sloth is the calm, 0%-commission option.",
-  "body": [
-    {
-      "p": "The best Topmate or Calendly alternative in India is the one that takes payment the way your clients actually pay — UPI — without skimming a commission off every booking. Topmate is built for creators but charges a percentage of what you earn. Calendly is world-class scheduling but wasn't built for India or for collecting money. Book A Sloth sits in the gap: one link that books and collects payment, 0% commission on paid plans, made for how India transacts."
-    },
-    {
-      "p": "I'm the founder of Book A Sloth, so treat this as a comparison from someone with a horse in the race — but a fair one. I'll tell you honestly where the other two are the better pick."
-    },
-    {
-      "h2": "Quick answer: which one is for you?"
-    },
-    {
-      "p": "Pick based on what you sell and where your clients are, not on brand name. Here's the short version before the detail."
-    },
-    {
-      "ul": [
-        "Choose Topmate if you're a creator who wants an all-in-one link-in-bio storefront and you don't mind paying a cut of each sale.",
-        "Choose Calendly if you're on a Western team that lives inside Google/Outlook calendars and rarely collects payment.",
-        "Choose Book A Sloth if you sell your time in India, want UPI plus auto GST invoices, and refuse to hand over a commission on money you earned."
-      ]
-    },
-    {
-      "h2": "Topmate vs Calendly vs Book A Sloth: the comparison table"
-    },
-    {
-      "p": "The clearest way to see the difference is fees, payments, and India-fit side by side. Everything below reflects publicly listed 2026 pricing and features."
-    },
-    {
-      "table": {
-        "head": [
-          "",
-          "Book A Sloth",
-          "Topmate",
-          "Calendly"
-        ],
-        "rows": [
-          [
-            "Commission per booking",
-            "0% on paid plans",
-            "~10% platform fee",
-            "0% (but no native payments)"
-          ],
-          [
-            "Payment collection",
-            "Native UPI + Razorpay",
-            "Yes (creator storefront)",
-            "Stripe / PayPal only"
-          ],
-          [
-            "Auto GST invoices",
-            "Yes",
-            "Partial",
-            "No"
-          ],
-          [
-            "WhatsApp + SMS reminders",
-            "Built in",
-            "Limited",
-            "No (email only)"
-          ],
-          [
-            "Google Calendar & Meet",
-            "Yes",
-            "Yes",
-            "Yes (best-in-class)"
-          ],
-          [
-            "Made for India",
-            "Yes",
-            "Yes",
-            "No"
-          ],
-          [
-            "Best for",
-            "Selling your time in India",
-            "Creators / mentors",
-            "Global sales & teams"
-          ],
-          [
-            "Pricing",
-            "Free + paid plans",
-            "Free + paid",
-            "Free–$16/user/mo"
-          ]
-        ]
-      }
-    },
-    {
-      "h2": "Where Topmate wins — and where it costs you"
-    },
-    {
-      "p": "Topmate is a genuinely good all-in-one for creators, but its business model takes a percentage of everything you make. If you want a single link-in-bio that handles sessions, digital products, and testimonials, Topmate does that well and has a large Indian creator base."
-    },
-    {
-      "p": "The catch is the cut. Independent breakdowns put Topmate's [platform commission at around 10%, rising to an effective 16–18% once payment-gateway and currency costs are added on international payments](https://eximpe.com/blog/payments/topmate-io-the-complete-guide-to-getting-started-earning-money-avoiding-pitfalls). On ₹50,000 of monthly sessions, 10% is ₹5,000 gone — every month, forever, on money you earned."
-    },
-    {
-      "p": "Book A Sloth's wedge here is simple: 0% commission on paid plans. You pay a flat subscription, not a tax on your talent. If you're a high earner, that difference compounds fast."
-    },
-    {
-      "h2": "Where Calendly wins — and where it falls short in India"
-    },
-    {
-      "p": "Calendly is the best pure scheduling tool in the world, but it wasn't designed to collect money or to work in India. If your job is coordinating meetings across Google and Outlook calendars for a Western team, nothing beats its polish. Its plans run from a [free tier up to $16 per user per month on the Teams plan](https://costbench.com/software/scheduling/calendly/)."
-    },
-    {
-      "p": "The problem shows up the moment you want to get paid. Calendly only collects payment through a Stripe or PayPal integration on its paid tiers — so for an Indian consultant, tutor, or coach, that means no native UPI, no auto GST invoice, and no WhatsApp reminders: the three things your clients and your accountant actually expect."
-    },
-    {
-      "p": "Book A Sloth is the opposite trade-off: slightly less scheduling flash, but it books and collects payment in one Indian-native flow."
-    },
-    {
-      "h2": "The real difference: calm vs clutter"
-    },
-    {
-      "p": "Beyond fees, the deeper split is philosophy — Book A Sloth is built to keep you out of admin, not to turn you into a storefront manager. Topmate leans into the creator-hustle aesthetic: dashboards, upsells, product tiles. Calendly leans corporate. Book A Sloth deliberately does less on the surface so you do less work."
-    },
-    {
-      "p": "The belief behind it: your craft is the valuable part. You shouldn't spend your day chasing payments or running a front desk. You share one link, the client picks a slot and pays, and the invoice, reminders, and calendar invite happen on their own. The craft is yours; the machinery is ours."
-    },
-    {
-      "p": "That's why the setup is deliberately boring in the best way — [you can put up a booking page in about five minutes](/blog/how-to-book-an-appointment-online), and because payment happens at booking, you [never write the awkward please-pay-me email](/blog/how-to-ask-client-for-payment-politely) again."
-    },
-    {
-      "h2": "Conclusion: my honest recommendation"
-    },
-    {
-      "p": "Here's where I'll put my bias aside. If you're a global creator selling digital products to a US audience, Topmate's storefront is a reasonable home. If you're a scheduler for a Western enterprise team, stay on Calendly — it's superb at that one job."
-    },
-    {
-      "p": "But if you sell your time in India — a consultant, a CA, a therapist, a coach, a tutor — the math and the mechanics both point one way. Three things worth doing this week:"
-    },
-    {
-      "ol": [
-        "Add up your commission. Take last month's session revenue and multiply by 10%. That number is what an all-in-one is quietly costing you every month.",
-        "Check your payment reality. If your clients pay by UPI, a tool that can't accept UPI natively is friction you're absorbing.",
-        "Try the calm version. [Set up a Book A Sloth page](/), share the link, and see how it feels to have booking, payment, GST, and [reminders that actually arrive](/blog/notifications-that-actually-arrive) handled for you."
-      ]
-    },
-    {
-      "p": "Same idea as the others. Less clutter. Made for India."
-    },
-    {
-      "faq": [
-        {
-          "q": "Is there a free Topmate alternative in India?",
-          "a": "Yes. Book A Sloth offers a free plan to start, and unlike Topmate it charges 0% commission on its paid plans — so you keep the full value of each booking rather than losing about 10% per sale."
-        },
-        {
-          "q": "Does Calendly work well in India?",
-          "a": "Calendly works for scheduling anywhere, but it wasn't built for India. It has no native UPI collection, no automatic GST invoices, and no WhatsApp reminders — so most Indian professionals need a payment workaround on top of it."
-        },
-        {
-          "q": "What's the difference between Topmate and Book A Sloth?",
-          "a": "Topmate is an all-in-one creator storefront that takes roughly a 10% cut of your earnings. Book A Sloth focuses on selling your time — one link that books and collects payment via UPI and Razorpay — with 0% commission on paid plans."
-        },
-        {
-          "q": "Can I collect payment by UPI when someone books?",
-          "a": "Yes — with Book A Sloth, UPI and Razorpay are built in, so clients pay the moment they book and you get an auto GST invoice. Calendly and most Western tools can't do this natively."
-        },
-        {
-          "q": "Which platform is cheapest overall?",
-          "a": "It depends on volume. A percentage-based tool like Topmate feels cheap at low earnings but gets expensive as you grow. A flat-fee, 0%-commission model like Book A Sloth's is usually cheaper once you're doing meaningful monthly revenue."
         }
       ]
     }
