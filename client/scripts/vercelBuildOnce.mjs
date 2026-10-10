@@ -27,7 +27,12 @@ import { fileURLToPath } from 'url';
 
 const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 const STAMP = join(DIST, '.vercel-build-stamp');
-const sha = process.env.VERCEL_GIT_COMMIT_SHA || '';
+// Prod deploys come from `vercel deploy` in GitHub Actions (CLI), where the git
+// SHA may not be exposed — without a key the guard never engages and the full
+// prerender runs twice against the 45-min build limit. The deployment id is
+// unique per deploy, so it is an equally safe key. GITHUB_SHA covers a
+// `vercel build` run inside GitHub Actions (prebuilt deploys).
+const sha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || process.env.GITHUB_SHA || '';
 
 if (sha) {
   let prev = '';
