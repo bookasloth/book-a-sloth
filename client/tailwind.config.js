@@ -27,8 +27,8 @@ export default {
         "c-pink": "#db2777",
       },
       fontFamily: {
-        sans: ["Poppins", "system-ui", "sans-serif"],
-        heading: ["Plus Jakarta Sans", "Poppins", "system-ui", "sans-serif"],
+        sans: ["Poppins", "Poppins Fallback", "system-ui", "sans-serif"],
+        heading: ["Plus Jakarta Sans", "Plus Jakarta Sans Fallback", "Poppins", "system-ui", "sans-serif"],
       },
       // Global radius rule: 4px max; 6px only for a wrapper that contains a 4px child.
       // `full` kept for pills/avatars. Overrides Tailwind's default rounded-* scale app-wide.
