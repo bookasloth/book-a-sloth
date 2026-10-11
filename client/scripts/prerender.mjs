@@ -406,9 +406,19 @@ async function prerender() {
   // strand the full CSS at media="print" (CSP is report-only + unsafe-inline today).
   const { default: Beasties } = await import('beasties');
   const beasties = new Beasties({ path: DIST, publicPath: '/', preload: 'media', inlineFonts: true, logLevel: 'warn' });
-  const inlineCritical = async (html) => {
-    try { return await beasties.process(html); }
-    catch (e) { console.warn(`[prerender] critical CSS skipped: ${e.message}`); return html; }
+  // SERIALIZED on purpose: beasties is not safe for concurrent process() calls —
+  // with the pool rendering 4 pages at once, pages got ANOTHER page's critical CSS
+  // (prod homepage shipped /pricing's: no hero rules → unstyled first paint).
+  // Separate instances don't help (shared state). ~250 ms/page, overlaps with
+  // the other workers' browser time.
+  let beastiesQueue = Promise.resolve();
+  const inlineCritical = (html) => {
+    const run = beastiesQueue.then(() => beasties.process(html)).catch((e) => {
+      console.warn(`[prerender] critical CSS skipped: ${e.message}`);
+      return html;
+    });
+    beastiesQueue = run;
+    return run;
   };
 
   const server = createStaticServer();
