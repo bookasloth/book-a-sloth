@@ -10,7 +10,12 @@ const HEAD_TX = '#F5F5F7';
 const BY_SLUG = new Map(BLOG_POSTS.map((p) => [p.slug, p]));
 
 export default function RelatedPosts({ slug }) {
-  const posts = selectRelated(slug).map((s) => BY_SLUG.get(s)).filter(Boolean);
+  // Skip scheduled posts (future `date`): the API hides them until they go live,
+  // so linking them early sends readers to a 404. The orphan test still counts
+  // them as linked; they appear here from the first build after their date.
+  const now = Date.now();
+  const posts = selectRelated(slug).map((s) => BY_SLUG.get(s))
+    .filter((p) => p && !(new Date(p.date).getTime() > now));
   if (posts.length === 0) return null;
 
   return (
