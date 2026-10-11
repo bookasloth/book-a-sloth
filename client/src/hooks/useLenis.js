@@ -8,9 +8,14 @@ import Lenis from "lenis";
  */
 export default function useLenis() {
   useEffect(() => {
+    // Touch-primary devices skip it too: Lenis leaves touch scrolling native
+    // (syncTouch is off), so on phones it smoothed nothing while its per-frame
+    // rAF loop kept the main thread busy — measured as the top bootup cost on
+    // mobile Lighthouse.
     if (
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        window.matchMedia("(hover: none) and (pointer: coarse)").matches)
     ) {
       return undefined;
     }
