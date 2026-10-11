@@ -476,6 +476,10 @@ async function prerender() {
       // for 500ms (polling / retry loops) with nothing actually hanging.
       const inFlight = new Map();
       const seen = new Map();
+      // API path → JSON body served to THIS page; baked into the HTML as
+      // #__bas_data so the page's first client render has its data (see
+      // src/services/prerenderData.js). Live-only data (slots/availability) skipped.
+      const served = {};
       page.on('requestfinished', (req) => {
         // Any single request this slow is a third party stalling the build — name it.
         const ms = Date.now() - (inFlight.get(req) || Date.now());
@@ -506,6 +510,10 @@ async function prerender() {
         if (API_BASE && url.startsWith(API_BASE) && req.method() === 'GET') {
           try {
             const r = await fetchApi(url);
+            const path = url.slice(API_BASE.length);
+            if (r.status === 200 && r.contentType.includes('json') && !/slot|availab/i.test(path)) {
+              try { served[path] = JSON.parse(r.body.toString('utf-8')); } catch { /* not JSON after all */ }
+            }
             return req.respond({
               status: r.status,
               headers: { 'content-type': r.contentType, 'access-control-allow-origin': '*' },
@@ -548,15 +556,23 @@ async function prerender() {
 
       // Strip runtime-injected external scripts (PostHog, analytics, etc.)
       // that got captured during render — they'll reload on hydration anyway.
-      await page.evaluate(() => {
+      // `<` escaped so a "</script>" inside any string can't close the tag early.
+      const seed = JSON.stringify(served).replace(/</g, '\\u003c');
+      if (seed.length > 300_000) console.warn(`[prerender] ${route}: __bas_data is ${Math.round(seed.length / 1024)} KB`);
+      await page.evaluate((seedJson) => {
         document.querySelectorAll('script[src*="posthog"], script[src*="clarity"], script[src*="google"]').forEach(el => el.remove());
+        const s = document.createElement('script');
+        s.type = 'application/json';
+        s.id = '__bas_data';
+        s.textContent = seedJson;
+        document.head.appendChild(s);
         // fontLoader.js injects the preloader greeting subsets as media="print"
         // (non-blocking) and flips them to media="all" once loaded. By snapshot
         // time they are "all", so serializing baked ~12 render-blocking Google
         // Fonts stylesheets into every static page (~1.2s of blocked render).
         // They re-inject on hydration, so dropping them here is lossless.
         document.querySelectorAll('link[data-preloader-font]').forEach(el => el.remove());
-      });
+      }, seed);
 
       const html = await page.content();
 

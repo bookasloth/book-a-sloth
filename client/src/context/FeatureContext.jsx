@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { prerendered } from '../services/prerenderData';
 import { getFeatureFlags } from '../services/api';
 import { useAuth } from './AuthContext';
 import { resolveFeature } from '../utils/featureBypass';
@@ -15,8 +16,11 @@ import { resolveFeature } from '../utils/featureBypass';
 const FeatureContext = createContext({ flags: {}, ready: false, isOn: () => true });
 
 export const FeatureProvider = ({ children }) => {
-  const [flags, setFlags] = useState({});
-  const [ready, setReady] = useState(false);
+  // Prerendered pages bake the build-time flags: start from them so the first
+  // render already has them (no flag-gated UI popping in); the fetch refreshes.
+  const baked = prerendered('/feature-flags');
+  const [flags, setFlags] = useState(() => (baked && typeof baked === 'object' ? baked : {}));
+  const [ready, setReady] = useState(!!baked);
 
   useEffect(() => {
     let alive = true;
