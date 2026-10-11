@@ -95,7 +95,7 @@ export default function Compare() {
               <Link
                 to={href}
                 className="block rounded-[6px] border border-black/5 bg-white p-4 text-sm font-semibold text-[#1E1E1E]
-                           shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition hover:-translate-y-0.5 hover:no-underline"
+                           shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-colors hover:border-primary/30 hover:no-underline"
               >
                 {title}
               </Link>
