@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAppearance } from "../services/api";
+import { prerendered } from "../services/prerenderData";
 
 /**
  * useAppearance — active navbar logo config (mode + image URLs).
@@ -32,7 +33,12 @@ const readCache = () => {
 };
 
 export default function useAppearance() {
-  const [appearance, setAppearance] = useState(readCache);
+  // A prerendered page bakes the build-time /appearance; start from it so the
+  // navbar logo is right on the first frame, then revalidate as before.
+  const [appearance, setAppearance] = useState(() => {
+    const baked = prerendered("/appearance");
+    return baked ? { ...DEFAULTS, ...baked } : readCache();
+  });
 
   useEffect(() => {
     let alive = true;
