@@ -38,9 +38,12 @@ const loadEntries = async () => {
   const [hosts, services, professions, blogs] = await Promise.all([
     fetchHosts(), fetchServices(), fetchProfessions(), fetchBlogs(),
   ]);
+  const listedHosts = new Set(services.map((s) => s.profiles && s.profiles.username).filter(Boolean));
   const value = {
     pages: staticEntries(site),
-    hosts: hostEntries(hosts, site),
+    // Only hosts with >=1 listed service: a profile with nothing bookable is
+    // noindexed (prerender + client), so it must not be in the sitemap either.
+    hosts: hostEntries(hosts.filter((h) => listedHosts.has(h.username)), site),
     services: serviceEntries(services, site),
     professions: professionEntries(professions, site),
     blog: blogEntries(blogs, site),

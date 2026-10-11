@@ -4,8 +4,8 @@
 
 Key facts:
 
-- **Plans:** Starter (free, 5% per booking), Host+ ₹229/mo (₹1,499/yr), Studio ₹555/mo (₹3,650/yr). Prices in INR, excl. GST.
-- **0% commission on paid plans** — Host+ and Studio hosts keep 100% of what they earn.
+- **Plans:** Sloth (free forever, 5% commission per paid booking) and Sloth Active (₹399/month or ₹3,599/year, 0% commission). Prices in INR, GST included. A payment gateway fee of about 2.4% applies (Razorpay's, not Book A Sloth's).
+- **0% commission on Sloth Active** — hosts keep what they earn, minus the gateway fee.
 - **India-native:** INR pricing, GST invoicing and UPI built in.
 - **Runs the whole booking:** payments up-front, email + WhatsApp reminders, two-way Google Calendar sync, and auto-generated video-call links.
 - **Personal page:** every host gets `bookasloth.com/their-username` — a mini-site that books, bills and brands them.
@@ -22,6 +22,19 @@ Key facts:
 - [About](https://bookasloth.com/about): The company, mission and the "calm economy" positioning.
 - [Blog](https://bookasloth.com/blog): Product updates and guides.
 - [Help](https://bookasloth.com/help): Common questions for hosts and guests, with a full article index at [/help/docs](https://bookasloth.com/help/docs).
+- [Templates](https://bookasloth.com/templates): Free WhatsApp, SMS and email templates for service businesses (confirmations, reminders, payment follow-ups, cancellation policies), including Hindi.
+- [Glossary](https://bookasloth.com/glossary): Plain-English definitions of booking and scheduling terms (buffer time, no-show, advance payment, UPI, GST invoice and more).
+- [Tools](https://bookasloth.com/tools): Free calculators — no-show cost, GST on services, earnings by plan.
+
+## Guides for Indian professionals
+
+- [How to collect payments from clients in India](https://bookasloth.com/blog/collect-payments-from-clients-india)
+- [How much to charge for a consultation in India](https://bookasloth.com/blog/consultation-fees-india)
+- [How to start an online consultation practice in India](https://bookasloth.com/blog/start-online-consultation-practice-india)
+- [How to reduce no-shows](https://bookasloth.com/blog/how-to-reduce-no-shows)
+- [Calendly pricing in India (₹, GST)](https://bookasloth.com/blog/calendly-pricing-india)
+- [Topmate commission and fees explained](https://bookasloth.com/blog/topmate-commission)
+- [Best appointment booking apps in India](https://bookasloth.com/blog/best-appointment-booking-apps-india)
 
 ## Features
 
@@ -49,7 +62,7 @@ Key facts:
 
 **Healthcare & wellness**
 
-- [Doctors & clinics](https://bookasloth.com/for/doctors) · [Doctors in India](https://bookasloth.com/for/doctors-india)
+- [Doctors & clinics](https://bookasloth.com/for/doctors)
 - [Dentists](https://bookasloth.com/for/dentists)
 - [Dermatologists](https://bookasloth.com/for/dermatologists)
 - [ENT specialists](https://bookasloth.com/for/ent-specialists)
@@ -59,9 +72,11 @@ Key facts:
 - [Physiotherapists](https://bookasloth.com/for/physiotherapists)
 - [Veterinarians](https://bookasloth.com/for/veterinarians)
 - [Nutritionists](https://bookasloth.com/for/nutritionists)
+- [Therapists & psychologists](https://bookasloth.com/for/therapists)
 - [Fitness trainers & studios](https://bookasloth.com/for/fitness)
 - [Salons](https://bookasloth.com/for/salon) · [Spas](https://bookasloth.com/for/spa)
 - [Life coaches](https://bookasloth.com/for/life-coaches)
+- [Yoga instructors](https://bookasloth.com/for/yoga-instructors)
 - [Astrologers](https://bookasloth.com/for/astrologers)
 
 **Legal, finance & advisory**

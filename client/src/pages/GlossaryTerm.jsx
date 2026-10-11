@@ -8,6 +8,7 @@ import { glossaryBySlug, GLOSSARY } from "../data/glossaryData";
  * /glossary/:slug — a single glossary term. Answer-first definition (first
  * sentence stands alone for AEO), related terms, and a CTA. DefinedTerm +
  * WebPage + BreadcrumbList JSON-LD via glossaryTermJsonLd. Unknown slug → /glossary.
+ * Optional `details` (paragraphs) and `example` render below the definition.
  */
 
 const titleFor = (term) => {
@@ -45,6 +46,20 @@ const GlossaryTerm = () => {
 
         <h1 className="font-heading text-3xl font-extrabold leading-tight sm:text-4xl">{entry.term}</h1>
         <p id="definition" className="mt-4 text-lg leading-relaxed text-neutral-700">{entry.def}</p>
+
+        {entry.details?.length > 0 && (
+          <section className="mt-8 space-y-4 leading-relaxed text-neutral-700">
+            <h2 className="font-heading text-xl font-bold text-ink">{`Why ${entry.term.toLowerCase()} matters`}</h2>
+            {entry.details.map((para, i) => <p key={i}>{para}</p>)}
+          </section>
+        )}
+
+        {entry.example && (
+          <div className="mt-8 rounded-[6px] border border-black/5 bg-white p-5 shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
+            <h2 className="font-heading text-sm font-bold uppercase tracking-wide text-neutral-500">Example</h2>
+            <p className="mt-2 leading-relaxed text-neutral-700">{entry.example}</p>
+          </div>
+        )}
 
         {related.length > 0 && (
           <section className="mt-10">

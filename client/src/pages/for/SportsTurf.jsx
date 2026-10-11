@@ -349,8 +349,8 @@ export default function SportsTurf() {
 
   const canonical = `${SITE_URL}/for/sports-turf`;
   const seo = {
-    title: 'Booking Software for Sports Turf & Arenas | Book A Sloth',
-    description: 'Book A Sloth is booking software for sports turf and arena owners in India — box cricket, football turf, badminton and pickleball courts. Let players book open slots and pay upfront, with WhatsApp reminders, GST invoices and 0% commission. Start free.',
+    title: 'Turf Booking Software for Indian Turfs | Book A Sloth',
+    description: 'Turf booking software for box cricket, football, badminton and pickleball turfs in India. Players book slots and pay upfront by UPI, with WhatsApp reminders.',
     keywords: 'turf booking software, sports arena booking software, box cricket slot booking, football turf booking online india, badminton court booking system, book turf online, sports venue scheduling india',
     ogTitle: 'Your ground runs on slots. Let Book A Sloth fill them.',
     ogDescription: 'Players book open slots, pay upfront over UPI, and get WhatsApp reminders — automatically. The booking page every turf and sports arena in India should have.',

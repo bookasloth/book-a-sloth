@@ -29,8 +29,21 @@ const COMPETITORS = [
     blurb: 'Sell 1:1s, webinars and bundles like Topmate — with 0% commission on what you earn.' },
 ];
 
+// Fee and pricing explainers (blog posts) — the questions people ask while
+// comparing, answered in ₹. Listed separately from the head-to-head pages.
+const GUIDES = [
+  { title: 'Best appointment booking apps in India', href: '/blog/best-appointment-booking-apps-india' },
+  { title: 'Calendly pricing in India (₹, GST, free plan)', href: '/blog/calendly-pricing-india' },
+  { title: 'Can you take UPI payments on Calendly?', href: '/blog/calendly-upi-payments' },
+  { title: 'Topmate commission and fees explained', href: '/blog/topmate-commission' },
+  { title: 'What you keep on each plan: earnings calculator', href: '/earnings-calculator' },
+];
+
 export default function Compare() {
-  const items = COMPETITORS.map((c) => ({ name: `Book A Sloth vs ${c.name}`, url: c.href }));
+  const items = [
+    ...COMPETITORS.map((c) => ({ name: `Book A Sloth vs ${c.name}`, url: c.href })),
+    ...GUIDES.map((g) => ({ name: g.title, url: g.href })),
+  ];
 
   return (
     <div className="app-container py-12">
@@ -72,6 +85,23 @@ export default function Compare() {
             </Link>
           ))}
         </div>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="font-heading text-xl font-bold text-[#1E1E1E]">Pricing and fees, in rupees</h2>
+        <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {GUIDES.map(({ title, href }) => (
+            <li key={href}>
+              <Link
+                to={href}
+                className="block rounded-[6px] border border-black/5 bg-white p-4 text-sm font-semibold text-[#1E1E1E]
+                           shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-colors hover:border-primary/30 hover:no-underline"
+              >
+                {title}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* Cross-links so this hub isn't a dead end. */}

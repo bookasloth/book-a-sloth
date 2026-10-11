@@ -12,7 +12,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Scale, Calculator, Stethoscope, BarChart3, Flower2, Laptop, Dumbbell, GraduationCap,
   Camera, CalendarDays, Building2, UserCheck, Zap, ShieldCheck, Heart, Moon, Smile,
-  Search, ArrowRight, PlayCircle, Compass,
+  Search, ArrowRight, PlayCircle, Compass, Brain, PersonStanding,
 } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import Reveal from '../components/home/Reveal';
@@ -40,6 +40,8 @@ const CATEGORIES = [
   { icon: CalendarDays,  label: 'Event Organisers',           sub: 'Planners & Coordinators',               to: '/for/events' },
   { icon: Building2,     label: 'Agencies & Studios',         sub: 'Creative & Professional Teams',         to: '/for/agencies' },
   { icon: Moon,          label: 'Astrologers & Consultants',  sub: 'Vedic, Tarot & Numerology',             to: '/for/astrologers' },
+  { icon: Brain,         label: 'Therapists & Psychologists', sub: 'Counselling & Mental Health',           to: '/for/therapists' },
+  { icon: PersonStanding, label: 'Yoga Instructors',          sub: 'Batches, Classes & Studios',            to: '/for/yoga-instructors' },
 ];
 
 const CHIPS = ['Career advice', 'Business growth', 'Fitness guidance', 'Creative support'];
@@ -212,7 +214,7 @@ export default function Solutions() {
             <Link to="/services" className="font-semibold text-ink underline underline-offset-2 hover:text-primary">
               services by profession
             </Link>, or find a{' '}
-            <Link to="/for/doctors-india" className="font-semibold text-ink underline underline-offset-2 hover:text-primary">
+            <Link to="/for/doctors" className="font-semibold text-ink underline underline-offset-2 hover:text-primary">
               doctor in India
             </Link>, or see our{' '}
             <Link to="/appointment-booking-software" className="font-semibold text-ink underline underline-offset-2 hover:text-primary">
