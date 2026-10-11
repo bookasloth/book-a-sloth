@@ -8,7 +8,7 @@
 // copy is replaced within a request. (hydrateRoot was tried and dropped: a
 // browser snapshot has no SSR Suspense markers, so lazy routes never hydrate.)
 //
-// Never seed availability/slots — those must be live (the prerender skips them).
+// Never seed availability/slots — those must be live (prerender.mjs LIVE_ONLY_API).
 let data;
 
 function all() {
