@@ -49,3 +49,25 @@
   font-display: swap;
   src: url('/fonts/poppins-latin-700.woff2') format('woff2');
 }
+
+/* Metric-matched fallbacks. With critical CSS inlined, the prerendered page paints
+ * BEFORE the webfonts land, so the swap re-flowed text (CLS ~0.11 on mobile
+ * Lighthouse). These local faces are scaled to Poppins / Plus Jakarta Sans metrics
+ * (size-adjust from avg lowercase advance vs Arial; overrides from hhea), so the
+ * swap is near-invisible. Recompute if the webfont files change. */
+@font-face {
+  font-family: 'Poppins Fallback';
+  src: local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo'), local('Roboto');
+  size-adjust: 114.11%;
+  ascent-override: 92.02%;
+  descent-override: 30.67%;
+  line-gap-override: 8.76%;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans Fallback';
+  src: local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo'), local('Roboto');
+  size-adjust: 106.05%;
+  ascent-override: 97.88%;
+  descent-override: 20.93%;
+  line-gap-override: 0%;
+}

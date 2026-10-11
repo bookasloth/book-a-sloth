@@ -21,6 +21,7 @@ import RibbonCut from './RibbonCut';
 import ConfettiStorm from './ConfettiStorm';
 import { getOpeningStatus, startVerify, confirmVerify } from '../../services/opening';
 import PetalSpinner from '../common/PetalSpinner';
+import '../../styles/opening.css';
 
 const REDUCED = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const pad = (n) => String(n).padStart(2, '0');

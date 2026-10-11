@@ -9,11 +9,15 @@
  * Mounted once at the app root; it self-gates to the homepage. Server /status is the
  * source of truth for the window; the result is cached in sessionStorage.
  */
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import OpeningCeremony from './OpeningCeremony';
 import { getOpeningStatus } from '../../services/opening';
-import '../../styles/opening.css';
+
+// Lazy so the ceremony JS + opening.css only download when the takeover actually
+// shows. Imported statically, Vite emitted opening.css as a <link> on every page and
+// the prerender snapshot baked it in as a render-blocking stylesheet (~450ms on
+// mobile Lighthouse) — even outside the launch window, when this renders null.
+const OpeningCeremony = lazy(() => import('./OpeningCeremony'));
 
 const SHOWS_KEY = 'opening_shows_v1';   // count of times shown-and-dismissed on this device
 const MAX_SHOWS = 1;                    // first-time visitors only: show once, then never again
@@ -63,7 +67,9 @@ export default function OpeningTakeover() {
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto bg-ink" role="dialog" aria-modal="true" aria-label="The Opening">
-      <OpeningCeremony status={status} embedded onExit={exit} />
+      <Suspense fallback={null}>
+        <OpeningCeremony status={status} embedded onExit={exit} />
+      </Suspense>
     </div>
   );
 }

@@ -10,7 +10,8 @@
 //
 // Consent model:
 //   - PostHog + Meta Pixel (needsConsent:false) are always-on; their SDKs are
-//     dynamically imported and initialised on first idle (see AnalyticsBridge) so
+//     dynamically imported and initialised on first interaction / 4s after load
+//     (see AnalyticsBridge) so
 //     they stay out of the initial bundle and off the first-paint critical path.
 //     The Pixel fires pre-consent by deliberate business decision (fills
 //     retargeting audiences from all prod visitors — see adapters/pixel.js).
