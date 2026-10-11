@@ -11,6 +11,7 @@ import { SITE_URL, resolveBlogSeo, articleGraphJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 import RelatedPosts from '../components/blog/RelatedPosts';
 import PetalSpinner from '../components/common/PetalSpinner';
+import { prerendered } from '../services/prerenderData';
 
 // /blog/:slug — immersive post page. A split hero (left = category colour +
 // text, right = image, hidden on mobile) over a dark reading body, finished
@@ -280,12 +281,17 @@ const SidebarCta = ({ theme }) => {
 
 const BlogPost = () => {
   const { slug } = useParams();
-  const [post, setPost] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading | ready | notfound | error
+  // Build-time copy of this post baked into the prerendered HTML → render it on
+  // the first frame (no spinner → no footer jump); the fetch below refreshes it.
+  const seed = prerendered(`/blogs/${slug}`)?.post;
+  const [post, setPost] = useState(seed || null);
+  const [status, setStatus] = useState(seed ? 'ready' : 'loading'); // loading | ready | notfound | error
 
   useEffect(() => {
     let alive = true;
-    setStatus('loading');
+    // Seeded slug (incl. navigating back to it) → show the baked copy at once.
+    const baked = prerendered(`/blogs/${slug}`)?.post;
+    if (baked) { setPost(baked); setStatus('ready'); } else setStatus('loading');
     window.scrollTo(0, 0);
 
     // A real 404 means the post is gone → the noindex ErrorPage is correct. Any
@@ -301,7 +307,7 @@ const BlogPost = () => {
           if (!alive) return;
           if (isNotFoundError(err)) { setStatus('notfound'); return; }
           if (attempt < 2) { setTimeout(() => { if (alive) load(attempt + 1); }, 800 * (attempt + 1)); return; }
-          setStatus('error');
+          setStatus(baked ? 'ready' : 'error'); // baked copy stays on a transient failure
         });
     };
     load();

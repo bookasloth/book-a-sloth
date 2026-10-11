@@ -13,6 +13,7 @@ import { isNotFoundError } from "../utils/fetchError";
 import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from "../utils/seo";
 import { profileFaqs } from "../utils/profileFaqs";
 import FaqAccordion from "../components/FaqAccordion";
+import { prerendered } from "../services/prerenderData";
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -316,6 +317,13 @@ const ProductCard = ({ product: p, profileSlug }) => {
   );
 };
 
+// Prerender-baked /host/:slug payload, or null when it can't be shown as-is.
+function bakedProfile(slug) {
+  const d = prerendered(`/host/${slug}`);
+  if (!d?.host || d.redirect || d.host.username === DEMO_USERNAME) return null;
+  return { host: d.host, services: d.services || [] };
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 const HostProfile = () => {
   const { profileSlug } = useParams();
@@ -326,9 +334,13 @@ const HostProfile = () => {
   // fetch effect skips these slugs so no 404 lookup fires.
   const isVanity = isVanitySlug(profileSlug);
   const pageRef         = useRef(null);
-  const [host,        setHost]        = useState(null);
-  const [services,    setServices]    = useState([]);
-  const [loading,     setLoading]     = useState(true);
+  // Build-time copy baked into the prerendered HTML → real profile on the first
+  // frame; the fetch effect below refreshes it. Redirect/demo payloads aren't
+  // seeded (they need the effect's navigate / persona handling).
+  const seed = isVanity ? null : bakedProfile(profileSlug);
+  const [host,        setHost]        = useState(seed?.host ?? null);
+  const [services,    setServices]    = useState(seed?.services ?? []);
+  const [loading,     setLoading]     = useState(!seed);
   const [error,       setError]       = useState('');
   // Demo persona switch (public /demo account only). Base host+services are kept
   // so switching is a pure view override — never persisted. See data/demoPersonas.
@@ -338,10 +350,10 @@ const HostProfile = () => {
   // Not-found (and other error) state gets the stripped minimal footer, header kept.
   useMinimalFooter(!!error);
   const [viewMode,    setViewMode]    = useState('grid');
-  const [reviewData,  setReviewData]  = useState({ reviews: [], count: 0, avg: 0 });
+  const [reviewData,  setReviewData]  = useState(() => (seed && prerendered(`/reviews/${profileSlug}`)) || { reviews: [], count: 0, avg: 0 });
   const [showReviews, setShowReviews] = useState(false);
-  const [products,    setProducts]    = useState([]);
-  const [badgeList,   setBadgeList]   = useState([]); // real awards from vendor_badges
+  const [products,    setProducts]    = useState(() => (seed && prerendered(`/products/host/${profileSlug}`)) || []);
+  const [badgeList,   setBadgeList]   = useState(() => (seed && prerendered(`/vendors/${profileSlug}/badges`)?.badges) || []); // real awards from vendor_badges
   const [badgeInfo,   setBadgeInfo]   = useState(null); // clicked badge → bottom-right info popup
   const [cardExpanded, setCardExpanded] = useState(false); // mobile-only collapse
   const [isMobile, setIsMobile] = useState(
@@ -356,7 +368,9 @@ const HostProfile = () => {
     if (isVanity) return; // vanity slug → redirected in render; skip the 404 lookup
     let alive = true;
     setError('');
-    setLoading(true);
+    // Seeded slug (incl. navigating back to it) → show the baked copy at once.
+    const baked = bakedProfile(profileSlug);
+    if (baked) { setHost(baked.host); setServices(baked.services); setLoading(false); } else setLoading(true);
     // Only a real 404 means the host is gone → the noindex ErrorPage is correct.
     // Any OTHER failure (network/timeout, 5xx, or a 429/403 from an edge
     // rate-limit or IP guard) is transient: retry with a short backoff, then fall
@@ -399,7 +413,8 @@ const HostProfile = () => {
         if (!alive) return;
         if (isNotFoundError(err)) { setError('notfound'); setLoading(false); return; }
         if (attempt < 2) { setTimeout(() => { if (alive) load(attempt + 1); }, 800 * (attempt + 1)); return; }
-        setError('transient'); setLoading(false);
+        if (!baked) setError('transient'); // baked copy stays on a transient failure
+        setLoading(false);
       }
     };
     load();

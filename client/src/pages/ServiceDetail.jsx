@@ -15,6 +15,7 @@ import { useMinimalFooter } from '../context/ChromeContext';
 import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from '../utils/seo';
 import { serviceFaqs } from '../utils/serviceFaqs';
 import PetalSpinner from '../components/common/PetalSpinner';
+import { prerendered } from '../services/prerenderData';
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -798,8 +799,11 @@ const TABS = ['Overview', 'Deliverables', 'Host', 'FAQ', 'How it Works', 'Review
 export default function ServiceDetail() {
   const { profileSlug, serviceSlug } = useParams();
   const navigate  = useNavigate();
-  const [data, setData]     = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Build-time copy baked into the prerendered HTML → real content on the first
+  // frame; the fetch below refreshes it (slots are never baked — always live).
+  const seedPath = `/services/public/${profileSlug}/${serviceSlug}`;
+  const [data, setData]     = useState(() => prerendered(seedPath) || null);
+  const [loading, setLoading] = useState(() => !prerendered(seedPath));
   const [error, setError]   = useState('');
   // Not-found state gets the stripped minimal footer, header kept.
   useMinimalFooter(!loading && (!!error || !data));
@@ -837,7 +841,12 @@ export default function ServiceDetail() {
   useEffect(() => {
     let alive = true;
     setError('');
-    setLoading(true);
+    const applyTheme = (v) => applyProfileTheme(
+      document.documentElement,
+      isValidHex(v?.theme_color) ? v.theme_color : DEFAULT_THEME_COLOR,
+    );
+    const baked = prerendered(`/services/public/${profileSlug}/${serviceSlug}`);
+    if (baked) { setData(baked); setLoading(false); applyTheme(baked.vendor); } else setLoading(true);
     // Only a real 404 means the service is gone → the noindex ErrorPage is correct.
     // Any OTHER failure (network/timeout, 5xx, or a 429/403 from an edge rate-limit
     // or IP guard) is transient: retry with a short backoff, then fall to the
@@ -862,7 +871,8 @@ export default function ServiceDetail() {
           if (!alive) return;
           if (isNotFoundError(err)) { setError('notfound'); setLoading(false); return; }
           if (attempt < 2) { setTimeout(() => { if (alive) load(attempt + 1); }, 800 * (attempt + 1)); return; }
-          setError('transient'); setLoading(false);
+          if (!baked) setError('transient'); // baked copy stays on a transient failure
+          setLoading(false);
         });
     };
     load();
