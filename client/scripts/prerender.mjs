@@ -436,6 +436,9 @@ async function prerender() {
   // categories / stats over and over (~800 fetches a run, the load that used to
   // rate-ban the build IP); the data can't meaningfully change inside one build.
   // Only successes are kept, so a failed call is refetched by the next page.
+  // Never baked into #__bas_data: slot/availability answers must be live. Matched
+  // by endpoint, not substring — /slot/ also hits every "book-a-SLOTH" slug.
+  const LIVE_ONLY_API = /^\/bookings\/|\/availability(\/|\?|$)/;
   const apiCache = new Map(); // url → Promise<{ status, contentType, body }>
   const fetchApi = (url) => {
     if (!apiCache.has(url)) {
@@ -511,7 +514,7 @@ async function prerender() {
           try {
             const r = await fetchApi(url);
             const path = url.slice(API_BASE.length);
-            if (r.status === 200 && r.contentType.includes('json') && !/slot|availab/i.test(path)) {
+            if (r.status === 200 && r.contentType.includes('json') && !LIVE_ONLY_API.test(path)) {
               try { served[path] = JSON.parse(r.body.toString('utf-8')); } catch { /* not JSON after all */ }
             }
             return req.respond({
