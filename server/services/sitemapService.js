@@ -64,6 +64,8 @@ const GLOSSARY_SLUGS = [
   'reminder', 'whatsapp-reminder', 'upi', 'gst-invoice', 'payment-gateway',
   'payout', 'commission', 'platform-fee', 'google-calendar-sync', 'round-robin',
   'intake-form', 'digital-product', 'meeting-link',
+  'placeholder-meeting', 'recurring-meeting', 'soft-booking', 'direct-booking', 'preferred-time',
+  'availability-24-7',
 ];
 
 // Open roles (/careers/:jobSlug). KEEP IN SYNC with
@@ -102,6 +104,7 @@ const STATIC_ROUTES = [
   { path: '/host-fees',                changefreq: 'yearly',  priority: '0.3' },
   { path: '/earnings-calculator',      changefreq: 'monthly', priority: '0.6' },
   { path: '/tools',                    changefreq: 'monthly', priority: '0.5' },
+  { path: '/templates',                changefreq: 'weekly',  priority: '0.6' },
   { path: '/tools/no-show-cost-calculator', changefreq: 'monthly', priority: '0.6' },
   { path: '/tools/gst-calculator',     changefreq: 'monthly', priority: '0.6' },
   { path: '/glossary',                 changefreq: 'monthly', priority: '0.5' },
@@ -129,7 +132,8 @@ const STATIC_ROUTES = [
   { path: '/for/chartered-accountants', changefreq: 'monthly', priority: '0.8' },
   { path: '/for/lawyers',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors',              changefreq: 'monthly', priority: '0.8' },
-  { path: '/for/doctors-india',        changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/therapists',           changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/yoga-instructors',     changefreq: 'monthly', priority: '0.8' },
   { path: '/for/business-consultant',  changefreq: 'monthly', priority: '0.8' },
   { path: '/for/pediatricians',        changefreq: 'monthly', priority: '0.8' },
   { path: '/for/gynecologists',        changefreq: 'monthly', priority: '0.8' },

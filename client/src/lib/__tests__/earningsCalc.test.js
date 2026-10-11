@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   resultsFor, pickWinner, annualSaving, deltaVsFree, premiumCrossover,
-  freeCommissionPerYear, annualBookings, ANNUAL_FEE,
+  freeCommissionPerYear, annualBookings, ANNUAL_FEE, platformFeesPerYear,
 } from '../earningsCalc';
 import { PREMIUM_PLAN } from '../../data/plans';
 
@@ -89,5 +89,16 @@ describe('the upgrade verdict', () => {
   it('commission given up per year = 5% × price × annual bookings', () => {
     expect(freeCommissionPerYear(1000, 10)).toBe(0.05 * 1000 * 120); // ₹6,000
     expect(freeCommissionPerYear(0, 10)).toBe(0);
+  });
+});
+
+describe('platformFeesPerYear', () => {
+  it('prices Topmate at 10%/20% plus GST on the fee, Sloth at 5%, Sloth Active flat', () => {
+    // ₹5,000 × 12 sessions/month × 12 months = ₹7,20,000 in sales
+    const rows = Object.fromEntries(platformFeesPerYear(5000, 12).map((r) => [r.key, r.fee]));
+    expect(rows['topmate-own']).toBe(84960);
+    expect(rows['topmate-marketplace']).toBe(169920);
+    expect(rows.free).toBe(36000);
+    expect(rows.premium).toBe(ANNUAL_FEE.premium);
   });
 });

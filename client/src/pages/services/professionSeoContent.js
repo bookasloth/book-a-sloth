@@ -162,11 +162,22 @@ export function professionSeo(prof = {}, services = []) {
   };
 }
 
+// "a"/"an" for a profession label. Acronyms go by letter sound ("an HR Consultant",
+// "a UX Designer"); words by first sound, with the u-consonant-consonant rule
+// covering "an Umpire" vs "a User". ponytail: heuristic, not a phonetic dictionary.
+const AN_LETTERS = 'AEFHILMNORSX';
+export const withArticle = (label = '') => {
+  const w = String(label).trim().split(/\s+/)[0] || '';
+  const acronym = w.length > 1 && w === w.toUpperCase() && /[A-Z]/.test(w);
+  const an = acronym ? AN_LETTERS.includes(w[0]) : /^[aeio]/i.test(w) || /^u[^aeiou]{2}/i.test(w);
+  return `${an ? 'an' : 'a'} ${label}`;
+};
+
 // A few sentence patterns so the per-card copy isn't identical across every
 // service and profession (the old text was one repeated line). Deterministic by
 // index so prerender output is stable.
 const CARD_PATTERNS = [
-  (name, l) => `Book a verified ${l} for ${name} — compare profiles, prices and reviews, then confirm online.`,
+  (name, l) => `Book ${withArticle(`verified ${l}`)} for ${name} — compare profiles, prices and reviews, then confirm online.`,
   (name, l) => `${name} with trusted ${l}s on Book A Sloth. See availability and book in minutes.`,
   (name, l) => `Find and book ${l}s offering ${name}. Real reviews, upfront prices, instant confirmation.`,
   (name, l) => `Need ${name}? Compare verified ${l}s, pick a time, and pay securely online.`,

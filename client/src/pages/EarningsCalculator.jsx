@@ -5,7 +5,7 @@ import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
 import { SITE_URL } from "../utils/seo";
 import {
-  resultsFor, pickWinner, annualSaving, deltaVsFree, ANNUAL_FEE,
+  resultsFor, pickWinner, annualSaving, deltaVsFree, ANNUAL_FEE, platformFeesPerYear, TOPMATE_FEES,
 } from "../lib/earningsCalc";
 
 // /earnings-calculator — public conversion tool. Host sets price + monthly volume;
@@ -239,6 +239,7 @@ export default function EarningsCalculator() {
   const delta = deltaVsFree(results, winnerKey);
   const maxSaving = annualSaving("premium");
 
+  const platformFees = useMemo(() => platformFeesPerYear(earning, bookings), [earning, bookings]);
   const animatedNet = useCountUp(winner.netAnnual);
   const canonical = `${SITE_URL}/earnings-calculator`;
 
@@ -321,6 +322,35 @@ export default function EarningsCalculator() {
 
             <p className="mt-4 text-center text-[11px] leading-relaxed text-neutral-500">
               Your guest pays <strong>{inr2(winner.guestPays)}</strong> at a {inr0(earning)} price — your price plus a flat ₹10 booking fee. You never eat it; your take-home is your price minus taxes.
+            </p>
+          </div>
+
+          {/* VS TOPMATE — platform fees only; gateway charges apply everywhere */}
+          <div className="mt-14">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Compare platforms</p>
+            <h2 className="mt-1 text-2xl font-extrabold text-ink sm:text-3xl">Platform fees per year vs Topmate</h2>
+            <p className="mt-2 max-w-2xl text-sm text-neutral-600">
+              At {inr0(earning)} a session and {bookings} sessions a month, this is what each option takes in platform fees over a year.
+            </p>
+            <div className="mt-5 overflow-x-auto rounded-[6px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-[#faf9f6] text-xs uppercase tracking-wide text-neutral-500">
+                  <tr><th className="px-4 py-3">Option</th><th className="px-4 py-3">How it charges</th><th className="px-4 py-3 text-right">Fees per year</th></tr>
+                </thead>
+                <tbody>
+                  {platformFees.map((r) => (
+                    <tr key={r.key} className="border-t border-black/5">
+                      <td className="px-4 py-3 font-semibold text-ink">{r.name}</td>
+                      <td className="px-4 py-3 text-neutral-600">{r.note}</td>
+                      <td className="px-4 py-3 text-right font-heading font-bold tabular-nums text-ink">{inr0(r.fee)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-[11px] leading-relaxed text-neutral-500">
+              Topmate fees as published on <a href={TOPMATE_FEES.source} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">topmate.io</a> ({TOPMATE_FEES.checked}). Payment gateway charges apply on every platform and are left out of all rows. See the full{" "}
+              <Link to="/lp/topmate-vs-bookasloth" className="text-primary hover:underline">Topmate comparison</Link>.
             </p>
           </div>
 

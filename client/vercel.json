@@ -9,7 +9,10 @@
       "statusCode": 308
     },
     { "source": "/blogs", "destination": "/blog", "statusCode": 301 },
-    { "source": "/blogs/:slug", "destination": "/blog/:slug", "statusCode": 301 }
+    { "source": "/blogs/:slug", "destination": "/blog/:slug", "statusCode": 301 },
+    { "source": "/blog/topmate-alternative", "destination": "/lp/topmate-vs-bookasloth", "statusCode": 301 },
+    { "source": "/blog/scheduling-terms-glossary", "destination": "/glossary/buffer-time", "statusCode": 301 },
+    { "source": "/for/doctors-india", "destination": "/for/doctors", "statusCode": 301 }
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://book-a-sloth.onrender.com/sitemap.xml" },
