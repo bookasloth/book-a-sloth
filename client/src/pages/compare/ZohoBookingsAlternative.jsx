@@ -1,192 +1,336 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+// /compare/zoho-bookings-alternative — Book A Sloth vs Zoho Bookings.
+//
+// Design system "Crimson & Cream": warm cream paper, charcoal ink, a deep
+// crimson used sparingly, Book A Sloth orange for CTAs. Motif: flow diagrams
+// joined by dashed connector lines. Page mechanic: "Who handles the payment?",
+// a two-lane flow (Zoho Bookings vs Book A Sloth) with a toggle.
+//
+// HONESTY: every Zoho Bookings fact reads from data/competitors.js
+// (COMPETITORS.zoho); every Book A Sloth price / commission reads from
+// data/plans.js. Fee facts (₹10 + GST booking fee, ~2% gateway at cost,
+// TDS 1% + TCS 1%, ₹100 minimum) are the published /host-fees numbers.
+// Testimonials are verbatim from data/testimonials.js. No images except a
+// competitor favicon. No scroll animation: the h1 is the LCP element.
+//
+// Global Navbar (57px) + Footer come from App.jsx.
+
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  Check,
-  X,
-  ArrowRight,
-  ChevronRight,
-  IndianRupee,
-  MessageCircle,
-  FileText,
-  Shield,
-  Zap,
-  Users,
-  Puzzle,
-  Bot,
-} from "lucide-react";
-import useUtm from "../../hooks/useUtm";
-import useDocumentMeta from "../../hooks/useDocumentMeta";
-import { analytics, EVENTS } from "../../services/analytics";
-import Seo from "../../components/common/Seo";
-import { ogCard } from "../../config/ogImages";
-import { SITE_URL, comparisonGraphJsonLd } from "../../utils/seo";
-import HowItWorks from "../../components/home/HowItWorks";
-import LogoMarquee from "../../components/about/LogoMarquee";
-import { ALL_PLANS } from "../../data/plans";
-import useFeeOnly from "../../hooks/useFeeOnly";
-import { TESTIMONIALS } from "../../data/testimonials";
-import { LpCta, AccentCard as KitAccentCard, Avatar as KitAvatar, fmtINR, BAS_ORANGE, BAS_CTA, BAS_PEACH } from "./_altKit";
-import { useHideChrome } from "../../context/ChromeContext";
+  ArrowRight, CalendarPlus, Smartphone, Receipt, Landmark, LogIn, Share2,
+  MessageCircle, Gift, Plug, Users, Check,
+} from 'lucide-react';
+import Seo from '../../components/common/Seo';
+import { ogCard } from '../../config/ogImages';
+import { SITE_URL, comparisonGraphJsonLd } from '../../utils/seo';
+import useUtm from '../../hooks/useUtm';
+import { analytics, EVENTS } from '../../services/analytics';
+import { COMPETITORS, COMPETITOR_LIST, CHECKED_LABEL } from '../../data/competitors';
+import { FREE_PLAN, PREMIUM_PLAN, PLAN_MATRIX } from '../../data/plans';
+import { TESTIMONIALS } from '../../data/testimonials';
 
-/*
-  /compare/zoho-bookings-alternative
-  Zoho-inspired corporate grid layout + Book A Sloth brand CTAs.
-  Copy: "Enterprise scheduling is overkill — you just need bookings that work."
-*/
+const SLUG = 'zoho-bookings-alternative';
+const START = '/be-a-sloth';
+const Z = COMPETITORS.zoho;
 
-const SLUG = "zoho-bookings-alternative";
+const THEME = {
+  '--zb-paper': '#FBF6EE',   // warm cream page
+  '--zb-cream': '#F2E8D8',   // alt section
+  '--zb-ink': '#2A2523',     // charcoal
+  '--zb-muted': '#5E5651',   // body text, 5.9:1 on cream
+  '--zb-crimson': '#9B1B30', // sparing accent, 6.5:1 on cream
+  '--zb-line': 'rgba(155,27,48,0.3)',
+};
 
-/* Palette — Zoho brand accents + BAS brand */
-const ZOHO_RED = "#E42527";
-const ZOHO_BLUE = "#1F76DB";
-const ZOHO_NAVY = "#1A1A2E";
-const ZOHO_BODY = "#4B5563";
-const ZOHO_LIGHT = "#FFF5F5"; // red-tinted section bg
-const ZOHO_NEUTRAL = "#F8FAFC"; // neutral section bg
+/* ─────────────────────────────  FACTS  ────────────────────────────── */
 
-const ACCENTS = [ZOHO_RED, BAS_ORANGE, ZOHO_BLUE, "#059669", "#db2777", "#0891b2", "#2563eb", "#f59e0b"];
+const inr = (n) => `₹${n.toLocaleString('en-IN')}`;
+const lc1 = (s) => s.charAt(0).toLowerCase() + s.slice(1);
+const commission = PLAN_MATRIX.flatMap((g) => g.rows).find((r) => r.label === 'Commission on your bookings');
+const Z_FREE = Z.freePlan.replace(/^Yes:\s*/, ''); // "1 user (Forever Free)"
+const FREE_MO = inr(FREE_PLAN.monthly);
+const PAID_MO = inr(PREMIUM_PLAN.monthly);
+const PAID_YR = inr(PREMIUM_PLAN.yearly);
+// ponytail: /host-fees worked example (₹1,000 at 0%: ~2% gateway on ₹1,011.80, TDS 1%, TCS 1%). Update if fees change.
+const PAYOUT_ON_1000 = '₹959.76';
+const favicon = (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 
+const TITLE = 'Zoho Bookings Alternative in India (UPI, GST) | Book A Sloth';
+const DESCRIPTION =
+  'Compare Zoho Bookings with Book A Sloth for India: USD vs rupee pricing, UPI via Razorpay, WhatsApp reminders, GST invoices and payouts to your own bank.';
 
-/* ─── CTA Button ─── */
-const ZohoCta = (p) => <LpCta slug={SLUG} {...p} />;
+const SHORT_ANSWER =
+  `${Z.name} and Book A Sloth both give you a booking page that takes payment. The main difference is who handles the money. ` +
+  `${Z.name} has a free plan for ${Z_FREE} and paid plans from ${Z.paidFrom}, billed in ${Z.currency}. You take payments by connecting one of its integrations (${Z.payments}), and UPI works ${lc1(Z.upi)}. ` +
+  `Book A Sloth is billed in rupees with GST included: ${FREE_PLAN.name} costs ${FREE_MO} a month with ${commission.free} commission, and ${PREMIUM_PLAN.name} costs ${PAID_MO} a month (${PAID_YR} a year) with ${commission.premium} commission. ` +
+  `Clients pay by UPI or card at booking, and Book A Sloth collects it, sends a GST invoice and settles to your bank after a one-time KYC. ` +
+  `Pick ${Z.name} if you already use Zoho apps or need several users. Pick Book A Sloth if you work on your own in India and don't want to run a payment gateway.`;
 
-/* ─── AccentCard ─── */
-const AccentCard = (p) => <KitAccentCard accent={ZOHO_RED} {...p} />;
+const PICK_ZOHO = [
+  'You already use Zoho apps',
+  'More than one person needs to take bookings (plans are priced per user)',
+  'You already have a Stripe, PayPal or Authorize.Net account to connect',
+];
+const PICK_BAS = [
+  'You work on your own and want clients to pay by UPI when they book',
+  'You would rather not open and manage a payment gateway account',
+  'You want a GST invoice on every paid booking, and prices in rupees',
+];
 
-/* ─── Avatar ─── */
-const Avatar = (p) => <KitAvatar accent={ZOHO_RED} {...p} />;
+// [label, Book A Sloth (plans.js / verified fees), Zoho Bookings (competitors.js)]
+const ROWS = [
+  ['Free plan', `Yes: unlimited services and bookings, ${commission.free} commission`, Z.freePlan],
+  ['Paid plans from', `${PAID_MO} / month or ${PAID_YR} / year (${PREMIUM_PLAN.name})`, Z.paidFrom],
+  ['Billing currency', 'INR, GST included', Z.currency],
+  ['Commission on bookings', `${commission.free} on ${FREE_PLAN.name}, ${commission.premium} on ${PREMIUM_PLAN.name}`, Z.commission],
+  ['Taking payments', 'UPI and cards through Razorpay, on both plans', Z.payments],
+  ['UPI at booking', 'Yes, on both plans', Z.upi],
+  ['Who collects the payment', 'Book A Sloth, then settles to your Indian bank after a one-time KYC', 'Your own account with one of its payment integrations'],
+  ['WhatsApp reminders', `Yes on ${PREMIUM_PLAN.name}. ${FREE_PLAN.name}: first 2 months, then email`, Z.whatsapp],
+  ['Free trial', `Not needed: ${FREE_PLAN.name} is ${FREE_MO} a month`, Z.trial],
+];
 
-/* ─── Hero product visual ─── */
-const HERO_IMG = "https://company-assets.bookasloth.in/images/compare/zoho-bookings-alternative-hero.png";
+const DIFFERENT = [
+  {
+    title: 'UPI at booking, no gateway of your own',
+    body: 'Clients pay by UPI or card through Razorpay on both plans. Book A Sloth collects the money and settles it to your Indian bank account after a one-time KYC, so there is no payment gateway account for you to open or run.',
+    link: { to: '/features/payments', label: 'How payments work on Book A Sloth' },
+  },
+  {
+    title: 'A GST invoice on every paid booking',
+    body: 'Invoices are generated automatically on both plans, so you don’t have to type up receipts for clients.',
+  },
+  {
+    title: 'Priced in rupees, GST included',
+    body: `${FREE_PLAN.name} is ${FREE_MO} a month with ${commission.free} commission. ${PREMIUM_PLAN.name} is ${PAID_MO} a month or ${PAID_YR} a year with ${commission.premium} commission. Unlimited services and bookings on both.`,
+    link: { to: '/pricing', label: 'See Book A Sloth pricing' },
+  },
+  {
+    title: 'Fees you can see up front',
+    body: `Your client pays a flat ₹10 + GST booking fee per paid booking. The gateway charge (about 2%) is passed through at cost, and TDS 1% + TCS 1% are deducted on payout. On a ₹1,000 booking at ${commission.premium} commission you receive ${PAYOUT_ON_1000}. Paid services start at ₹100.`,
+    link: { to: '/host-fees', label: 'Read the full host fee breakdown' },
+  },
+];
 
-function HeroBookingMock() {
+const ZOHO_WINS = [
+  { icon: MessageCircle, title: 'WhatsApp reminders, built in', body: `Its pricing page lists WhatsApp reminders. On Book A Sloth they come with ${PREMIUM_PLAN.name}; on ${FREE_PLAN.name} you get them for your first 2 months, then reminders go by email.` },
+  { icon: Gift, title: 'A Forever Free plan for 1 user', body: `${Z.name} has a free plan for ${Z_FREE}${Z.commission === 'None' ? ', with no commission on bookings' : ''}. Book A Sloth's free plan takes ${commission.free} of each paid booking instead.` },
+  { icon: Plug, title: 'Many payment integrations', body: `It connects to ${Z.payments}. If you already run an account with one of them, you can keep using it.` },
+  { icon: Users, title: 'If you already use Zoho apps', body: 'Your scheduling stays with the same company as the rest of your tools, and plans are priced per user for teams. Book A Sloth is for one person taking bookings and has no multi-staff team accounts.' },
+];
+
+// "Who handles the payment?" — each step tagged with who does it.
+const LANES = {
+  zoho: {
+    name: Z.name,
+    summary: `On ${Z.name}, you handle the payment: you choose, open and run the gateway account the money goes into.`,
+    steps: [
+      { who: 'You', title: 'Pick a payment integration', body: `${Z.payments}.` },
+      { who: 'You', title: 'Open an account with that gateway', body: 'You sign up with it directly and manage the account yourself.' },
+      { who: 'You', title: `Connect it to ${Z.name}`, body: 'So clients can pay when they book.' },
+      { who: 'Your client', title: 'Client pays at booking', body: `UPI works ${lc1(Z.upi)}.` },
+      { who: 'Your gateway', title: 'Money lands in your gateway account', body: 'Settlements happen in the account you run.' },
+    ],
+  },
+  bas: {
+    name: 'Book A Sloth',
+    summary: 'On Book A Sloth, we handle the payment: we collect it, send the GST invoice and settle it to your bank. Your part is a one-time KYC.',
+    steps: [
+      { who: 'You', title: 'Sign in with Google, finish a one-time KYC', body: 'No payment gateway account to open.' },
+      { who: 'Your client', title: 'Client pays by UPI or card at booking', body: 'Through Razorpay, on both plans.' },
+      { who: 'Book A Sloth', title: 'Book A Sloth collects the payment', body: 'It never passes through an account you run.' },
+      { who: 'Book A Sloth', title: 'A GST invoice goes out automatically', body: 'On both plans.' },
+      { who: 'Book A Sloth', title: 'Settled to your Indian bank account', body: `Minus the gateway charge (about 2%, at cost), TDS 1% + TCS 1%, and ${commission.free} commission on ${FREE_PLAN.name} (${commission.premium} on ${PREMIUM_PLAN.name}).` },
+    ],
+  },
+};
+
+const HERO_FLOW = [
+  { icon: CalendarPlus, t: 'Client picks a slot', s: 'On your booking page' },
+  { icon: Smartphone, t: 'Pays by UPI or card', s: 'Through Razorpay' },
+  { icon: Receipt, t: 'Book A Sloth collects it', s: 'GST invoice sent automatically' },
+  { icon: Landmark, t: 'Settled to your bank', s: 'After a one-time KYC' },
+];
+
+const SWITCH = [
+  { icon: LogIn, title: 'Sign in with Google', body: 'Your Book A Sloth account is ready in one step. No gateway account to set up.' },
+  { icon: CalendarPlus, title: 'Add your services and availability', body: 'Recreate each service with its price (paid services start at ₹100) and set the hours you take bookings.' },
+  { icon: Share2, title: 'Share your link', body: 'Put your booking link where clients find you, and complete the one-time KYC so payouts reach your bank.' },
+];
+
+const QUOTES = ['Vishal Chaware', 'Ar. Pranav Kadoo', 'Happy Singh']
+  .map((n) => TESTIMONIALS.find((t) => t.name === n))
+  .filter(Boolean);
+
+export const FAQ = [
+  {
+    q: 'Is Zoho Bookings free?',
+    a: `Yes. ${Z.name} has a free plan for ${Z_FREE}, according to its pricing page, checked in ${CHECKED_LABEL}. Paid plans start at ${Z.paidFrom}, billed in ${Z.currency}. Book A Sloth's ${FREE_PLAN.name} plan is also ${FREE_MO} a month, with unlimited services and bookings and a ${commission.free} commission on paid bookings.`,
+  },
+  {
+    q: 'How much does Zoho Bookings cost in India?',
+    a: `${Z.name} lists its prices in ${Z.currency}: paid plans start at ${Z.paidFrom}, and there is a free plan for ${Z_FREE}. Because pricing is per user, the bill grows with each person you add. Book A Sloth is priced in rupees with GST included: ${FREE_MO} a month on ${FREE_PLAN.name}, or ${PAID_MO} a month (${PAID_YR} a year) on ${PREMIUM_PLAN.name}.`,
+  },
+  {
+    q: 'Does Zoho Bookings support Razorpay and UPI?',
+    a: `Yes. ${Z.name} lists ${Z.payments} as payment integrations, and UPI works ${lc1(Z.upi)}. You connect your own account with the gateway you choose. On Book A Sloth, UPI and cards work on both plans without a gateway account of your own: we collect the payment through Razorpay and settle it to your bank after a one-time KYC.`,
+  },
+  {
+    q: 'Does Zoho Bookings send WhatsApp reminders?',
+    a: `Yes. Its pricing page lists WhatsApp reminders, and SMS reminders ${lc1(Z.sms)}. Book A Sloth sends WhatsApp reminders on ${PREMIUM_PLAN.name}. On the free ${FREE_PLAN.name} plan you get WhatsApp reminders for your first 2 months, then reminders go by email. Booking confirmations go out by email and WhatsApp on both plans.`,
+  },
+  {
+    q: "What's the cheapest Zoho Bookings alternative in India?",
+    a: `It depends on what you earn from bookings. Book A Sloth's ${FREE_PLAN.name} plan costs ${FREE_MO} a month and takes ${commission.free} of each paid booking. ${PREMIUM_PLAN.name} costs ${PAID_MO} a month or ${PAID_YR} a year and takes ${commission.premium}. On both, clients pay a flat ₹10 + GST booking fee, and the gateway charge (about 2%) is passed through at cost.`,
+  },
+  {
+    q: 'Can I move from Zoho Bookings to Book A Sloth?',
+    a: `Yes. Sign in with Google, add your services and availability, then share your new booking link. Complete the one-time KYC so payouts can reach your Indian bank account. Paid services need a price of ₹100 or more. You can keep your ${Z.name} account running until the bookings already made there are done.`,
+  },
+  {
+    q: 'Do I need my own Razorpay account on Book A Sloth?',
+    a: `No. Book A Sloth collects your clients' payments through Razorpay and settles them to your Indian bank account after a one-time KYC. You pay the gateway charge (about 2%) at cost, and TDS 1% + TCS 1% are deducted on payout. On a ₹1,000 booking at ${commission.premium} commission, you receive ${PAYOUT_ON_1000}.`,
+  },
+  {
+    q: 'Can my whole team use Book A Sloth?',
+    a: `No. Book A Sloth is built for one person taking their own bookings and doesn't have multi-staff team accounts. If several people need to take bookings under one account, ${Z.name}, which prices its plans per user, is the better fit. Book A Sloth suits solo coaches, consultants and freelancers who want UPI payments handled for them.`,
+  },
+];
+
+const RELATED = COMPETITOR_LIST.filter((c) => c.key !== 'zoho');
+
+/* ─────────────────────────────  PIECES  ────────────────────────────── */
+
+const H2 = 'font-heading text-4xl font-extrabold leading-[1.08] tracking-tight text-[color:var(--zb-ink)] sm:text-5xl';
+const SECTION = 'px-5 py-20 sm:px-8 lg:py-28';
+const CARD = 'rounded-[6px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.04)]';
+const INLINE_LINK = 'font-semibold text-[color:var(--zb-crimson)] underline decoration-[color:var(--zb-line)] underline-offset-4 hover:decoration-[color:var(--zb-crimson)]';
+
+function StartCta({ slot, track }) {
   return (
-    <div className="rounded-[6px] border border-white/30 bg-white p-5 shadow-[0_24px_80px_-8px_rgba(0,0,0,0.3)]">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: BAS_ORANGE }}>Your booking page</span>
-        <span className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: BAS_ORANGE }}>✓</span>
+    <Link
+      to={START}
+      onClick={() => track(slot)}
+      className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[6px] bg-primary-cta px-6 py-3 text-sm font-semibold text-white shadow-[0_8px_30px_rgba(194,61,0,0.22)] transition-opacity hover:no-underline hover:opacity-90"
+    >
+      Start free <ArrowRight size={16} aria-hidden />
+    </Link>
+  );
+}
+
+function Cell({ value }) {
+  if (value == null) return <span className="text-[color:var(--zb-muted)]">Not listed</span>;
+  return <span>{value}</span>;
+}
+
+/* Hero visual: one paid booking, start to payout, on a dashed connector. */
+function HeroFlow() {
+  return (
+    <div className={`${CARD} mx-auto w-full max-w-[22rem] p-6`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-heading text-sm font-bold text-[color:var(--zb-ink)]">How a paid booking flows</p>
+        <span className="rounded-full bg-[var(--zb-paper)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--zb-crimson)]">Book A Sloth</span>
       </div>
-      <div className="mb-3 font-heading text-sm font-bold" style={{ color: ZOHO_NAVY }}>Simple. No workspaces needed.</div>
-      <div className="space-y-2">
-        {[
-          { t: "Client books a session", sub: "Picks date, time & pays via UPI", tag: "1 step" },
-          { t: "You get notified instantly", sub: "WhatsApp + email confirmation", tag: "Auto" },
-          { t: "Google Calendar syncs", sub: "Meet link auto-created", tag: "Auto" },
-        ].map((w) => (
-          <div key={w.t} className="rounded-[6px] border border-gray-100 p-2.5" style={{ background: ZOHO_NEUTRAL }}>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold" style={{ color: ZOHO_NAVY }}>{w.t}</span>
-              <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: BAS_PEACH, color: BAS_CTA }}>{w.tag}</span>
+      <ol className="mt-5" aria-label="How a paid booking flows on Book A Sloth">
+        {HERO_FLOW.map((f, i) => (
+          <li key={f.t} className="relative flex gap-3.5 pb-5 last:pb-0">
+            {i < HERO_FLOW.length - 1 && (
+              <span aria-hidden className="absolute bottom-0 left-[17px] top-9 border-l border-dashed border-[color:var(--zb-line)]" />
+            )}
+            <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--zb-line)] bg-[var(--zb-paper)] text-[color:var(--zb-crimson)]">
+              <f.icon size={16} />
+            </span>
+            <span className="pt-0.5">
+              <span className="block text-sm font-semibold text-[color:var(--zb-ink)]">{f.t}</span>
+              <span className="block text-xs text-[color:var(--zb-muted)]">{f.s}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-5 border-t border-black/5 pt-4 text-xs text-[color:var(--zb-muted)]">No payment gateway account of your own.</p>
+    </div>
+  );
+}
+
+function Lane({ id, lane, on }) {
+  const mine = lane.steps.filter((s) => s.who === 'You').length;
+  return (
+    <div className={`rounded-[6px] border p-6 transition-colors sm:p-7 ${on ? 'border-[color:var(--zb-line)] bg-white shadow-[0_8px_30px_rgba(26,26,26,0.06)]' : 'border-black/10 bg-transparent'}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="flex items-center gap-2.5 font-heading text-xl font-bold text-[color:var(--zb-ink)]">
+          {id === 'zoho' && <img src={favicon(Z.domain)} alt="" width="20" height="20" loading="lazy" className="h-5 w-5" />}
+          {lane.name}
+        </h3>
+        <span className="flex items-center gap-2 text-xs font-semibold text-[color:var(--zb-muted)]">
+          <span aria-hidden className="flex gap-1">
+            {lane.steps.map((s) => (
+              <span key={s.title} className={`h-2 w-4 rounded-full ${s.who === 'You' ? 'bg-[var(--zb-crimson)]' : 'bg-black/10'}`} />
+            ))}
+          </span>
+          {mine} of {lane.steps.length} steps on you
+        </span>
+      </div>
+      <ol className="mt-6">
+        {lane.steps.map((s, i) => (
+          <li key={s.title} className="relative flex gap-4 pb-6 last:pb-0">
+            {i < lane.steps.length - 1 && (
+              <span aria-hidden className="absolute bottom-0 left-[15px] top-8 border-l border-dashed border-[color:var(--zb-line)]" />
+            )}
+            <span aria-hidden className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${s.who === 'You' ? 'bg-[var(--zb-crimson)] text-white' : 'border border-black/10 bg-[var(--zb-paper)] text-[color:var(--zb-ink)]'}`}>
+              {i + 1}
+            </span>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--zb-crimson)]">{s.who}</span>
+              <p className="font-semibold leading-snug text-[color:var(--zb-ink)]">{s.title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-[color:var(--zb-muted)]">{s.body}</p>
             </div>
-            <div className="mt-0.5 text-[10px] text-gray-400">{w.sub}</div>
-          </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/* Page mechanic. Initial state is fixed ('zoho'), so prerender = first paint. */
+function PaymentLanes() {
+  const [active, setActive] = useState('zoho');
+  const keys = Object.keys(LANES);
+  return (
+    <>
+      <div role="group" aria-label="Choose a product" className="mt-8 inline-flex rounded-[6px] border border-black/10 bg-white p-1">
+        {keys.map((k) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={active === k}
+            onClick={() => setActive(k)}
+            className={`min-h-[44px] rounded-[5px] px-4 text-sm font-semibold transition-colors sm:px-5 ${active === k ? 'bg-[var(--zb-ink)] text-white' : 'text-[color:var(--zb-muted)] hover:text-[color:var(--zb-ink)]'}`}
+          >
+            {LANES[k].name}
+          </button>
         ))}
       </div>
-    </div>
+      {/* Both summaries share one grid cell, so the box keeps the taller height: no layout shift. */}
+      <div className="mt-5 grid max-w-2xl" aria-live="polite">
+        {keys.map((k) => (
+          <p key={k} aria-hidden={active !== k} className={`[grid-area:1/1] text-base leading-relaxed text-[color:var(--zb-ink)] ${active === k ? '' : 'invisible'}`}>
+            {LANES[k].summary}
+          </p>
+        ))}
+      </div>
+      <div className="mt-8 grid gap-5 lg:grid-cols-2 lg:gap-6">
+        {keys.map((k) => <Lane key={k} id={k} lane={LANES[k]} on={active === k} />)}
+      </div>
+    </>
   );
 }
 
-function HeroProductCard() {
-  const [imgOk, setImgOk] = useState(true);
-  return (
-    <div className="relative py-10 px-6">
-      <div
-        className="absolute inset-0 -z-10"
-        style={{
-          background: `linear-gradient(135deg, ${ZOHO_RED} 0%, ${BAS_ORANGE} 45%, ${ZOHO_BLUE} 100%)`,
-          borderRadius: "40% 60% 55% 45% / 55% 40% 60% 45%",
-          transform: "scale(1.08)",
-        }}
-      />
-      {imgOk ? (
-        <img
-          src={HERO_IMG}
-          alt="Book A Sloth — simple bookings without enterprise overhead"
-          onError={() => setImgOk(false)}
-          className="w-full rounded-[6px] border border-white/30 bg-white shadow-[0_24px_80px_-8px_rgba(0,0,0,0.3)]"
-        />
-      ) : (
-        <HeroBookingMock />
-      )}
-    </div>
-  );
-}
+/* ─────────────────────────────  PAGE  ────────────────────────────── */
 
-/* ─── Data ─── */
-const INTEGRATIONS = [
-  { name: "Google Meet", domain: "meet.google.com" },
-  { name: "Google Calendar", domain: "calendar.google.com" },
-  { name: "Razorpay", domain: "razorpay.com" },
-  { name: "WhatsApp", domain: "whatsapp.com" },
-  { name: "Gmail", domain: "gmail.com" },
-  { name: "Zoom", domain: "zoom.us" },
-  { name: "PhonePe", domain: "phonepe.com" },
-  { name: "Paytm", domain: "paytm.com" },
-  { name: "Outlook", domain: "outlook.com" },
-  { name: "Slack", domain: "slack.com" },
-  { name: "Stripe", domain: "stripe.com" },
-  { name: "Zapier", domain: "zapier.com" },
-];
-
-const COMPARE = [
-  { f: "Setup time", basT: "Under 5 minutes", zT: "Hours (workspaces, event types, workflows)", z: false },
-  { f: "Built for solo creators", basT: "Yes", zT: "No — team/enterprise focus", z: false },
-  { f: "UPI payments at booking", basT: "Built in", zT: "Via Razorpay integration", z: "partial" },
-  { f: "GST invoices — automatic", basT: "Yes", zT: "No", z: false },
-  { f: "WhatsApp reminders", basT: "Yes", zT: "Yes", z: true },
-  { f: "Starting price (solo)", basT: "₹0 free · ₹399/mo paid", zT: "Free (limited) then ₹per user", z: "partial" },
-  { f: "No ecosystem lock-in", basT: "Yes — standalone", zT: "Best with Zoho CRM, Mail, etc.", z: false },
-  { f: "Google Calendar sync", basT: "Yes", zT: "Yes", z: true },
-  { f: "Google Meet links", basT: "Yes", zT: "Yes", z: true },
-  { f: "Custom booking page", basT: "Yes", zT: "Yes", z: true },
-  { f: "Email reminders", basT: "Yes", zT: "Yes", z: true },
-  { f: "Razorpay payments", basT: "Yes", zT: "Yes", z: true },
-];
-
-const FAQS = [
-  {
-    q: "Does Zoho Bookings support Razorpay?",
-    a: "Yes, Zoho Bookings does integrate with Razorpay. The difference is that Book A Sloth has Razorpay built into the core — UPI, cards, and wallets work out of the box with zero configuration. With Zoho, you need to connect your Razorpay account through settings and manage the integration separately.",
-  },
-  {
-    q: "I'm already using Zoho CRM. Should I switch?",
-    a: "If you rely heavily on the Zoho ecosystem (CRM, Mail, Invoice, etc.), Zoho Bookings makes sense as part of that suite. But if you're a solo professional who just needs a booking page with payments, Book A Sloth is simpler and cheaper than paying for the full Zoho stack.",
-  },
-  {
-    q: "Can I migrate my booking data from Zoho?",
-    a: "There's no automated import yet, but our support team will help you get set up. Most solo professionals can recreate their services in under 10 minutes since Book A Sloth doesn't require complex workspace or event-type configuration.",
-  },
-  {
-    q: "Does Book A Sloth have group bookings like Zoho?",
-    a: "Not yet. If you need multi-person group bookings, collective scheduling, or resource-based events, Zoho's enterprise features are more comprehensive. Book A Sloth focuses on one-on-one sessions — the core use case for freelancers, tutors, coaches, and consultants.",
-  },
-  {
-    q: "What about Zoho's AI scheduling features?",
-    a: "Zoho's AI features are designed for enterprise teams managing complex multi-person calendars. If you're a solo creator, you don't need AI to find a meeting time — you need a clean booking page where clients pick a slot and pay. That's what we do best.",
-  },
-  {
-    q: "Is Book A Sloth really free to start?",
-    a: "Yes. The Sloth plan is free forever — no 15-day trial, no credit card required. You get a booking page, Google Calendar sync, and can accept 2 free services. Sloth Active is ₹399/month (₹3,599/year) for 0% commission.",
-  },
-];
-
-/* ════════════════════════════════════════
-   PAGE
-   ════════════════════════════════════════ */
-const ZohoBookingsAlternative = () => {
-  // Legacy design — draws its own header/footer until rebuilt. Rebuilt pages drop this.
-  useHideChrome();
-  const feeOnly = useFeeOnly();
-  const plans = feeOnly ? ALL_PLANS.filter((p) => p.monthly !== 0) : ALL_PLANS;
+export default function ZohoBookingsAlternative() {
   const utm = useUtm();
-  const [billingAnnual, setBillingAnnual] = useState(true);
-  const [openFaq, setOpenFaq] = useState(null);
-
-  useDocumentMeta({
-    title: "Book A Sloth — Zoho Bookings alternative for Indian creators",
-    description:
-      "Zoho Bookings is built for enterprises. Book A Sloth is built for you — simple scheduling with UPI payments, GST invoices & WhatsApp reminders free to start.",
-  });
+  const track = (slot) => analytics.track(EVENTS.LP_CTA_CLICKED, { slug: SLUG, slot, ...utm });
+  const canonical = `${SITE_URL}${Z.path}`;
 
   useEffect(() => {
     analytics.page({ lp: SLUG });
@@ -195,593 +339,293 @@ const ZohoBookingsAlternative = () => {
   }, []);
 
   return (
-    <div
-      className="min-h-dvh overflow-x-hidden bg-white"
-      style={{ fontFamily: "'Poppins', ui-sans-serif, system-ui, sans-serif", color: ZOHO_NAVY }}
-    >
+    <main className="overflow-x-clip bg-[var(--zb-paper)] text-[color:var(--zb-ink)]" style={THEME}>
       <Seo
-        title="The Best Zoho Bookings Alternative for Creators — Book A Sloth"
-        description="Looking for a Zoho Bookings alternative? Book A Sloth offers simple scheduling with UPI payments, GST invoices, and WhatsApp reminders — built for Indian professionals."
+        title={TITLE}
+        description={DESCRIPTION}
+        canonical={canonical}
         image={ogCard('lp-zoho-bookings-alternative')}
-        canonical={`${SITE_URL}/compare/zoho-bookings-alternative`}
-        jsonLd={comparisonGraphJsonLd({
-          canonical: `${SITE_URL}/compare/zoho-bookings-alternative`,
-          name: "The Best Zoho Bookings Alternative for Creators — Book A Sloth",
-          description: "Book A Sloth offers simple scheduling with UPI payments, GST invoices, and WhatsApp reminders — built for Indian professionals. A Zoho Bookings alternative.",
-          breadcrumbName: "Zoho Bookings Alternative",
-          faqs: FAQS,
-        })}
+        jsonLd={comparisonGraphJsonLd({ canonical, name: TITLE, description: DESCRIPTION, breadcrumbName: 'Zoho Bookings Alternative', faqs: FAQ })}
       />
 
-      {/* ══════ HEADER ══════ */}
-      <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur" style={{ borderColor: `${ZOHO_RED}15` }}>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <div className="flex items-center gap-3">
-            <span className="font-heading text-base font-extrabold tracking-tight" style={{ color: ZOHO_NAVY }}>
-              Book A Sloth
-            </span>
-            <span
-              className="hidden rounded-full px-2 py-0.5 text-[11px] font-semibold sm:inline"
-              style={{ background: ZOHO_LIGHT, color: ZOHO_RED }}
-            >
-              vs Zoho Bookings
-            </span>
-          </div>
-
-          <nav className="hidden items-center gap-7 text-sm font-medium md:flex" style={{ color: "#6B7280" }}>
-            {[["#how-it-works", "Product"], ["#compare", "Compare"], ["#pricing", "Pricing"], ["#faq", "FAQ"]].map(([href, label]) => (
-              <a
-                key={label}
-                href={href}
-                className="transition-colors hover:no-underline"
-                style={{ color: "inherit" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = ZOHO_NAVY; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "#6B7280"; }}
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login-as-vendor"
-              className="hidden text-sm font-semibold hover:no-underline sm:block"
-              style={{ color: "#6B7280" }}
-            >
-              Log in
-            </Link>
-            <ZohoCta slot="header" label="Get started" className="!py-2 !px-4 !text-[13px]" />
-          </div>
-        </div>
-      </header>
-
-      {/* ══════ HERO ══════ */}
-      <section className="overflow-hidden px-5 pb-20 pt-16 sm:px-8 sm:pt-20" style={{ background: `linear-gradient(180deg, ${ZOHO_LIGHT} 0%, white 100%)` }}>
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
+      {/* ═══════════ 1 · HERO ═══════════ */}
+      <section className="px-5 pb-16 pt-4 sm:px-8 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center lg:py-10">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
           <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold" style={{ borderColor: `${ZOHO_RED}30`, color: ZOHO_RED, background: `${ZOHO_RED}08` }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: ZOHO_RED }} />
-              Zoho Bookings Alternative
-            </div>
-            <h1
-              className="font-heading text-[2.4rem] font-extrabold leading-[1.08] tracking-tight sm:text-[3.2rem]"
-              style={{ color: ZOHO_NAVY }}
-            >
-              Enterprise scheduling is overkill.
-              <br />
-              <span style={{ color: BAS_ORANGE }}>You just need bookings that work.</span>
+            <nav aria-label="Breadcrumb" className="text-xs text-[color:var(--zb-muted)]">
+              <ol className="flex flex-wrap items-center gap-x-2">
+                <li><Link to="/" className="inline-flex min-h-[44px] items-center text-[color:var(--zb-muted)] hover:text-[color:var(--zb-ink)] hover:no-underline">Home</Link></li>
+                <li aria-hidden>›</li>
+                <li><Link to="/compare" className="inline-flex min-h-[44px] items-center text-[color:var(--zb-muted)] hover:text-[color:var(--zb-ink)] hover:no-underline">Compare</Link></li>
+                <li aria-hidden>›</li>
+                <li><span aria-current="page" className="font-medium text-[color:var(--zb-ink)]">{Z.name}</span></li>
+              </ol>
+            </nav>
+            <h1 className="mt-2 max-w-2xl font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-[color:var(--zb-ink)]">
+              Zoho Bookings alternative with UPI <span className="text-primary-cta">built in</span>
             </h1>
-            <p className="mt-5 max-w-lg text-lg leading-relaxed" style={{ color: ZOHO_BODY }}>
-              Zoho Bookings has workspaces, event types, collective scheduling, and 75+ integrations.
-              You need a booking link that collects payments. We built that.
+            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-[color:var(--zb-muted)] sm:text-[17px]">
+              Book A Sloth is a Zoho Bookings alternative built for India. Clients pay by UPI or card when they book, and we
+              collect the money and settle it to your bank after a one-time KYC, so you don&rsquo;t need your own payment
+              gateway. Every paid booking gets a GST invoice, and the {FREE_PLAN.name} plan costs {FREE_MO} a month.
             </p>
-
-            <div id="start" className="mt-8 max-w-xs scroll-mt-24">
-              <ZohoCta slot="hero-google" label="Sign up with Google" variant="google" />
-              <p className="mt-2.5 text-xs text-gray-400">Free forever plan · No 15-day trial</p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <StartCta slot="hero" track={track} />
+              <a href="#side-by-side" className="inline-flex min-h-[44px] items-center justify-center rounded-[6px] border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-[color:var(--zb-ink)] transition-opacity hover:no-underline hover:opacity-90">
+                See the side-by-side
+              </a>
             </div>
-
-            <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 border-t border-gray-100 pt-6">
-              {[
-                { e: "🇮🇳", t: "Built for India" },
-                { e: "💳", t: "UPI + cards at booking" },
-                { e: "📄", t: "GST invoices" },
-                { e: "💬", t: "WhatsApp reminders" },
-              ].map((b) => (
-                <li key={b.t} className="flex items-center gap-1.5 text-xs font-medium" style={{ color: ZOHO_BODY }}>
-                  {b.e} {b.t}
-                </li>
+            <p className="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[color:var(--zb-muted)]">
+              {[`${FREE_PLAN.name} plan: ${FREE_MO} a month`, 'UPI + cards via Razorpay', 'GST invoices on both plans'].map((t) => (
+                <span key={t} className="inline-flex items-center gap-1.5"><Check size={14} className="text-[color:var(--zb-crimson)]" aria-hidden />{t}</span>
               ))}
-            </ul>
+            </p>
           </div>
-
-          <div className="flex justify-center lg:justify-end">
-            <div className="w-full max-w-[360px]">
-              <HeroProductCard />
-            </div>
-          </div>
+          <HeroFlow />
         </div>
       </section>
 
-      {/* ══════ LOGO MARQUEE ══════ */}
-      <div className="border-y border-gray-100 bg-white">
-        <LogoMarquee />
-      </div>
-
-      {/* ══════ HOW IT WORKS ══════ */}
-      <section id="how-it-works" className="scroll-mt-16 bg-neutral-900 px-5 py-20 sm:px-8 lg:py-24">
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-3 text-center text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: ZOHO_RED }}>
-            How it works
-          </p>
-          <h2 className="text-center font-heading text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            3 steps. No workspaces. No training.
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-lg text-neutral-300">
-            While Zoho needs workspace setup, event-type configuration, and workflow builders — you just sign up and share your link.
-          </p>
-          <div className="mt-6 flex justify-center">
-            <ZohoCta slot="how-it-works" label="Start for free" />
+      {/* ═══════════ 2 · THE SHORT ANSWER ═══════════ */}
+      <section id="short-answer" className="scroll-mt-20 px-5 pb-20 sm:px-8 lg:pb-28">
+        <div className="mx-auto max-w-3xl">
+          <h2 className={H2}>The short <span className="text-primary-cta">answer</span></h2>
+          <div className={`${CARD} mt-8 border-[color:var(--zb-line)] p-6 sm:p-8`}>
+            <p className="text-base leading-relaxed text-[color:var(--zb-ink)] sm:text-[17px]">{SHORT_ANSWER}</p>
           </div>
-          <HowItWorks />
-        </div>
-      </section>
-
-      {/* ══════ "ZOHO IS BUILT FOR ENTERPRISES" ══════ */}
-      <section className="px-5 py-20 sm:px-8" style={{ background: ZOHO_NEUTRAL }}>
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-3 text-center text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: ZOHO_RED }}>
-            The honest truth
-          </p>
-          <h2 className="text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: ZOHO_NAVY }}>
-            Zoho Bookings is powerful. Too powerful for you.
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-sm" style={{ color: ZOHO_BODY }}>
-            Built for enterprises with 50-person teams. Here&apos;s what you don&apos;t need.
-          </p>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {[
-              {
-                icon: Users,
-                color: ZOHO_RED,
-                h: "You don't need workspaces",
-                b: "Zoho lets you create multiple workspaces with separate staff, services, and calendars. You're one person. You need one booking page.",
-                vs: "BAS: One link. Share it. Done.",
-              },
-              {
-                icon: Puzzle,
-                color: ZOHO_BLUE,
-                h: "You don't need 75 integrations",
-                b: "Zoho connects to 75+ tools and works best inside the Zoho ecosystem (CRM, Mail, Invoice). You need Google Calendar and a payment gateway.",
-                vs: "BAS: Google + Razorpay. Built in.",
-              },
-              {
-                icon: Bot,
-                color: BAS_ORANGE,
-                h: "You don't need AI scheduling",
-                b: "Zoho's AI finds optimal meeting times across teams and time zones. Your clients just need to pick a slot from your availability.",
-                vs: "BAS: Clean calendar. Clients pick & pay.",
-              },
-            ].map((card) => (
-              <AccentCard
-                key={card.h}
-                accent={card.color}
-                className="flex flex-col rounded-[6px] border border-gray-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[6px]" style={{ background: `${card.color}12` }}>
-                  <card.icon size={20} style={{ color: card.color }} />
-                </div>
-                <h3 className="font-heading text-lg font-bold" style={{ color: ZOHO_NAVY }}>{card.h}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed" style={{ color: ZOHO_BODY }}>{card.b}</p>
-                <p className="mt-4 rounded-[6px] px-3 py-2 text-xs font-semibold" style={{ background: BAS_PEACH, color: BAS_CTA }}>
-                  {card.vs}
-                </p>
-              </AccentCard>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {[[`Pick ${Z.name} if…`, PICK_ZOHO], ['Pick Book A Sloth if…', PICK_BAS]].map(([h, items]) => (
+              <div key={h} className="rounded-[6px] border border-black/10 p-6">
+                <h3 className="font-heading text-lg font-bold text-[color:var(--zb-ink)]">{h}</h3>
+                <ul className="mt-4 space-y-2.5">
+                  {items.map((t) => (
+                    <li key={t} className="flex gap-2.5 text-sm leading-relaxed text-[color:var(--zb-muted)]">
+                      <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--zb-crimson)]" />{t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ══════ INTEGRATIONS ══════ */}
-      <section id="integrations" className="scroll-mt-16 px-5 py-20 sm:px-8">
+      {/* ═══════════ 3 · SIDE-BY-SIDE TABLE ═══════════ */}
+      <section id="side-by-side" className={`scroll-mt-20 bg-[var(--zb-cream)] ${SECTION}`}>
         <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16">
-            <div className="lg:max-w-[280px]">
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: ZOHO_RED }}>
-                Integrations
-              </p>
-              <h2 className="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: ZOHO_NAVY }}>
-                The tools you actually use
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed" style={{ color: ZOHO_BODY }}>
-                Zoho offers 75+ integrations. We focus on the ones Indian professionals actually need — Google, Razorpay, WhatsApp, UPI.
-              </p>
-              <a
-                href="#start"
-                className="mt-5 inline-flex items-center gap-1 text-sm font-semibold transition-opacity hover:no-underline hover:opacity-80"
-                style={{ color: BAS_CTA }}
-              >
-                Get started free <ChevronRight size={15} />
-              </a>
-            </div>
-
-            <div className="flex-1">
-              <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6">
-                {INTEGRATIONS.map((int) => (
-                  <div
-                    key={int.name}
-                    className="flex flex-col items-center gap-1.5 rounded-[6px] border border-gray-100 bg-white p-3 shadow-sm transition hover:shadow-md"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-gray-100 bg-white">
-                      <img
-                        src={`https://www.google.com/s2/favicons?sz=64&domain=${int.domain}`}
-                        alt={int.name}
-                        loading="lazy"
-                        className="h-6 w-6 object-contain"
-                      />
-                    </div>
-                    <span className="text-center text-[10px] font-medium leading-tight text-gray-500">
-                      {int.name}
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 className={`${H2} max-w-3xl`}>How much does Zoho Bookings <span className="text-primary-cta">cost</span> in India?</h2>
+            <span className="rounded-full border border-[color:var(--zb-line)] bg-white px-3 py-1 text-xs font-semibold text-[color:var(--zb-crimson)]">Last checked {CHECKED_LABEL}</span>
+          </div>
+          <p className="mt-4 max-w-2xl text-[color:var(--zb-muted)]">
+            &ldquo;Not listed&rdquo; means their pricing page doesn&rsquo;t say. It doesn&rsquo;t mean they can&rsquo;t.
+          </p>
+          <div className={`${CARD} mt-10 overflow-x-auto`}>
+            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+              <caption className="sr-only">Book A Sloth compared with {Z.name}: pricing, commission, payments and reminders</caption>
+              <thead>
+                <tr className="border-b border-black/5">
+                  <th scope="col" className="sticky left-0 z-10 w-[22%] bg-white p-4 text-xs font-semibold uppercase tracking-wide text-[color:var(--zb-muted)]">Feature</th>
+                  <th scope="col" className="bg-primary-light p-4 font-heading font-bold text-ink">Book A Sloth</th>
+                  <th scope="col" className="p-4 font-heading font-bold text-[color:var(--zb-ink)]">
+                    <span className="inline-flex items-center gap-2">
+                      <img src={favicon(Z.domain)} alt="" width="16" height="16" loading="lazy" className="h-4 w-4" />{Z.name}
                     </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {[
-                  { title: "No ecosystem lock-in", body: "Works standalone — no Zoho CRM, Zoho Mail, or Zoho One required", color: ZOHO_RED },
-                  { title: "India-first payments", body: "UPI, Razorpay, PhonePe, Paytm — clients pay in ₹ at booking", color: BAS_ORANGE },
-                ].map((card) => (
-                  <AccentCard
-                    key={card.title}
-                    accent={card.color}
-                    className="rounded-[6px] border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-heading text-sm font-bold" style={{ color: ZOHO_NAVY }}>{card.title}</div>
-                        <div className="mt-0.5 text-xs" style={{ color: ZOHO_BODY }}>{card.body}</div>
-                      </div>
-                      <ArrowRight size={15} className="mt-0.5 shrink-0 text-gray-300" />
-                    </div>
-                  </AccentCard>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ COMPARISON TABLE ══════ */}
-      <section id="compare" className="scroll-mt-16 px-5 py-16 sm:px-8" style={{ background: ZOHO_LIGHT }}>
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: ZOHO_NAVY }}>
-            Book A Sloth vs Zoho Bookings
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-sm" style={{ color: ZOHO_BODY }}>
-            An honest comparison. Zoho is great for enterprises — we&apos;re great for you.
-          </p>
-          <div className="mt-8 overflow-hidden rounded-[6px] border border-gray-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-400">Feature</th>
-                    <th className="px-5 py-4 font-heading text-sm font-bold" style={{ background: BAS_PEACH, color: BAS_CTA }}>
-                      Book A Sloth 🇮🇳
-                    </th>
-                    <th className="px-5 py-4 text-sm font-semibold" style={{ color: ZOHO_RED }}>Zoho Bookings</th>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {ROWS.map(([label, bas, zoho]) => (
+                  <tr key={label} className="border-b border-black/5 align-top last:border-0">
+                    <th scope="row" className="sticky left-0 z-10 bg-white p-4 font-semibold text-[color:var(--zb-ink)]">{label}</th>
+                    <td className="bg-primary-light/50 p-4 text-ink"><Cell value={bas} /></td>
+                    <td className="p-4 text-[color:var(--zb-ink)]"><Cell value={zoho} /></td>
                   </tr>
-                </thead>
-                <tbody>
-                  {COMPARE.map((row, i) => (
-                    <tr key={row.f} style={{ borderTop: "1px solid #F3F4F6", background: i % 2 ? "#FFFBF8" : "white" }}>
-                      <th scope="row" className="px-5 py-3 text-sm font-medium" style={{ color: ZOHO_NAVY }}>{row.f}</th>
-                      <td className="px-5 py-3" style={{ background: i % 2 ? "#FFE3D2" : BAS_PEACH }}>
-                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: BAS_CTA }}>
-                          <Check size={14} /> {row.basT}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className={`inline-flex items-center gap-1.5 text-sm ${row.z === true ? "text-gray-600" : row.z === "partial" ? "text-amber-600" : "text-gray-400"}`}>
-                          {row.z === true ? (
-                            <Check size={14} className="text-gray-400" />
-                          ) : row.z === "partial" ? (
-                            <span className="text-[10px]">~</span>
-                          ) : (
-                            <X size={14} className="text-gray-300" />
-                          )}
-                          {row.zT}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr style={{ borderTop: "2px solid #EAD7CC" }}>
-                    <td className="hidden px-5 py-5 align-top text-xs font-semibold uppercase tracking-wide text-gray-400 sm:table-cell">
-                      The verdict
-                    </td>
-                    <td className="px-4 py-5 align-top sm:px-5" style={{ background: BAS_PEACH }}>
-                      <div className="font-heading text-sm font-extrabold leading-snug sm:text-base" style={{ color: ZOHO_NAVY }}>
-                        Simple &amp; effective.<br />Book A Sloth.
-                      </div>
-                      <p className="mt-1 hidden text-xs sm:block" style={{ color: ZOHO_BODY }}>
-                        Built for creators. Paid in ₹.
-                      </p>
-                      <div className="mt-3 sm:max-w-[220px]">
-                        <ZohoCta slot="compare-yes" label="Sign up with Google" variant="google" />
-                      </div>
-                    </td>
-                    <td className="px-4 py-5 align-top sm:px-5">
-                      <div className="font-heading text-sm font-bold leading-snug text-gray-400 sm:text-base">
-                        Great for enterprises.
-                      </div>
-                      <p className="mt-1 hidden text-xs text-gray-400 sm:block">
-                        Overkill for solo professionals.
-                      </p>
-                      <span className="mt-3 inline-flex items-center gap-1.5 rounded-[6px] border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-300">
-                        Enterprise-grade
-                      </span>
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <p className="mt-2 text-center text-xs text-gray-400">
-            Zoho Bookings pricing varies by plan and user count. Comparison as of Jul 2026.
+          <p className="mt-5 max-w-3xl text-xs leading-relaxed text-[color:var(--zb-muted)]">
+            Checked against the {Z.name} pricing page in {CHECKED_LABEL}. Prices as published, in their currency, and they may
+            have changed since. Source:{' '}
+            <a href={Z.source} target="_blank" rel="noopener noreferrer nofollow" className="text-[color:var(--zb-muted)] underline underline-offset-2 hover:text-[color:var(--zb-ink)]">{Z.name} pricing page</a>.{' '}
+            {Z.name} is a trademark of its owner. Book A Sloth isn&rsquo;t affiliated with {Z.name}.
           </p>
         </div>
       </section>
 
-      {/* ══════ PRICING ══════ */}
-      <section id="pricing" className="scroll-mt-16 px-5 py-20 sm:px-8">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-center font-heading text-3xl font-extrabold tracking-tight sm:text-4xl" style={{ color: ZOHO_NAVY }}>
-            Simple pricing. No per-user fees.
-          </h2>
-          <p className="mt-2 text-center" style={{ color: ZOHO_BODY }}>
-            Zoho charges per user. We charge per plan — one price, everything included, billed in ₹.
-          </p>
-
-          <div className="mt-6 flex justify-center">
-            <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setBillingAnnual(false)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${!billingAnnual ? "text-white" : "text-neutral-500 hover:text-ink"}`}
-                style={!billingAnnual ? { background: BAS_CTA } : undefined}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingAnnual(true)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${billingAnnual ? "text-white" : "text-neutral-500 hover:text-ink"}`}
-                style={billingAnnual ? { background: BAS_CTA } : undefined}
-              >
-                Yearly
-                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${billingAnnual ? "bg-white/20 text-white" : "bg-primary/10 text-primary"}`}>
-                  Save 58%
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div className={`mt-10 grid gap-5 ${feeOnly ? "sm:grid-cols-2 sm:max-w-3xl sm:mx-auto" : "md:grid-cols-3"}`}>
-            {plans.map((plan, i) => {
-              const isFree = plan.monthly === 0;
-              const perMo = isFree ? 0 : Math.round(plan.yearly / 12);
-              const savePct = isFree ? 0 : Math.round((1 - plan.yearly / 12 / plan.monthly) * 100);
-              const big = isFree ? "Free" : (billingAnnual ? fmtINR(plan.yearly) : fmtINR(plan.monthly));
-              const cadence = isFree ? "" : (billingAnnual ? "/ year" : "/ month");
-              const sub = isFree
-                ? "Free forever — no 15-day trial"
-                : (billingAnnual ? `just ₹${perMo}/mo, billed yearly` : "billed monthly");
-              const highlight = !!plan.recommended;
-              const accent = highlight ? BAS_ORANGE : ACCENTS[i % ACCENTS.length];
-
-              return (
-                <AccentCard
-                  key={plan.name}
-                  accent={accent}
-                  className={`flex h-full flex-col rounded-[6px] border bg-white p-7 transition hover:-translate-y-1 ${
-                    highlight ? "shadow-[0_24px_60px_-30px_rgba(254,81,0,0.45)]" : "shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
-                  }`}
-                  style={{ borderColor: highlight ? BAS_ORANGE : "#E5E7EB" }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-heading text-lg font-bold" style={{ color: ZOHO_NAVY }}>{plan.name}</span>
-                    {highlight && (
-                      <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white" style={{ background: BAS_CTA }}>
-                        Recommended
-                      </span>
-                    )}
-                    {plan.badge && !highlight && (
-                      <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold" style={{ background: BAS_PEACH, color: BAS_CTA }}>
-                        {plan.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs" style={{ color: "#9CA3AF" }}>{plan.tagline}</p>
-
-                  <div className="mt-5 flex items-end gap-1">
-                    <span className="text-4xl font-extrabold" style={{ color: ZOHO_NAVY }}>{big}</span>
-                    {cadence && <span className="mb-1 text-sm" style={{ color: "#9CA3AF" }}>{cadence}</span>}
-                  </div>
-                  <p className="mt-0.5 text-xs" style={{ color: "#9CA3AF" }}>
-                    {sub}
-                    {!isFree && billingAnnual && savePct > 0 && (
-                      <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                        Save {savePct}%
-                      </span>
-                    )}
-                  </p>
-
-                  <ZohoCta
-                    slot={`pricing-${plan.name}`}
-                    label={isFree ? "Start for Free" : "Get Started Now"}
-                    className="mt-5 w-full !justify-center"
-                  />
-
-                  <ul className="mt-6 space-y-2.5">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm">
-                        <Check size={14} className="mt-0.5 shrink-0" style={{ color: accent }} />
-                        <span style={{ color: ZOHO_BODY }}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </AccentCard>
-              );
-            })}
-          </div>
-          <p className="mt-6 text-center text-sm text-gray-400">
-            0% commission on Sloth Active · All prices include GST · Cancel anytime
-          </p>
-        </div>
-      </section>
-
-      {/* ══════ TESTIMONIALS ══════ */}
-      <section className="px-5 py-20 sm:px-8" style={{ background: ZOHO_NEUTRAL }}>
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mb-3 text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: ZOHO_NAVY }}>
-            Indian Professionals Who Chose Simplicity
-          </h2>
-          <p className="mx-auto mb-10 max-w-xl text-center text-sm" style={{ color: ZOHO_BODY }}>
-            Coaches, consultants, tutors, freelancers — real creators who ditched the enterprise overhead.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {TESTIMONIALS.map((t, i) => {
-              const accent = ACCENTS[i % ACCENTS.length];
-              return (
-                <AccentCard
-                  key={t.name}
-                  accent={accent}
-                  className="flex h-full flex-col rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.05)] transition hover:-translate-y-1"
-                >
-                  <span className="font-heading text-3xl font-extrabold leading-none" style={{ color: accent }} aria-hidden>"</span>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed" style={{ color: ZOHO_NAVY }}>{t.quote}</p>
-                  <div className="mt-5 flex items-center gap-2.5">
-                    <Avatar src={t.avatar} name={t.name} accent={accent} />
-                    <div>
-                      <div className="text-xs font-bold" style={{ color: ZOHO_NAVY }}>{t.name}</div>
-                      <div className="text-[11px]" style={{ color: ZOHO_BODY }}>{t.role}</div>
-                    </div>
-                  </div>
-                </AccentCard>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ FAQ ══════ */}
-      <section id="faq" className="scroll-mt-16 px-5 py-20 sm:px-8">
+      {/* ═══════════ 4 · WHAT'S DIFFERENT (connector ledger) ═══════════ */}
+      <section className={SECTION}>
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: ZOHO_NAVY }}>
-            Switching from Zoho? Questions answered.
-          </h2>
-          <div className="mt-10 space-y-3">
-            {FAQS.map((faq, i) => {
-              const isOpen = openFaq === i;
-              return (
-                <div key={faq.q} className="rounded-[6px] border border-gray-200 bg-white transition-shadow hover:shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? null : i)}
-                    className="flex w-full items-center justify-between px-5 py-4 text-left"
-                  >
-                    <span className="pr-4 text-sm font-semibold" style={{ color: ZOHO_NAVY }}>{faq.q}</span>
-                    <ChevronRight
-                      size={16}
-                      className="shrink-0 transition-transform duration-200"
-                      style={{ color: ZOHO_BODY, transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="border-t border-gray-100 px-5 pb-4 pt-3">
-                      <p className="text-sm leading-relaxed" style={{ color: ZOHO_BODY }}>{faq.a}</p>
-                    </div>
+          <h2 className={H2}>What&rsquo;s different for hosts <span className="text-primary-cta">in India</span>?</h2>
+          <ol className="mt-12">
+            {DIFFERENT.map((d, i) => (
+              <li key={d.title} className="relative flex gap-5 pb-10 last:pb-0">
+                {i < DIFFERENT.length - 1 && (
+                  <span aria-hidden className="absolute bottom-0 left-[19px] top-10 border-l border-dashed border-[color:var(--zb-line)]" />
+                )}
+                <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--zb-line)] bg-white font-heading text-sm font-extrabold text-[color:var(--zb-crimson)]">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div className="pt-1.5">
+                  <h3 className="font-heading text-xl font-bold text-[color:var(--zb-ink)]">{d.title}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--zb-muted)]">{d.body}</p>
+                  {d.link && (
+                    <Link to={d.link.to} className={`mt-3 inline-flex min-h-[44px] items-center gap-1.5 text-sm ${INLINE_LINK}`}>
+                      {d.link.label} <ArrowRight size={14} aria-hidden />
+                    </Link>
                   )}
                 </div>
-              );
-            })}
-          </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
-      {/* ══════ FINAL CTA ══════ */}
-      <section className="px-5 py-20 sm:px-8" style={{ background: ZOHO_NAVY }}>
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-heading text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-            Built for creators,
-            <br />
-            <span style={{ color: BAS_ORANGE }}>not corporations.</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-lg text-neutral-300">
-            Free to start. UPI payments from day one. No 15-day trial, no ecosystem lock-in.
+      {/* ═══════════ 5 · WHERE ZOHO BOOKINGS IS THE BETTER CHOICE ═══════════ */}
+      <section className={`bg-[var(--zb-cream)] ${SECTION}`}>
+        <div className="mx-auto max-w-6xl">
+          <h2 className={`${H2} max-w-3xl`}>When is Zoho Bookings the <span className="text-primary-cta">better choice</span>?</h2>
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-[color:var(--zb-muted)]">
+            It isn&rsquo;t the right pick for everyone, and neither are we. Here is where {Z.name} has the edge.
           </p>
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <div className="w-full max-w-xs">
-              <ZohoCta slot="final-google" label="Sign up with Google" variant="google" />
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {ZOHO_WINS.map((w) => (
+              <div key={w.title} className={`${CARD} p-7`}>
+                <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-[6px] bg-[var(--zb-paper)] text-[color:var(--zb-crimson)]">
+                  <w.icon size={19} />
+                </span>
+                <h3 className="mt-4 font-heading text-lg font-bold text-[color:var(--zb-ink)]">{w.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-[color:var(--zb-muted)]">{w.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ 6 · MECHANIC: WHO HANDLES THE PAYMENT? ═══════════ */}
+      <section id="who-handles-payment" className={`scroll-mt-20 ${SECTION}`}>
+        <div className="mx-auto max-w-6xl">
+          <h2 className={`${H2} max-w-3xl`}>Who handles the <span className="text-primary-cta">payment</span>?</h2>
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-[color:var(--zb-muted)]">
+            The same paid booking, traced on both. Switch between them to see whose job each step is.
+          </p>
+          <PaymentLanes />
+        </div>
+      </section>
+
+      {/* ═══════════ 7 · SWITCH IN 3 STEPS ═══════════ */}
+      <section className={`bg-[var(--zb-cream)] ${SECTION}`}>
+        <div className="mx-auto max-w-6xl">
+          <h2 className={`${H2} max-w-3xl`}>How do I <span className="text-primary-cta">switch</span> from Zoho Bookings?</h2>
+          <ol className="mt-14 grid gap-10 md:grid-cols-3 md:gap-6">
+            {SWITCH.map((s, i) => (
+              <li key={s.title} className="relative flex gap-5 md:block">
+                {i < SWITCH.length - 1 && (
+                  <>
+                    <span aria-hidden className="absolute -bottom-10 left-[21px] top-12 border-l border-dashed border-[color:var(--zb-line)] md:hidden" />
+                    <span aria-hidden className="absolute -right-6 left-14 top-[21px] hidden border-t border-dashed border-[color:var(--zb-line)] md:block" />
+                  </>
+                )}
+                <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--zb-line)] bg-white text-[color:var(--zb-crimson)]">
+                  <s.icon size={19} />
+                </span>
+                <div className="pt-1 md:mt-5 md:pt-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--zb-crimson)]">Step {i + 1}</p>
+                  <h3 className="mt-1 font-heading text-lg font-bold text-[color:var(--zb-ink)]">{s.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-[color:var(--zb-muted)]">{s.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-12"><StartCta slot="switch" track={track} /></div>
+        </div>
+      </section>
+
+      {/* ═══════════ 8 · TESTIMONIALS ═══════════ */}
+      {QUOTES.length > 0 && (
+        <section className={SECTION}>
+          <div className="mx-auto max-w-6xl">
+            <h2 className={H2}>What hosts <span className="text-primary-cta">say</span></h2>
+            <div className="mt-12 grid gap-5 sm:gap-6 md:grid-cols-3">
+              {QUOTES.map((t) => (
+                <figure key={t.name} className={`${CARD} flex flex-col p-7`}>
+                  <blockquote className="flex-1 text-[15px] leading-relaxed text-[color:var(--zb-ink)]">&ldquo;{t.quote}&rdquo;</blockquote>
+                  <figcaption className="mt-6 flex items-center gap-3">
+                    <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--zb-cream)] font-heading text-sm font-bold text-[color:var(--zb-crimson)]">
+                      {t.name.replace(/^(Ar|Dr)\.\s*/, '').split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-[color:var(--zb-ink)]">{t.name}</span>
+                      <span className="block text-xs text-[color:var(--zb-muted)]">{t.role}</span>
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
             </div>
-            <p className="text-sm text-neutral-400">
-              Already have an account?{" "}
-              <Link to="/login-as-vendor" className="font-semibold hover:no-underline" style={{ color: BAS_ORANGE }}>
-                Log in
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════ 9 · FAQ ═══════════ */}
+      <section id="faq" className={`scroll-mt-20 bg-[var(--zb-cream)] ${SECTION}`}>
+        <div className="mx-auto max-w-3xl">
+          <h2 className={H2}>Zoho Bookings alternative: your <span className="text-primary-cta">questions</span></h2>
+          <p className="mt-5 text-base text-[color:var(--zb-muted)]">
+            Every fee is listed on our <Link to="/host-fees" className={INLINE_LINK}>host fees page</Link>. Comparing more tools? Read our guide to{' '}
+            <Link to="/blog/best-appointment-booking-apps-india" className={INLINE_LINK}>appointment booking apps in India</Link>.
+          </p>
+          <div className="mt-10 border-t border-black/10">
+            {FAQ.map((f, i) => (
+              <details key={f.q} className="group border-b border-black/10" open={i === 0}>
+                <summary className="flex min-h-[44px] cursor-pointer list-none items-start gap-4 py-5 [&::-webkit-details-marker]:hidden">
+                  <span className="flex-1 font-heading text-[17px] font-bold text-[color:var(--zb-ink)]">{f.q}</span>
+                  <span aria-hidden className="text-xl leading-none text-[color:var(--zb-crimson)] transition-transform group-open:rotate-45 motion-reduce:transition-none">+</span>
+                </summary>
+                <p className="pb-6 pr-8 text-[15px] leading-relaxed text-[color:var(--zb-muted)]">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ 10 · RELATED + FINAL CTA ═══════════ */}
+      <section className="px-5 py-16 sm:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="font-heading text-2xl font-extrabold text-[color:var(--zb-ink)]">More <span className="text-primary-cta">comparisons</span></h2>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {RELATED.map((c) => (
+              <li key={c.key}>
+                <Link to={c.path} className="flex min-h-[44px] items-center gap-3 rounded-[6px] border border-black/5 bg-white px-4 py-3 text-sm font-semibold text-[color:var(--zb-ink)] transition-colors hover:border-[color:var(--zb-line)] hover:no-underline">
+                  <img src={favicon(c.domain)} alt="" width="20" height="20" loading="lazy" className="h-5 w-5" />
+                  Book A Sloth vs {c.name}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link to="/compare" className="flex min-h-[44px] items-center gap-2 rounded-[6px] border border-black/5 bg-white px-4 py-3 text-sm font-semibold text-[color:var(--zb-crimson)] transition-colors hover:border-[color:var(--zb-line)] hover:no-underline">
+                All booking tool comparisons <ArrowRight size={14} aria-hidden />
               </Link>
-            </p>
-          </div>
+            </li>
+          </ul>
         </div>
       </section>
 
-      {/* ══════ SECURITY BADGES ══════ */}
-      <section className="border-y border-gray-100 bg-white px-5 py-8 sm:px-8">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">Security &amp; trust</p>
-        <div className="mx-auto mt-5 flex flex-wrap items-center justify-center gap-6">
-          {[
-            [Shield, "Razorpay Secured"],
-            [FileText, "GST Compliant"],
-            [Shield, "Data Encrypted"],
-            [Shield, "PCI DSS"],
-          ].map(([Icon, label]) => (
-            <div key={label} className="flex items-center gap-2 text-xs font-semibold text-gray-400">
-              <Icon size={15} className="text-gray-300" />
-              {label}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════ FOOTER ══════ */}
-      <footer className="border-t border-gray-100 px-5 py-10 sm:px-8">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 text-xs text-gray-400 sm:flex-row">
-          <p>© {new Date().getFullYear()} Book A Sloth — The Zoho Bookings alternative for Indian creators</p>
-          <div className="flex items-center gap-5">
-            <Link to="/privacy" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = ZOHO_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              Privacy
+      <section className="bg-[var(--zb-ink)] px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="font-heading text-4xl font-extrabold leading-[1.08] tracking-tight text-[#FBF6EE] sm:text-5xl">
+            Let clients pay when they book. <span className="text-primary">Start free.</span>
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-[#FBF6EE]/75">
+            UPI and cards at checkout, a GST invoice on every paid booking, and payouts to your bank. {FREE_PLAN.name} costs {FREE_MO} a month.
+          </p>
+          <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
+            <StartCta slot="final" track={track} />
+            <Link to="/pricing" className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-[#FBF6EE] hover:no-underline hover:opacity-80">
+              Compare plans and pricing <ArrowRight size={15} aria-hidden />
             </Link>
-            <Link to="/help" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = ZOHO_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              Help
-            </Link>
-            <a href="mailto:bolt@bookasloth.in" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = ZOHO_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              bolt@bookasloth.in
-            </a>
           </div>
         </div>
-      </footer>
-    </div>
+      </section>
+    </main>
   );
-};
-
-export default ZohoBookingsAlternative;
+}
