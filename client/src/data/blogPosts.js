@@ -2047,7 +2047,7 @@ export const BLOG_POSTS = [
       "h2": "If you mainly need paid 1:1 bookings in rupees"
     },
     {
-      "p": "Calendly is a strong scheduler, especially for teams that work in dollars. If your clients are in India and pay in rupees, Book A Sloth was built for that case. Clients book at bookasloth.com/yourname and pay upfront by UPI, card or netbanking through Razorpay, and the booking confirms on payment. Confirmations and reminders go out on email and WhatsApp, and it syncs both ways with Google Calendar and creates Google Meet links. The free plan has no subscription and takes 5% per paid booking; Sloth Active is ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. It does not do multi-staff calendars or charge in foreign currencies. See [pricing](/pricing) or the [Calendly alternative](/lp/calendly-alternative) page for a side-by-side."
+      "p": "Calendly is a strong scheduler, especially for teams that work in dollars. If your clients are in India and pay in rupees, Book A Sloth was built for that case. Clients book at bookasloth.com/yourname and pay upfront by UPI, card or netbanking through Razorpay, and the booking confirms on payment. Confirmations and reminders go out on email and WhatsApp, and it syncs both ways with Google Calendar and creates Google Meet links. The free plan has no subscription and takes 5% per paid booking; Sloth Active is ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. It does not do multi-staff calendars or charge in foreign currencies. See [pricing](/pricing) or the [Calendly alternative](/compare/calendly-alternative) page for a side-by-side."
     },
     {
       "p": "Comparing more tools? Our [best appointment booking apps in India](/blog/best-appointment-booking-apps-india) list puts Calendly, Zoho Bookings, Cal.com, Setmore and others in one ₹ table. If you sell sessions on Topmate, see [Topmate's commission and fees](/blog/topmate-commission)."
@@ -2283,7 +2283,7 @@ export const BLOG_POSTS = [
       "h2": "How Book A Sloth handles UPI at booking"
     },
     {
-      "p": "Book A Sloth is an India-first booking page. Clients choose a slot at bookasloth.com/yourname, verify their phone by OTP, and pay upfront by UPI, card or netbanking through Razorpay. The booking confirms automatically on payment, and email and WhatsApp confirmations and reminders follow. It syncs both ways with Google Calendar and creates Google Meet links. The free plan has no subscription and takes 5% per paid booking; Sloth Active is ₹399 a month (GST included) with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. It works in rupees only and does not offer multi-staff calendars. See how [payments](/features/payments) work, or the [Calendly alternative](/lp/calendly-alternative) comparison."
+      "p": "Book A Sloth is an India-first booking page. Clients choose a slot at bookasloth.com/yourname, verify their phone by OTP, and pay upfront by UPI, card or netbanking through Razorpay. The booking confirms automatically on payment, and email and WhatsApp confirmations and reminders follow. It syncs both ways with Google Calendar and creates Google Meet links. The free plan has no subscription and takes 5% per paid booking; Sloth Active is ₹399 a month (GST included) with 0% commission. Razorpay's gateway fee of about 2.4% applies on both. It works in rupees only and does not offer multi-staff calendars. See how [payments](/features/payments) work, or the [Calendly alternative](/compare/calendly-alternative) comparison."
     },
     {
       "faq": [
@@ -2572,7 +2572,7 @@ export const BLOG_POSTS = [
       "h2": "Where Book A Sloth fits"
     },
     {
-      "p": "Book A Sloth is a booking page for Indian professionals who already have clients and want to keep more of each fee. Clients book at bookasloth.com/yourname and pay upfront by UPI, card or netbanking through Razorpay, and the booking confirms on payment. You get email and WhatsApp confirmations and reminders, two-way Google Calendar sync, Google Meet links and GST invoices. The free plan takes 5% per paid booking with no subscription; Sloth Active is ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Razorpay's gateway fee of about 2.4% applies to both. It is India-focused (rupee payments only) and has no multi-staff calendars. See [pricing](/pricing) or the full [Topmate vs Book A Sloth](/lp/topmate-vs-bookasloth) comparison, and our [best appointment booking apps in India](/blog/best-appointment-booking-apps-india) list for other options."
+      "p": "Book A Sloth is a booking page for Indian professionals who already have clients and want to keep more of each fee. Clients book at bookasloth.com/yourname and pay upfront by UPI, card or netbanking through Razorpay, and the booking confirms on payment. You get email and WhatsApp confirmations and reminders, two-way Google Calendar sync, Google Meet links and GST invoices. The free plan takes 5% per paid booking with no subscription; Sloth Active is ₹399 a month or ₹3,599 a year, GST included, with 0% commission. Razorpay's gateway fee of about 2.4% applies to both. It is India-focused (rupee payments only) and has no multi-staff calendars. See [pricing](/pricing) or the full [Topmate vs Book A Sloth](/compare/topmate-alternative) comparison, and our [best appointment booking apps in India](/blog/best-appointment-booking-apps-india) list for other options."
     },
     {
       "faq": [
@@ -5683,7 +5683,7 @@ export const BLOG_POSTS = [
       "p": "A good poll flow is just three moves: [pick your times, share the link, and book the winner](https://calendly.com/scheduling/meeting-polls.html). That's it. If you find yourself building a grid in Google Sheets, color-coding cells, and pinging people to fill their row, you've rebuilt a worse version of a tool that already exists."
     },
     {
-      "p": "For the meetings that are really one-on-one — client calls, mentoring, interviews — skip the poll entirely. Send a booking link and let people self-serve. That's the calm path: [group scheduling without the spreadsheet](/blog/how-to-book-an-appointment-online) for the group case, and a [personal booking page](/be-a-sloth) for the rest. If you're weighing tools for the solo-creator version of this, our [Topmate alternative](/lp/topmate-vs-bookasloth) breakdown covers the options, and a simple [30-minute call setup](/blog/30-minute-call-setup) is often all you need."
+      "p": "For the meetings that are really one-on-one — client calls, mentoring, interviews — skip the poll entirely. Send a booking link and let people self-serve. That's the calm path: [group scheduling without the spreadsheet](/blog/how-to-book-an-appointment-online) for the group case, and a [personal booking page](/be-a-sloth) for the rest. If you're weighing tools for the solo-creator version of this, our [Topmate alternative](/compare/topmate-alternative) breakdown covers the options, and a simple [30-minute call setup](/blog/30-minute-call-setup) is often all you need."
     },
     {
       "h2": "Conclusion: poll for groups, link for one-on-ones"
@@ -9036,7 +9036,7 @@ export const BLOG_POSTS = [
       "p": "A clean booking does four things: it shows the expert's real open slots so you are not negotiating times; it collects payment at booking, so the session is committed on both sides; it sends the meeting link and reminders automatically; and it keeps a record — an invoice, a receipt — so it is a real transaction."
     },
     {
-      "p": "This is exactly what [Book A Sloth](/) gives the expert's side: [one link that books the slot and collects payment](/features/online-scheduling), UPI and Razorpay, auto GST invoices for Indian experts, Google Meet built in, and email plus WhatsApp reminders. If the expert you want does not have a link like this yet, that is fine — but the smoothest ones already do. Choosing between platforms? This [Topmate alternative breakdown](/lp/topmate-vs-bookasloth) covers what to look for. Paying also changes the relationship: when you make a fair exchange for their time, you both treat the session as real work. Free advice gets free effort."
+      "p": "This is exactly what [Book A Sloth](/) gives the expert's side: [one link that books the slot and collects payment](/features/online-scheduling), UPI and Razorpay, auto GST invoices for Indian experts, Google Meet built in, and email plus WhatsApp reminders. If the expert you want does not have a link like this yet, that is fine — but the smoothest ones already do. Choosing between platforms? This [Topmate alternative breakdown](/compare/topmate-alternative) covers what to look for. Paying also changes the relationship: when you make a fair exchange for their time, you both treat the session as real work. Free advice gets free effort."
     },
     {
       "h2": "The calm way to do this"
@@ -11381,7 +11381,7 @@ export const BLOG_POSTS = [
       "p": "If you are the one sending these invitations, chasing confirmations is its own part-time job. Candidates go quiet, time zones get muddled, and you end up refreshing your inbox instead of hiring. It helps to start with a clear [interview calling message](/blog/interview-calling-message) that includes a slot link."
     },
     {
-      "p": "There is a calmer way. Instead of proposing a time and hoping for a \"yes,\" you share one link, the candidate picks a slot that is actually free, and the confirmation and reminders send themselves. The time saved is not small: availability-based back-and-forth burns [243 minutes of coordination per hire versus 27 minutes when the candidate self-schedules](https://candidate.fyi/post/interview-confirmation-email). That is what Book A Sloth does — a [Topmate-style booking link that removes the back-and-forth](/lp/topmate-vs-bookasloth) and syncs straight to your calendar. You send [one link that books and confirms the slot](/blog/how-to-book-an-appointment-online), the schedule fills itself, and the acknowledgement email you were waiting for stops being something you have to chase. [Set up online scheduling](/features/online-scheduling), [start free](/be-a-sloth), and let [Book A Sloth](/) do the chasing for you."
+      "p": "There is a calmer way. Instead of proposing a time and hoping for a \"yes,\" you share one link, the candidate picks a slot that is actually free, and the confirmation and reminders send themselves. The time saved is not small: availability-based back-and-forth burns [243 minutes of coordination per hire versus 27 minutes when the candidate self-schedules](https://candidate.fyi/post/interview-confirmation-email). That is what Book A Sloth does — a [Topmate-style booking link that removes the back-and-forth](/compare/topmate-alternative) and syncs straight to your calendar. You send [one link that books and confirms the slot](/blog/how-to-book-an-appointment-online), the schedule fills itself, and the acknowledgement email you were waiting for stops being something you have to chase. [Set up online scheduling](/features/online-scheduling), [start free](/be-a-sloth), and let [Book A Sloth](/) do the chasing for you."
     },
     {
       "faq": [
@@ -11729,7 +11729,7 @@ export const BLOG_POSTS = [
       ]
     },
     {
-      "p": "Sell across several channels rather than one, so a single algorithm change can't end your business. This is the same playbook creators use to move off high-commission marketplaces — see our [Topmate alternative breakdown](/lp/topmate-vs-bookasloth) for how the math changes when you own the audience and the checkout."
+      "p": "Sell across several channels rather than one, so a single algorithm change can't end your business. This is the same playbook creators use to move off high-commission marketplaces — see our [Topmate alternative breakdown](/compare/topmate-alternative) for how the math changes when you own the audience and the checkout."
     },
     {
       "h2": "Handle the legal and tax side (India notes)"
@@ -12224,7 +12224,7 @@ export const BLOG_POSTS = [
       "p": "Use your own booking link as your home base, and treat marketplaces as extra shelves — not your only shop. The difference is control and cost."
     },
     {
-      "p": "A marketplace brings discovery but takes a cut and owns the relationship. Your own link keeps the full fee and the client. If you're weighing the popular platforms, [our comparison of the best Topmate alternatives](/lp/topmate-vs-bookasloth) lays out the trade-offs. The strongest setup is both: be discoverable where mentees search, but send everyone you already know to a link that's yours."
+      "p": "A marketplace brings discovery but takes a cut and owns the relationship. Your own link keeps the full fee and the client. If you're weighing the popular platforms, [our comparison of the best Topmate alternatives](/compare/topmate-alternative) lays out the trade-offs. The strongest setup is both: be discoverable where mentees search, but send everyone you already know to a link that's yours."
     },
     {
       "h2": "Give them a way to book — and pay"
@@ -12627,7 +12627,7 @@ export const BLOG_POSTS = [
       "p": "You add your service and price, connect Google Calendar, and share one link. Clients pick a slot and pay by UPI or Razorpay on the spot, you get an auto GST invoice, and email plus WhatsApp reminders go out on their own. Google Meet links are generated automatically for video calls. No front desk, no plugins, no chasing."
     },
     {
-      "p": "It fits pretty much anyone selling time — a consultant taking a bookable 30-minute call, a tutor booking sessions, a therapist or CA managing a full calendar. If you're comparing options, here's [how it stacks up against Topmate and Calendly](/lp/topmate-vs-bookasloth) for Indian professionals specifically. Or see [eight appointment scheduling apps compared in rupees](/blog/best-appointment-booking-apps-india)."
+      "p": "It fits pretty much anyone selling time — a consultant taking a bookable 30-minute call, a tutor booking sessions, a therapist or CA managing a full calendar. If you're comparing options, here's [how it stacks up against Topmate and Calendly](/compare/topmate-alternative) for Indian professionals specifically. Or see [eight appointment scheduling apps compared in rupees](/blog/best-appointment-booking-apps-india)."
     },
     {
       "h2": "Conclusion: start with one link"
@@ -17142,7 +17142,7 @@ export const BLOG_POSTS = [
         "p": "Which is why there is a free tier. [Start there, take some bookings, and switch when the arithmetic turns](/blog/you-only-pay-when-you-earn) — and it turns early. At ₹2,000 a session, the annual plan pays for itself somewhere in your first month."
       },
       {
-        "p": "The whole reasoning is in [the 0% commission bet](/blog/zero-commission-bet). The numbers are on [the pricing page](/pricing). The comparison, if you want it laid out side by side, is [here](/lp/topmate-vs-bookasloth)."
+        "p": "The whole reasoning is in [the 0% commission bet](/blog/zero-commission-bet). The numbers are on [the pricing page](/pricing). The comparison, if you want it laid out side by side, is [here](/compare/topmate-alternative)."
       },
       {
         "faq": [
@@ -19434,7 +19434,7 @@ export const BLOG_POSTS = [
         "p": "It is a claim about fit. A tool built somewhere else will keep asking you to work in a way that country works, and you will keep quietly patching the gap with WhatsApp messages, screenshots and a spreadsheet. That patching is invisible, unpaid, and it never ends. If WhatsApp is still your booking system, here are [three ways to manage appointments on WhatsApp](/blog/manage-appointments-on-whatsapp)."
       },
       {
-        "p": "We are building the version where the patching is not required. That is the whole pitch. If you want it laid out side by side, there is [a comparison page](/lp/calendly-alternative)."
+        "p": "We are building the version where the patching is not required. That is the whole pitch. If you want it laid out side by side, there is [a comparison page](/compare/calendly-alternative)."
       },
       {
         "faq": [

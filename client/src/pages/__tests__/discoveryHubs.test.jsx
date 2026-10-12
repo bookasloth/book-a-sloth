@@ -9,7 +9,7 @@ afterEach(cleanup);
 
 const renderAt = (Comp) => render(<MemoryRouter><Comp /></MemoryRouter>);
 
-// The whole point of these hubs is de-orphaning: every /for/* and /lp/* landing
+// The whole point of these hubs is de-orphaning: every /for/* and /compare/* landing
 // page (both hide the global nav) must be reachable from a crawlable static link.
 describe('<Solutions> hub', () => {
   test('links every profession landing page (/for/*)', () => {
@@ -27,10 +27,10 @@ describe('<Solutions> hub', () => {
 });
 
 describe('<Compare> hub', () => {
-  test('links every competitor comparison page (/lp/*)', () => {
+  test('links every competitor comparison page (/compare/*)', () => {
     const { container } = renderAt(Compare);
-    ['/lp/calendly-alternative', '/lp/acuity-alternative', '/lp/setmore-alternative',
-      '/lp/simplybook-alternative', '/lp/zoho-bookings-alternative', '/lp/topmate-vs-bookasloth']
+    ['/compare/calendly-alternative', '/compare/acuity-alternative', '/compare/setmore-alternative',
+      '/compare/simplybook-alternative', '/compare/zoho-bookings-alternative', '/compare/topmate-alternative']
       .forEach((href) => expect(container.querySelector(`a[href="${href}"]`), `missing ${href}`).toBeTruthy());
   });
 

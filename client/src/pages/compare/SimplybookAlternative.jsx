@@ -26,9 +26,10 @@ import { ALL_PLANS } from "../../data/plans";
 import useFeeOnly from "../../hooks/useFeeOnly";
 import { TESTIMONIALS } from "../../data/testimonials";
 import { LpCta, AccentCard as KitAccentCard, Avatar as KitAvatar, fmtINR, BAS_ORANGE, BAS_CTA, BAS_PEACH } from "./_altKit";
+import { useHideChrome } from "../../context/ChromeContext";
 
 /*
-  /lp/simplybook-alternative
+  /compare/simplybook-alternative
   Mimics SimplyBook.me's design language — their blue palette, gradient cards,
   rounded icon containers — but positions Book A Sloth as the simpler,
   India-native alternative. "100 features you'll never use vs the 10 that matter."
@@ -82,7 +83,7 @@ const PAIN_POINTS = [
     icon: Eye,
     color: SB_BLUE,
     title: "Opaque pricing",
-    body: "SimplyBook hides real costs behind a 14-day trial and complex add-on modules. You don't know what you'll pay until you're already invested.",
+    body: "SimplyBook's free plan stops at 50 bookings a month, and SMS or WhatsApp reminders are paid credits on top of your plan.",
     bas: "BAS shows every plan, every price, upfront. In rupees.",
   },
   {
@@ -96,32 +97,32 @@ const PAIN_POINTS = [
     icon: IndianRupee,
     color: "#059669",
     title: "No India payments",
-    body: "No UPI. No Razorpay. No GST invoices. SimplyBook was built for Western markets — Indian clients can't pay the way they want to.",
+    body: "Razorpay and UPI aren't among the payment gateways on SimplyBook's pricing page, and GST invoices aren't listed. Indian clients can't pay the way they want to.",
     bas: "BAS collects UPI/cards at booking time, settled to your Indian bank account.",
   },
   {
     icon: Clock,
     color: BAS_ORANGE,
-    title: "24/5 support + trial pressure",
-    body: "Support vanishes on weekends. And the 14-day trial clock starts ticking the moment you sign up — convert or lose everything.",
-    bas: "BAS has a free plan forever. No trial. No pressure. No deadline.",
+    title: "Priced in euros",
+    body: "Paid plans are billed in euros, from €11.90 a month (Basic, billed yearly).",
+    bas: "BAS bills in ₹ with GST included, and the free plan has no booking cap.",
   },
 ];
 
 const COMPARE = [
-  { f: "Upfront pricing (no trial wall)", basT: "Yes", sbT: "No — 14-day trial first", sb: false },
+  { f: "Free plan booking limit", basT: "Unlimited", sbT: "50 / month", sb: false },
   { f: "UPI / Razorpay payments at booking", basT: "Built in", sbT: "No", sb: false },
   { f: "GST invoices — automatic", basT: "Yes", sbT: "No", sb: false },
-  { f: "WhatsApp reminders", basT: "Yes", sbT: "No", sb: false },
-  { f: "INR billing (₹)", basT: "Yes", sbT: "USD / EUR only", sb: false },
+  { f: "WhatsApp reminders", basT: "Yes", sbT: "Paid credits", sb: false },
+  { f: "INR billing (₹)", basT: "Yes", sbT: "EUR only", sb: false },
   { f: "Setup time", basT: "~3 minutes", sbT: "30-60 minutes", sb: false },
-  { f: "0% commission on Sloth Active", basT: "Yes", sbT: "Varies by plan", sb: false },
-  { f: "Starting price (paid)", basT: "₹0 free · ₹399/mo paid", sbT: "~₹700/mo (USD)", sb: false },
+  { f: "Commission on bookings", basT: "0% on Sloth Active", sbT: "None", sb: true },
+  { f: "Starting price (paid)", basT: "₹0 free · ₹399/mo paid", sbT: "€11.90 / mo (Basic, yearly)", sb: false },
   { f: "Google Calendar sync", basT: "Yes", sbT: "Yes", sb: true },
   { f: "Custom booking page", basT: "Yes", sbT: "Yes", sb: true },
   { f: "Email reminders", basT: "Yes", sbT: "Yes", sb: true },
   { f: "Online payments (intl.)", basT: "Yes", sbT: "Yes", sb: true },
-  { f: "Free plan", basT: "Yes (forever)", sbT: "No — trial only", sb: false },
+  { f: "Free plan", basT: "Yes (forever)", sbT: "Yes (50 bookings / mo)", sb: true },
 ];
 
 const FAQS = [
@@ -139,7 +140,7 @@ const FAQS = [
   },
   {
     q: "Is Book A Sloth really free to start?",
-    a: "Yes. Our Sloth plan is free forever — not a 14-day trial. You get a booking page, Google Calendar sync, and email reminders at no cost. Upgrade only when you need payments or WhatsApp reminders.",
+    a: "Yes. Our Sloth plan is free forever with no booking cap. You get a booking page, UPI payments, GST invoices and Google Calendar sync at no cost (5% commission per booking). Upgrade to Sloth Active for 0% commission and WhatsApp reminders.",
   },
   {
     q: "How does pricing compare to SimplyBook.me?",
@@ -155,6 +156,8 @@ const FAQS = [
    PAGE
    ════════════════════════════════════════ */
 const SimplybookAlternative = () => {
+  // Legacy design — draws its own header/footer until rebuilt. Rebuilt pages drop this.
+  useHideChrome();
   const feeOnly = useFeeOnly();
   const plans = feeOnly ? ALL_PLANS.filter((p) => p.monthly !== 0) : ALL_PLANS;
   const utm = useUtm();
@@ -182,9 +185,9 @@ const SimplybookAlternative = () => {
         title="Best SimplyBook.me Alternative for India — Book A Sloth"
         description="Looking for a SimplyBook.me alternative? Book A Sloth gives you UPI payments, WhatsApp reminders, and GST invoices — with pricing you can actually see upfront."
         image={ogCard('lp-simplybook-alternative')}
-        canonical={`${SITE_URL}/lp/simplybook-alternative`}
+        canonical={`${SITE_URL}/compare/simplybook-alternative`}
         jsonLd={comparisonGraphJsonLd({
-          canonical: `${SITE_URL}/lp/simplybook-alternative`,
+          canonical: `${SITE_URL}/compare/simplybook-alternative`,
           name: "Best SimplyBook.me Alternative for India — Book A Sloth",
           description: "Book A Sloth gives you UPI payments, WhatsApp reminders, and GST invoices — with pricing you can see upfront. A SimplyBook.me alternative for India.",
           breadcrumbName: "SimplyBook.me Alternative",
@@ -277,7 +280,7 @@ const SimplybookAlternative = () => {
               <div className="w-full max-w-xs">
                 <SbCta slot="hero-google" label="Sign up with Google" variant="google" />
               </div>
-              <p className="text-xs text-gray-400">Free plan forever · No credit card · No 14-day trial</p>
+              <p className="text-xs text-gray-400">Free plan forever · No credit card · No booking cap</p>
             </div>
 
             {/* Feature pills */}
@@ -480,7 +483,7 @@ const SimplybookAlternative = () => {
                       Say Yes to<br />Book A Sloth.
                     </div>
                     <p className="mt-1 hidden text-xs sm:block" style={{ color: SB_BODY }}>
-                      Built for India. Priced in ₹. No trial games.
+                      Built for India. Priced in ₹.
                     </p>
                     <div className="mt-3 sm:max-w-[220px]">
                       <SbCta slot="compare-yes" label="Sign up with Google" variant="google" />
@@ -550,7 +553,7 @@ const SimplybookAlternative = () => {
               const big = isFree ? "Free" : (billingAnnual ? fmtINR(plan.yearly) : fmtINR(plan.monthly));
               const cadence = isFree ? "" : (billingAnnual ? "/ year" : "/ month");
               const sub = isFree
-                ? "Free forever — not a 14-day trial"
+                ? "Free forever, no booking cap"
                 : (billingAnnual ? `just ₹${perMo}/mo, billed yearly` : "billed monthly");
               const highlight = !!plan.recommended;
               const accent = highlight ? BAS_ORANGE : ACCENTS[i % ACCENTS.length];
@@ -699,7 +702,7 @@ const SimplybookAlternative = () => {
             <span style={{ color: BAS_ORANGE }}>Start free. Stay free.</span>
           </h2>
           <p className="mx-auto mt-4 max-w-md text-lg text-neutral-300">
-            Unlike SimplyBook&apos;s 14-day trial, our Sloth plan is free forever. Upgrade when you&apos;re ready — not when a countdown says so.
+            Our Sloth plan is free forever with no booking cap. Upgrade when you&apos;re ready.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3">
             <div className="w-full max-w-xs">

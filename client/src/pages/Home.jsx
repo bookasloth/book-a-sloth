@@ -537,8 +537,8 @@ const Home = () => {
 
   // ── Competitor comparison tiles (favicons via Google's favicon service) ──
   const COMPETITORS = [
-    { name: "Topmate", domain: "topmate.io", href: "/lp/topmate-vs-bookasloth" },
-    { name: "Calendly", domain: "calendly.com", href: "/lp/calendly-alternative" },
+    { name: "Topmate", domain: "topmate.io", href: "/compare/topmate-alternative" },
+    { name: "Calendly", domain: "calendly.com", href: "/compare/calendly-alternative" },
     { name: "Cal.com", domain: "cal.com" }, // page not built yet → active tile, no link
     { name: "DaySchedule", domain: "dayschedule.com" }, // page not built yet
   ];

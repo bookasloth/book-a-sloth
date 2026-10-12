@@ -350,7 +350,7 @@ export default function EarningsCalculator() {
             </div>
             <p className="mt-3 text-[11px] leading-relaxed text-neutral-500">
               Topmate fees as published on <a href={TOPMATE_FEES.source} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">topmate.io</a> ({TOPMATE_FEES.checked}). Payment gateway charges apply on every platform and are left out of all rows. See the full{" "}
-              <Link to="/lp/topmate-vs-bookasloth" className="text-primary hover:underline">Topmate comparison</Link>.
+              <Link to="/compare/topmate-alternative" className="text-primary hover:underline">Topmate comparison</Link>.
             </p>
           </div>
 

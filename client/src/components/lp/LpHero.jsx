@@ -66,8 +66,8 @@ export default function LpHero() {
 
           <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-neutral-700 lg:mx-0">
             Sell sessions, host workshops, grow your business — all from a single link.
-            Keep <strong className="text-ink">100% of every booking</strong>, instead of
-            losing up to 30% to commission.
+            Pay <strong className="text-ink">0% commission</strong> on Sloth Active, instead of
+            giving Topmate 10% of every sale.
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-5 sm:flex-row lg:items-center">

@@ -5,7 +5,7 @@
   INR formatter, and the BAS brand palette.
 
   Each page keeps its own bespoke body + brand colours and passes its `slug`
-  (analytics) and brand `accent` down. Calendly (/lp/calendly-alternative) and
+  (analytics) and brand `accent` down. Calendly (/compare/calendly-alternative) and
   Topmate (TopmateVsBookASloth) deliberately keep their own bespoke primitives —
   different visual design — do NOT migrate them here.
 */

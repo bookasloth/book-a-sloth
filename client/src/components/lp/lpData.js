@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════
    lpData.js — single source of placeholder content for
-   /lp/topmate-vs-bookasloth (Topmate-style rebuild).
+   /compare/topmate-alternative (Topmate-style rebuild).
 
    PROFILES + COHORTS use testimonial avatars as PLACEHOLDERS. Swap the
    `img` / names here in ONE place when real creator profiles are chosen.
@@ -53,7 +53,7 @@ export const CAPABILITIES = [
   },
   {
     title: "Bundle your services",
-    body: "Package multiple sessions into one offer at a price you set. You keep 100% of it.",
+    body: "Package multiple sessions into one offer at a price you set, with 0% commission on Sloth Active.",
     preview: { kind: "bundle", title: "4-Session Coaching Pack", meta: "Save 20% vs single", price: "₹3,999", accent: "c-emerald" },
   },
   {
@@ -93,10 +93,10 @@ export const BENTO = [
    `win`: true = BAS advantage · null = parity (both ✓) · false = Topmate edge.
    ──────────────────────────────────────────────────────────────────── */
 export const COMPARE_TM = [
-  { f: "Commission on paid bookings",        bas: "0% — flat ₹10 / day",  tm: "Takes a cut of earnings", win: true },
+  { f: "Commission on paid bookings",        bas: "0% on Sloth Active",  tm: "10% of each sale", win: true },
   { f: "GST invoices — automatic",           bas: "Yes",                  tm: "No",                      win: true },
   { f: "WhatsApp reminders",                 bas: "Built in",             tm: "Email-first",             win: true },
-  { f: "Flat price (never scales w/ earnings)", bas: "Yes — ₹10 / day",  tm: "Fee grows as you earn",   win: true },
+  { f: "Flat price (never scales w/ earnings)", bas: "Yes — ₹399 / mo",  tm: "Fee grows as you earn",   win: true },
   { f: "Your client list & data",            bas: "100% yours, no lock-in", tm: "Held on the platform",  win: true },
   { f: "UPI / INR payments at booking",      bas: "Yes",                  tm: "Yes",                     win: null },
   { f: "1:1 sessions, webinars & products",  bas: "Yes",                  tm: "Yes",                     win: null },
@@ -107,13 +107,13 @@ export const COMPARE_TM = [
 
 /* ─── Block 7: FAQ (objection handling; answers front-loaded for AI/GEO) ─── */
 export const FAQ = [
-  { q: "Does Book A Sloth take a commission like Topmate?", a: "No. On every paid plan Book A Sloth takes 0% commission — just a flat ₹10 per booking plus your payment gateway's standard charge. Topmate takes a cut of what you earn, so the more you make, the more it costs you. With Book A Sloth the price stays flat." },
+  { q: "Does Book A Sloth take a commission like Topmate?", a: "No. On every paid plan Book A Sloth takes 0% commission — just the flat ₹399/month Sloth Active plan. Your client pays a flat ₹10 + GST booking fee, and your payment gateway's standard charge applies. Topmate takes a cut of what you earn, so the more you make, the more it costs you. With Book A Sloth the price stays flat." },
   { q: "Is it really 0% commission?", a: "Yes — on every paid plan, Book A Sloth takes 0% commission. The only per-booking cost is a flat ₹10 platform fee plus your payment gateway's standard charge. Nothing is skimmed as commission." },
   { q: "What does Rs. 10 / Day include?", a: "Unlimited bookings, up-front payments, WhatsApp + email reminders, your own SlothPage, and automatic Google Calendar + Meet. One flat price — it never scales with how much you earn." },
   { q: "Can my clients pay by UPI, and do I get paid in ₹?", a: "Yes. Clients pay up-front by UPI or card through Razorpay, and your earnings settle straight to your Indian bank account in ₹ — no USD, no foreign-currency conversion." },
   { q: "Do I get GST invoices automatically?", a: "Yes. Book A Sloth generates GST-ready invoices automatically for your bookings — no separate accounting tool needed. Topmate doesn't do this for you." },
   { q: "How do I switch from Topmate?", a: "Just share your new SlothPage link. There's nothing to migrate and no lock-in — your clients book in seconds and your client list stays yours. You can even run both side by side while you move over." },
-  { q: "Is there a free plan?", a: "Yes. The Starter plan is free with a small 5% commission — still far below Topmate. Upgrade to a 0%-commission paid plan whenever you're ready." },
+  { q: "Is there a free plan?", a: "Yes. The Sloth plan is free with a 5% commission, half of Topmate's 10%. Upgrade to a 0%-commission paid plan whenever you're ready." },
   { q: "How do payouts work?", a: "Clients pay up-front through Razorpay when they book. Your earnings are settled to you after the session completes." },
-  { q: "Is Topmate better than Book A Sloth for anything?", a: "Honestly, yes — Topmate has a larger creator discovery network today, so if you rely on its marketplace to find you new audience, that's its edge. Book A Sloth wins on keeping more of your money: 0% commission on paid plans, a flat ₹10/day price, automatic GST invoices, and WhatsApp reminders built in." },
+  { q: "Is Topmate better than Book A Sloth for anything?", a: "Honestly, yes — Topmate has a larger creator discovery network today, so if you rely on its marketplace to find you new audience, that's its edge. Book A Sloth wins on keeping more of your money: 0% commission on paid plans, a flat ₹399/month price, automatic GST invoices, and WhatsApp reminders built in." },
 ];

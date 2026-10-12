@@ -10,7 +10,9 @@
     },
     { "source": "/blogs", "destination": "/blog", "statusCode": 301 },
     { "source": "/blogs/:slug", "destination": "/blog/:slug", "statusCode": 301 },
-    { "source": "/blog/topmate-alternative", "destination": "/lp/topmate-vs-bookasloth", "statusCode": 301 },
+    { "source": "/blog/topmate-alternative", "destination": "/compare/topmate-alternative", "statusCode": 301 },
+    { "source": "/lp/topmate-vs-bookasloth", "destination": "/compare/topmate-alternative", "statusCode": 301 },
+    { "source": "/lp/:competitor(calendly|setmore|acuity|simplybook|zoho-bookings)-alternative", "destination": "/compare/:competitor-alternative", "statusCode": 301 },
     { "source": "/blog/scheduling-terms-glossary", "destination": "/glossary/buffer-time", "statusCode": 301 },
     { "source": "/for/doctors-india", "destination": "/for/doctors", "statusCode": 301 }
   ],

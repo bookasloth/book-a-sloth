@@ -17,9 +17,10 @@ import LpTestimonials from "../../components/lp/LpTestimonials";
 import LpBento from "../../components/lp/LpBento";
 import LpCompareTable from "../../components/lp/LpCompareTable";
 import LpFaq from "../../components/lp/LpFaq";
+import { useHideChrome } from "../../context/ChromeContext";
 
 /* ════════════════════════════════════════════════════════════════════
-   /lp/topmate-vs-bookasloth — Topmate-style conversion landing page.
+   /compare/topmate-alternative — Topmate-style conversion landing page.
    Single goal: start a 0%-commission host signup (→ /be-a-sloth).
    No global Navbar/footer (App.jsx hides nav on /lp). No exit links.
    Blocks live in client/src/components/lp/*; content in lpData.js.
@@ -28,12 +29,14 @@ import LpFaq from "../../components/lp/LpFaq";
 const SLUG = "topmate-vs-bookasloth";
 
 const TopmateVsBookASloth = () => {
+  // Legacy design — draws its own header/footer until rebuilt. Rebuilt pages drop this.
+  useHideChrome();
   const utm = useUtm();
 
   useDocumentMeta({
     title: "Topmate Alternative — 0% Commission Booking Page | Book A Sloth",
     description:
-      "Book A Sloth is the 0% commission Topmate alternative for Indian creators. Just Rs. 10 / Day — UPI & GST built in. Switch and keep 100% of every booking.",
+      "Book A Sloth is the 0% commission Topmate alternative for Indian creators. Just Rs. 10 / Day — UPI & GST built in. Switch and pay 0% commission.",
   });
 
   useEffect(() => {
@@ -48,9 +51,9 @@ const TopmateVsBookASloth = () => {
         title="Book A Sloth vs Topmate — A Better Way to Get Booked"
         description="Compare Book A Sloth and Topmate for creators and consultants. See pricing, payouts, reminders, and booking features side by side."
         image={ogCard('lp-topmate-vs-bookasloth')}
-        canonical={`${SITE_URL}/lp/topmate-vs-bookasloth`}
+        canonical={`${SITE_URL}/compare/topmate-alternative`}
         jsonLd={comparisonGraphJsonLd({
-          canonical: `${SITE_URL}/lp/topmate-vs-bookasloth`,
+          canonical: `${SITE_URL}/compare/topmate-alternative`,
           name: "Book A Sloth vs Topmate — A Better Way to Get Booked",
           description: "Compare Book A Sloth and Topmate for creators and consultants — pricing, payouts, reminders, and booking features side by side.",
           breadcrumbName: "Book A Sloth vs Topmate",

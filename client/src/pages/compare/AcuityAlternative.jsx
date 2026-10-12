@@ -28,9 +28,10 @@ import { ALL_PLANS } from "../../data/plans";
 import useFeeOnly from "../../hooks/useFeeOnly";
 import { TESTIMONIALS } from "../../data/testimonials";
 import { LpCta, AccentCard as KitAccentCard, Avatar as KitAvatar, fmtINR, BAS_ORANGE, BAS_CTA, BAS_PEACH } from "./_altKit";
+import { useHideChrome } from "../../context/ChromeContext";
 
 /*
-  /lp/acuity-alternative
+  /compare/acuity-alternative
   Mimics Acuity Scheduling's minimal flat design language — their blue palette,
   grid layouts, industry tabs — but with Book A Sloth content showing why BAS
   is better for Indian professionals. Acuity blue as trust accent, BAS orange CTAs.
@@ -120,13 +121,13 @@ const FEATURES = [
 ];
 
 const COMPARE = [
-  { f: "Take payment at booking (UPI / cards)", basT: "Built in", aT: "USD only", a: false },
+  { f: "UPI payments at booking", basT: "Built in", aT: "No (Stripe, Square, PayPal)", a: false },
   { f: "GST invoices — automatic", basT: "Yes", aT: "No", a: false },
   { f: "WhatsApp reminders", basT: "Yes", aT: "No", a: false },
   { f: "INR billing (₹)", basT: "Yes", aT: "USD only", a: false },
   { f: "UPI / Razorpay integration", basT: "Native", aT: "No", a: false },
   { f: "0% commission on Sloth Active", basT: "Yes", aT: "N/A", a: false },
-  { f: "Starting price", basT: "₹0 free · ₹399/mo paid", aT: "~₹1,350 / month (USD)", a: false },
+  { f: "Starting price", basT: "₹0 free · ₹399/mo paid", aT: "$16 / mo (Starter, yearly)", a: false },
   { f: "Intake forms", basT: "Yes", aT: "Yes", a: true },
   { f: "Google Calendar sync", basT: "Yes", aT: "Yes", a: true },
   { f: "Email reminders", basT: "Yes", aT: "Yes", a: true },
@@ -174,6 +175,8 @@ const FAQ = [
    PAGE
    ════════════════════════════════════════ */
 const AcuityAlternative = () => {
+  // Legacy design — draws its own header/footer until rebuilt. Rebuilt pages drop this.
+  useHideChrome();
   const feeOnly = useFeeOnly();
   const plans = feeOnly ? ALL_PLANS.filter((p) => p.monthly !== 0) : ALL_PLANS;
   const utm = useUtm();
@@ -202,9 +205,9 @@ const AcuityAlternative = () => {
         title="The Best Acuity Scheduling Alternative for India — Book A Sloth"
         description="Looking for an Acuity alternative? Book A Sloth adds UPI payments, WhatsApp reminders, GST invoices, and a booking page built for Indian professionals."
         image={ogCard('lp-acuity-alternative')}
-        canonical={`${SITE_URL}/lp/acuity-alternative`}
+        canonical={`${SITE_URL}/compare/acuity-alternative`}
         jsonLd={comparisonGraphJsonLd({
-          canonical: `${SITE_URL}/lp/acuity-alternative`,
+          canonical: `${SITE_URL}/compare/acuity-alternative`,
           name: "The Best Acuity Scheduling Alternative for India — Book A Sloth",
           description: "Book A Sloth adds UPI payments, WhatsApp reminders, GST invoices, and a booking page built for Indian professionals — an Acuity Scheduling alternative.",
           breadcrumbName: "Acuity Scheduling Alternative",
@@ -595,7 +598,7 @@ const AcuityAlternative = () => {
             Pricing that makes sense in India
           </h2>
           <p className="mt-2 text-center" style={{ color: ACU_BODY }}>
-            Acuity starts at ~₹1,350/mo (USD). We start at ₹0. All plans billed in ₹, GST included.
+            Acuity starts at $16/mo (billed yearly in USD, no free plan). We start at ₹0. All plans billed in ₹, GST included.
           </p>
 
           <div className="mt-6 flex justify-center">

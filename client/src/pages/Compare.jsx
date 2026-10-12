@@ -1,7 +1,7 @@
-// /compare — hub page that lists every competitor comparison page (/lp/*).
+// /compare — hub page that lists every competitor comparison page (/compare/*).
 // Like /solutions, its job is to be a real "how do we compare" directory AND to
-// hold crawlable internal links to the /lp/* alternative pages in static HTML so
-// they aren't orphaned in the SEO audit. The /lp/* pages hide the global nav, so
+// hold crawlable internal links to the /compare/* alternative pages in static HTML so
+// they aren't orphaned in the SEO audit. The /compare/* pages hide the global nav, so
 // this footer-linked hub is their main crawlable entry point.
 import { Link } from 'react-router-dom';
 import Seo from '../components/common/Seo';
@@ -12,20 +12,20 @@ const TITLE = 'Book A Sloth vs the alternatives | Compare';
 const DESCRIPTION =
   'See how Book A Sloth compares to Calendly, Acuity, Setmore, SimplyBook, Zoho Bookings and Topmate — 0% commission, upfront payments and reminders built for India.';
 
-// Each competitor page under /lp/*. Kept as an explicit list (only six, stable)
+// Each competitor page under /compare/*. Kept as an explicit list (only six, stable)
 // rather than parsed from routes — clearer and easy to reorder.
 const COMPETITORS = [
-  { name: 'Calendly', href: '/lp/calendly-alternative',
+  { name: 'Calendly', href: '/compare/calendly-alternative',
     blurb: 'A Calendly alternative that also collects payment upfront and speaks UPI, WhatsApp and GST.' },
-  { name: 'Acuity Scheduling', href: '/lp/acuity-alternative',
+  { name: 'Acuity Scheduling', href: '/compare/acuity-alternative',
     blurb: 'Acuity-grade scheduling without the price tag — deposits, reminders and 0% commission.' },
-  { name: 'Setmore', href: '/lp/setmore-alternative',
+  { name: 'Setmore', href: '/compare/setmore-alternative',
     blurb: 'Everything Setmore does for bookings, plus prepaid slots and India-first payments.' },
-  { name: 'SimplyBook.me', href: '/lp/simplybook-alternative',
+  { name: 'SimplyBook.me', href: '/compare/simplybook-alternative',
     blurb: 'A simpler SimplyBook alternative — go live in minutes, keep 100% of every fee.' },
-  { name: 'Zoho Bookings', href: '/lp/zoho-bookings-alternative',
+  { name: 'Zoho Bookings', href: '/compare/zoho-bookings-alternative',
     blurb: 'Booking + payments without the Zoho suite lock-in, priced from about ₹10 a day.' },
-  { name: 'Topmate', href: '/lp/topmate-vs-bookasloth',
+  { name: 'Topmate', href: '/compare/topmate-alternative',
     blurb: 'Sell 1:1s, webinars and bundles like Topmate — with 0% commission on what you earn.' },
 ];
 
