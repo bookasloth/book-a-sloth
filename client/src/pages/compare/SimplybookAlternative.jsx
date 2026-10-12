@@ -259,7 +259,7 @@ function BookingMeter() {
         <div className="mx-auto mt-6 max-w-sm"><Gauge value={n} label={n} sub="bookings a month" /></div>
         <ul className="mt-4 space-y-2 text-sm text-[color:var(--navy-soft)]">
           <li className="flex items-center gap-2"><Swatch color={C.steel} /> SimplyBook.me free plan: up to {CAP}</li>
-          <li className="flex items-center gap-2"><Swatch color={C.orange} thin /> Book A Sloth {FREE}: no cap</li>
+          <li className="flex items-center gap-2"><Swatch color={C.orange} thin /> Book A Sloth free plan: no cap</li>
         </ul>
       </div>
 
@@ -362,14 +362,14 @@ const SimplybookAlternative = () => {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--navy-soft)]">Free-plan booking meter</p>
               <span className="rounded-full bg-[color:var(--sky)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--navy)]">per month</span>
             </div>
-            <div className="mt-4"><Gauge label="No cap" sub={`on Book A Sloth ${FREE}`} /></div>
+            <div className="mt-4"><Gauge label="No cap" sub={`on the free ${FREE} plan`} /></div>
             <ul className="mt-4 space-y-3 border-t border-black/5 pt-4 text-sm">
               <li className="flex items-center justify-between gap-3">
                 <span className="flex items-center gap-2 text-[color:var(--navy-soft)]"><Swatch color={C.steel} />SimplyBook.me free plan</span>
                 <span className="font-heading font-bold">Up to {CAP}</span>
               </li>
               <li className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2 text-[color:var(--navy-soft)]"><Swatch color={C.orange} thin />Book A Sloth {FREE}</span>
+                <span className="flex items-center gap-2 text-[color:var(--navy-soft)]"><Swatch color={C.orange} thin />Book A Sloth free plan</span>
                 <span className="font-heading font-bold">No cap</span>
               </li>
             </ul>
