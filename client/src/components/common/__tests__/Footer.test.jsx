@@ -43,7 +43,11 @@ describe('<Footer>', () => {
     expect(screen.getByRole('link', { name: 'Privacy' }).getAttribute('href')).toBe('/privacy');
     expect(screen.getByRole('link', { name: 'Refund' }).getAttribute('href')).toBe('/refund');
     // Company ownership line — required by the Google OAuth verification checklist.
-    expect(screen.getByText(/Operated by Timewheel Internet Private Limited/i)).toBeTruthy();
+    // "Timewheel Internet" is a dofollow backlink to Timewheel's web-development page.
+    const operator = screen.getByRole('link', { name: 'Timewheel Internet' });
+    expect(operator.getAttribute('href')).toBe('https://timewheel.co.in/web-development-company-in-nagpur');
+    expect(operator.getAttribute('rel')).toBe('noopener');
+    expect(operator.closest('span').textContent).toMatch(/Operated and Hand crafted by the humans of Timewheel Internet Private Limited/);
     const mail = screen
       .getAllByRole('link')
       .find((a) => a.getAttribute('href') === 'mailto:bolt@bookasloth.in');
@@ -65,8 +69,9 @@ describe('<Footer>', () => {
     // CTA band survives
     expect(screen.getByText(/Power up your/i)).toBeTruthy();
     expect(screen.getByRole('link', { name: "Let's Get Started" })).toBeTruthy();
-    // legal bar survives (Bolt attribution + a legal link)
-    expect(screen.getByRole('link', { name: 'Bolt the Sloth' })).toBeTruthy();
+    // legal bar survives (operator backlink + a legal link); Bolt attribution removed
+    expect(screen.getByRole('link', { name: 'Timewheel Internet' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Bolt the Sloth' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Terms' }).getAttribute('href')).toBe('/terms');
     // link columns + socials + newsletter are gone
     expect(screen.queryByRole('link', { name: 'About' })).toBeNull();
