@@ -1,174 +1,304 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+// /compare/simplybook-alternative — SimplyBook.me vs Book A Sloth (Oct 2026 rebuild).
+//
+// Design system "Sky & Ink": pale sky + deep navy ink, Book A Sloth orange on CTAs,
+// a meter/gauge motif. Mechanics unique to this page: hero free-plan gauge ·
+// interactive booking-cap meter (range slider, deterministic default) · stepped
+// progress rail for the switch.
+//
+// HONESTY: every SimplyBook.me fact reads from data/competitors.js (checked against
+// their pricing page; null renders "Not listed", never "No"). Their prices stay as
+// published, in euros: never converted to ₹. Every Book A Sloth price and commission
+// reads from data/plans.js. Testimonials are the real, consented TESTIMONIALS.
+//
+// Global Navbar + Footer come from App.jsx. No images except the competitor favicon.
+// No scroll-reveal, no hover uplift; the h1 paints on first frame (LCP).
+
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  Check,
-  X,
-  ArrowRight,
-  ChevronRight,
-  IndianRupee,
-  MessageCircle,
-  FileText,
-  Shield,
-  Zap,
-  Clock,
-  Eye,
-  Settings,
-} from "lucide-react";
-import useUtm from "../../hooks/useUtm";
-import useDocumentMeta from "../../hooks/useDocumentMeta";
-import { analytics, EVENTS } from "../../services/analytics";
-import Seo from "../../components/common/Seo";
-import { ogCard } from "../../config/ogImages";
-import { SITE_URL, comparisonGraphJsonLd } from "../../utils/seo";
-import HowItWorks from "../../components/home/HowItWorks";
-import LogoMarquee from "../../components/about/LogoMarquee";
-import { ALL_PLANS } from "../../data/plans";
-import useFeeOnly from "../../hooks/useFeeOnly";
-import { TESTIMONIALS } from "../../data/testimonials";
-import { LpCta, AccentCard as KitAccentCard, Avatar as KitAvatar, fmtINR, BAS_ORANGE, BAS_CTA, BAS_PEACH } from "./_altKit";
-import { useHideChrome } from "../../context/ChromeContext";
+  ArrowRight, Check, X, Gauge as GaugeIcon, IndianRupee, Receipt, Wallet,
+  CreditCard, Layers, CalendarClock, LogIn, Share2, Info, Plus,
+} from 'lucide-react';
+import Seo from '../../components/common/Seo';
+import { ogCard } from '../../config/ogImages';
+import { SITE_URL, comparisonGraphJsonLd } from '../../utils/seo';
+import useUtm from '../../hooks/useUtm';
+import { analytics, EVENTS } from '../../services/analytics';
+import { COMPETITORS, COMPETITOR_LIST, CHECKED_LABEL } from '../../data/competitors';
+import { FREE_PLAN, PREMIUM_PLAN, PLAN_MATRIX } from '../../data/plans';
+import { TESTIMONIALS } from '../../data/testimonials';
 
-/*
-  /compare/simplybook-alternative
-  Mimics SimplyBook.me's design language — their blue palette, gradient cards,
-  rounded icon containers — but positions Book A Sloth as the simpler,
-  India-native alternative. "100 features you'll never use vs the 10 that matter."
-*/
+const SLUG = 'simplybook-alternative';
+const START = '/be-a-sloth';
+const SB = COMPETITORS.simplybook;
+const CANONICAL = `${SITE_URL}${SB.path}`;
 
-const SLUG = "simplybook-alternative";
+/* ─────────────────────────────  FACTS (derived, never typed)  ───────────────────────────── */
 
-/* SimplyBook-inspired palette + BAS brand */
-const SB_BLUE = "#3E7BFA"; // SimplyBook primary blue
-const SB_NAVY = "#1A1F36"; // SimplyBook dark heading ink
-const SB_BODY = "#475569"; // muted slate body text
-const SB_LIGHT = "#EEF2FF"; // SimplyBook light blue tinted bg
-const SB_GREEN = "#10B981"; // SimplyBook accent green (confirmations)
+const inr = (n) => `₹${n.toLocaleString('en-IN')}`;
+const commission = PLAN_MATRIX.flatMap((g) => g.rows).find((r) => r.label === 'Commission on your bookings');
+const FREE = FREE_PLAN.name;
+const PREM = PREMIUM_PLAN.name;
+const MONTHLY = inr(PREMIUM_PLAN.monthly);
+const YEARLY = inr(PREMIUM_PLAN.yearly);
 
-const ACCENTS = [SB_BLUE, BAS_ORANGE, "#5E3AD4", "#059669", "#db2777", "#0891b2", "#2563eb", "#f59e0b"];
+// ponytail: the cap is parsed from the published free-plan line ("Yes: 50 bookings / month, 1 provider")
+// so a re-check stays one edit in competitors.js; the page test pins the parsed value.
+const SB_FREE = SB.freePlan.replace(/^Yes:\s*/, '');
+const CAP = Number(SB.freePlan.match(/(\d+)\s*bookings/)?.[1]);
+const TRIAL = SB.trial.replace(/(\d+) days/, '$1-day'); // "14 days" → "14-day"
 
+const METER_MAX = 200;
+const METER_DEFAULT = 40;
 
-/* ─────────────────────────────────────────────
-   CTA
-   ───────────────────────────────────────────── */
-const SbCta = (p) => <LpCta slug={SLUG} {...p} />;
+/* ─────────────────────────────  PALETTE  ───────────────────────────── */
 
-/* ─────────────────────────────────────────────
-   AccentCard — SimplyBook-style gradient bloom on hover
-   ───────────────────────────────────────────── */
-const AccentCard = (p) => <KitAccentCard accent={SB_BLUE} {...p} />;
+const C = { sky: '#EAF3FB', skyDeep: '#CFE2F3', navy: '#12233F', navySoft: '#46587A', steel: '#3B6EA8', orange: '#FE5100', onDark: '#FF9A66' };
+const THEME = { '--sky': C.sky, '--sky-deep': C.skyDeep, '--navy': C.navy, '--navy-soft': C.navySoft, '--steel': C.steel };
+const CARD = 'rounded-[6px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(18,35,63,0.05)]';
+const H2 = 'font-heading text-4xl font-extrabold leading-[1.08] tracking-tight text-[color:var(--navy)] sm:text-5xl';
+const LINK = 'font-semibold text-[color:var(--navy)] underline underline-offset-2 hover:text-primary-cta';
 
-/* Avatar with initials fallback */
-const Avatar = (p) => <KitAvatar accent={SB_BLUE} fallback="S" {...p} />;
+/* ─────────────────────────────  CONTENT  ───────────────────────────── */
 
-/* ─────────────────────────────────────────────
-   Data
-   ───────────────────────────────────────────── */
-const INTEGRATIONS = [
-  { name: "Google Meet", domain: "meet.google.com" },
-  { name: "Google Calendar", domain: "calendar.google.com" },
-  { name: "Razorpay", domain: "razorpay.com" },
-  { name: "WhatsApp", domain: "whatsapp.com" },
-  { name: "Gmail", domain: "gmail.com" },
-  { name: "Zoom", domain: "zoom.us" },
-  { name: "PhonePe", domain: "phonepe.com" },
-  { name: "Paytm", domain: "paytm.com" },
-  { name: "Outlook", domain: "outlook.com" },
-  { name: "Slack", domain: "slack.com" },
-  { name: "Stripe", domain: "stripe.com" },
-  { name: "Zapier", domain: "zapier.com" },
+const SEO = {
+  title: 'SimplyBook.me Alternative for India (UPI, ₹) | Book A Sloth',
+  description: `SimplyBook.me's free plan stops at ${CAP} bookings a month. Book A Sloth's free plan has no booking cap, takes UPI at booking and bills in rupees with GST invoices.`,
+};
+
+const SHORT_ANSWER = `SimplyBook.me and Book A Sloth both have a free plan, but they limit it differently. SimplyBook.me's free plan covers ${SB_FREE}; its paid plans start at ${SB.paidFrom}, priced in ${SB.currency}, and it takes no commission on bookings. It connects to ${SB.payments}. Book A Sloth's free ${FREE} plan has no booking cap and takes ${commission.free} commission per paid booking, while ${PREM} costs ${MONTHLY} a month or ${YEARLY} a year, GST included, with ${commission.premium} commission. Book A Sloth takes UPI and cards through Razorpay and settles to your Indian bank account, so you don't need a payment gateway account of your own. Pick SimplyBook.me if you stay under ${CAP} bookings a month or want its choice of gateways. Pick Book A Sloth if you work in India and want UPI at booking, rupee pricing and GST invoices.`;
+
+const PICK_SB = [
+  `You take fewer than ${CAP} bookings a month and want a free plan with no commission.`,
+  `You already use one of its gateways: ${SB.payments}.`,
+  `You want to try paid features first, with its ${TRIAL} trial.`,
+];
+const PICK_BAS = [
+  'You want clients to pay by UPI or card at the moment they book.',
+  'You would rather be billed in rupees, with a GST invoice on every paid booking.',
+  `You expect more than ${CAP} bookings a month and want no booking cap.`,
 ];
 
-const PAIN_POINTS = [
+// Table rows: [label, Book A Sloth (plans.js / verified facts), SimplyBook.me (competitors.js)].
+const ROWS = [
+  ['Free plan', `Yes: unlimited bookings, ${commission.free} commission`, SB.freePlan],
+  ['Bookings a month on the free plan', 'No cap', `Up to ${CAP}`],
+  ['Paid plan from', `${MONTHLY} / month (${YEARLY} / year)`, SB.paidFrom],
+  ['Billing currency', 'INR, GST included', SB.currency],
+  ['Commission on bookings', `${commission.free} on ${FREE}, ${commission.premium} on ${PREM}`, SB.commission],
+  ['Taking payments', 'UPI and cards, through Razorpay', SB.payments],
+  ['UPI at booking', true, SB.upi],
+  ['WhatsApp reminders', `Yes, on ${PREM} (first 2 months on ${FREE})`, SB.whatsapp],
+  ['Free trial', `Not needed: ${FREE} is free`, SB.trial],
+];
+
+const DIFFERENT = [
   {
-    icon: Eye,
-    color: SB_BLUE,
-    title: "Opaque pricing",
-    body: "SimplyBook's free plan stops at 50 bookings a month, and SMS or WhatsApp reminders are paid credits on top of your plan.",
-    bas: "BAS shows every plan, every price, upfront. In rupees.",
+    icon: IndianRupee, title: 'UPI at checkout, no gateway of your own',
+    body: 'Clients pay by UPI or card through Razorpay when they book, on both plans. Book A Sloth collects the payment and settles it to your Indian bank account after a one-time KYC.',
+    link: { to: '/features/payments', label: 'How payments work' },
   },
   {
-    icon: Settings,
-    color: "#8B5CF6",
-    title: "Complex setup",
-    body: "\"Full customization step-by-step\" sounds great until you're 45 minutes into configuration wizards for features you'll never use.",
-    bas: "BAS: sign in with Google, set your availability, share your link. Done in 3 minutes.",
+    icon: Receipt, title: 'Rupee pricing and GST invoices',
+    body: `${PREM} is ${MONTHLY} a month or ${YEARLY} a year, GST included. Every paid booking gets a GST invoice, on both plans.`,
+    link: { to: '/pricing', label: 'See both plans' },
   },
   {
-    icon: IndianRupee,
-    color: "#059669",
-    title: "No India payments",
-    body: "Razorpay and UPI aren't among the payment gateways on SimplyBook's pricing page, and GST invoices aren't listed. Indian clients can't pay the way they want to.",
-    bas: "BAS collects UPI/cards at booking time, settled to your Indian bank account.",
+    icon: GaugeIcon, title: 'No booking cap on either plan',
+    body: `Unlimited services and bookings on ${FREE} and ${PREM}. ${FREE} is free with ${commission.free} commission per paid booking; ${PREM} takes ${commission.premium}.`,
   },
   {
-    icon: Clock,
-    color: BAS_ORANGE,
-    title: "Priced in euros",
-    body: "Paid plans are billed in euros, from €11.90 a month (Basic, billed yearly).",
-    bas: "BAS bills in ₹ with GST included, and the free plan has no booking cap.",
+    icon: Wallet, title: 'Every fee, written down',
+    body: `Clients pay a flat ₹10 + GST booking fee on top of your price. The gateway charge (about 2%) is passed through at cost, and TDS 1% + TCS 1% are deducted on payout. On ₹1,000 at ${commission.premium} commission you receive ₹959.76.`,
+    link: { to: '/host-fees', label: 'Read the host fees' },
   },
 ];
 
-const COMPARE = [
-  { f: "Free plan booking limit", basT: "Unlimited", sbT: "50 / month", sb: false },
-  { f: "UPI / Razorpay payments at booking", basT: "Built in", sbT: "No", sb: false },
-  { f: "GST invoices — automatic", basT: "Yes", sbT: "No", sb: false },
-  { f: "WhatsApp reminders", basT: "Yes", sbT: "Paid credits", sb: false },
-  { f: "INR billing (₹)", basT: "Yes", sbT: "EUR only", sb: false },
-  { f: "Setup time", basT: "~3 minutes", sbT: "30-60 minutes", sb: false },
-  { f: "Commission on bookings", basT: "0% on Sloth Active", sbT: "None", sb: true },
-  { f: "Starting price (paid)", basT: "₹0 free · ₹399/mo paid", sbT: "€11.90 / mo (Basic, yearly)", sb: false },
-  { f: "Google Calendar sync", basT: "Yes", sbT: "Yes", sb: true },
-  { f: "Custom booking page", basT: "Yes", sbT: "Yes", sb: true },
-  { f: "Email reminders", basT: "Yes", sbT: "Yes", sb: true },
-  { f: "Online payments (intl.)", basT: "Yes", sbT: "Yes", sb: true },
-  { f: "Free plan", basT: "Yes (forever)", sbT: "Yes (50 bookings / mo)", sb: true },
+const BETTER = [
+  { icon: Check, title: 'A free plan, with no commission', body: `SimplyBook.me's free plan covers ${SB_FREE}, and SimplyBook.me takes no commission on bookings. If you stay under ${CAP} bookings a month, the free plan may be all you need.` },
+  { icon: CreditCard, title: 'More payment gateways', body: `It connects to ${SB.payments}. That helps if you already have one of those accounts, or take clients outside India.` },
+  { icon: Layers, title: `A ${TRIAL} trial of paid features`, body: `You can try its paid plans for ${SB.trial} before deciding. Paid plans start at ${SB.paidFrom}.` },
 ];
 
-const FAQS = [
+const STEPS = [
+  { icon: LogIn, title: 'Sign in with Google', body: 'Hosts sign in with their Google account. There is no separate password to set up.' },
+  { icon: CalendarClock, title: 'Add your services and availability', body: 'Set your prices (paid services start at ₹100), durations and the hours you take bookings. Google Calendar and Meet work on both plans.' },
+  { icon: Share2, title: 'Share your link', body: 'Put your booking page link in your bio, on WhatsApp or in email. Clients pick a slot and pay by UPI or card.' },
+];
+
+const QUOTES = ['Arjun Ravikumar', 'Vishal Chaware', 'Dr. Yukta Bawankar']
+  .map((n) => TESTIMONIALS.find((t) => t.name === n))
+  .filter(Boolean);
+
+export const FAQ = [
   {
-    q: "Can I migrate my bookings from SimplyBook.me to Book A Sloth?",
-    a: "Yes. Export your client list from SimplyBook.me and share it with us — we'll help you get set up with your existing client base. Your booking link will be live in minutes.",
+    q: 'Is SimplyBook.me free?',
+    a: `Yes. SimplyBook.me's pricing page lists a free plan: ${SB_FREE}. Above that you need a paid plan, from ${SB.paidFrom}, and it offers a ${TRIAL} trial of paid features. Book A Sloth's free ${FREE} plan has no booking cap and takes ${commission.free} commission per paid booking.`,
   },
   {
-    q: "Does Book A Sloth support the same payment methods as SimplyBook?",
-    a: "We support more payment methods for India — UPI, all major cards, Razorpay, PhonePe, Paytm, and net banking. For international clients, we support cards and wallets via Razorpay.",
+    q: "What is SimplyBook.me's free plan limit?",
+    a: `SimplyBook.me's free plan is limited to ${SB_FREE}. Once you go past ${CAP} bookings in a month you would need a paid plan, which starts at ${SB.paidFrom}. Book A Sloth has no monthly booking cap on either plan: ${FREE} is free with ${commission.free} commission, and ${PREM} costs ${MONTHLY} a month with ${commission.premium} commission.`,
   },
   {
-    q: "SimplyBook has 100+ features. Will I miss anything?",
-    a: "Most professionals use fewer than 10 features regularly. Book A Sloth focuses on the features that actually matter — scheduling, payments, reminders, and a professional booking page. No feature bloat, no module add-ons.",
+    q: 'How much does SimplyBook.me cost in India?',
+    a: `SimplyBook.me publishes its prices in euros, from ${SB.paidFrom}. SMS and WhatsApp reminders are ${SB.sms.toLowerCase()}. Book A Sloth bills in rupees with GST included: ${FREE} is ₹0 a month with ${commission.free} commission per paid booking, and ${PREM} is ${MONTHLY} a month or ${YEARLY} a year with ${commission.premium} commission. Clients pay a ₹10 + GST booking fee on each paid booking.`,
   },
   {
-    q: "Is Book A Sloth really free to start?",
-    a: "Yes. Our Sloth plan is free forever with no booking cap. You get a booking page, UPI payments, GST invoices and Google Calendar sync at no cost (5% commission per booking). Upgrade to Sloth Active for 0% commission and WhatsApp reminders.",
+    q: 'Does SimplyBook.me support UPI payments?',
+    a: `SimplyBook.me's pricing page doesn't list UPI. It lists ${SB.payments}. Book A Sloth takes UPI and cards through Razorpay at the moment of booking, on both plans, and settles the money to your Indian bank account after a one-time KYC, so you don't need a payment gateway account of your own.`,
   },
   {
-    q: "How does pricing compare to SimplyBook.me?",
-    a: "SimplyBook's Basic plan starts at ~$8.25/month (billed in USD). Book A Sloth's paid plan is ₹399/month (billed in INR, GST included), includes UPI payments and GST invoices — features SimplyBook charges extra for or doesn't offer at all.",
+    q: 'Does SimplyBook.me send WhatsApp reminders?',
+    a: `Yes, as an add-on. SimplyBook.me's pricing page lists WhatsApp reminders as ${SB.whatsapp.toLowerCase()} and SMS reminders as ${SB.sms.toLowerCase()}. On Book A Sloth, WhatsApp reminders are part of ${PREM}. On the free ${FREE} plan you get WhatsApp reminders for your first 2 months, then reminders go by email.`,
   },
   {
-    q: "Do you support multi-channel booking like SimplyBook?",
-    a: "Yes. Clients can book via your personal booking page link, which you can share on Instagram, WhatsApp, your website, Google Business — anywhere. No complex widget embeds needed.",
+    q: "What's the cheapest SimplyBook.me alternative in India?",
+    a: `Book A Sloth's ${FREE} plan costs ₹0 a month, with no booking cap and ${commission.free} commission per paid booking. If you take a lot of paid bookings, ${PREM} at ${MONTHLY} a month with ${commission.premium} commission can cost less than the ${commission.free} would. Either way, clients pay a ₹10 + GST booking fee on each paid booking.`,
+  },
+  {
+    q: 'Do I need my own payment gateway account with Book A Sloth?',
+    a: `No. Book A Sloth collects UPI and card payments through Razorpay and settles them to your Indian bank account after a one-time KYC. The gateway charge (about 2%) is passed through at cost, and TDS 1% and TCS 1% are deducted on payout. On a ₹1,000 booking at ${commission.premium} commission, you receive ₹959.76.`,
+  },
+  {
+    q: 'Can I move from SimplyBook.me to Book A Sloth?',
+    a: `Yes. Sign in with Google, add your services and availability, and share your new booking link with clients. Paid services need a price of ₹100 or more. Both plans include unlimited services and bookings, Google Calendar and Meet, and GST invoices, so you can start on the free ${FREE} plan and move to ${PREM} later.`,
   },
 ];
 
-/* ════════════════════════════════════════
-   PAGE
-   ════════════════════════════════════════ */
-const SimplybookAlternative = () => {
-  // Legacy design — draws its own header/footer until rebuilt. Rebuilt pages drop this.
-  useHideChrome();
-  const feeOnly = useFeeOnly();
-  const plans = feeOnly ? ALL_PLANS.filter((p) => p.monthly !== 0) : ALL_PLANS;
+const RELATED = COMPETITOR_LIST.filter((c) => c.key !== 'simplybook');
+const favicon = (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+
+/* ─────────────────────────────  PIECES  ───────────────────────────── */
+
+function StartCta({ slot, children = 'Start free' }) {
   const utm = useUtm();
-  const [billingAnnual, setBillingAnnual] = useState(true);
-  const [openFaq, setOpenFaq] = useState(null);
+  return (
+    <Link
+      to={START}
+      onClick={() => analytics.track(EVENTS.LP_CTA_CLICKED, { slug: SLUG, slot, ...utm })}
+      className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[6px] bg-primary-cta px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_30px_rgba(194,61,0,0.22)] transition-opacity hover:text-white hover:no-underline hover:opacity-90"
+    >
+      {children} <ArrowRight size={16} aria-hidden="true" />
+    </Link>
+  );
+}
 
-  useDocumentMeta({
-    title: "Book A Sloth — SimplyBook.me alternative built for India",
-    description:
-      "SimplyBook.me has 100 features you'll never use. Book A Sloth has the 10 that matter — UPI payments, WhatsApp reminders, GST invoices — at a price you can actually see upfront.",
-  });
+// Semicircle meter, 0 → METER_MAX bookings a month. Thick steel zone = SimplyBook.me's free cap;
+// thin orange outer arc = Book A Sloth's free plan, which runs the whole dial. Decorative: the
+// numbers it shows are always repeated in text next to it.
+const CX = 120, CY = 116, R = 92;
+const pt = (v, r) => {
+  const a = Math.PI * (1 - Math.min(Math.max(v, 0), METER_MAX) / METER_MAX);
+  return [+(CX + r * Math.cos(a)).toFixed(2), +(CY - r * Math.sin(a)).toFixed(2)];
+};
+const arc = (from, to, r) => {
+  const [x1, y1] = pt(from, r); const [x2, y2] = pt(to, r);
+  return `M${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}`;
+};
+
+function Gauge({ value, label, sub }) {
+  const over = value != null && value > CAP;
+  const [px1, py1] = value != null ? pt(value, R - 16) : [];
+  const [px2, py2] = value != null ? pt(value, R + 16) : [];
+  const [cx, cy] = pt(CAP, R - 30);
+  return (
+    <svg viewBox="0 0 240 132" className="h-auto w-full" aria-hidden="true" focusable="false">
+      <path d={arc(0, METER_MAX, R + 15)} fill="none" stroke={C.orange} strokeWidth="3" strokeLinecap="round" />
+      <path d={arc(0, METER_MAX, R)} fill="none" stroke={C.skyDeep} strokeWidth="14" strokeLinecap="round" />
+      <path d={arc(0, CAP, R)} fill="none" stroke={C.steel} strokeWidth="14" strokeLinecap="round" />
+      {[0, 50, 100, 150, 200].map((t) => {
+        const [x1, y1] = pt(t, R - 11); const [x2, y2] = pt(t, R - 17);
+        return <line key={t} x1={x1} y1={y1} x2={x2} y2={y2} stroke={C.navySoft} strokeWidth="1.5" />;
+      })}
+      <text x={cx} y={cy} fontSize="10" fontWeight="700" fill={C.steel} textAnchor="middle">{CAP} cap</text>
+      {value != null && (
+        <>
+          <line x1={px1} y1={py1} x2={px2} y2={py2} stroke={over ? C.orange : C.navy} strokeWidth="4" strokeLinecap="round" />
+          <circle cx={pt(value, R)[0]} cy={pt(value, R)[1]} r="5" fill="#fff" stroke={over ? C.orange : C.navy} strokeWidth="2.5" />
+        </>
+      )}
+      <text x={CX} y={CY - 14} fontSize="26" fontWeight="800" fill={C.navy} textAnchor="middle" fontFamily="'Plus Jakarta Sans', sans-serif">{label}</text>
+      <text x={CX} y={CY + 4} fontSize="10" fill={C.navySoft} textAnchor="middle">{sub}</text>
+    </svg>
+  );
+}
+
+const Swatch = ({ color, thin }) => (
+  <span aria-hidden="true" className={`inline-block w-5 shrink-0 rounded-full ${thin ? 'h-[3px]' : 'h-2.5'}`} style={{ background: color }} />
+);
+
+function Cell({ value }) {
+  if (value === true) return <span className="inline-flex items-center gap-1.5 font-semibold"><Check size={15} className="text-emerald-700" aria-hidden="true" />Yes</span>;
+  if (value === false) return <span className="inline-flex items-center gap-1.5"><X size={15} aria-hidden="true" />No</span>;
+  if (value == null) return <span className="text-[color:var(--navy-soft)]">Not listed</span>;
+  return <span>{value}</span>;
+}
+
+function BookingMeter() {
+  const [n, setN] = useState(METER_DEFAULT);
+  const over = n > CAP;
+  return (
+    <div className="mt-12 grid gap-6 lg:grid-cols-[1fr_1fr] lg:gap-8">
+      <div className={`${CARD} p-6 sm:p-8`}>
+        <div className="flex items-end justify-between gap-4">
+          <label htmlFor="bookings-per-month" className="text-sm font-semibold text-[color:var(--navy)]">Bookings per month</label>
+          <output htmlFor="bookings-per-month" aria-live="off" className="font-heading text-4xl font-extrabold tabular-nums text-[color:var(--navy)]">{n}</output>
+        </div>
+        <input
+          id="bookings-per-month"
+          type="range"
+          min="0"
+          max={METER_MAX}
+          step="1"
+          value={n}
+          onChange={(e) => setN(Number(e.target.value))}
+          aria-valuetext={`${n} bookings per month`}
+          className="mt-3 h-11 w-full cursor-pointer border-0 bg-transparent p-0 accent-[#12233F]"
+        />
+        <div className="flex justify-between text-xs text-[color:var(--navy-soft)]" aria-hidden="true"><span>0</span><span>{CAP}</span><span>{METER_MAX}</span></div>
+        <div className="mx-auto mt-6 max-w-sm"><Gauge value={n} label={n} sub="bookings a month" /></div>
+        <ul className="mt-4 space-y-2 text-sm text-[color:var(--navy-soft)]">
+          <li className="flex items-center gap-2"><Swatch color={C.steel} /> SimplyBook.me free plan: up to {CAP}</li>
+          <li className="flex items-center gap-2"><Swatch color={C.orange} thin /> Book A Sloth {FREE}: no cap</li>
+        </ul>
+      </div>
+
+      <div className="grid gap-6">
+        <div className={`${CARD} p-6 sm:p-8`}>
+          <div className="flex items-center gap-3">
+            <img src={favicon(SB.domain)} alt="" width="24" height="24" loading="lazy" className="h-6 w-6 rounded-full border border-black/5 bg-white p-0.5" />
+            <h3 className="font-heading text-xl font-bold text-[color:var(--navy)]">{SB.name}</h3>
+          </div>
+          <p role="status" className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${over ? 'bg-primary-light text-[#9A3A0A]' : 'bg-[color:var(--sky)] text-[color:var(--navy)]'}`}>
+            {over ? 'Paid plan needed' : 'Free plan covers it'}
+          </p>
+          <p className="mt-3 min-h-[3.25rem] text-[15px] leading-relaxed text-[color:var(--navy-soft)]">
+            {over
+              ? `${n} is ${n - CAP} over the free plan's ${CAP}-booking cap. You'd need a paid plan, from ${SB.paidFrom}.`
+              : `${n} of the free plan's ${CAP} bookings a month (${SB_FREE}).`}
+          </p>
+        </div>
+        <div className={`${CARD} p-6 sm:p-8`}>
+          <h3 className="font-heading text-xl font-bold text-[color:var(--navy)]">Book A Sloth</h3>
+          <p className="mt-4 inline-flex rounded-full bg-[color:var(--sky)] px-3 py-1 text-xs font-semibold text-[color:var(--navy)]">Free plan covers it</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-[color:var(--navy-soft)]">
+            {FREE} has no booking cap, so {n} bookings stay on the free plan at {commission.free} commission per paid booking.
+            Or move to {PREM} at {MONTHLY} a month for {commission.premium} commission.
+          </p>
+        </div>
+        <p className="flex items-start gap-2 text-xs leading-relaxed text-[color:var(--navy-soft)]">
+          <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
+          SimplyBook.me prices as published, in euros. See their pricing page for what each paid plan includes.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────  PAGE  ───────────────────────────── */
+
+const SimplybookAlternative = () => {
+  const utm = useUtm();
 
   useEffect(() => {
     analytics.page({ lp: SLUG });
@@ -177,589 +307,308 @@ const SimplybookAlternative = () => {
   }, []);
 
   return (
-    <div
-      className="min-h-dvh overflow-x-hidden bg-white"
-      style={{ fontFamily: "'Poppins', ui-sans-serif, system-ui, sans-serif", color: SB_NAVY }}
-    >
+    <main className="overflow-x-clip bg-white text-[color:var(--navy)]" style={THEME}>
       <Seo
-        title="Best SimplyBook.me Alternative for India — Book A Sloth"
-        description="Looking for a SimplyBook.me alternative? Book A Sloth gives you UPI payments, WhatsApp reminders, and GST invoices — with pricing you can actually see upfront."
+        title={SEO.title}
+        description={SEO.description}
         image={ogCard('lp-simplybook-alternative')}
-        canonical={`${SITE_URL}/compare/simplybook-alternative`}
+        canonical={CANONICAL}
         jsonLd={comparisonGraphJsonLd({
-          canonical: `${SITE_URL}/compare/simplybook-alternative`,
-          name: "Best SimplyBook.me Alternative for India — Book A Sloth",
-          description: "Book A Sloth gives you UPI payments, WhatsApp reminders, and GST invoices — with pricing you can see upfront. A SimplyBook.me alternative for India.",
-          breadcrumbName: "SimplyBook.me Alternative",
-          faqs: FAQS,
+          canonical: CANONICAL,
+          name: SEO.title,
+          description: SEO.description,
+          breadcrumbName: 'SimplyBook Alternative',
+          faqs: FAQ,
         })}
       />
 
-      {/* ══════ HEADER ══════ */}
-      <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur" style={{ borderColor: `${SB_BLUE}15` }}>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <div className="flex items-center gap-3">
-            <span className="font-heading text-base font-extrabold tracking-tight" style={{ color: SB_NAVY }}>
-              Book A Sloth
-            </span>
-            <span
-              className="hidden rounded-full px-2 py-0.5 text-[11px] font-semibold sm:inline"
-              style={{ background: BAS_PEACH, color: BAS_CTA }}
-            >
-              Built for India
-            </span>
-          </div>
-
-          <nav className="hidden items-center gap-7 text-sm font-medium md:flex" style={{ color: "#6B7280" }}>
-            {[["#how-it-works", "Product"], ["#integrations", "Integrations"], ["#pricing", "Pricing"], ["#faq", "FAQ"]].map(([href, label]) => (
-              <a
-                key={label}
-                href={href}
-                className="transition-colors hover:no-underline"
-                style={{ color: "inherit" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = SB_NAVY; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "#6B7280"; }}
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login-as-vendor"
-              className="hidden text-sm font-semibold hover:no-underline sm:block"
-              style={{ color: "#6B7280" }}
-            >
-              Log in
-            </Link>
-            <SbCta slot="header" label="Get started" className="!py-2 !px-4 !text-[13px]" />
-          </div>
-        </div>
-      </header>
-
-      {/* ══════ HERO — SimplyBook-style gradient bg ══════ */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-16 sm:px-8 sm:pt-20" style={{ background: `linear-gradient(165deg, ${SB_LIGHT} 0%, white 50%, ${SB_LIGHT} 100%)` }}>
-        {/* Decorative gradient blob */}
-        <div
-          className="pointer-events-none absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full opacity-20 blur-3xl"
-          style={{ background: `radial-gradient(circle, ${SB_BLUE}, transparent 70%)` }}
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full opacity-15 blur-3xl"
-          style={{ background: `radial-gradient(circle, ${BAS_ORANGE}, transparent 70%)` }}
-          aria-hidden
-        />
-
-        <div className="relative mx-auto max-w-6xl text-center">
-          <div className="mx-auto max-w-3xl">
-            <div
-              className="mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold"
-              style={{ borderColor: `${SB_BLUE}30`, background: `${SB_BLUE}08`, color: SB_BLUE }}
-            >
-              <Zap size={13} /> SimplyBook.me alternative
-            </div>
-
-            <h1
-              className="font-heading text-[2.4rem] font-extrabold leading-[1.08] tracking-tight sm:text-[3.2rem]"
-              style={{ color: SB_NAVY }}
-            >
-              Simple scheduling.
-              <br />
-              No gimmicks.{" "}
-              <span style={{ color: BAS_ORANGE }}>Just bookings that work.</span>
+      {/* ═══════════════ 1 · HERO ═══════════════ */}
+      <section className="bg-[linear-gradient(180deg,var(--sky)_0%,#ffffff_100%)] px-5 pb-16 pt-6 sm:px-8 sm:pt-10 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center lg:py-12">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-14">
+          <div>
+            <nav aria-label="Breadcrumb">
+              <ol className="flex flex-wrap items-center gap-1.5 text-xs text-[color:var(--navy-soft)]">
+                <li><Link to="/" className="inline-block py-1 text-[color:var(--navy-soft)] hover:text-[color:var(--navy)] hover:no-underline">Home</Link></li>
+                <li aria-hidden="true">›</li>
+                <li><Link to="/compare" className="inline-block py-1 text-[color:var(--navy-soft)] hover:text-[color:var(--navy)] hover:no-underline">Compare</Link></li>
+                <li aria-hidden="true">›</li>
+                <li aria-current="page" className="font-medium text-[color:var(--navy)]">SimplyBook Alternative</li>
+              </ol>
+            </nav>
+            <h1 className="mt-3 font-heading font-extrabold leading-[1.06] tracking-tight text-[color:var(--navy)]" style={{ fontSize: 'clamp(2.1rem,3.7vw,3.2rem)' }}>
+              SimplyBook.me alternative with <span className="text-primary-cta">no booking cap</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed" style={{ color: SB_BODY }}>
-              SimplyBook.me has 100 features you&apos;ll never use. Book A Sloth has the 10 that
-              matter — payments in ₹, WhatsApp reminders, GST invoices — at a price you can
-              actually see upfront.
+            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-[color:var(--navy-soft)] sm:text-[17px]">
+              Book A Sloth is a SimplyBook.me alternative built for India. Its free {FREE} plan has no monthly
+              booking cap (SimplyBook.me&rsquo;s free plan covers {CAP}), takes UPI and cards at booking, sends GST
+              invoices and bills in rupees. You pay {commission.free} per paid booking, or {MONTHLY} a month
+              on {PREM} for {commission.premium} commission.
             </p>
-
-            <div id="start" className="mt-8 flex flex-col items-center gap-3 scroll-mt-24">
-              <div className="w-full max-w-xs">
-                <SbCta slot="hero-google" label="Sign up with Google" variant="google" />
-              </div>
-              <p className="text-xs text-gray-400">Free plan forever · No credit card · No booking cap</p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <StartCta slot="hero" />
+              <a href="#side-by-side" className="inline-flex min-h-[44px] items-center rounded-[6px] border border-[color:var(--sky-deep)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--navy)] hover:text-[color:var(--navy)] hover:no-underline hover:opacity-90">
+                See the comparison
+              </a>
             </div>
+            <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[color:var(--navy-soft)]">
+              <span className="inline-flex items-center gap-1.5"><Check size={14} className="text-[color:var(--steel)]" aria-hidden="true" />Free plan, no booking cap</span>
+              <span className="inline-flex items-center gap-1.5"><Check size={14} className="text-[color:var(--steel)]" aria-hidden="true" />UPI via Razorpay</span>
+              <span className="inline-flex items-center gap-1.5"><Check size={14} className="text-[color:var(--steel)]" aria-hidden="true" />Facts checked {CHECKED_LABEL}</span>
+            </p>
+          </div>
 
-            {/* Feature pills */}
-            <ul className="mt-8 flex flex-wrap justify-center gap-x-5 gap-y-2 border-t border-gray-100 pt-6">
-              {[
-                { e: "₹", t: "UPI + cards" },
-                { e: "💬", t: "WhatsApp reminders" },
-                { e: "📄", t: "GST invoices" },
-                { e: "⚡", t: "3-min setup" },
-              ].map((b) => (
-                <li key={b.t} className="flex items-center gap-1.5 text-xs font-medium" style={{ color: SB_BODY }}>
-                  {b.e} {b.t}
-                </li>
-              ))}
+          <div className={`${CARD} mx-auto w-full max-w-md p-6`}>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--navy-soft)]">Free-plan booking meter</p>
+              <span className="rounded-full bg-[color:var(--sky)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--navy)]">per month</span>
+            </div>
+            <div className="mt-4"><Gauge label="No cap" sub={`on Book A Sloth ${FREE}`} /></div>
+            <ul className="mt-4 space-y-3 border-t border-black/5 pt-4 text-sm">
+              <li className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-[color:var(--navy-soft)]"><Swatch color={C.steel} />SimplyBook.me free plan</span>
+                <span className="font-heading font-bold">Up to {CAP}</span>
+              </li>
+              <li className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-[color:var(--navy-soft)]"><Swatch color={C.orange} thin />Book A Sloth {FREE}</span>
+                <span className="font-heading font-bold">No cap</span>
+              </li>
             </ul>
           </div>
         </div>
       </section>
 
-      {/* ══════ LOGO MARQUEE ══════ */}
-      <div className="border-y border-gray-100 bg-white">
-        <LogoMarquee />
-      </div>
-
-      {/* ══════ HOW IT WORKS — dark band ══════ */}
-      <section id="how-it-works" className="scroll-mt-16 px-5 py-20 sm:px-8 lg:py-24" style={{ background: SB_NAVY }}>
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-3 text-center text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: SB_BLUE }}>
-            How it works
-          </p>
-          <h2 className="text-center font-heading text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Set up in 3 minutes, not 30
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-lg text-neutral-300">
-            No configuration wizards. No module add-ons. Sign in, set your availability, share your link.
-          </p>
-          <div className="mt-6 flex justify-center">
-            <SbCta slot="how-it-works" label="Sign up for free" />
+      {/* ═══════════════ 2 · THE SHORT ANSWER ═══════════════ */}
+      <section id="short-answer" aria-labelledby="short-answer-title" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-3xl">
+          <h2 id="short-answer-title" className={H2}>The short <span className="text-primary-cta">answer</span></h2>
+          <div className={`${CARD} mt-8 p-6 sm:p-8`}>
+            <p className="text-base leading-relaxed text-[color:var(--navy)] sm:text-[17px]">{SHORT_ANSWER}</p>
           </div>
-          <HowItWorks />
-        </div>
-      </section>
-
-      {/* ══════ WHY NOT SIMPLYBOOK — pain point cards ══════ */}
-      <section className="px-5 py-20 sm:px-8" style={{ background: SB_LIGHT }}>
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-2 text-center text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: SB_BLUE }}>
-            Why switch?
-          </p>
-          <h2 className="text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: SB_NAVY }}>
-            SimplyBook.me wasn&apos;t built for India
-          </h2>
-          <p className="mx-auto mt-2 max-w-lg text-center text-sm" style={{ color: SB_BODY }}>
-            Great for European salons. Not so great when your clients pay via UPI and read WhatsApp, not email.
-          </p>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-2">
-            {PAIN_POINTS.map((p) => (
-              <AccentCard
-                key={p.title}
-                accent={p.color}
-                className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
-                  style={{ background: `${p.color}14` }}
-                >
-                  <p.icon size={20} style={{ color: p.color }} />
-                </div>
-                <h3 className="font-heading text-base font-bold" style={{ color: SB_NAVY }}>{p.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: SB_BODY }}>{p.body}</p>
-                <div
-                  className="mt-4 rounded-lg border-l-[3px] py-2 pl-3 text-xs font-semibold"
-                  style={{ borderColor: SB_GREEN, background: `${SB_GREEN}08`, color: "#065F46" }}
-                >
-                  <Check size={12} className="mb-0.5 mr-1 inline" style={{ color: SB_GREEN }} />
-                  {p.bas}
-                </div>
-              </AccentCard>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {[[`Pick ${SB.name} if…`, PICK_SB, C.steel], ['Pick Book A Sloth if…', PICK_BAS, C.orange]].map(([title, items, color]) => (
+              <div key={title} className="rounded-[6px] bg-[color:var(--sky)] p-6">
+                <h3 className="font-heading text-lg font-bold text-[color:var(--navy)]">{title}</h3>
+                <ul className="mt-4 space-y-3">
+                  {items.map((t) => (
+                    <li key={t} className="flex gap-2.5 text-[15px] leading-relaxed text-[color:var(--navy-soft)]">
+                      <span aria-hidden="true" className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />{t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ══════ INTEGRATIONS ══════ */}
-      <section id="integrations" className="scroll-mt-16 px-5 py-20 sm:px-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16">
-            <div className="lg:max-w-[280px]">
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: SB_BLUE }}>
-                Integrations
-              </p>
-              <h2 className="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: SB_NAVY }}>
-                Connect the tools you already use
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed" style={{ color: SB_BODY }}>
-                Google Calendar, Razorpay, WhatsApp, UPI — no complex widget embeds or API keys needed.
-              </p>
-              <a
-                href="#start"
-                className="mt-5 inline-flex items-center gap-1 text-sm font-semibold transition-opacity hover:no-underline hover:opacity-80"
-                style={{ color: BAS_CTA }}
-              >
-                View all integrations <ChevronRight size={15} />
-              </a>
-            </div>
-
-            <div className="flex-1">
-              <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6">
-                {INTEGRATIONS.map((int) => (
-                  <div
-                    key={int.name}
-                    className="flex flex-col items-center gap-1.5 rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition hover:shadow-md"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-100 bg-white">
-                      <img
-                        src={`https://www.google.com/s2/favicons?sz=64&domain=${int.domain}`}
-                        alt={int.name}
-                        loading="lazy"
-                        className="h-6 w-6 object-contain"
-                      />
-                    </div>
-                    <span className="text-center text-[10px] font-medium leading-tight text-gray-500">
-                      {int.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {[
-                  { title: "India payment suite", body: "Razorpay, UPI, PhonePe, Paytm — clients pay at booking in ₹", color: BAS_ORANGE },
-                  { title: "Google suite", body: "Calendar, Meet, Gmail — all connected in one click", color: SB_BLUE },
-                ].map((card) => (
-                  <AccentCard
-                    key={card.title}
-                    accent={card.color}
-                    className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-heading text-sm font-bold" style={{ color: SB_NAVY }}>{card.title}</div>
-                        <div className="mt-0.5 text-xs" style={{ color: SB_BODY }}>{card.body}</div>
-                      </div>
-                      <ArrowRight size={15} className="mt-0.5 shrink-0 text-gray-300" />
-                    </div>
-                  </AccentCard>
-                ))}
-              </div>
-            </div>
+      {/* ═══════════════ 3 · SIDE BY SIDE ═══════════════ */}
+      <section id="side-by-side" aria-labelledby="side-by-side-title" className="bg-[color:var(--sky)] px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 id="side-by-side-title" className={`${H2} max-w-3xl`}>How much does SimplyBook.me cost <span className="text-primary-cta">in India?</span></h2>
+            <p className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[color:var(--navy)]">Last checked {CHECKED_LABEL}</p>
           </div>
-        </div>
-      </section>
-
-      {/* ══════ COMPARISON TABLE ══════ */}
-      <section className="px-5 py-16 sm:px-8" style={{ background: SB_LIGHT }}>
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: SB_NAVY }}>
-            Book A Sloth vs SimplyBook.me
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-sm" style={{ color: SB_BODY }}>
-            The features that matter for Indian professionals — side by side.
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[color:var(--navy-soft)]">
+            SimplyBook.me publishes its prices in euros; Book A Sloth bills in rupees. &ldquo;Not listed&rdquo; means
+            their pricing page doesn&rsquo;t say, not that they can&rsquo;t.
           </p>
-          <div className="mt-8 overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
+          <div className={`${CARD} mt-10 overflow-x-auto`}>
+            <table className="w-full min-w-[600px] border-collapse text-left text-sm">
+              <caption className="sr-only">SimplyBook.me and Book A Sloth compared: plans, prices, payments and reminders</caption>
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-400">Feature</th>
-                  <th className="px-5 py-4 font-heading text-sm font-bold" style={{ background: BAS_PEACH, color: BAS_CTA }}>
-                    Book A Sloth
+                <tr className="border-b border-black/5">
+                  <th scope="col" className="w-[30%] p-4 text-xs font-semibold uppercase tracking-wide text-[color:var(--navy-soft)]">What you get</th>
+                  <th scope="col" className="w-[35%] bg-primary-light p-4 font-heading font-bold">Book A Sloth</th>
+                  <th scope="col" className="w-[35%] p-4 font-heading font-bold">
+                    <span className="inline-flex items-center gap-2">
+                      <img src={favicon(SB.domain)} alt="" width="20" height="20" loading="lazy" className="h-5 w-5 rounded-full" style={{ boxShadow: `0 0 0 2px ${SB.color}33` }} />
+                      {SB.name}
+                    </span>
                   </th>
-                  <th className="px-5 py-4 text-sm font-semibold" style={{ color: SB_BLUE }}>SimplyBook.me</th>
                 </tr>
               </thead>
               <tbody>
-                {COMPARE.map((row, i) => (
-                  <tr key={row.f} style={{ borderTop: "1px solid #F3F4F6", background: i % 2 ? "#FFFBF8" : "white" }}>
-                    <th scope="row" className="px-5 py-3 text-sm font-medium" style={{ color: SB_NAVY }}>{row.f}</th>
-                    <td className="px-5 py-3" style={{ background: i % 2 ? "#FFE3D2" : BAS_PEACH }}>
-                      <span className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: BAS_CTA }}>
-                        <Check size={14} style={{ color: SB_GREEN }} /> {row.basT}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-flex items-center gap-1.5 text-sm ${row.sb ? "text-gray-600" : "text-gray-400"}`}>
-                        {row.sb ? <Check size={14} className="text-gray-400" /> : <X size={14} className="text-gray-300" />}
-                        {row.sbT}
-                      </span>
-                    </td>
+                {ROWS.map(([label, bas, sb]) => (
+                  <tr key={label} className="border-b border-black/5 align-top last:border-0">
+                    <th scope="row" className="p-4 font-semibold">{label}</th>
+                    <td className="bg-primary-light/50 p-4"><Cell value={bas} /></td>
+                    <td className="p-4 text-[color:var(--navy-soft)]"><Cell value={sb} /></td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr style={{ borderTop: "2px solid #EAD7CC" }}>
-                  <td className="hidden px-5 py-5 align-top text-xs font-semibold uppercase tracking-wide text-gray-400 sm:table-cell">
-                    The verdict
-                  </td>
-                  <td className="px-4 py-5 align-top sm:px-5" style={{ background: BAS_PEACH }}>
-                    <div className="font-heading text-sm font-extrabold leading-snug sm:text-base" style={{ color: SB_NAVY }}>
-                      Say Yes to<br />Book A Sloth.
-                    </div>
-                    <p className="mt-1 hidden text-xs sm:block" style={{ color: SB_BODY }}>
-                      Built for India. Priced in ₹.
-                    </p>
-                    <div className="mt-3 sm:max-w-[220px]">
-                      <SbCta slot="compare-yes" label="Sign up with Google" variant="google" />
-                    </div>
-                  </td>
-                  <td className="px-4 py-5 align-top sm:px-5">
-                    <div className="font-heading text-sm font-bold leading-snug text-gray-400 line-through sm:text-base">
-                      Say No to SimplyBook.
-                    </div>
-                    <p className="mt-1 hidden text-xs text-gray-400 sm:block">
-                      USD billing. No UPI. No GST. Trial wall.
-                    </p>
-                    <span className="mt-3 inline-flex items-center gap-1.5 rounded-[6px] border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-300">
-                      <X size={13} /> No thanks
-                    </span>
-                  </td>
-                </tr>
-              </tfoot>
             </table>
           </div>
-          <p className="mt-2 text-center text-xs text-gray-400">
-            SimplyBook.me Basic ~$8.25/mo (billed in USD), as of Jul 2026. Add-on modules cost extra.
-          </p>
-        </div>
-      </section>
-
-      {/* ══════ PRICING ══════ */}
-      <section id="pricing" className="scroll-mt-16 px-5 py-20 sm:px-8">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-center font-heading text-3xl font-extrabold tracking-tight sm:text-4xl" style={{ color: SB_NAVY }}>
-            Transparent pricing. No module add-ons.
-          </h2>
-          <p className="mt-2 text-center" style={{ color: SB_BODY }}>
-            All plans billed in ₹. Every feature included. No hidden costs — unlike SimplyBook&apos;s add-on maze.
-          </p>
-
-          {/* Billing toggle */}
-          <div className="mt-6 flex justify-center">
-            <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setBillingAnnual(false)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${!billingAnnual ? "text-white" : "text-neutral-500 hover:text-ink"}`}
-                style={!billingAnnual ? { background: BAS_CTA } : undefined}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingAnnual(true)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${billingAnnual ? "text-white" : "text-neutral-500 hover:text-ink"}`}
-                style={billingAnnual ? { background: BAS_CTA } : undefined}
-              >
-                Yearly
-                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${billingAnnual ? "bg-white/20 text-white" : "bg-primary/10 text-primary"}`}>
-                  Save 58%
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div className={`mt-10 grid gap-5 ${feeOnly ? "sm:grid-cols-2 sm:max-w-3xl sm:mx-auto" : "md:grid-cols-3"}`}>
-            {plans.map((plan, i) => {
-              const isFree = plan.monthly === 0;
-              const perMo = isFree ? 0 : Math.round(plan.yearly / 12);
-              const savePct = isFree ? 0 : Math.round((1 - plan.yearly / 12 / plan.monthly) * 100);
-              const big = isFree ? "Free" : (billingAnnual ? fmtINR(plan.yearly) : fmtINR(plan.monthly));
-              const cadence = isFree ? "" : (billingAnnual ? "/ year" : "/ month");
-              const sub = isFree
-                ? "Free forever, no booking cap"
-                : (billingAnnual ? `just ₹${perMo}/mo, billed yearly` : "billed monthly");
-              const highlight = !!plan.recommended;
-              const accent = highlight ? BAS_ORANGE : ACCENTS[i % ACCENTS.length];
-
-              return (
-                <AccentCard
-                  key={plan.name}
-                  accent={accent}
-                  className={`flex h-full flex-col rounded-xl border bg-white p-7 transition hover:-translate-y-1 ${
-                    highlight ? "shadow-[0_24px_60px_-30px_rgba(254,81,0,0.45)]" : "shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
-                  }`}
-                  style={{ borderColor: highlight ? BAS_ORANGE : "#E5E7EB" }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-heading text-lg font-bold" style={{ color: SB_NAVY }}>{plan.name}</span>
-                    {highlight && (
-                      <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white" style={{ background: BAS_CTA }}>
-                        Recommended
-                      </span>
-                    )}
-                    {plan.badge && !highlight && (
-                      <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold" style={{ background: BAS_PEACH, color: BAS_CTA }}>
-                        {plan.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs" style={{ color: "#9CA3AF" }}>{plan.tagline}</p>
-
-                  <div className="mt-5 flex items-end gap-1">
-                    <span className="text-4xl font-extrabold" style={{ color: SB_NAVY }}>{big}</span>
-                    {cadence && <span className="mb-1 text-sm" style={{ color: "#9CA3AF" }}>{cadence}</span>}
-                  </div>
-                  <p className="mt-0.5 text-xs" style={{ color: "#9CA3AF" }}>
-                    {sub}
-                    {!isFree && billingAnnual && savePct > 0 && (
-                      <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                        Save {savePct}%
-                      </span>
-                    )}
-                  </p>
-
-                  <SbCta
-                    slot={`pricing-${plan.name}`}
-                    label={isFree ? "Start for Free" : "Get Started Now"}
-                    className="mt-5 w-full !justify-center"
-                  />
-
-                  <ul className="mt-6 space-y-2.5">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm">
-                        <Check size={14} className="mt-0.5 shrink-0" style={{ color: accent }} />
-                        <span style={{ color: SB_BODY }}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </AccentCard>
-              );
-            })}
-          </div>
-          <p className="mt-6 text-center text-sm text-gray-400">
-            0% commission on Sloth Active · All prices include GST · Cancel anytime
-          </p>
-        </div>
-      </section>
-
-      {/* ══════ TESTIMONIALS ══════ */}
-      <section className="px-5 py-20 sm:px-8" style={{ background: SB_LIGHT }}>
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mb-3 text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: SB_NAVY }}>
-            Indian Professionals Trust Book A Sloth
-          </h2>
-          <p className="mx-auto mb-10 max-w-xl text-center text-sm" style={{ color: SB_BODY }}>
-            Coaches, consultants, therapists, freelancers — professionals who chose simplicity over feature bloat.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {TESTIMONIALS.map((t, i) => {
-              const accent = ACCENTS[i % ACCENTS.length];
-              return (
-                <AccentCard
-                  key={t.name}
-                  accent={accent}
-                  className="flex h-full flex-col rounded-xl border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.05)] transition hover:-translate-y-1"
-                >
-                  <span className="font-heading text-3xl font-extrabold leading-none" style={{ color: accent }} aria-hidden>&ldquo;</span>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed" style={{ color: SB_NAVY }}>{t.quote}</p>
-                  <div className="mt-5 flex items-center gap-2.5">
-                    <Avatar src={t.avatar} name={t.name} accent={accent} />
-                    <div>
-                      <div className="text-xs font-bold" style={{ color: SB_NAVY }}>{t.name}</div>
-                      <div className="text-[11px]" style={{ color: SB_BODY }}>{t.role}</div>
-                    </div>
-                  </div>
-                </AccentCard>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ FAQ ══════ */}
-      <section id="faq" className="scroll-mt-16 px-5 py-20 sm:px-8">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: SB_NAVY }}>
-            Switching from SimplyBook.me? Questions answered.
-          </h2>
-          <div className="mt-10 space-y-3">
-            {FAQS.map((faq, i) => {
-              const isOpen = openFaq === i;
-              return (
-                <div
-                  key={i}
-                  className="overflow-hidden rounded-xl border transition-colors"
-                  style={{ borderColor: isOpen ? `${SB_BLUE}40` : "#E5E7EB", background: isOpen ? `${SB_BLUE}05` : "white" }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? null : i)}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold transition-colors"
-                    style={{ color: SB_NAVY }}
-                  >
-                    {faq.q}
-                    <ChevronRight
-                      size={16}
-                      className="shrink-0 transition-transform duration-200"
-                      style={{ color: SB_BLUE, transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-5 pb-4 text-sm leading-relaxed" style={{ color: SB_BODY }}>
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ FINAL CTA — dark ══════ */}
-      <section className="px-5 py-20 sm:px-8" style={{ background: SB_NAVY }}>
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-heading text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-            No trial needed.
-            <br />
-            <span style={{ color: BAS_ORANGE }}>Start free. Stay free.</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-lg text-neutral-300">
-            Our Sloth plan is free forever with no booking cap. Upgrade when you&apos;re ready.
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <div className="w-full max-w-xs">
-              <SbCta slot="final-google" label="Sign up with Google" variant="google" />
-            </div>
-            <p className="text-sm text-neutral-400">
-              Already have an account?{" "}
-              <Link to="/login-as-vendor" className="font-semibold hover:no-underline" style={{ color: BAS_ORANGE }}>
-                Log in
-              </Link>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ SECURITY BADGES ══════ */}
-      <section className="border-y border-gray-100 bg-white px-5 py-8 sm:px-8">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">Security &amp; trust</p>
-        <div className="mx-auto mt-5 flex flex-wrap items-center justify-center gap-6">
-          {[
-            [Shield, "Razorpay Secured"],
-            [FileText, "GST Compliant"],
-            [Shield, "Data Encrypted"],
-            [Shield, "PCI DSS"],
-          ].map(([Icon, label]) => (
-            <div key={label} className="flex items-center gap-2 text-xs font-semibold text-gray-400">
-              <Icon size={15} className="text-gray-300" />
-              {label}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════ FOOTER ══════ */}
-      <footer className="border-t border-gray-100 px-5 py-10 sm:px-8">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 text-xs text-gray-400 sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} Book A Sloth — The SimplyBook.me alternative built for India</p>
-          <div className="flex items-center gap-5">
-            <Link to="/privacy" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = SB_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              Privacy
-            </Link>
-            <Link to="/help" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = SB_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              Help
-            </Link>
-            <a href="mailto:bolt@bookasloth.in" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = SB_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              bolt@bookasloth.in
+          <p className="mt-5 text-xs leading-relaxed text-[color:var(--navy-soft)]">
+            Checked against SimplyBook.me&rsquo;s pricing page in {CHECKED_LABEL}. Prices as published, in their currency.{' '}
+            <a href={SB.source} target="_blank" rel="noopener noreferrer nofollow" className="text-[color:var(--navy-soft)] underline underline-offset-2 hover:text-[color:var(--navy)]">
+              Source: SimplyBook.me pricing page
             </a>
+            . SimplyBook.me is a trademark of its owner. Book A Sloth isn&rsquo;t affiliated with SimplyBook.me.
+          </p>
+        </div>
+      </section>
+
+      {/* ═══════════════ 4 · WHAT'S DIFFERENT ═══════════════ */}
+      <section aria-labelledby="different-title" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <h2 id="different-title" className={`${H2} max-w-3xl`}>What&rsquo;s different for hosts <span className="text-primary-cta">in India?</span></h2>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {DIFFERENT.map(({ icon: Icon, title, body, link }) => (
+              <div key={title} className={`${CARD} flex flex-col p-6 sm:p-7`}>
+                <span className="grid h-11 w-11 place-items-center rounded-full border border-[color:var(--sky-deep)] bg-[color:var(--sky)] text-[color:var(--steel)]">
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <h3 className="mt-5 font-heading text-xl font-bold text-[color:var(--navy)]">{title}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--navy-soft)]">{body}</p>
+                {link && (
+                  <Link to={link.to} className={`mt-4 inline-flex items-center gap-1.5 self-start py-1 text-sm ${LINK}`}>
+                    {link.label} <ArrowRight size={14} aria-hidden="true" />
+                  </Link>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-      </footer>
-    </div>
+      </section>
+
+      {/* ═══════════════ 5 · WHERE SIMPLYBOOK IS THE BETTER CHOICE ═══════════════ */}
+      <section aria-labelledby="better-title" className="bg-[color:var(--navy)] px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <h2 id="better-title" className="max-w-3xl font-heading text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl">
+            Where SimplyBook.me is the <span style={{ color: C.onDark }}>better choice</span>
+          </h2>
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/75">
+            For some setups it fits better. Here is where, going by its own pricing page.
+          </p>
+          <div className="mt-12 grid gap-5 md:grid-cols-3 md:gap-6">
+            {BETTER.map(({ icon: Icon, title, body }) => (
+              <div key={title} className="rounded-[6px] border border-white/10 bg-white/[0.04] p-6 sm:p-7">
+                <Icon size={20} style={{ color: C.onDark }} aria-hidden="true" />
+                <h3 className="mt-4 font-heading text-lg font-bold text-white">{title}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-white/75">{body}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-8 flex items-start gap-2 text-sm leading-relaxed text-white/75">
+            <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+            Good to know: on SimplyBook.me, SMS reminders are {SB.sms.toLowerCase()} and WhatsApp reminders are {SB.whatsapp.toLowerCase()}.
+          </p>
+        </div>
+      </section>
+
+      {/* ═══════════════ 6 · BOOKING-CAP METER ═══════════════ */}
+      <section aria-labelledby="meter-title" className="bg-[color:var(--sky)] px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <h2 id="meter-title" className={`${H2} max-w-3xl`}>How many bookings does SimplyBook.me&rsquo;s free plan <span className="text-primary-cta">cover?</span></h2>
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[color:var(--navy-soft)]">
+            Up to {CAP} a month. Set the meter to a typical month and see which plan you&rsquo;d need on each.
+          </p>
+          <BookingMeter />
+        </div>
+      </section>
+
+      {/* ═══════════════ 7 · SWITCH IN 3 STEPS ═══════════════ */}
+      <section aria-labelledby="switch-title" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <h2 id="switch-title" className={`${H2} max-w-3xl`}>How do I switch from <span className="text-primary-cta">SimplyBook.me?</span></h2>
+          <ol className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
+            {STEPS.map(({ icon: Icon, title, body }, i) => (
+              <li key={title}>
+                <div className="flex items-center gap-3" aria-hidden="true">
+                  <span className="font-heading text-sm font-extrabold tabular-nums text-[color:var(--steel)]">0{i + 1}</span>
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[color:var(--sky-deep)]">
+                    <span className="block h-full rounded-full bg-[color:var(--steel)]" style={{ width: `${((i + 1) / STEPS.length) * 100}%` }} />
+                  </span>
+                </div>
+                <Icon size={22} className="mt-6 text-[color:var(--navy)]" aria-hidden="true" />
+                <h3 className="mt-3 font-heading text-xl font-bold text-[color:var(--navy)]">{title}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--navy-soft)]">{body}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-12"><StartCta slot="switch">Start free in 3 steps</StartCta></div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 8 · TESTIMONIALS ═══════════════ */}
+      <section aria-labelledby="quotes-title" className="bg-[color:var(--sky)] px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <h2 id="quotes-title" className={H2}>What hosts <span className="text-primary-cta">say</span></h2>
+          <div className="mt-12 grid gap-5 md:grid-cols-3 md:gap-6">
+            {QUOTES.map((t) => (
+              <figure key={t.name} className={`${CARD} flex flex-col p-6 sm:p-7`}>
+                <blockquote className="flex-1 text-[15px] leading-relaxed text-[color:var(--navy)]">&ldquo;{t.quote}&rdquo;</blockquote>
+                <figcaption className="mt-6 flex items-center gap-3">
+                  <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[color:var(--sky)] font-heading text-sm font-bold text-[color:var(--navy)]">
+                    {t.name.replace(/^(Dr|Ar)\.\s*/, '').split(' ').map((w) => w[0]).join('').slice(0, 2)}
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold text-[color:var(--navy)]">{t.name}</span>
+                    <span className="block text-xs text-[color:var(--navy-soft)]">{t.role}</span>
+                  </span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 9 · FAQ ═══════════════ */}
+      <section id="faq" aria-labelledby="faq-title" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-3xl">
+          <h2 id="faq-title" className={H2}>SimplyBook.me questions, <span className="text-primary-cta">answered</span></h2>
+          <div className="mt-10 space-y-3">
+            {FAQ.map((f, i) => (
+              <details key={f.q} className={`${CARD} group`} open={i === 0}>
+                <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 p-5 [&::-webkit-details-marker]:hidden">
+                  <h3 className="font-heading text-base font-bold text-[color:var(--navy)] sm:text-lg">{f.q}</h3>
+                  <Plus size={18} className="shrink-0 text-[color:var(--steel)] transition-transform group-open:rotate-45" aria-hidden="true" />
+                </summary>
+                <p className="px-5 pb-5 text-[15px] leading-relaxed text-[color:var(--navy-soft)]">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 10 · RELATED + FINAL CTA ═══════════════ */}
+      <section aria-labelledby="related-title" className="border-t border-black/5 px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <h2 id="related-title" className="font-heading text-2xl font-extrabold text-[color:var(--navy)]">More comparisons</h2>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {RELATED.map((c) => (
+              <li key={c.key}>
+                <Link to={c.path} className={`${CARD} flex min-h-[56px] items-center gap-3 p-4 text-[color:var(--navy)] transition-colors hover:border-black/15 hover:no-underline`}>
+                  <img src={favicon(c.domain)} alt="" width="24" height="24" loading="lazy" className="h-6 w-6 rounded-full border border-black/5 bg-white p-0.5" />
+                  <span className="font-heading text-[15px] font-bold">Book A Sloth vs {c.name}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-8 text-sm leading-relaxed text-[color:var(--navy-soft)]">
+            See <Link to="/compare" className={LINK}>every booking tool compared side by side</Link>, or read{' '}
+            <Link to="/blog/best-appointment-booking-apps-india" className={LINK}>our guide to appointment booking apps in India</Link>.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="final-title" className="bg-[color:var(--navy)] px-5 py-20 sm:px-8 lg:py-24">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 id="final-title" className="font-heading text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl">
+            Start free, with <span style={{ color: C.onDark }}>no booking cap</span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-white/75">
+            {FREE} is free with {commission.free} commission per paid booking. {PREM} is {MONTHLY} a month for {commission.premium} commission.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <StartCta slot="final" />
+            <Link to="/pricing" className="inline-flex min-h-[44px] items-center py-3 text-sm font-semibold text-white underline underline-offset-2 hover:text-white hover:opacity-90">
+              Compare {FREE} and {PREM} pricing
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 };
 
