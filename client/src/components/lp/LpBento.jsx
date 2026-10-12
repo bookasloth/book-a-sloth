@@ -5,7 +5,7 @@ export default function LpBento() {
     <section className="bg-neutral-100 px-5 py-24 sm:px-8">
       <div className="mx-auto max-w-6xl">
         <h2 className="text-center text-3xl font-extrabold tracking-tight text-ink sm:text-[2.8rem]">
-          <span className="text-primary">Earn &amp; Convert</span> more with Book A Sloth
+          <span className="text-primary">What you get</span> with Book A Sloth
         </h2>
 
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
