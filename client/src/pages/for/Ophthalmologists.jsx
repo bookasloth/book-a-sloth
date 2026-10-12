@@ -54,6 +54,7 @@ import {
 } from '../../data/plans';
 import ToolLogo from './toolLogos';
 import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
+import OperatorCredit from '../../components/common/OperatorCredit';
 
 const START = '/be-a-sloth';      // real host signup funnel
 const LOGIN = '/login-as-vendor'; // host login (Google-only door)
@@ -792,7 +793,7 @@ export default function Ophthalmologists() {
             ))}
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-black/5 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-slate-500">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+            <p className="text-xs text-slate-500">© 2026 Book A Sloth. <OperatorCredit /></p>
             <p className="text-xs text-slate-500">Made for India&apos;s ophthalmologists &amp; eye clinics</p>
           </div>
         </div>

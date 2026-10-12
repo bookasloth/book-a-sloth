@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import OperatorCredit from './OperatorCredit';
 
 const ROUTE_START = '/be-a-sloth';
 const EMAIL = 'bolt@bookasloth.in';
@@ -140,11 +141,7 @@ export default function Footer({ variant = 'full' }) {
           </div>
           {/* Company ownership visible site-wide — part of the Google OAuth
               verification checklist (homepage must identify the operator). */}
-          <span>
-            Operated and Hand crafted by the humans of{' '}
-            <a href="https://timewheel.co.in/web-development-company-in-nagpur" target="_blank" rel="noopener" className="text-white/60 underline underline-offset-2 transition-colors hover:text-white">Timewheel Internet</a>{' '}
-            Private Limited
-          </span>
+          <OperatorCredit linkClassName="text-white/60 underline underline-offset-2 transition-colors hover:text-white" />
         </div>
       </div>
     </footer>
