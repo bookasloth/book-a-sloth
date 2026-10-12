@@ -86,7 +86,7 @@ const STATIC_ROUTES = [
   { path: '/appointment-booking-software', changefreq: 'monthly', priority: '0.8' },
   { path: '/enterprise',               changefreq: 'monthly', priority: '0.7' },
   { path: '/about',                    changefreq: 'monthly', priority: '0.5' },
-  // SEO discovery hubs — internally link every /for/* and /lp/* landing page.
+  // SEO discovery hubs — internally link every /for/* and /compare/* landing page.
   { path: '/solutions',                changefreq: 'monthly', priority: '0.7' },
   { path: '/compare',                  changefreq: 'monthly', priority: '0.7' },
   { path: '/careers',                  changefreq: 'weekly',  priority: '0.5' },
@@ -117,12 +117,12 @@ const STATIC_ROUTES = [
   { path: '/help/docs',                changefreq: 'monthly', priority: '0.4' },
   ...HELP_DOC_SLUGS.map((s) => ({ path: `/help/docs/${s}`, changefreq: 'monthly', priority: '0.4' })),
   ...FEATURE_SLUGS.map((s) => ({ path: `/features/${s}`, changefreq: 'monthly', priority: '0.7' })),
-  { path: '/lp/topmate-vs-bookasloth', changefreq: 'monthly', priority: '0.7' },
-  { path: '/lp/calendly-alternative',  changefreq: 'monthly', priority: '0.7' },
-  { path: '/lp/setmore-alternative',   changefreq: 'monthly', priority: '0.7' },
-  { path: '/lp/acuity-alternative',    changefreq: 'monthly', priority: '0.7' },
-  { path: '/lp/simplybook-alternative', changefreq: 'monthly', priority: '0.7' },
-  { path: '/lp/zoho-bookings-alternative', changefreq: 'monthly', priority: '0.7' },
+  { path: '/compare/topmate-alternative', changefreq: 'monthly', priority: '0.7' },
+  { path: '/compare/calendly-alternative',  changefreq: 'monthly', priority: '0.7' },
+  { path: '/compare/setmore-alternative',   changefreq: 'monthly', priority: '0.7' },
+  { path: '/compare/acuity-alternative',    changefreq: 'monthly', priority: '0.7' },
+  { path: '/compare/simplybook-alternative', changefreq: 'monthly', priority: '0.7' },
+  { path: '/compare/zoho-bookings-alternative', changefreq: 'monthly', priority: '0.7' },
   // These 5 are live, prerendered /for pages (client/scripts/prerender.mjs)
   // that were missing from the sitemap — crawlable only via internal links.
   { path: '/for/astrologers',          changefreq: 'monthly', priority: '0.8' },

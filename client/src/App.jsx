@@ -73,17 +73,18 @@ const JobDetail      = lazy(() => import('./pages/JobDetail'));
 const Enterprise     = lazy(() => import('./pages/Enterprise'));
 const HowItWorks     = lazy(() => import('./pages/HowItWorks'));
 // SEO discovery hubs — crawlable directories that internally link every
-// /for/* profession page (Solutions) and /lp/* competitor page (Compare).
+// /for/* profession page (Solutions) and /compare/* competitor page (Compare).
 const Solutions      = lazy(() => import('./pages/Solutions'));
 const Compare        = lazy(() => import('./pages/Compare'));
 
-// Paid-traffic landing pages (/lp/*) — own header/footer, global nav hidden
-const TopmateVsBookASloth = lazy(() => import('./pages/lp/TopmateVsBookASloth'));
-const CalendlyAlternative  = lazy(() => import('./pages/lp/CalendlyAlternative'));
-const SetmoreAlternative   = lazy(() => import('./pages/lp/SetmoreAlternative'));
-const AcuityAlternative    = lazy(() => import('./pages/lp/AcuityAlternative'));
-const SimplybookAlternative = lazy(() => import('./pages/lp/SimplybookAlternative'));
-const ZohoBookingsAlternative = lazy(() => import('./pages/lp/ZohoBookingsAlternative'));
+// Competitor comparison pages (/compare/*, formerly /lp/*). Pages not yet rebuilt
+// still draw their own header/footer and call useHideChrome() to drop the global nav.
+const TopmateVsBookASloth = lazy(() => import('./pages/compare/TopmateVsBookASloth'));
+const CalendlyAlternative  = lazy(() => import('./pages/compare/CalendlyAlternative'));
+const SetmoreAlternative   = lazy(() => import('./pages/compare/SetmoreAlternative'));
+const AcuityAlternative    = lazy(() => import('./pages/compare/AcuityAlternative'));
+const SimplybookAlternative = lazy(() => import('./pages/compare/SimplybookAlternative'));
+const ZohoBookingsAlternative = lazy(() => import('./pages/compare/ZohoBookingsAlternative'));
 
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
@@ -443,15 +444,20 @@ function App() {
         <Routes>
           {/* Public */}
           <Route path="/" element={<HomeGate />} />
-          {/* Paid-traffic landing pages — own header/footer, nav hidden */}
-          <Route path="/lp/topmate-vs-bookasloth" element={<TopmateVsBookASloth />} />
-          <Route path="/lp/calendly-alternative" element={<CalendlyAlternative />} />
-          <Route path="/lp/setmore-alternative" element={<SetmoreAlternative />} />
-          <Route path="/lp/acuity-alternative" element={<AcuityAlternative />} />
-          <Route path="/lp/simplybook-alternative" element={<SimplybookAlternative />} />
-          <Route path="/lp/zoho-bookings-alternative" element={<ZohoBookingsAlternative />} />
-          {/* Unknown /lp/* slug → home (friendlier than a bare 404 for ad traffic) */}
-          <Route path="/lp/*" element={<Navigate to="/" replace />} />
+          {/* Competitor comparison pages — live under the /compare hub. */}
+          <Route path="/compare/topmate-alternative" element={<TopmateVsBookASloth />} />
+          <Route path="/compare/calendly-alternative" element={<CalendlyAlternative />} />
+          <Route path="/compare/setmore-alternative" element={<SetmoreAlternative />} />
+          <Route path="/compare/acuity-alternative" element={<AcuityAlternative />} />
+          <Route path="/compare/simplybook-alternative" element={<SimplybookAlternative />} />
+          <Route path="/compare/zoho-bookings-alternative" element={<ZohoBookingsAlternative />} />
+          {/* Old /lp/* URLs (Oct 2026 move). vercel.json 301s them at the edge;
+              these cover in-app navigation from a stale link or cached bundle. */}
+          <Route path="/lp/topmate-vs-bookasloth" element={<Navigate to="/compare/topmate-alternative" replace />} />
+          {['calendly', 'setmore', 'acuity', 'simplybook', 'zoho-bookings'].map((c) => (
+            <Route key={c} path={`/lp/${c}-alternative`} element={<Navigate to={`/compare/${c}-alternative`} replace />} />
+          ))}
+          <Route path="/lp/*" element={<Navigate to="/compare" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />

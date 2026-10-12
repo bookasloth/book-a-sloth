@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import TopmateVsBookASloth from "../lp/TopmateVsBookASloth";
+import TopmateVsBookASloth from "../compare/TopmateVsBookASloth";
 
 vi.mock("../../context/AuthContext", () => ({ useAuth: () => ({ startVendorGoogleAuth: vi.fn() }) }));
 vi.mock("../../hooks/useUtm", () => ({ default: () => ({}) }));

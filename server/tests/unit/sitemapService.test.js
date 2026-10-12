@@ -46,8 +46,8 @@ describe('staticEntries', () => {
   test('includes the marketing clusters (LPs, features, help docs, wall of love)', () => {
     const locs = new Set(staticEntries(SITE).map((e) => e.loc));
     for (const path of [
-      '/lp/setmore-alternative', '/lp/acuity-alternative', '/lp/simplybook-alternative',
-      '/lp/zoho-bookings-alternative', '/features/payments', '/features/online-scheduling',
+      '/compare/setmore-alternative', '/compare/acuity-alternative', '/compare/simplybook-alternative',
+      '/compare/zoho-bookings-alternative', '/features/payments', '/features/online-scheduling',
       '/help/docs', '/help/docs/what-is-book-a-sloth', '/wall-of-love',
       '/careers/mern-stack-developer',
     ]) {

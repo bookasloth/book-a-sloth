@@ -108,12 +108,12 @@ const RESOURCES_MENU = [
 // competitor's domain (favicon) and primary brand colour (hover tint). Only LPs
 // that exist. `label` (mobile) kept alongside name/domain/color (desktop cards).
 const COMPARE_MENU = [
-  { label: 'vs Calendly',      name: 'Calendly',      href: '/lp/calendly-alternative',      domain: 'calendly.com',         color: '#006BFF' },
-  { label: 'vs Acuity',        name: 'Acuity',        href: '/lp/acuity-alternative',        domain: 'acuityscheduling.com', color: '#1B7FA8' },
-  { label: 'vs Setmore',       name: 'Setmore',       href: '/lp/setmore-alternative',       domain: 'setmore.com',          color: '#009DE0' },
-  { label: 'vs SimplyBook',    name: 'SimplyBook',    href: '/lp/simplybook-alternative',    domain: 'simplybook.me',        color: '#2FA8C9' },
-  { label: 'vs Zoho Bookings', name: 'Zoho Bookings', href: '/lp/zoho-bookings-alternative', domain: 'zoho.com',             color: '#E42527' },
-  { label: 'vs Topmate',       name: 'Topmate',       href: '/lp/topmate-vs-bookasloth',     domain: 'topmate.io',           color: '#FF3E5F' },
+  { label: 'vs Calendly',      name: 'Calendly',      href: '/compare/calendly-alternative',      domain: 'calendly.com',         color: '#006BFF' },
+  { label: 'vs Acuity',        name: 'Acuity',        href: '/compare/acuity-alternative',        domain: 'acuityscheduling.com', color: '#1B7FA8' },
+  { label: 'vs Setmore',       name: 'Setmore',       href: '/compare/setmore-alternative',       domain: 'setmore.com',          color: '#009DE0' },
+  { label: 'vs SimplyBook',    name: 'SimplyBook',    href: '/compare/simplybook-alternative',    domain: 'simplybook.me',        color: '#2FA8C9' },
+  { label: 'vs Zoho Bookings', name: 'Zoho Bookings', href: '/compare/zoho-bookings-alternative', domain: 'zoho.com',             color: '#E42527' },
+  { label: 'vs Topmate',       name: 'Topmate',       href: '/compare/topmate-alternative',     domain: 'topmate.io',           color: '#FF3E5F' },
 ];
 
 // Flat lists derived from the mega configs — reused by the mobile accordions.

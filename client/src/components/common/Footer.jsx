@@ -9,7 +9,7 @@ const EMAIL = 'bolt@bookasloth.in';
 
 // Single centered inline row (support + legal, no label). Solutions + Compare
 // lead the row: they are hub pages (/solutions, /compare) that carry crawlable
-// internal links to every profession (/for/*) and competitor (/lp/*) landing
+// internal links to every profession (/for/*) and competitor (/compare/*) landing
 // page, keeping those out of the SEO orphan list without a heavy footer sitemap.
 const LEGAL = [
   { t: 'Solutions', href: '/solutions' },

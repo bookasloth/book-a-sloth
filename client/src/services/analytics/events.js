@@ -19,7 +19,7 @@ export const EVENTS = Object.freeze({
   PROFILE_VIEWED:     'host_profile_viewed', // guest landed on a host's public page
   SERVICE_VIEWED:     'service_viewed',      // guest opened a bookable service
 
-  // ── Paid landing pages (/lp/*) — ad traffic, retargeting-relevant ──
+  // ── Paid landing pages (/compare/*) — ad traffic, retargeting-relevant ──
   LP_VIEWED:          'lp_viewed',           // ad visitor landed on a conversion LP
   LP_CTA_CLICKED:     'lp_cta_clicked',      // clicked a primary CTA on an LP
   LEAD_CAPTURED:      'lead_captured',       // submitted email on an LP (→ Meta 'Lead')

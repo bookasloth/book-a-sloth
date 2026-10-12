@@ -26,9 +26,10 @@ import { ALL_PLANS } from "../../data/plans";
 import useFeeOnly from "../../hooks/useFeeOnly";
 import { TESTIMONIALS } from "../../data/testimonials";
 import { LpCta, AccentCard as KitAccentCard, Avatar as KitAvatar, fmtINR, BAS_ORANGE, BAS_CTA, BAS_PEACH } from "./_altKit";
+import { useHideChrome } from "../../context/ChromeContext";
 
 /*
-  /lp/zoho-bookings-alternative
+  /compare/zoho-bookings-alternative
   Zoho-inspired corporate grid layout + Book A Sloth brand CTAs.
   Copy: "Enterprise scheduling is overkill — you just need bookings that work."
 */
@@ -56,7 +57,7 @@ const AccentCard = (p) => <KitAccentCard accent={ZOHO_RED} {...p} />;
 const Avatar = (p) => <KitAvatar accent={ZOHO_RED} {...p} />;
 
 /* ─── Hero product visual ─── */
-const HERO_IMG = "https://company-assets.bookasloth.in/images/lp/zoho-bookings-alternative-hero.png";
+const HERO_IMG = "https://company-assets.bookasloth.in/images/compare/zoho-bookings-alternative-hero.png";
 
 function HeroBookingMock() {
   return (
@@ -130,9 +131,9 @@ const INTEGRATIONS = [
 const COMPARE = [
   { f: "Setup time", basT: "Under 5 minutes", zT: "Hours (workspaces, event types, workflows)", z: false },
   { f: "Built for solo creators", basT: "Yes", zT: "No — team/enterprise focus", z: false },
-  { f: "UPI payments at booking", basT: "Built in", zT: "Via Razorpay add-on", z: "partial" },
+  { f: "UPI payments at booking", basT: "Built in", zT: "Via Razorpay integration", z: "partial" },
   { f: "GST invoices — automatic", basT: "Yes", zT: "No", z: false },
-  { f: "WhatsApp reminders", basT: "Yes", zT: "Via Zoho ecosystem", z: "partial" },
+  { f: "WhatsApp reminders", basT: "Yes", zT: "Yes", z: true },
   { f: "Starting price (solo)", basT: "₹0 free · ₹399/mo paid", zT: "Free (limited) then ₹per user", z: "partial" },
   { f: "No ecosystem lock-in", basT: "Yes — standalone", zT: "Best with Zoho CRM, Mail, etc.", z: false },
   { f: "Google Calendar sync", basT: "Yes", zT: "Yes", z: true },
@@ -173,6 +174,8 @@ const FAQS = [
    PAGE
    ════════════════════════════════════════ */
 const ZohoBookingsAlternative = () => {
+  // Legacy design — draws its own header/footer until rebuilt. Rebuilt pages drop this.
+  useHideChrome();
   const feeOnly = useFeeOnly();
   const plans = feeOnly ? ALL_PLANS.filter((p) => p.monthly !== 0) : ALL_PLANS;
   const utm = useUtm();
@@ -200,9 +203,9 @@ const ZohoBookingsAlternative = () => {
         title="The Best Zoho Bookings Alternative for Creators — Book A Sloth"
         description="Looking for a Zoho Bookings alternative? Book A Sloth offers simple scheduling with UPI payments, GST invoices, and WhatsApp reminders — built for Indian professionals."
         image={ogCard('lp-zoho-bookings-alternative')}
-        canonical={`${SITE_URL}/lp/zoho-bookings-alternative`}
+        canonical={`${SITE_URL}/compare/zoho-bookings-alternative`}
         jsonLd={comparisonGraphJsonLd({
-          canonical: `${SITE_URL}/lp/zoho-bookings-alternative`,
+          canonical: `${SITE_URL}/compare/zoho-bookings-alternative`,
           name: "The Best Zoho Bookings Alternative for Creators — Book A Sloth",
           description: "Book A Sloth offers simple scheduling with UPI payments, GST invoices, and WhatsApp reminders — built for Indian professionals. A Zoho Bookings alternative.",
           breadcrumbName: "Zoho Bookings Alternative",
