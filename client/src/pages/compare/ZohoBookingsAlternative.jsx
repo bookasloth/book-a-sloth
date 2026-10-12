@@ -59,22 +59,18 @@ const TITLE = 'Zoho Bookings Alternative in India (UPI, GST) | Book A Sloth';
 const DESCRIPTION =
   'Compare Zoho Bookings with Book A Sloth for India: USD vs rupee pricing, UPI via Razorpay, WhatsApp reminders, GST invoices and payouts to your own bank.';
 
-const SHORT_ANSWER =
-  `${Z.name} and Book A Sloth both give you a booking page that takes payment. The main difference is who handles the money. ` +
-  `${Z.name} has a free plan for ${Z_FREE} and paid plans from ${Z.paidFrom}, billed in ${Z.currency}. You take payments by connecting one of its integrations (${Z.payments}), and UPI works ${lc1(Z.upi)}. ` +
-  `Book A Sloth is billed in rupees with GST included: ${FREE_PLAN.name} costs ${FREE_MO} a month with ${commission.free} commission, and ${PREMIUM_PLAN.name} costs ${PAID_MO} a month (${PAID_YR} a year) with ${commission.premium} commission. ` +
-  `Clients pay by UPI or card at booking, and Book A Sloth collects it, sends a GST invoice and settles to your bank after a one-time KYC. ` +
-  `Pick ${Z.name} if you already use Zoho apps or need several users. Pick Book A Sloth if you work on your own in India and don't want to run a payment gateway.`;
+// One-line verdict + 3 short reasons per side. Detail lives in the table and FAQ below.
+const SHORT_ANSWER = `Working solo and want UPI without running a gateway? Pick Book A Sloth. Already on Zoho apps, or need several users? Pick ${Z.name}.`;
 
 const PICK_ZOHO = [
-  'You already use Zoho apps',
-  'More than one person needs to take bookings (plans are priced per user)',
-  'You already have a Stripe, PayPal or Authorize.Net account to connect',
+  "You already use Zoho apps",
+  "Several people take bookings",
+  "You already have a gateway account",
 ];
 const PICK_BAS = [
-  'You work on your own and want clients to pay by UPI when they book',
-  'You would rather not open and manage a payment gateway account',
-  'You want a GST invoice on every paid booking, and prices in rupees',
+  "You work on your own",
+  "Clients pay by UPI at booking",
+  "No payment gateway account to manage",
 ];
 
 // [label, Book A Sloth (plans.js / verified fees), Zoho Bookings (competitors.js)]
@@ -390,7 +386,7 @@ export default function ZohoBookingsAlternative() {
         <div className="mx-auto max-w-3xl">
           <h2 className={H2}>The short <span className="text-primary-cta">answer</span></h2>
           <div className={`${CARD} mt-8 border-[color:var(--zb-line)] p-6 sm:p-8`}>
-            <p className="text-base leading-relaxed text-[color:var(--zb-ink)] sm:text-[17px]">{SHORT_ANSWER}</p>
+            <p className="font-heading text-lg font-bold leading-snug text-[color:var(--zb-ink)] sm:text-xl">{SHORT_ANSWER}</p>
           </div>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 sm:gap-6">
             {[[`Pick ${Z.name} if…`, PICK_ZOHO], ['Pick Book A Sloth if…', PICK_BAS]].map(([h, items]) => (

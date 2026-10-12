@@ -75,18 +75,18 @@ const H2 = 'font-heading text-4xl font-extrabold leading-[1.06] tracking-tight s
 
 const HERO_SUB = `Book A Sloth is an Acuity Scheduling alternative built for India. Clients pay by UPI or card at booking, and you're billed in rupees with GST included: ${FREE} is free (${COMMISSION.free} per paid booking) and ${PREM} is ${inr(PREMIUM_PLAN.monthly)} a month with ${COMMISSION.premium} commission. Acuity has no free plan and starts at ${usd(ACU_YR)} a month, billed yearly in USD.`;
 
-const SHORT_ANSWER = `Book A Sloth and Acuity Scheduling both give you an online booking page, but they charge you and collect money differently. Acuity Scheduling has no free plan, only a ${ACU_TRIAL} trial. Its ${ACU_PLAN} plan costs ${usd(ACU_YR)} a month billed yearly or ${usd(ACU_MO)} billed monthly, in US dollars with taxes extra, and it takes payments through ${ACU_PAYMENTS}, with no UPI. Book A Sloth's ${FREE} plan is free, with unlimited services and bookings and a ${COMMISSION.free} commission on each paid booking; ${PREM} costs ${inr(PREMIUM_PLAN.monthly)} a month or ${inr(PREMIUM_PLAN.yearly)} a year, GST included, with ${COMMISSION.premium} commission. On both plans clients pay by UPI or card at booking, the money is settled to your Indian bank account, and every paid booking gets a GST invoice. Pick Acuity if your clients pay by US card or you want SMS reminders (${ACU.sms}). Pick Book A Sloth if your clients are in India and pay by UPI.`;
+// One-line verdict + 3 short reasons per side. Detail lives in the table and FAQ below.
+const SHORT_ANSWER = `Want a free plan and UPI payments? Pick Book A Sloth. Clients mostly pay by US card, PayPal or Venmo? Pick ${ACU.name}.`;
 
 const PICK_ACUITY = [
-  'Most of your clients are in the US and pay by card, PayPal or Venmo',
-  `You want SMS reminders (${ACU.sms})`,
-  `You want a ${ACU_TRIAL} free trial of paid features first`,
+  "Clients pay by US card, PayPal or Venmo",
+  "You want SMS reminders",
+  "Paying in USD suits you",
 ];
 const PICK_BAS = [
-  'Your clients pay by UPI',
-  `You want a ${inr(FREE_PLAN.monthly)} plan to start on`,
-  'You need rupee billing and GST invoices',
-  'You want WhatsApp reminders',
+  "Clients pay by UPI",
+  "You want a free plan to start",
+  "You want rupee billing with GST invoices",
 ];
 
 // Table rows: [label, Book A Sloth, Acuity]. Acuity cells are competitors.js
@@ -361,7 +361,7 @@ export default function AcuityAlternative() {
           <div className="relative overflow-hidden rounded-[10px] border border-[var(--ct-line)] bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-10">
             <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-[var(--ct-mid)]" />
             <h2 className={H2}>The <span className="text-primary-cta">short</span> answer</h2>
-            <p className="mt-6 text-base leading-relaxed text-ink sm:text-[17px]">{SHORT_ANSWER}</p>
+            <p className="mt-6 font-heading text-lg font-bold leading-snug text-ink sm:text-xl">{SHORT_ANSWER}</p>
             <div className="mt-8 grid gap-6 border-t border-black/5 pt-7 sm:grid-cols-2">
               {[[`Pick ${ACU.name} if…`, PICK_ACUITY], ['Pick Book A Sloth if…', PICK_BAS]].map(([title, items]) => (
                 <div key={title}>

@@ -52,8 +52,7 @@ describe("ZohoBookingsAlternative", () => {
   it("keeps the short answer and hero sub inside their word budgets", () => {
     const { container } = renderPage();
     const short = words(container.querySelector("#short-answer p").textContent);
-    expect(short).toBeGreaterThanOrEqual(120);
-    expect(short).toBeLessThanOrEqual(170);
+    expect(short).toBeLessThanOrEqual(35); // one-line verdict, not a paragraph
     const sub = words(container.querySelector("h1").nextElementSibling.textContent);
     expect(sub).toBeGreaterThanOrEqual(40);
     expect(sub).toBeLessThanOrEqual(60);

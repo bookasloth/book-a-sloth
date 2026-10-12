@@ -66,17 +66,18 @@ const SEO = {
   description: `SimplyBook.me's free plan stops at ${CAP} bookings a month. Book A Sloth's free plan has no booking cap, takes UPI at booking and bills in rupees with GST invoices.`,
 };
 
-const SHORT_ANSWER = `SimplyBook.me and Book A Sloth both have a free plan, but they limit it differently. SimplyBook.me's free plan covers ${SB_FREE}; its paid plans start at ${SB.paidFrom}, priced in ${SB.currency}, and it takes no commission on bookings. It connects to ${SB.payments}. Book A Sloth's free ${FREE} plan has no booking cap and takes ${commission.free} commission per paid booking, while ${PREM} costs ${MONTHLY} a month or ${YEARLY} a year, GST included, with ${commission.premium} commission. Book A Sloth takes UPI and cards through Razorpay and settles to your Indian bank account, so you don't need a payment gateway account of your own. Pick SimplyBook.me if you stay under ${CAP} bookings a month or want its choice of gateways. Pick Book A Sloth if you work in India and want UPI at booking, rupee pricing and GST invoices.`;
+// One-line verdict + 3 short reasons per side. Detail lives in the table and FAQ below.
+const SHORT_ANSWER = `Over ${CAP} bookings a month, or clients pay by UPI? Pick Book A Sloth. Under ${CAP} and want no commission? Pick ${SB.name}.`;
 
 const PICK_SB = [
-  `You take fewer than ${CAP} bookings a month and want a free plan with no commission.`,
-  `You already use one of its gateways: ${SB.payments}.`,
-  `You want to try paid features first, with its ${TRIAL} trial.`,
+  `You stay under ${CAP} bookings a month`,
+  "You need a specific international gateway",
+  "You want no commission on bookings",
 ];
 const PICK_BAS = [
-  'You want clients to pay by UPI or card at the moment they book.',
-  'You would rather be billed in rupees, with a GST invoice on every paid booking.',
-  `You expect more than ${CAP} bookings a month and want no booking cap.`,
+  `You get more than ${CAP} bookings a month`,
+  "Clients pay by UPI at booking",
+  "You want rupee billing with GST invoices",
 ];
 
 // Table rows: [label, Book A Sloth (plans.js / verified facts), SimplyBook.me (competitors.js)].
@@ -382,7 +383,7 @@ const SimplybookAlternative = () => {
         <div className="mx-auto max-w-3xl">
           <h2 id="short-answer-title" className={H2}>The short <span className="text-primary-cta">answer</span></h2>
           <div className={`${CARD} mt-8 p-6 sm:p-8`}>
-            <p className="text-base leading-relaxed text-[color:var(--navy)] sm:text-[17px]">{SHORT_ANSWER}</p>
+            <p className="font-heading text-lg font-bold leading-snug text-[color:var(--navy)] sm:text-xl">{SHORT_ANSWER}</p>
           </div>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 sm:gap-6">
             {[[`Pick ${SB.name} if…`, PICK_SB, C.steel], ['Pick Book A Sloth if…', PICK_BAS, C.orange]].map(([title, items, color]) => (
