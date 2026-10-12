@@ -62,18 +62,18 @@ const KICKER = 'text-[11px] font-bold uppercase tracking-[0.18em]';
 const SEO_TITLE = 'Calendly Alternative for India (UPI + GST) | Book A Sloth';
 const SEO_DESC = 'Book A Sloth is a Calendly alternative for India: clients pay by UPI or card when they book, every paid booking gets a GST invoice, and plans bill in rupees.';
 
-const SHORT_ANSWER = `Calendly and Book A Sloth both give you a booking link. The real difference is how your client pays. Calendly's free plan covers ${CAL_FREE} with no payment step, and its paid plans start at ${C.paidFrom}, billed in ${C.currency}, taking payment through Stripe or PayPal. UPI isn't one of its options. Book A Sloth bills in rupees: ${FREE_PLAN.name} is free with unlimited services and bookings and a ${COMMISSION.free} commission, and ${PREMIUM_PLAN.name} costs ${inr(PREMIUM_PLAN.monthly)} a month or ${inr(PREMIUM_PLAN.yearly)} a year with ${COMMISSION.premium} commission. On both plans your client pays by UPI or card at booking, gets a GST invoice, and pays a flat ${inr(BOOKING_FEE)} + GST booking fee on paid bookings. Choose Calendly for free scheduling, per-seat team plans or clients paying by international card. Choose Book A Sloth if your clients are in India and you want to be paid by UPI before the session.`;
+// One-line verdict + 3 short reasons per side. Detail lives in the table and FAQ below.
+const SHORT_ANSWER = `Clients pay by UPI? Pick Book A Sloth. Only need free scheduling, or clients pay by international card? Pick ${C.name}.`;
 
 const PICK_CAL = [
-  `You only need free scheduling (${CAL_FREE}) and never take payment.`,
-  'Your clients pay by international card or PayPal.',
-  'You book for a team and want per-seat plans.',
+  "You only need free scheduling",
+  "Clients pay by international card or PayPal",
+  "You book as a team",
 ];
 const PICK_BAS = [
-  'Your clients want to pay by UPI when they book.',
-  'You want a GST invoice on every paid booking.',
-  `You'd rather pay in rupees: ₹0, or ${inr(PREMIUM_PLAN.monthly)} a month for ${COMMISSION.premium} commission.`,
-  "You don't want to set up your own payment gateway account.",
+  "Clients pay by UPI when they book",
+  "You want a GST invoice per booking",
+  "No payment gateway account to set up",
 ];
 
 // [label, Calendly value (competitors.js), Book A Sloth value (plans.js / host-fees)]
@@ -380,7 +380,7 @@ export default function CalendlyAlternative() {
         <div className={`relative mx-auto max-w-3xl rounded-[6px] border ${RULE} bg-white py-8 pl-10 pr-6 shadow-[0_8px_30px_rgba(20,33,61,0.04)] sm:py-10 sm:pl-14 sm:pr-10`}>
           <span aria-hidden className="absolute inset-y-0 left-6 w-px bg-primary/40 sm:left-9" />
           <h2 id="short-answer-title" className={`font-heading text-2xl font-extrabold sm:text-3xl ${INK}`}>The short <span className="text-primary-cta">answer</span></h2>
-          <p className={`mt-4 text-[15px] leading-relaxed sm:text-base ${INK}`}>{SHORT_ANSWER}</p>
+          <p className={`mt-4 font-heading text-lg font-bold leading-snug sm:text-xl ${INK}`}>{SHORT_ANSWER}</p>
           <div className={`mt-8 grid gap-8 border-t ${RULE} pt-6 sm:grid-cols-2`}>
             {[[`Pick ${C.name} if…`, PICK_CAL, false], ['Pick Book A Sloth if…', PICK_BAS, true]].map(([title, items, ours]) => (
               <div key={title}>

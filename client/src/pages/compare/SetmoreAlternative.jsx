@@ -82,18 +82,18 @@ const DESCRIPTION = "Setmore and Book A Sloth both have free plans. Book A Sloth
 
 const HERO_SUB = `Book A Sloth is a ${S.name} alternative for India if your clients pay by UPI. Both have free plans. ${S.name}'s covers ${SET_FREE[0]} and unlimited appointments. Book A Sloth's ${FREE_PLAN.name} plan takes UPI and cards at booking and sends GST invoices, for ${commission.free} per paid booking.`;
 
-const SHORT_ANSWER = `${S.name} and Book A Sloth both have free plans, so the choice mostly comes down to how your clients pay. ${S.name}'s free plan covers ${SET_FREE.join(' and ')}, its pricing page lists ${PAY_OR} for payments, and paid plans start at ${S.paidFrom}, in ${S.currency}. Book A Sloth's free ${FREE_PLAN.name} plan has unlimited bookings, takes UPI and card payments at booking through Razorpay, sends GST invoices and charges ${commission.free} commission on paid bookings. ${PREMIUM_PLAN.name} costs ${inr(PREMIUM_PLAN.monthly)} a month (${inr(PREMIUM_PLAN.yearly)} a year) with ${commission.premium} commission. Book A Sloth pays out to your Indian bank account after a one-time KYC, so you don't need a payment gateway account of your own. Pick ${S.name} if you need ${SET_FREE[0]} on a free plan or most clients pay by international card. Pick Book A Sloth if you work solo in India and want clients to pay by UPI when they book.`;
+// One-line verdict + 3 short reasons per side. Detail lives in the table and FAQ below.
+const SHORT_ANSWER = `Clients pay by UPI? Pick Book A Sloth. A small team sharing one free plan? Pick ${S.name}.`;
 
 const PICK_SETMORE = [
-  `You need ${SET_FREE[0]} on one free plan.`,
-  `Most clients pay by international card, through ${PAY_OR}.`,
-  `You want SMS reminders: ${S.sms}.`,
+  "Up to 4 people share the free plan",
+  "Clients pay by international card",
+  "You want SMS reminders on Pro",
 ];
 const PICK_BAS = [
-  'Your clients pay by UPI and you want the money at booking.',
-  'You want a GST invoice on every paid booking.',
-  "You'd rather not set up your own payment gateway account.",
-  `You'd rather pay in rupees: ${PREMIUM_PLAN.name} is ${inr(PREMIUM_PLAN.monthly)} a month with ${commission.premium} commission.`,
+  "Clients pay by UPI at booking",
+  "You want a GST invoice per booking",
+  "No payment gateway account to set up",
 ];
 
 // Side-by-side rows: [label, Book A Sloth, Setmore]. true/false → Yes/No, null → Not listed.
@@ -414,7 +414,7 @@ const SetmoreAlternative = () => {
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
           <h2 id="short-answer-title" className={H2}>{S.name} or Book A Sloth? <span className="text-primary-cta">The short answer.</span></h2>
           <div>
-            <p className={`text-[17px] leading-relaxed ${INK}`}>{SHORT_ANSWER}</p>
+            <p className={`font-heading text-lg font-bold leading-snug sm:text-xl ${INK}`}>{SHORT_ANSWER}</p>
             <div className="mt-8 grid gap-5 sm:grid-cols-2">
               {[[`Pick ${S.name} if…`, PICK_SETMORE, 'var(--mg-mint)'], ['Pick Book A Sloth if…', PICK_BAS, '#FFF4ED']].map(([h, items, bg]) => (
                 <div key={h} className="rounded-[6px] border border-black/5 p-6" style={{ background: bg }}>

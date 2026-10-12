@@ -46,11 +46,11 @@ describe('SetmoreAlternative (/compare/setmore-alternative)', () => {
     });
   });
 
-  it('keeps the short answer quotable (120-170 words)', () => {
+  it('keeps the short answer short: a one-line verdict + 3 reasons per side', () => {
     const { container } = renderPage();
     const p = container.querySelector('#short-answer p');
-    expect(words(p.textContent)).toBeGreaterThanOrEqual(120);
-    expect(words(p.textContent)).toBeLessThanOrEqual(170);
+    expect(words(p.textContent)).toBeLessThanOrEqual(35);
+    container.querySelectorAll('#short-answer ul').forEach((ul) => expect(ul.querySelectorAll('li')).toHaveLength(3));
   });
 
   it('shows the trademark / not-affiliated line and the source link', () => {
