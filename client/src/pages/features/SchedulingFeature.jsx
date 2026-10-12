@@ -42,6 +42,7 @@ import { ogCard } from '../../config/ogImages';
 import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import { FREE_PLAN, PREMIUM_PLAN } from '../../data/plans';
 import { TESTIMONIALS as ALL_TESTIMONIALS } from '../../data/testimonials';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';
 const BLUE = '#1D4ED8';       // accent for text + fills on white (AA, ~6.7:1)
@@ -550,6 +551,8 @@ export default function SchedulingFeature() {
       )}
 
       {/* ═══════════════ 8 · FAQ (two-column accordion) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <SectionHead center title="Scheduling questions," accent="answered." />

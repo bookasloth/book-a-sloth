@@ -20,6 +20,7 @@ import { ArrowRight, Check, Star, Sparkles, ShieldCheck, Plus } from 'lucide-rea
 import useLenis from '../../hooks/useLenis';
 import Seo from '../../components/common/Seo';
 import OperatorCredit from '../../components/common/OperatorCredit';
+import PageGuides from '../../components/common/PageGuides';
 import ErrorPage from '../ErrorPage';
 import { SITE_URL } from '../../utils/seo';
 import { HERO_FACES } from '../../components/home/images';
@@ -592,6 +593,8 @@ export default function ProfessionLanding() {
           </Reveal>
         </div>
       </section>
+
+      <PageGuides />
 
       {/* ════════════════ FAQ ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">

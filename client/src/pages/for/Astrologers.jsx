@@ -52,6 +52,7 @@ import meetLogo from '../enterprise-v2/assets/logo/meet.svg';
 import zoomLogo from '../enterprise-v2/assets/logo/zoom.svg';
 import calendarLogo from '../enterprise-v2/assets/logo/calendar.svg';
 import OperatorCredit from '../../components/common/OperatorCredit';
+import PageGuides from '../../components/common/PageGuides';
 
 const WHATSAPP_LOGO = '/for/astrologers/whatsapp.svg'; // green WhatsApp mark (public asset)
 
@@ -854,6 +855,8 @@ export default function Astrologers() {
       </section>
 
       {/* ═══════════════ 11 · FAQ (two-column) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <Reveal as="h2" className="text-center font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">

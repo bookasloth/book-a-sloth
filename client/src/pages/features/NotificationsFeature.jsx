@@ -50,6 +50,7 @@ import { ogCard } from '../../config/ogImages';
 import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import { FREE_PLAN, PREMIUM_PLAN } from '../../data/plans';
 import { TESTIMONIALS as ALL_TESTIMONIALS } from '../../data/testimonials';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';
 const INK = '#0F1111';        // dominant near-black
@@ -604,6 +605,8 @@ export default function NotificationsFeature() {
       )}
 
       {/* ═══════════════ 8 · FAQ (dark accordion) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-3xl">
           <Reveal as="h2" className="font-heading text-4xl font-extrabold leading-[1.05] tracking-tight text-[#F2F5F3] sm:text-5xl">

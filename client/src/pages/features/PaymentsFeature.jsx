@@ -35,6 +35,7 @@ import { ogCard } from '../../config/ogImages';
 import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import { FREE_PLAN, PREMIUM_PLAN } from '../../data/plans';
 import { TESTIMONIALS as ALL_TESTIMONIALS } from '../../data/testimonials';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';
 const GOLD = '#E9C46A';       // accent on dark forest only (AA on #0E3B2C)
@@ -497,6 +498,8 @@ export default function PaymentsFeature() {
       )}
 
       {/* ═══════════════ 8 · FAQ (sticky heading + numbered list) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
           <div className="lg:sticky lg:top-28 lg:self-start">

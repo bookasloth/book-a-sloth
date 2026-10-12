@@ -47,6 +47,7 @@ import { ogCard } from '../../config/ogImages';
 import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import { FREE_PLAN, PREMIUM_PLAN } from '../../data/plans';
 import { TESTIMONIALS as ALL_TESTIMONIALS } from '../../data/testimonials';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';
 const DEMO = '/demo';
@@ -644,6 +645,8 @@ export default function BookingPagesFeature() {
       )}
 
       {/* ═══════════════ 8 · FAQ (accordion of pill rows) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: PAPER }}>
         <div className="mx-auto max-w-3xl">
           <Reveal as="h2" className="text-center font-heading text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">

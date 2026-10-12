@@ -27,6 +27,16 @@ describe('Payments feature page', () => {
     expect(screen.getByRole('link', { name: /see what you keep/i }).getAttribute('href')).toBe('#keep');
   });
 
+  it('renders the Guides block directly above the FAQ', () => {
+    // PageGuides reads the route itself; App skips /features + /for so it isn't doubled.
+    const { container } = render(
+      <MemoryRouter initialEntries={['/features/payments']}><PaymentsFeature /></MemoryRouter>,
+    );
+    const guides = container.querySelectorAll('#page-guides-title');
+    expect(guides).toHaveLength(1);
+    expect(guides[0].closest('section').nextElementSibling.id).toBe('faq');
+  });
+
   it('recalculates what you keep when the price changes', () => {
     renderPage();
     fireEvent.change(screen.getByLabelText(/your price for one session/i), { target: { value: '1000' } });
