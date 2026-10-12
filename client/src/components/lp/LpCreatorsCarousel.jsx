@@ -49,10 +49,10 @@ export default function LpCreatorsCarousel() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <h2 className="max-w-xl text-3xl font-extrabold leading-tight text-white sm:text-[2.6rem]">
-              See what the best creators build on Book A Sloth
+              See what creators build on Book A Sloth
             </h2>
             <p className="mt-3 max-w-md text-white/80">
-              1:1 sessions, workshops and bundles — run by hosts who keep every rupee.
+              1:1 sessions, in-person appointments and digital products, from real Book A Sloth hosts.
             </p>
           </div>
           <div className="flex gap-2">
