@@ -1,14 +1,20 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { PAGE_GUIDES } from "../../data/pageGuides";
 
+// /for/* and /features/* pages render <PageGuides /> themselves, directly above
+// their FAQ (the /for pages also draw their own footer, so an App-level mount
+// landed BELOW it). App skips these routes to avoid a double render.
+export const GUIDES_IN_PAGE = /^\/(for|features)\//;
+
 /**
- * "Guides" strip rendered above the footer on product, tool, profession and
- * glossary pages that have an entry in PAGE_GUIDES. Mounted once in App so no
- * page component needs editing; renders nothing on every other route.
+ * "Guides" strip on product, tool, profession and glossary pages that have an
+ * entry in PAGE_GUIDES. App mounts it above the footer for most routes; /for and
+ * /features place it above their FAQ. Renders nothing on unmapped routes.
  */
 export default function PageGuides({ pathname }) {
-  const guides = PAGE_GUIDES[(pathname || "").replace(/\/+$/, "")];
+  const location = useLocation();
+  const guides = PAGE_GUIDES[(pathname ?? location.pathname).replace(/\/+$/, "")];
   if (!guides?.length) return null;
 
   return (

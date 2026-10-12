@@ -36,6 +36,7 @@ import { SITE_URL } from '../../utils/seo';
 import { getFeature } from './featureData';
 import { TESTIMONIALS } from '../../data/testimonials';
 import { HERO_FACES } from '../../components/home/images';
+import PageGuides from '../../components/common/PageGuides';
 import './featurePage.css';
 
 const ROUTE = '/be-a-sloth';
@@ -696,6 +697,7 @@ export default function FeaturePage() {
       <UseCases useCases={feature.useCases} />
       <Testimonials testimonials={feature.testimonials} />
       <Related related={feature.related} />
+      <PageGuides />
       <Faq faq={feature.faq} />
       <FinalCta feature={feature} />
     </div>

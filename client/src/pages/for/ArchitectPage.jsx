@@ -50,6 +50,7 @@ import {
 import ToolLogo from './toolLogos';
 import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
 import OperatorCredit from '../../components/common/OperatorCredit';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';
 const LOGIN = '/login-as-vendor';
@@ -856,6 +857,8 @@ export default function ArchitectPage() {
       </section>
 
       {/* ═══════════════ 11 · FAQ (two-column accordion) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
