@@ -1,250 +1,330 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  Check,
-  X,
-  ArrowRight,
-  ChevronRight,
-  IndianRupee,
-  MessageCircle,
-  FileText,
-  Shield,
-} from "lucide-react";
-import useUtm from "../../hooks/useUtm";
-import useDocumentMeta from "../../hooks/useDocumentMeta";
-import { analytics, EVENTS } from "../../services/analytics";
-import Seo from "../../components/common/Seo";
-import { ogCard } from "../../config/ogImages";
-import { SITE_URL, comparisonGraphJsonLd } from "../../utils/seo";
-import HowItWorks from "../../components/home/HowItWorks";
-import LogoMarquee from "../../components/about/LogoMarquee";
-import { ALL_PLANS } from "../../data/plans";
-import useFeeOnly from "../../hooks/useFeeOnly";
-import { TESTIMONIALS } from "../../data/testimonials";
-import { useHideChrome } from "../../context/ChromeContext";
+// /compare/calendly-alternative — Book A Sloth vs Calendly, for hosts in India.
+//
+// HONESTY: every Calendly claim comes from data/competitors.js (COMPETITORS.calendly,
+// checked against calendly.com/pricing). `null` there renders "Not listed", never
+// "No". Book A Sloth prices/commission come from data/plans.js. The ₹10 + GST
+// booking fee, ~2% gateway pass-through, TDS 1% + TCS 1% and the ₹959.76-on-₹1,000
+// payout are the published /host-fees figures. Quotes are real (data/testimonials.js).
+//
+// Design system "Ledger": warm paper + deep navy ink, ruled lines, one orange
+// accent. Page mechanic: "Same booking, two checkouts" (Calendly free / Standard
+// toggle vs Book A Sloth). Global Navbar + Footer come from App.jsx. No images
+// except competitor favicons, no scroll animations, no hover uplift.
 
-/*
-  /compare/calendly-alternative
-  Hybrid look: Calendly's layout/structure (familiarity for paid traffic) +
-  Book A Sloth branding — brand orange CTAs, Plus Jakarta Sans / Poppins,
-  Friendly-Brutalism cards. Calendly blue is kept only as a trust accent.
-  Copy: "everything Calendly does + payments in ₹ for India".
-*/
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Check, X, Minus, Receipt, Landmark, MessageCircle, IndianRupee } from 'lucide-react';
+import Seo from '../../components/common/Seo';
+import { ogCard } from '../../config/ogImages';
+import { SITE_URL, comparisonGraphJsonLd } from '../../utils/seo';
+import useUtm from '../../hooks/useUtm';
+import { analytics, EVENTS } from '../../services/analytics';
+import { COMPETITORS, COMPETITOR_LIST, CHECKED_LABEL } from '../../data/competitors';
+import { FREE_PLAN, PREMIUM_PLAN, PLAN_MATRIX } from '../../data/plans';
+import { TESTIMONIALS } from '../../data/testimonials';
 
-const SLUG = "calendly-alternative";
-const ROUTE_START = "/be-a-sloth"; // every CTA hands off to the real signup funnel
+const SLUG = 'calendly-alternative';
+const START = '/be-a-sloth';
+const C = COMPETITORS.calendly;
 
-/* Hybrid palette — BAS brand + a Calendly-blue trust accent */
-const CAL_BLUE = "#006BFF"; // Calendly-blue accent (familiarity)
-const CAL_NAVY = "#1A1A2E"; // dark surface + heading ink
-const CAL_BODY = "#4B4B63"; // muted body
-const CAL_LIGHT = "#F5F8FF"; // soft blue-tinted section bg
-const BAS_ORANGE = "#FE5100"; // brand accent / large text
-const BAS_CTA = "#c23d00"; // brand orange for white-text buttons (WCAG AA)
-const BAS_PEACH = "#FFE9DD"; // primary-light tint
+/* ─────────────────────────────  FACTS  ────────────────────────────── */
 
-/* Per-card accent colours for the social-proof grid */
-const ACCENTS = [CAL_BLUE, BAS_ORANGE, "#5E3AD4", "#059669", "#db2777", "#0891b2", "#2563eb", "#f59e0b"];
+const inr = (n, dp = 0) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: dp, maximumFractionDigits: dp })}`;
+const COMMISSION = PLAN_MATRIX.flatMap((g) => g.rows).find((r) => r.label === 'Commission on your bookings');
+const CAL_FREE = C.freePlan.replace(/^Yes:\s*/, ''); // "1 event type, 1 calendar"
+const favicon = (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 
-const fmtINR = (n) => `₹${n.toLocaleString("en-IN")}`;
+// /host-fees: client pays price + ₹10 booking fee + 18% GST on that fee; on
+// Sloth Active (0%) a ₹1,000 booking pays out ₹959.76 after ~2% gateway + TDS 1% + TCS 1%.
+const BOOKING_FEE = 10;
+const BOOKING_FEE_GST = 1.8;
+const EXAMPLE_PRICE = 1000;
+const EXAMPLE_TOTAL = EXAMPLE_PRICE + BOOKING_FEE + BOOKING_FEE_GST;
+const EXAMPLE_PAYOUT = '₹959.76';
 
-/* ─────────────────────────────────────────────
-   CTA — one-click Google signup (reuses AuthContext startVendorGoogleAuth).
-   No email form anywhere: every CTA hands off straight to Google.
-   ───────────────────────────────────────────── */
-function CalCta({ slot, label = "Get started", variant = "primary", className = "" }) {
+const PALETTE = {
+  '--lg-paper': '#FBF8F2',
+  '--lg-ink': '#14213D',
+  '--lg-muted': '#4D5873',
+  '--lg-faint': '#626C86',
+  '--lg-rule': 'rgba(20,33,61,0.12)',
+};
+const INK = 'text-[color:var(--lg-ink)]';
+const MUTED = 'text-[color:var(--lg-muted)]';
+const FAINT = 'text-[color:var(--lg-faint)]';
+const RULE = 'border-[color:var(--lg-rule)]';
+const PAPER_TXT = 'text-[#FBF8F2]';
+const H2 = 'font-heading text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl';
+const KICKER = 'text-[11px] font-bold uppercase tracking-[0.18em]';
+
+/* ─────────────────────────────  CONTENT  ────────────────────────────── */
+
+const SEO_TITLE = 'Calendly Alternative for India (UPI + GST) | Book A Sloth';
+const SEO_DESC = 'Book A Sloth is a Calendly alternative for India: clients pay by UPI or card when they book, every paid booking gets a GST invoice, and plans bill in rupees.';
+
+const SHORT_ANSWER = `Calendly and Book A Sloth both give you a booking link. The real difference is how your client pays. Calendly's free plan covers ${CAL_FREE} with no payment step, and its paid plans start at ${C.paidFrom}, billed in ${C.currency}, taking payment through Stripe or PayPal. UPI isn't one of its options. Book A Sloth bills in rupees: ${FREE_PLAN.name} is free with unlimited services and bookings and a ${COMMISSION.free} commission, and ${PREMIUM_PLAN.name} costs ${inr(PREMIUM_PLAN.monthly)} a month or ${inr(PREMIUM_PLAN.yearly)} a year with ${COMMISSION.premium} commission. On both plans your client pays by UPI or card at booking, gets a GST invoice, and pays a flat ${inr(BOOKING_FEE)} + GST booking fee on paid bookings. Choose Calendly for free scheduling, per-seat team plans or clients paying by international card. Choose Book A Sloth if your clients are in India and you want to be paid by UPI before the session.`;
+
+const PICK_CAL = [
+  `You only need free scheduling (${CAL_FREE}) and never take payment.`,
+  'Your clients pay by international card or PayPal.',
+  'You book for a team and want per-seat plans.',
+];
+const PICK_BAS = [
+  'Your clients want to pay by UPI when they book.',
+  'You want a GST invoice on every paid booking.',
+  `You'd rather pay in rupees: ₹0, or ${inr(PREMIUM_PLAN.monthly)} a month for ${COMMISSION.premium} commission.`,
+  "You don't want to set up your own payment gateway account.",
+];
+
+// [label, Calendly value (competitors.js), Book A Sloth value (plans.js / host-fees)]
+const ROWS = [
+  ['Free plan', C.freePlan, `Yes: unlimited services & bookings, ${COMMISSION.free} commission`],
+  ['Paid plan from', C.paidFrom, `${inr(PREMIUM_PLAN.monthly)} / month or ${inr(PREMIUM_PLAN.yearly)} / year (${PREMIUM_PLAN.name})`],
+  ['Priced per', 'Seat', 'Account, one flat price'],
+  ['Billing currency', C.currency, 'INR, GST included'],
+  ['Commission', C.commission, `${COMMISSION.free} on ${FREE_PLAN.name}, ${COMMISSION.premium} on ${PREMIUM_PLAN.name}`],
+  ['Taking payments', C.payments, 'UPI and cards through Razorpay, on both plans'],
+  ['UPI at booking', C.upi, true],
+  ['GST invoice for your client', null, 'Yes, on both plans'],
+  ['Fee your client pays', null, `${inr(BOOKING_FEE)} + GST per paid booking`],
+  ['WhatsApp reminders', C.whatsapp, `Yes on ${PREMIUM_PLAN.name}; first 2 months on ${FREE_PLAN.name}, then email`],
+];
+
+const DIFFERENT = [
+  { icon: IndianRupee, title: 'UPI at checkout, on both plans', body: `Your client pays by UPI or card through Razorpay while booking, on ${FREE_PLAN.name} and ${PREMIUM_PLAN.name}. Calendly lists ${C.payments}, and UPI isn't one of them.` },
+  { icon: Receipt, title: 'A GST invoice with every paid booking', body: "Each paid booking generates a GST invoice for your client, with nothing for you to type. Calendly's pricing page doesn't list GST invoicing." },
+  { icon: Landmark, title: 'Paid out to your Indian bank', body: "Book A Sloth collects the payment and settles it to your bank account after a one-time KYC. You don't need a payment gateway account of your own." },
+  { icon: MessageCircle, title: 'Reminders on WhatsApp', body: `Clients get WhatsApp reminders on ${PREMIUM_PLAN.name}. On ${FREE_PLAN.name} they're included for your first 2 months, then reminders go by email. Calendly's pricing page doesn't list WhatsApp reminders.` },
+];
+
+const BETTER = [
+  { title: 'You only need free scheduling', body: `Calendly's free plan (${CAL_FREE}) has no payment step and charges no commission. If you never charge for sessions, it may be all you need. Book A Sloth's ${FREE_PLAN.name} plan allows 2 free (₹0) services.` },
+  { title: 'Your clients pay by international card', body: "Calendly's paid plans take payment through Stripe or PayPal, which suits clients abroad who already pay that way." },
+  { title: 'You book for a team', body: 'Calendly prices per seat and also lists a Teams plan for groups. Book A Sloth is built for one host per account and has no multi-staff team accounts.' },
+];
+
+const STEPS = [
+  { title: 'Sign in with Google', body: 'Create your host account with Google. Google Calendar and Meet work on both plans.' },
+  { title: 'Add your services and availability', body: 'Set up each Calendly event type as a service, with its price and your weekly hours. Paid services start at ₹100.' },
+  { title: 'Share your link', body: 'Put your Book A Sloth link wherever your Calendly link was. Complete a one-time KYC to receive payouts.' },
+];
+
+const QUOTES = ['Vishal Chaware', 'Ar. Pranav Kadoo', 'Happy Singh']
+  .map((n) => TESTIMONIALS.find((t) => t.name === n))
+  .filter(Boolean);
+
+export const FAQ = [
+  { q: 'Is Calendly free?', a: `Yes. Calendly has a free plan with ${CAL_FREE}, according to its pricing page (checked ${CHECKED_LABEL}). Taking payments isn't part of it: Calendly lists payments through Stripe or PayPal on paid plans. Book A Sloth's ${FREE_PLAN.name} plan is also free, with unlimited services and bookings and UPI payments, and a ${COMMISSION.free} commission on paid bookings.` },
+  { q: 'Does Calendly support UPI payments?', a: `No. Calendly's pricing page lists ${C.payments}, and UPI isn't one of the options. Book A Sloth takes UPI and cards through Razorpay inside the booking flow on both of its plans, so your client pays when they book and gets a GST invoice for the payment.` },
+  { q: 'How much does Calendly cost in India?', a: `Calendly's paid plans start at ${C.paidFrom}, and it publishes prices in ${C.currency}, not rupees. There is also a free plan with ${CAL_FREE}. Book A Sloth is priced in rupees with GST included: ${FREE_PLAN.name} is ₹0 and ${PREMIUM_PLAN.name} is ${inr(PREMIUM_PLAN.monthly)} a month or ${inr(PREMIUM_PLAN.yearly)} a year.` },
+  { q: "What's the cheapest Calendly alternative for India?", a: `Book A Sloth starts at ₹0 a month. Its ${FREE_PLAN.name} plan includes unlimited services and bookings, UPI payments and GST invoices, with a ${COMMISSION.free} commission on paid bookings. ${PREMIUM_PLAN.name} costs ${inr(PREMIUM_PLAN.monthly)} a month and takes ${COMMISSION.premium} commission. On both plans your client pays a flat ${inr(BOOKING_FEE)} + GST booking fee per paid booking.` },
+  { q: 'Can I move from Calendly to Book A Sloth?', a: 'Yes. Sign in with Google, set up each Calendly event type as a service with its price and your weekly availability, then share your new booking link wherever your Calendly link was. Paid services start at ₹100. To receive payments, complete a one-time KYC so payouts reach your Indian bank account.' },
+  { q: 'Does Book A Sloth send GST invoices?', a: `Yes, on both plans. Every paid booking generates a GST invoice for your client automatically, so you don't type receipts or collect payment screenshots. It comes with ${FREE_PLAN.name} and ${PREMIUM_PLAN.name} alike, with nothing extra to buy. Calendly's pricing page doesn't list GST invoicing (checked ${CHECKED_LABEL}).` },
+  { q: 'Does Book A Sloth take a commission?', a: `Only on the free plan. ${FREE_PLAN.name} takes ${COMMISSION.free} per paid booking and ${PREMIUM_PLAN.name} takes ${COMMISSION.premium}. On every paid booking the client pays a ${inr(BOOKING_FEE)} + GST booking fee, the gateway charge (about 2%) is passed through at cost, and TDS 1% + TCS 1% are deducted on payout. On ${inr(EXAMPLE_PRICE)} at ${COMMISSION.premium} commission you receive ${EXAMPLE_PAYOUT}.` },
+  { q: 'Does Calendly send WhatsApp reminders?', a: `Calendly's pricing page doesn't list WhatsApp reminders (checked ${CHECKED_LABEL}). Book A Sloth sends WhatsApp reminders on ${PREMIUM_PLAN.name}. On the free ${FREE_PLAN.name} plan they're included for your first 2 months, then reminders go by email. Booking confirmations go out by email and WhatsApp on both plans.` },
+];
+
+const GUIDES = [
+  { to: '/blog/calendly-pricing-india', label: 'Calendly pricing in India, in rupees with GST' },
+  { to: '/blog/calendly-upi-payments', label: 'Can you take UPI payments on Calendly?' },
+  { to: '/blog/best-appointment-booking-apps-india', label: 'Appointment booking apps in India, compared' },
+];
+
+/* ─────────────────────────────  PIECES  ────────────────────────────── */
+
+function Cta({ slot, children = 'Start free', className = '' }) {
   const utm = useUtm();
-  const track = () => analytics.track(EVENTS.LP_CTA_CLICKED, { slug: SLUG, slot, ...utm });
-
-  if (variant === "google") {
-    return (
-      <Link
-        to={ROUTE_START}
-        onClick={track}
-        className={`flex w-full items-center justify-center gap-3 rounded-[6px] border-2 border-black/10 bg-white py-3 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition hover:border-black/20 hover:no-underline ${className}`}
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
-          <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-          <path d="M3.964 10.707A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
-          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-        </svg>
-        {label}
-      </Link>
-    );
-  }
-
   return (
     <Link
-      to={ROUTE_START}
-      onClick={track}
-      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 hover:no-underline ${className}`}
-      style={{ background: BAS_CTA }}
+      to={START}
+      onClick={() => analytics.track(EVENTS.LP_CTA_CLICKED, { slug: SLUG, slot, ...utm })}
+      className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[6px] bg-primary-cta px-6 py-3 text-sm font-semibold text-white shadow-[0_8px_30px_rgba(194,61,0,0.2)] transition-opacity hover:no-underline hover:opacity-90 ${className}`}
     >
-      {label}
-      <ArrowRight size={14} />
+      {children} <ArrowRight size={16} aria-hidden />
     </Link>
   );
 }
 
-/* ─────────────────────────────────────────────
-   AccentCard — brand-coloured abstract shapes tucked in the corners that
-   bloom on hover (smooth, transform/opacity only — lightweight). Wraps any
-   card content. overflow-hidden clips the shapes to the card.
-   ───────────────────────────────────────────── */
-function AccentCard({ accent = CAL_BLUE, className = "", children, ...rest }) {
-  return (
-    <div className={`group relative overflow-hidden ${className}`} {...rest}>
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-[0.08] transition-all duration-500 ease-out group-hover:scale-[1.45] group-hover:opacity-[0.22]"
-        style={{ background: accent }}
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -bottom-12 -left-12 h-32 w-32 rounded-[42%] opacity-[0.06] transition-all duration-500 ease-out group-hover:-translate-y-2 group-hover:opacity-[0.16]"
-        style={{ background: accent }}
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{ background: `radial-gradient(130% 130% at 100% 0%, ${accent}1f, transparent 55%)` }}
-      />
-      <div className="relative z-[1] h-full">{children}</div>
-    </div>
-  );
+function Cell({ value }) {
+  if (value === true) return <span className="inline-flex items-center gap-1.5 font-semibold"><Check size={15} className="text-emerald-700" aria-hidden />Yes</span>;
+  if (value === false) return <span className="inline-flex items-center gap-1.5"><X size={15} aria-hidden />No</span>;
+  if (value == null) return <span className={FAINT}>Not listed</span>;
+  return <span>{value}</span>;
 }
 
-/* Avatar with graceful initials fallback (CDN photo may be unset). */
-function Avatar({ src, name, accent = CAL_BLUE }) {
-  const [err, setErr] = useState(false);
-  if (err || !src) {
-    return (
-      <div
-        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold"
-        style={{ background: `${accent}1a`, color: accent }}
-      >
-        {name?.charAt(0) || "★"}
-      </div>
-    );
-  }
+/* Hero visual: a ledger slip, four rows from the data files. */
+function HeroLedger() {
+  const rows = [
+    ['Billed in', C.currency, 'INR (₹)'],
+    ['UPI at booking', C.upi ? 'Yes' : 'No', 'Yes'],
+    ['Free plan', CAL_FREE, 'Unlimited bookings'],
+    ['Commission', C.commission, `${COMMISSION.free} or ${COMMISSION.premium}`],
+  ];
   return (
-    <img
-      src={src}
-      onError={() => setErr(true)}
-      alt={name}
-      loading="lazy"
-      className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
-    />
-  );
-}
-
-/* Hero product visual — image from the company asset CDN (founder uploads it),
-   with the workflow mock as a graceful fallback until the PNG is in place. */
-const HERO_IMG = "https://company-assets.bookasloth.in/images/compare/calendly-alternative-hero.png";
-
-function HeroWorkflowMock() {
-  return (
-    <div className="rounded-[6px] border border-white/30 bg-white p-5 shadow-[0_24px_80px_-8px_rgba(0,0,0,0.3)]">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: BAS_ORANGE }}>Workflow</span>
-        <span className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: BAS_ORANGE }}>✓</span>
+    <figure className={`relative mx-auto w-full max-w-md rounded-[6px] border ${RULE} bg-white py-5 pl-12 pr-5 shadow-[0_8px_30px_rgba(20,33,61,0.06)]`}>
+      <span aria-hidden className="absolute inset-y-0 left-8 w-px bg-primary/40" />
+      <div className={`flex items-baseline justify-between border-b ${RULE} pb-3 ${KICKER} ${FAINT}`}>
+        <span>At a glance</span>
+        <span>Checked {CHECKED_LABEL}</span>
       </div>
-      <div className="mb-3 font-heading text-sm font-bold" style={{ color: CAL_NAVY }}>Reduce no-shows and stay on track</div>
-      <div className="space-y-2">
-        {[
-          { t: "Send WhatsApp reminder", sub: "24 hours before event starts", arrow: "→ Send to invitees" },
-          { t: "Send GST invoice", sub: "Immediately after payment", arrow: "→ Send to client" },
-          { t: "Send follow-up email", sub: "2 hours after event ends", arrow: "→ Send to invitees" },
-        ].map((w) => (
-          <div key={w.t} className="rounded-[6px] border border-gray-100 p-2.5" style={{ background: CAL_LIGHT }}>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold" style={{ color: CAL_NAVY }}>{w.t}</span>
-              <span className="text-[10px]" style={{ color: CAL_BLUE }}>{w.arrow}</span>
-            </div>
-            <div className="mt-0.5 text-[10px] text-gray-400">{w.sub}</div>
+      <div aria-hidden className={`grid grid-cols-[1fr_1fr_1fr] gap-3 pt-3 ${KICKER} ${FAINT}`}>
+        <span />
+        <span>Calendly</span>
+        <span className="text-primary-cta">Book A Sloth</span>
+      </div>
+      <dl>
+        {rows.map(([label, cal, bas]) => (
+          <div key={label} className={`grid grid-cols-[1fr_1fr_1fr] gap-3 border-b ${RULE} py-3 text-[13px] last:border-0`}>
+            <dt className={`font-semibold ${INK}`}>{label}</dt>
+            <dd className={MUTED}><span className="sr-only">Calendly: </span>{cal}</dd>
+            <dd className={`font-semibold ${INK}`}><span className="sr-only">Book A Sloth: </span>{bas}</dd>
           </div>
         ))}
+      </dl>
+      <figcaption className={`mt-3 text-[11px] ${FAINT}`}>From each pricing page, as published.</figcaption>
+    </figure>
+  );
+}
+
+/* Mechanic: one 30-minute booking, checked out on Calendly and on Book A Sloth. */
+function StepRow({ n, title, state = 'done', children }) {
+  const mark = {
+    done: <Check size={13} aria-hidden />,
+    skip: <Minus size={13} aria-hidden />,
+    pay: <span className="text-[11px] font-bold">{n}</span>,
+  }[state];
+  return (
+    <li className={`flex gap-3 border-b ${RULE} py-3 last:border-0`}>
+      <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${state === 'skip' ? 'border border-dashed border-[color:var(--lg-faint)] text-[color:var(--lg-faint)]' : 'bg-[color:var(--lg-ink)] text-white'}`}>{mark}</span>
+      <div className="min-w-0 flex-1">
+        <div className={`text-sm font-semibold ${state === 'skip' ? FAINT : INK}`}>{title}</div>
+        {children && <div className={`mt-1 text-[13px] ${MUTED}`}>{children}</div>}
+      </div>
+    </li>
+  );
+}
+
+function PayTiles({ options }) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {options.map(([label, on]) => (
+        <span key={label} className={`rounded-[5px] border px-2.5 py-1 text-xs font-semibold ${on ? 'border-primary-cta bg-primary-light text-primary-cta' : `${RULE} ${INK}`}`}>{label}</span>
+      ))}
+    </div>
+  );
+}
+
+const NOTE = `border-t ${RULE} pt-3 pb-1 text-xs ${FAINT}`;
+
+const CAL_PLANS = [
+  { key: 'free', label: 'Calendly free plan' },
+  { key: 'standard', label: 'Calendly Standard' },
+];
+
+function CardHead({ children, note }) {
+  return (
+    <div className={`flex items-center gap-2 border-b ${RULE} px-5 py-3.5`}>
+      {children}
+      <span className={`ml-auto text-[11px] ${FAINT}`}>{note}</span>
+    </div>
+  );
+}
+
+function TwoCheckouts() {
+  const [plan, setPlan] = useState('standard'); // deterministic first paint (prerender-safe)
+  const card = `overflow-hidden rounded-[6px] bg-[color:var(--lg-paper)] ${INK} shadow-[0_30px_70px_-30px_rgba(0,0,0,0.5)]`;
+  return (
+    <div className="mt-12 grid gap-8 md:grid-cols-2 md:gap-6">
+      <div>
+        <div role="group" aria-label="Which Calendly plan to show" className="mb-3 flex gap-2">
+          {CAL_PLANS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              aria-pressed={plan === p.key}
+              aria-controls="cal-checkout"
+              onClick={() => setPlan(p.key)}
+              className={`min-h-[44px] flex-1 rounded-[6px] border px-3 text-xs font-semibold transition-colors sm:text-sm ${plan === p.key ? `border-transparent bg-[#FBF8F2] ${INK}` : `border-white/20 bg-transparent ${PAPER_TXT} hover:bg-white/5`}`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div id="cal-checkout" className={card}>
+          <CardHead note="30-min consultation · Thu, 4:30 PM">
+            <img src={favicon(C.domain)} alt="" width="16" height="16" loading="lazy" className="h-4 w-4" />
+            <span className="font-heading text-sm font-bold">Calendly</span>
+          </CardHead>
+          {/* Both panels share one grid cell, so switching never changes the card height. */}
+          <div className="grid px-5 py-2" aria-live="polite">
+            <div className={`[grid-area:1/1] ${plan === 'free' ? '' : 'invisible'}`} aria-hidden={plan !== 'free'}>
+              <ol>
+                <StepRow title="Pick a time">Thu, 4:30 PM</StepRow>
+                <StepRow title="Your details">Name and contact details</StepRow>
+                <StepRow title="Payment" state="skip">No payment step. Calendly lists payments on paid plans only.</StepRow>
+                <StepRow title="Booking confirmed">Unpaid. Any fee has to be collected outside Calendly.</StepRow>
+              </ol>
+              <p className={NOTE}>Free plan: {CAL_FREE}.</p>
+            </div>
+            <div className={`[grid-area:1/1] ${plan === 'standard' ? '' : 'invisible'}`} aria-hidden={plan !== 'standard'}>
+              <ol>
+                <StepRow title="Pick a time">Thu, 4:30 PM</StepRow>
+                <StepRow title="Your details">Name and contact details</StepRow>
+                <StepRow n={3} title="Pay" state="pay">
+                  <PayTiles options={[['Card via Stripe', true], ['PayPal', false]]} />
+                  <div className={`mt-2 text-xs ${FAINT}`}>UPI: not an option</div>
+                </StepRow>
+                <StepRow title="Booking confirmed" />
+              </ol>
+              <p className={NOTE}>Paid plans from {C.paidFrom}. Billed in {C.currency}.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className={`mb-3 flex min-h-[44px] items-center text-sm font-semibold ${PAPER_TXT}`}>
+          Book A Sloth, on {FREE_PLAN.name} or {PREMIUM_PLAN.name}
+        </div>
+        <div className={card}>
+          <CardHead note="30-min consultation · Thu, 4:30 PM">
+            <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-primary" />
+            <span className="font-heading text-sm font-bold">Book A Sloth</span>
+          </CardHead>
+          <div className="px-5 py-2">
+            <ol>
+              <StepRow title="Pick a time">Thu, 4:30 PM</StepRow>
+              <StepRow title="Your details">Name and contact details</StepRow>
+              <StepRow n={3} title={`Pay ${inr(EXAMPLE_TOTAL, 2)}`} state="pay">
+                <PayTiles options={[['UPI', true], ['Card', false]]} />
+                <div className="mt-2 text-xs">{inr(EXAMPLE_PRICE)} session + {inr(BOOKING_FEE + BOOKING_FEE_GST, 2)} booking fee and GST</div>
+              </StepRow>
+              <StepRow title="GST invoice sent">
+                <div className={`mt-1 rounded-[5px] border border-dashed ${RULE} bg-white p-2.5 text-xs`}>
+                  <div className={`mb-1 flex items-center gap-1.5 font-semibold ${INK}`}><Receipt size={13} aria-hidden /> Tax invoice</div>
+                  <div className="flex justify-between"><span>Session</span><span className="tabular-nums">{inr(EXAMPLE_PRICE, 2)}</span></div>
+                  <div className="flex justify-between"><span>Booking fee</span><span className="tabular-nums">{inr(BOOKING_FEE, 2)}</span></div>
+                  <div className="flex justify-between"><span>GST on fee (18%)</span><span className="tabular-nums">{inr(BOOKING_FEE_GST, 2)}</span></div>
+                  <div className={`mt-1 flex justify-between border-t ${RULE} pt-1 font-semibold ${INK}`}><span>Paid in total</span><span className="tabular-nums">{inr(EXAMPLE_TOTAL, 2)}</span></div>
+                </div>
+              </StepRow>
+            </ol>
+            <p className={NOTE}>
+              On {PREMIUM_PLAN.name} you receive {EXAMPLE_PAYOUT} of the {inr(EXAMPLE_PRICE)}, after the ~2% gateway charge and TDS 1% + TCS 1%.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function HeroProductCard() {
-  const [imgOk, setImgOk] = useState(true);
-  return (
-    <div className="relative py-10 px-6">
-      <div
-        className="absolute inset-0 -z-10"
-        style={{
-          background: "linear-gradient(135deg, #FE5100 0%, #FF8A4C 45%, #006BFF 100%)",
-          borderRadius: "40% 60% 55% 45% / 55% 40% 60% 45%",
-          transform: "scale(1.08)",
-        }}
-      />
-      {imgOk ? (
-        <img
-          src={HERO_IMG}
-          alt="Book A Sloth — reduce no-shows and stay on track"
-          onError={() => setImgOk(false)}
-          className="w-full rounded-[6px] border border-white/30 bg-white shadow-[0_24px_80px_-8px_rgba(0,0,0,0.3)]"
-        />
-      ) : (
-        <HeroWorkflowMock />
-      )}
-    </div>
-  );
-}
+/* ─────────────────────────────  PAGE  ────────────────────────────── */
 
-/* ─────────────────────────────────────────────
-   Data
-   ───────────────────────────────────────────── */
-/* Real tool favicons via Google's favicon service (same pattern as the homepage). */
-const INTEGRATIONS = [
-  { name: "Google Meet", domain: "meet.google.com" },
-  { name: "Google Calendar", domain: "calendar.google.com" },
-  { name: "Razorpay", domain: "razorpay.com" },
-  { name: "WhatsApp", domain: "whatsapp.com" },
-  { name: "Gmail", domain: "gmail.com" },
-  { name: "Zoom", domain: "zoom.us" },
-  { name: "PhonePe", domain: "phonepe.com" },
-  { name: "Paytm", domain: "paytm.com" },
-  { name: "Outlook", domain: "outlook.com" },
-  { name: "Slack", domain: "slack.com" },
-  { name: "Stripe", domain: "stripe.com" },
-  { name: "Zapier", domain: "zapier.com" },
-];
-
-const COMPARE = [
-  { f: "UPI payments at booking", basT: "Built in", cT: "No (Stripe / PayPal on paid plans)", c: false },
-  { f: "GST invoices — automatic", basT: "Yes", cT: "No", c: false },
-  { f: "WhatsApp reminders", basT: "Yes", cT: "No", c: false },
-  { f: "INR billing (₹)", basT: "Yes", cT: "USD only", c: false },
-  { f: "0% commission on Sloth Active", basT: "Yes", cT: "N/A", c: false },
-  { f: "Starting price", basT: "₹0 free · ₹399/mo paid", cT: "$10 / seat / mo (Standard, yearly)", c: false },
-  { f: "Google Calendar sync", basT: "Yes", cT: "Yes", c: true },
-  { f: "Google Meet links", basT: "Yes", cT: "Yes", c: true },
-  { f: "Custom booking page", basT: "Yes", cT: "Yes", c: true },
-  { f: "Email reminders", basT: "Yes", cT: "Yes", c: true },
-  { f: "Free plan", basT: "Yes", cT: "Yes", c: true },
-];
-
-/* ════════════════════════════════════════
-   PAGE
-   ════════════════════════════════════════ */
-const CalendlyAlternative = () => {
-  // Legacy design — draws its own header/footer until rebuilt. Rebuilt pages drop this.
-  useHideChrome();
-  const feeOnly = useFeeOnly();
-  const plans = feeOnly ? ALL_PLANS.filter((p) => p.monthly !== 0) : ALL_PLANS;
+export default function CalendlyAlternative() {
   const utm = useUtm();
-  const [billingAnnual, setBillingAnnual] = useState(true);
-
-  useDocumentMeta({
-    title: "Book A Sloth — Calendly alternative built for India",
-    description:
-      "Calendly schedules. Book A Sloth schedules AND collects ₹ via UPI, sends GST invoices, WhatsApp reminders — built for India, free to start.",
-  });
+  const canonical = `${SITE_URL}${C.path}`;
+  const others = COMPETITOR_LIST.filter((c) => c.key !== 'calendly');
 
   useEffect(() => {
     analytics.page({ lp: SLUG });
@@ -253,521 +333,273 @@ const CalendlyAlternative = () => {
   }, []);
 
   return (
-    <div
-      className="min-h-dvh overflow-x-hidden bg-white"
-      style={{ fontFamily: "'Poppins', ui-sans-serif, system-ui, sans-serif", color: CAL_NAVY }}
-    >
+    <main className={`overflow-x-clip bg-[color:var(--lg-paper)] ${INK}`} style={PALETTE}>
       <Seo
-        title="The Best Calendly Alternative for Creators — Book A Sloth"
-        description="Looking for a Calendly alternative? Book A Sloth adds payments, reminders, and a booking page built for coaches, consultants, and creators."
+        title={SEO_TITLE}
+        description={SEO_DESC}
+        canonical={canonical}
         image={ogCard('lp-calendly-alternative')}
-        canonical={`${SITE_URL}/compare/calendly-alternative`}
-        jsonLd={comparisonGraphJsonLd({
-          canonical: `${SITE_URL}/compare/calendly-alternative`,
-          name: "The Best Calendly Alternative for Creators — Book A Sloth",
-          description: "Book A Sloth adds payments, reminders, and a booking page built for coaches, consultants, and creators — a Calendly alternative.",
-          breadcrumbName: "Calendly Alternative",
-        })}
+        jsonLd={comparisonGraphJsonLd({ canonical, name: SEO_TITLE, description: SEO_DESC, breadcrumbName: 'Calendly Alternative', faqs: FAQ })}
       />
-      {/* ══════ HEADER ══════ */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <div className="flex items-center gap-3">
-            <span className="font-heading text-base font-extrabold tracking-tight" style={{ color: CAL_NAVY }}>
-              Book A Sloth
-            </span>
-            <span
-              className="hidden rounded-full px-2 py-0.5 text-[11px] font-semibold sm:inline"
-              style={{ background: BAS_PEACH, color: BAS_CTA }}
-            >
-              🇮🇳 Built for India
-            </span>
-          </div>
 
-          <nav className="hidden items-center gap-7 text-sm font-medium md:flex" style={{ color: "#6B7280" }}>
-            {[["#how-it-works", "Product"], ["#integrations", "Integrations"], ["#pricing", "Pricing"]].map(([href, label]) => (
-              <a
-                key={label}
-                href={href}
-                className="transition-colors hover:no-underline"
-                style={{ color: "inherit" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = CAL_NAVY; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "#6B7280"; }}
-              >
-                {label}
+      {/* ═══════════ 1 · HERO ═══════════ */}
+      <section className="px-5 pb-16 pt-8 sm:px-8 lg:flex lg:min-h-[calc(100svh-57px)] lg:flex-col lg:justify-center lg:py-10">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
+          <div>
+            <nav aria-label="Breadcrumb" className={`text-xs ${FAINT}`}>
+              <Link to="/" className={`${FAINT} hover:no-underline hover:opacity-80`}>Home</Link>
+              <span aria-hidden className="mx-2">›</span>
+              <Link to="/compare" className={`${FAINT} hover:no-underline hover:opacity-80`}>Compare</Link>
+              <span aria-hidden className="mx-2">›</span>
+              <span aria-current="page" className={INK}>Calendly</span>
+            </nav>
+            <h1 className={`mt-4 font-heading text-[clamp(2.1rem,3.7vw,3.2rem)] font-extrabold leading-[1.05] tracking-[-0.03em] ${INK}`}>
+              Calendly alternative for India, <span className="text-primary-cta">with UPI</span>
+            </h1>
+            <p className={`mt-4 max-w-xl text-[15px] leading-relaxed sm:text-base lg:text-[17px] ${MUTED}`}>
+              Book A Sloth is a Calendly alternative built for India. Clients pay by UPI or card when they book, each paid booking gets a GST invoice, and plans are billed in rupees. Calendly&rsquo;s free plan has no payment step, and its paid plans collect through Stripe or PayPal, priced in {C.currency}.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Cta slot="hero" />
+              <a href="#side-by-side" className={`inline-flex min-h-[44px] items-center justify-center rounded-[6px] border ${RULE} bg-white px-6 py-3 text-sm font-semibold ${INK} hover:no-underline hover:opacity-90`}>
+                Compare side by side
               </a>
-            ))}
-          </nav>
+            </div>
+            <p className={`mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px] ${MUTED}`}>
+              {[`${FREE_PLAN.name} plan is ₹0`, 'Sign in with Google', 'UPI + cards via Razorpay'].map((t) => (
+                <span key={t} className="inline-flex items-center gap-1.5"><Check size={14} className="text-primary-cta" aria-hidden />{t}</span>
+              ))}
+            </p>
+          </div>
+          <HeroLedger />
+        </div>
+      </section>
 
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login-as-vendor"
-              className="hidden text-sm font-semibold hover:no-underline sm:block"
-              style={{ color: "#6B7280" }}
-            >
-              Log in
-            </Link>
-            <CalCta slot="header" label="Get started" className="!py-2 !px-4 !text-[13px]" />
+      {/* ═══════════ 2 · THE SHORT ANSWER ═══════════ */}
+      <section id="short-answer" aria-labelledby="short-answer-title" className="px-5 pb-20 sm:px-8 lg:pb-28">
+        <div className={`relative mx-auto max-w-3xl rounded-[6px] border ${RULE} bg-white py-8 pl-10 pr-6 shadow-[0_8px_30px_rgba(20,33,61,0.04)] sm:py-10 sm:pl-14 sm:pr-10`}>
+          <span aria-hidden className="absolute inset-y-0 left-6 w-px bg-primary/40 sm:left-9" />
+          <h2 id="short-answer-title" className={`font-heading text-2xl font-extrabold sm:text-3xl ${INK}`}>The short <span className="text-primary-cta">answer</span></h2>
+          <p className={`mt-4 text-[15px] leading-relaxed sm:text-base ${INK}`}>{SHORT_ANSWER}</p>
+          <div className={`mt-8 grid gap-8 border-t ${RULE} pt-6 sm:grid-cols-2`}>
+            {[[`Pick ${C.name} if…`, PICK_CAL, false], ['Pick Book A Sloth if…', PICK_BAS, true]].map(([title, items, ours]) => (
+              <div key={title}>
+                <h3 className={`font-heading text-base font-bold ${INK}`}>{title}</h3>
+                <ul className={`mt-3 space-y-2 text-sm ${MUTED}`}>
+                  {items.map((t) => (
+                    <li key={t} className="flex gap-2"><Check size={15} className={`mt-0.5 shrink-0 ${ours ? 'text-primary-cta' : FAINT}`} aria-hidden />{t}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
-      </header>
+      </section>
 
-      {/* ══════ HERO ══════ */}
-      <section className="overflow-hidden bg-white px-5 pb-20 pt-16 sm:px-8 sm:pt-20">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Left */}
-          <div>
-            <h1
-              className="font-heading text-[2.6rem] font-extrabold leading-[1.08] tracking-tight sm:text-[3.4rem]"
-              style={{ color: CAL_NAVY }}
-            >
-              Everything Calendly does —<br />
-              <span style={{ color: BAS_ORANGE }}>and gets you paid in ₹</span>
-            </h1>
-            <p className="mt-5 max-w-lg text-lg leading-relaxed" style={{ color: CAL_BODY }}>
-              Book meetings, take payments the moment clients book, and send GST invoices
-              automatically. Scheduling built for how India works.
-            </p>
+      {/* ═══════════ 3 · SIDE BY SIDE ═══════════ */}
+      <section id="side-by-side" aria-labelledby="table-title" className={`scroll-mt-20 border-y ${RULE} bg-white px-5 py-20 sm:px-8 lg:py-28`}>
+        <div className="mx-auto max-w-5xl">
+          <h2 id="table-title" className={`${H2} ${INK}`}>How much does Calendly cost <span className="text-primary-cta">in India?</span></h2>
+          <p className={`mt-5 max-w-2xl text-base leading-relaxed ${MUTED}`}>
+            Calendly publishes its prices in {C.currency}. Paid plans start at {C.paidFrom}, and the free plan covers {CAL_FREE}. Here it is line by line against Book A Sloth, which bills in rupees.
+            {' '}<Link to="/blog/calendly-pricing-india" className="font-semibold text-primary-cta underline underline-offset-4">Calendly pricing in India, worked out in rupees</Link>.
+          </p>
+          <p className={`mt-8 ${KICKER} ${FAINT}`}>Last checked {CHECKED_LABEL}</p>
+          <div className={`mt-3 overflow-x-auto rounded-[6px] border ${RULE}`}>
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+              <caption className="sr-only">Calendly compared with Book A Sloth, checked {CHECKED_LABEL}</caption>
+              <thead>
+                <tr className={`border-b ${RULE}`}>
+                  <th scope="col" className="w-[28%] p-4"><span className="sr-only">Feature</span></th>
+                  <th scope="col" className={`p-4 font-heading font-bold ${INK}`}>
+                    <span className="inline-flex items-center gap-2">
+                      <img src={favicon(C.domain)} alt="" width="16" height="16" loading="lazy" className="h-4 w-4" />
+                      {C.name}
+                    </span>
+                  </th>
+                  <th scope="col" className={`bg-primary-light p-4 font-heading font-bold ${INK}`}>Book A Sloth</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ROWS.map(([label, cal, bas]) => (
+                  <tr key={label} className={`border-b ${RULE} align-top last:border-0`}>
+                    <th scope="row" className={`p-4 font-semibold ${INK}`}>{label}</th>
+                    <td className={`p-4 ${MUTED}`}><Cell value={cal} /></td>
+                    <td className={`bg-primary-light/50 p-4 ${INK}`}><Cell value={bas} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className={`mt-5 text-xs leading-relaxed ${FAINT}`}>
+            Checked against {C.name}&rsquo;s pricing page in {CHECKED_LABEL}. Prices as published, in their currency.
+            {' '}&ldquo;Not listed&rdquo; means their pricing page doesn&rsquo;t say.{' '}
+            <a href={C.source} target="_blank" rel="noopener noreferrer nofollow" className={`${FAINT} underline underline-offset-2`}>View {C.name}&rsquo;s pricing page</a>.
+            {' '}{C.name} is a trademark of its owner. Book A Sloth isn&rsquo;t affiliated with {C.name}.
+            {' '}Book A Sloth&rsquo;s plans are on our <Link to="/pricing" className={`${FAINT} underline underline-offset-2`}>pricing page</Link>.
+          </p>
+        </div>
+      </section>
 
-            {/* Google-only signup */}
-            <div id="start" className="mt-8 max-w-xs scroll-mt-24">
-              <CalCta slot="hero-google" label="Sign up with Google" variant="google" />
-              <p className="mt-2.5 text-xs text-gray-400">Free plan · No credit card required</p>
+      {/* ═══════════ 4 · WHAT'S DIFFERENT ═══════════ */}
+      <section aria-labelledby="different-title" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-5xl">
+          <h2 id="different-title" className={`${H2} ${INK}`}>What&rsquo;s different for hosts <span className="text-primary-cta">in India?</span></h2>
+          <ol className={`mt-12 border-t ${RULE}`}>
+            {DIFFERENT.map((d, i) => (
+              <li key={d.title} className={`grid gap-3 border-b ${RULE} py-7 sm:grid-cols-[4rem_1fr_1.4fr] sm:gap-8`}>
+                <span className="font-heading text-sm font-extrabold tabular-nums text-primary-cta">No. {String(i + 1).padStart(2, '0')}</span>
+                <h3 className={`flex items-start gap-2 font-heading text-lg font-bold ${INK}`}><d.icon size={19} className="mt-1 shrink-0 text-primary-cta" aria-hidden />{d.title}</h3>
+                <p className={`text-[15px] leading-relaxed ${MUTED}`}>{d.body}</p>
+              </li>
+            ))}
+          </ol>
+          <p className={`mt-8 max-w-3xl text-sm leading-relaxed ${MUTED}`}>
+            <span className={`font-semibold ${INK}`}>Every fee, in plain numbers:</span> clients pay {inr(BOOKING_FEE)} + GST per paid booking, the gateway charge (about 2%) is passed through at cost, and TDS 1% + TCS 1% are deducted on payout. On {inr(EXAMPLE_PRICE)} at {COMMISSION.premium} commission you receive {EXAMPLE_PAYOUT}.
+            {' '}<Link to="/host-fees" className="font-semibold text-primary-cta underline underline-offset-4">See every host fee</Link> or read <Link to="/features/payments" className="font-semibold text-primary-cta underline underline-offset-4">how payments work</Link>.
+          </p>
+        </div>
+      </section>
+
+      {/* ═══════════ 5 · WHERE CALENDLY IS THE BETTER CHOICE ═══════════ */}
+      <section aria-labelledby="better-title" className={`border-t ${RULE} bg-white px-5 py-20 sm:px-8 lg:py-28`}>
+        <div className="mx-auto max-w-5xl">
+          <h2 id="better-title" className={`${H2} ${INK}`}>When is Calendly <span className="text-primary-cta">the better choice?</span></h2>
+          <p className={`mt-5 max-w-2xl text-base leading-relaxed ${MUTED}`}>No tool fits everyone. Calendly is the better pick when:</p>
+          <div className="mt-12 grid gap-5 sm:gap-6 md:grid-cols-3">
+            {BETTER.map((b) => (
+              <div key={b.title} className={`rounded-[6px] border ${RULE} bg-[color:var(--lg-paper)] p-6`}>
+                <h3 className={`font-heading text-lg font-bold ${INK}`}>{b.title}</h3>
+                <p className={`mt-2 text-[15px] leading-relaxed ${MUTED}`}>{b.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ 6 · SAME BOOKING, TWO CHECKOUTS ═══════════ */}
+      <section aria-labelledby="checkouts-title" className={`bg-[color:var(--lg-ink)] px-5 py-20 sm:px-8 lg:py-28 ${PAPER_TXT}`}>
+        <div className="mx-auto max-w-5xl">
+          <p className={`${KICKER} text-primary`}>Same booking, two checkouts</p>
+          <h2 id="checkouts-title" className={`mt-3 ${H2} ${PAPER_TXT}`}>Can clients pay by UPI <span className="text-primary">on Calendly?</span></h2>
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-[#FBF8F2]/75">
+            No, not with the options Calendly lists. On Calendly Standard your client pays through Stripe or PayPal, and on the free plan there&rsquo;s no payment step. On Book A Sloth they pay by UPI or card while booking and get a GST invoice. Here&rsquo;s one 30-minute booking on each.
+            {' '}<Link to="/blog/calendly-upi-payments" className="font-semibold text-[#FBF8F2] underline decoration-white/30 underline-offset-4 hover:decoration-white">Calendly UPI workarounds, compared</Link>.
+          </p>
+          <TwoCheckouts />
+          <p className="mt-6 text-xs text-[#FBF8F2]/60">Illustration of what a client sees. Calendly steps are based on its pricing page; amounts are an example.</p>
+        </div>
+      </section>
+
+      {/* ═══════════ 7 · SWITCH IN 3 STEPS ═══════════ */}
+      <section aria-labelledby="switch-title" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-5xl">
+          <h2 id="switch-title" className={`${H2} ${INK}`}>How do you switch <span className="text-primary-cta">from Calendly?</span></h2>
+          <ol className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className={`border-t ${RULE} pt-5`}>
+                <span className="font-heading text-sm font-extrabold tabular-nums text-primary-cta">Step {String(i + 1).padStart(2, '0')}</span>
+                <h3 className={`mt-2 font-heading text-xl font-bold ${INK}`}>{s.title}</h3>
+                <p className={`mt-2 text-[15px] leading-relaxed ${MUTED}`}>{s.body}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-10"><Cta slot="switch">Start free with Google</Cta></div>
+        </div>
+      </section>
+
+      {/* ═══════════ 8 · TESTIMONIALS ═══════════ */}
+      {QUOTES.length > 0 && (
+        <section aria-labelledby="quotes-title" className={`border-y ${RULE} bg-white px-5 py-20 sm:px-8 lg:py-28`}>
+          <div className="mx-auto max-w-6xl">
+            <h2 id="quotes-title" className={`${H2} ${INK}`}>What hosts say about <span className="text-primary-cta">getting paid</span></h2>
+            <div className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
+              {QUOTES.map((t) => (
+                <figure key={t.name} className={`flex flex-col border-t ${RULE} pt-6`}>
+                  <blockquote className={`flex-1 font-heading text-lg font-semibold leading-snug ${INK}`}>&ldquo;{t.quote}&rdquo;</blockquote>
+                  <figcaption className="mt-5 flex items-center gap-3">
+                    <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-light font-heading text-sm font-bold text-primary-cta">
+                      {t.name.replace(/^(Ar|Dr)\.\s*/, '').charAt(0)}
+                    </span>
+                    <span>
+                      <span className={`block text-sm font-semibold ${INK}`}>{t.name}</span>
+                      <span className={`block text-xs ${FAINT}`}>{t.role}</span>
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
             </div>
+          </div>
+        </section>
+      )}
 
-            {/* Feature pills */}
-            <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 border-t border-gray-100 pt-6">
-              {[
-                { e: "🔒", t: "Secured by Razorpay" },
-                { e: "📄", t: "GST invoices" },
-                { e: "💬", t: "WhatsApp reminders" },
-                { e: "🇮🇳", t: "UPI + cards" },
-              ].map((b) => (
-                <li key={b.t} className="flex items-center gap-1.5 text-xs font-medium" style={{ color: CAL_BODY }}>
-                  {b.e} {b.t}
+      {/* ═══════════ 9 · FAQ ═══════════ */}
+      <section id="faq" aria-labelledby="faq-title" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-3xl">
+          <h2 id="faq-title" className={`${H2} ${INK}`}>Calendly alternative <span className="text-primary-cta">questions</span></h2>
+          <div className={`mt-10 border-t ${RULE}`}>
+            {FAQ.map((f, i) => (
+              <details key={f.q} className={`group border-b ${RULE}`} open={i === 0}>
+                <summary className="flex min-h-[44px] cursor-pointer list-none items-start gap-4 py-5 [&::-webkit-details-marker]:hidden">
+                  <span className="pt-0.5 font-heading text-sm font-extrabold tabular-nums text-primary-cta">{String(i + 1).padStart(2, '0')}</span>
+                  <h3 className={`flex-1 font-heading text-[17px] font-bold ${INK}`}>{f.q}</h3>
+                  <span aria-hidden className={`pt-0.5 text-xl leading-none ${FAINT} transition-transform group-open:rotate-45`}>+</span>
+                </summary>
+                <p className={`pb-6 pl-9 pr-6 text-[15px] leading-relaxed ${MUTED}`}>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ 10 · RELATED + FINAL CTA ═══════════ */}
+      <section aria-labelledby="related-title" className={`border-t ${RULE} px-5 py-16 sm:px-8`}>
+        <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1.4fr_1fr]">
+          <div>
+            <h2 id="related-title" className={`font-heading text-2xl font-extrabold ${INK}`}>More comparisons</h2>
+            <ul className="mt-5 grid gap-x-6 sm:grid-cols-2">
+              {others.map((c) => (
+                <li key={c.key}>
+                  <Link to={c.path} className={`flex min-h-[44px] items-center gap-2.5 border-b ${RULE} py-2 text-sm font-semibold ${INK} hover:text-primary-cta hover:no-underline`}>
+                    <img src={favicon(c.domain)} alt="" width="16" height="16" loading="lazy" className="h-4 w-4" />
+                    Book A Sloth vs {c.name}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <Link to="/compare" className={`flex min-h-[44px] items-center gap-2 border-b ${RULE} py-2 text-sm font-semibold text-primary-cta hover:no-underline`}>
+                  All comparisons <ArrowRight size={14} aria-hidden />
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2 className={`font-heading text-2xl font-extrabold ${INK}`}>Guides</h2>
+            <ul className="mt-5">
+              {GUIDES.map((g) => (
+                <li key={g.to}>
+                  <Link to={g.to} className={`flex min-h-[44px] items-center border-b ${RULE} py-2 text-sm font-semibold ${INK} hover:text-primary-cta hover:no-underline`}>{g.label}</Link>
                 </li>
               ))}
             </ul>
           </div>
-
-          {/* Right — brand blob + workflow card */}
-          <div className="flex justify-center lg:justify-end">
-            <div className="w-full max-w-[360px]">
-              <HeroProductCard />
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* ══════ "USED BY PEOPLE WHO WORK WITH…" — reused brand marquee ══════ */}
-      <div className="border-y border-gray-100 bg-white">
-        <LogoMarquee />
-      </div>
-
-      {/* ══════ HOW IT WORKS — reuses the homepage cards on a dark band ══════ */}
-      <section id="how-it-works" className="scroll-mt-16 bg-neutral-900 px-5 py-20 sm:px-8 lg:py-24">
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-3 text-center text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: BAS_ORANGE }}>
-            How it works
+      <section aria-labelledby="final-title" className={`bg-[color:var(--lg-ink)] px-5 py-20 text-center sm:px-8 lg:py-28 ${PAPER_TXT}`}>
+        <div className="mx-auto max-w-3xl">
+          <h2 id="final-title" className={`${H2} ${PAPER_TXT}`}>One link for the booking <span className="text-primary">and the payment.</span></h2>
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-[#FBF8F2]/75">
+            Start on {FREE_PLAN.name} for ₹0 and take UPI from your first booking. Move to {PREMIUM_PLAN.name} when you want {COMMISSION.premium} commission.
           </p>
-          <h2 className="text-center font-heading text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Book A Sloth makes scheduling simple
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-lg text-neutral-300">
-            Everything Calendly does — plus UPI payments, GST invoices and WhatsApp reminders, built for India.
-          </p>
-          <div className="mt-6 flex justify-center">
-            <CalCta slot="how-it-works" label="Sign up for free" />
-          </div>
-
-          <HowItWorks />
-        </div>
-      </section>
-
-      {/* ══════ INTEGRATIONS ══════ */}
-      <section id="integrations" className="scroll-mt-16 px-5 py-20 sm:px-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16">
-            <div className="lg:max-w-[280px]">
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: BAS_ORANGE }}>
-                Integrations
-              </p>
-              <h2 className="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: CAL_NAVY }}>
-                Connect to the tools you already use
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed" style={{ color: CAL_BODY }}>
-                Google Calendar, Razorpay, WhatsApp, UPI — and every tool Calendly supports. 100+ integrations.
-              </p>
-              <a
-                href="#start"
-                className="mt-5 inline-flex items-center gap-1 text-sm font-semibold transition-opacity hover:no-underline hover:opacity-80"
-                style={{ color: BAS_CTA }}
-              >
-                View all integrations <ChevronRight size={15} />
-              </a>
-            </div>
-
-            <div className="flex-1">
-              <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6">
-                {INTEGRATIONS.map((int) => (
-                  <div
-                    key={int.name}
-                    className="flex flex-col items-center gap-1.5 rounded-[6px] border border-gray-100 bg-white p-3 shadow-sm transition hover:shadow-md"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-gray-100 bg-white">
-                      <img
-                        src={`https://www.google.com/s2/favicons?sz=64&domain=${int.domain}`}
-                        alt={int.name}
-                        loading="lazy"
-                        className="h-6 w-6 object-contain"
-                      />
-                    </div>
-                    <span className="text-center text-[10px] font-medium leading-tight text-gray-500">
-                      {int.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {[
-                  { title: "Google suite", body: "Calendar, Meet, Gmail — all connected in one click", color: CAL_BLUE },
-                  { title: "UPI + payment suite", body: "Razorpay, PhonePe, Paytm — pay at booking in ₹", color: BAS_ORANGE },
-                ].map((card) => (
-                  <AccentCard
-                    key={card.title}
-                    accent={card.color}
-                    className="rounded-[6px] border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-heading text-sm font-bold" style={{ color: CAL_NAVY }}>{card.title}</div>
-                        <div className="mt-0.5 text-xs" style={{ color: CAL_BODY }}>{card.body}</div>
-                      </div>
-                      <ArrowRight size={15} className="mt-0.5 shrink-0 text-gray-300" />
-                    </div>
-                  </AccentCard>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ COMPARISON ══════ */}
-      <section className="px-5 py-16 sm:px-8" style={{ background: CAL_LIGHT }}>
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: CAL_NAVY }}>
-            Book A Sloth vs Calendly
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-sm" style={{ color: CAL_BODY }}>
-            All the scheduling power — plus the Indian toolkit Calendly doesn&apos;t have.
-          </p>
-          <div className="mt-8 overflow-hidden rounded-[6px] border border-gray-200 bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-400">Feature</th>
-                  <th className="px-5 py-4 font-heading text-sm font-bold" style={{ background: BAS_PEACH, color: BAS_CTA }}>
-                    Book A Sloth 🇮🇳
-                  </th>
-                  <th className="px-5 py-4 text-sm font-semibold text-gray-400">Calendly</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARE.map((row, i) => (
-                  <tr key={row.f} style={{ borderTop: "1px solid #F3F4F6", background: i % 2 ? "#FFFBF8" : "white" }}>
-                    <th scope="row" className="px-5 py-3 text-sm font-medium" style={{ color: CAL_NAVY }}>{row.f}</th>
-                    <td className="px-5 py-3" style={{ background: i % 2 ? "#FFE3D2" : BAS_PEACH }}>
-                      <span className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: BAS_CTA }}>
-                        <Check size={14} /> {row.basT}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-flex items-center gap-1.5 text-sm ${row.c ? "text-gray-600" : "text-gray-400"}`}>
-                        {row.c ? <Check size={14} className="text-gray-400" /> : <X size={14} className="text-gray-300" />}
-                        {row.cT}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr style={{ borderTop: "2px solid #EAD7CC" }}>
-                  <td className="hidden px-5 py-5 align-top text-xs font-semibold uppercase tracking-wide text-gray-400 sm:table-cell">
-                    The verdict
-                  </td>
-                  <td className="px-4 py-5 align-top sm:px-5" style={{ background: BAS_PEACH }}>
-                    <div className="font-heading text-sm font-extrabold leading-snug sm:text-base" style={{ color: CAL_NAVY }}>
-                      Say Yes to<br />Book A Sloth.
-                    </div>
-                    <p className="mt-1 hidden text-xs sm:block" style={{ color: CAL_BODY }}>
-                      Built for India. Paid in ₹ from day one.
-                    </p>
-                    <div className="mt-3 sm:max-w-[220px]">
-                      <CalCta slot="compare-yes" label="Sign up with Google" variant="google" />
-                    </div>
-                  </td>
-                  <td className="px-4 py-5 align-top sm:px-5">
-                    <div className="font-heading text-sm font-bold leading-snug text-gray-400 line-through sm:text-base">
-                      Say No to Calendly.
-                    </div>
-                    <p className="mt-1 hidden text-xs text-gray-400 sm:block">
-                      USD billing. No payments. No GST.
-                    </p>
-                    <span className="mt-3 inline-flex items-center gap-1.5 rounded-[6px] border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-300">
-                      <X size={13} /> No thanks
-                    </span>
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          <p className="mt-2 text-center text-xs text-gray-400">
-            Calendly Pro approx US$12–16/mo, billed in USD, as of Jun 2026.
-          </p>
-        </div>
-      </section>
-
-      {/* ══════ PRICING — synced with homepage (src/data/plans.js) ══════ */}
-      <section id="pricing" className="scroll-mt-16 px-5 py-20 sm:px-8">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-center font-heading text-3xl font-extrabold tracking-tight sm:text-4xl" style={{ color: CAL_NAVY }}>
-            Pick the Perfect Plan for Your Work
-          </h2>
-          <p className="mt-2 text-center" style={{ color: CAL_BODY }}>
-            All plans billed in ₹, GST included. 0% commission on Sloth Active. No USD, no surprises.
-          </p>
-
-          {/* Billing toggle — compact segmented control */}
-          <div className="mt-6 flex justify-center">
-            <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setBillingAnnual(false)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${!billingAnnual ? "text-white" : "text-neutral-500 hover:text-ink"}`}
-                style={!billingAnnual ? { background: BAS_CTA } : undefined}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingAnnual(true)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${billingAnnual ? "text-white" : "text-neutral-500 hover:text-ink"}`}
-                style={billingAnnual ? { background: BAS_CTA } : undefined}
-              >
-                Yearly
-                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${billingAnnual ? "bg-white/20 text-white" : "bg-primary/10 text-primary"}`}>
-                  Save 58%
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div className={`mt-10 grid gap-5 ${feeOnly ? "sm:grid-cols-2 sm:max-w-3xl sm:mx-auto" : "md:grid-cols-3"}`}>
-            {plans.map((plan, i) => {
-              const isFree = plan.monthly === 0;
-              const perMo = isFree ? 0 : Math.round(plan.yearly / 12);
-              const savePct = isFree ? 0 : Math.round((1 - plan.yearly / 12 / plan.monthly) * 100);
-              const big = isFree ? "Free" : (billingAnnual ? fmtINR(plan.yearly) : fmtINR(plan.monthly));
-              const cadence = isFree ? "" : (billingAnnual ? "/ year" : "/ month");
-              const sub = isFree
-                ? "Free forever"
-                : (billingAnnual ? `just ₹${perMo}/mo, billed yearly` : "billed monthly");
-              const highlight = !!plan.recommended;
-              const accent = highlight ? BAS_ORANGE : ACCENTS[i % ACCENTS.length];
-
-              return (
-                <AccentCard
-                  key={plan.name}
-                  accent={accent}
-                  className={`flex h-full flex-col rounded-[6px] border bg-white p-7 transition hover:-translate-y-1 ${
-                    highlight ? "shadow-[0_24px_60px_-30px_rgba(254,81,0,0.45)]" : "shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
-                  }`}
-                  style={{ borderColor: highlight ? BAS_ORANGE : "#E5E7EB" }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-heading text-lg font-bold" style={{ color: CAL_NAVY }}>{plan.name}</span>
-                    {highlight && (
-                      <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white" style={{ background: BAS_CTA }}>
-                        Recommended
-                      </span>
-                    )}
-                    {plan.badge && !highlight && (
-                      <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold" style={{ background: BAS_PEACH, color: BAS_CTA }}>
-                        {plan.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs" style={{ color: "#9CA3AF" }}>{plan.tagline}</p>
-
-                  <div className="mt-5 flex items-end gap-1">
-                    <span className="text-4xl font-extrabold" style={{ color: CAL_NAVY }}>{big}</span>
-                    {cadence && <span className="mb-1 text-sm" style={{ color: "#9CA3AF" }}>{cadence}</span>}
-                  </div>
-                  <p className="mt-0.5 text-xs" style={{ color: "#9CA3AF" }}>
-                    {sub}
-                    {!isFree && billingAnnual && savePct > 0 && (
-                      <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                        Save {savePct}%
-                      </span>
-                    )}
-                  </p>
-
-                  <CalCta
-                    slot={`pricing-${plan.name}`}
-                    label={isFree ? "Start for Free" : "Get Started Now"}
-                    className="mt-5 w-full !justify-center"
-                  />
-
-                  <ul className="mt-6 space-y-2.5">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm">
-                        <Check size={14} className="mt-0.5 shrink-0" style={{ color: accent }} />
-                        <span style={{ color: CAL_BODY }}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </AccentCard>
-              );
-            })}
-          </div>
-          <p className="mt-6 text-center text-sm text-gray-400">
-            0% commission on Sloth Active · All prices include GST · Cancel anytime
-          </p>
-        </div>
-      </section>
-
-      {/* ══════ SOCIAL PROOF — real hosts, Calendly case-study card style ══════ */}
-      <section className="px-5 py-20 sm:px-8" style={{ background: CAL_LIGHT }}>
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mb-3 text-center font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: CAL_NAVY }}>
-            Discover How Indian Professionals Grow with Book A Sloth
-          </h2>
-          <p className="mx-auto mb-10 max-w-xl text-center text-sm" style={{ color: CAL_BODY }}>
-            Coaches, doctors, architects, freelancers — real professionals who replaced the
-            back-and-forth with one Book A Sloth link.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {TESTIMONIALS.map((t, i) => {
-              const accent = ACCENTS[i % ACCENTS.length];
-              return (
-                <AccentCard
-                  key={t.name}
-                  accent={accent}
-                  className="flex h-full flex-col rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.05)] transition hover:-translate-y-1"
-                >
-                  <span className="font-heading text-3xl font-extrabold leading-none" style={{ color: accent }} aria-hidden>“</span>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed" style={{ color: CAL_NAVY }}>{t.quote}</p>
-                  <div className="mt-5 flex items-center gap-2.5">
-                    <Avatar src={t.avatar} name={t.name} accent={accent} />
-                    <div>
-                      <div className="text-xs font-bold" style={{ color: CAL_NAVY }}>{t.name}</div>
-                      <div className="text-[11px]" style={{ color: CAL_BODY }}>{t.role}</div>
-                    </div>
-                  </div>
-                </AccentCard>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ INDIA DIFFERENTIATORS — full section, under testimonials ══════ */}
-      <section className="px-5 py-16 sm:px-8 lg:py-20" style={{ background: CAL_NAVY }}>
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-3 text-center text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: BAS_ORANGE }}>
-            The India difference
-          </p>
-          <h2 className="mb-10 text-center font-heading text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            Built for India, end to end.
-          </h2>
-          <div className="grid gap-6 lg:grid-cols-3">
-            {[
-              { icon: IndianRupee, color: "#0AE8F0", h: "Calendly schedules.\nWe get you paid.", b: "Clients pay via UPI, cards or wallets the moment they book. Settled directly to your bank. No chasing, no separate payment links." },
-              { icon: FileText, color: "#FE5100", h: "GST invoices.\nAutomatic. Always.", b: "Every booking triggers a compliant GST invoice, sent to your client instantly. Your CA will finally stop calling." },
-              { icon: MessageCircle, color: "#25D366", h: "WhatsApp reminders.\nWhere India reads.", b: "Automated nudges on WhatsApp 24h before every session. Fewer no-shows, zero manual follow-up. Indian by design." },
-            ].map((item) => (
-              <AccentCard key={item.h} accent={item.color} className="rounded-[6px] border border-white/10 p-7">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[6px]" style={{ background: `${item.color}20` }}>
-                  <item.icon size={20} style={{ color: item.color }} />
-                </div>
-                <h3 className="whitespace-pre-line font-heading text-lg font-bold leading-snug text-white">{item.h}</h3>
-                <p className="mt-2 text-sm leading-relaxed" style={{ color: "#9CA3AF" }}>{item.b}</p>
-              </AccentCard>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ SECURITY BADGES ══════ */}
-      <section className="border-y border-gray-100 bg-white px-5 py-8 sm:px-8">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">Security &amp; trust</p>
-        <div className="mx-auto mt-5 flex flex-wrap items-center justify-center gap-6">
-          {[
-            [Shield, "Razorpay Secured"],
-            [FileText, "GST Compliant"],
-            [Shield, "Data Encrypted"],
-            [Shield, "PCI DSS"],
-          ].map(([Icon, label]) => (
-            <div key={label} className="flex items-center gap-2 text-xs font-semibold text-gray-400">
-              <Icon size={15} className="text-gray-300" />
-              {label}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════ FINAL CTA ══════ */}
-      <section className="px-5 py-20 sm:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-heading text-3xl font-extrabold tracking-tight sm:text-5xl" style={{ color: CAL_NAVY }}>
-            Power up your scheduling.
-            <br />
-            <span style={{ color: BAS_ORANGE }}>Keep every rupee.</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-lg" style={{ color: CAL_BODY }}>
-            Free to start. UPI payments from day one. No card required.
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <div className="w-full max-w-xs">
-              <CalCta slot="final-google" label="Sign up with Google" variant="google" />
-            </div>
-            <p className="text-sm text-gray-400">
-              Already have an account?{" "}
-              <Link to="/login-as-vendor" className="font-semibold hover:no-underline" style={{ color: BAS_CTA }}>
-                Log in
-              </Link>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ FOOTER ══════ */}
-      <footer className="border-t border-gray-100 px-5 py-10 sm:px-8">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 text-xs text-gray-400 sm:flex-row">
-          <p>© {new Date().getFullYear()} Book A Sloth — The Calendly alternative built for India</p>
-          <div className="flex items-center gap-5">
-            <Link to="/privacy" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = CAL_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              Privacy
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <Cta slot="final" />
+            <Link to="/pricing" className={`inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold ${PAPER_TXT} hover:no-underline hover:opacity-80`}>
+              See pricing <ArrowRight size={15} aria-hidden />
             </Link>
-            <Link to="/help" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = CAL_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              Help
-            </Link>
-            <a href="mailto:bolt@bookasloth.in" className="hover:no-underline" style={{ color: "inherit" }}
-              onMouseEnter={e => { e.currentTarget.style.color = CAL_NAVY; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#9CA3AF"; }}>
-              bolt@bookasloth.in
-            </a>
           </div>
         </div>
-      </footer>
-    </div>
+      </section>
+    </main>
   );
-};
-
-export default CalendlyAlternative;
+}
