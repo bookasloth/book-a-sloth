@@ -51,6 +51,7 @@ import outlookLogo from '../enterprise-v2/assets/logo/outlook.svg';
 import meetLogo from '../enterprise-v2/assets/logo/meet.svg';
 import zoomLogo from '../enterprise-v2/assets/logo/zoom.svg';
 import calendarLogo from '../enterprise-v2/assets/logo/calendar.svg';
+import OperatorCredit from '../../components/common/OperatorCredit';
 
 const WHATSAPP_LOGO = '/for/astrologers/whatsapp.svg'; // green WhatsApp mark (public asset)
 
@@ -922,7 +923,7 @@ export default function Astrologers() {
             ))}
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-white/50">© {new Date().getFullYear()} Book A Sloth · Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+            <p className="text-xs text-white/50">© {new Date().getFullYear()} Book A Sloth · <OperatorCredit /></p>
             <p className="text-xs uppercase tracking-[0.18em] text-white/60">Made for India&apos;s astrologers &amp; Vedic consultants</p>
           </div>
         </div>

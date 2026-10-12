@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
+import OperatorCredit from './OperatorCredit';
 
 const ROUTE_START = '/be-a-sloth';
 const EMAIL = 'bolt@bookasloth.in';
-const BOLT_URL = 'https://www.instagram.com/bookasloth';
 
 // Minimal footer: link discovery now lives in the navbar mega-menus, so the
 // footer is just the CTA band + a centered legal strip + socials + operator bar.
@@ -138,17 +138,10 @@ export default function Footer({ variant = 'full' }) {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <button type="button" onClick={scrollTop} className="font-heading text-sm font-extrabold text-white/80 transition-colors hover:text-white">Book A Sloth</button>
             <span>© {year} All rights reserved.</span>
-            <span className="text-white/25">·</span>
-            <span>
-              Made with Speed and Calm by{' '}
-              <a href={BOLT_URL} target="_blank" rel="noopener noreferrer" className="text-white/60 underline underline-offset-2 transition-colors hover:text-white">Bolt the Sloth</a>
-            </span>
-            <span className="text-white/25">·</span>
-            {/* Company ownership visible site-wide — part of the Google OAuth
-                verification checklist (homepage must identify the operator). */}
-            <span>Operated by Timewheel Internet Private Limited</span>
           </div>
-          <p className="text-white/60">Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+          {/* Company ownership visible site-wide — part of the Google OAuth
+              verification checklist (homepage must identify the operator). */}
+          <OperatorCredit linkClassName="text-white/60 underline underline-offset-2 transition-colors hover:text-white" />
         </div>
       </div>
     </footer>

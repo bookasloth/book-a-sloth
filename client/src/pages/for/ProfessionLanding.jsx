@@ -19,6 +19,7 @@ import Reveal from '../../components/home/Reveal';
 import { ArrowRight, Check, Star, Sparkles, ShieldCheck, Plus } from 'lucide-react';
 import useLenis from '../../hooks/useLenis';
 import Seo from '../../components/common/Seo';
+import OperatorCredit from '../../components/common/OperatorCredit';
 import ErrorPage from '../ErrorPage';
 import { SITE_URL } from '../../utils/seo';
 import { HERO_FACES } from '../../components/home/images';
@@ -59,11 +60,9 @@ function ForFooter({ madeFor, label }) {
         <div className="text-lg font-bold text-white">Book A Sloth</div>
         <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-white/60">
           <span>© {YEAR} All rights reserved.</span>
-          <span aria-hidden>·</span>
-          <span>Made with Speed and Calm by Bolt the Sloth</span>
         </p>
         <p className="mt-4 text-sm font-semibold" style={{ color: 'var(--lp-accent)' }}>
-          Razorpay-secure payments · GST invoices · Made in India 🇮🇳
+          <OperatorCredit />
         </p>
         <p className="mt-4 text-xs uppercase tracking-[0.18em] text-white/40">
           Made for {madeFor || `India's ${label}`}
