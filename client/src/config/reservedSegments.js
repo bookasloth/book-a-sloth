@@ -10,7 +10,7 @@
 export const RESERVED_FIRST_SEGMENTS = [
   'login', 'logout', 'signin', 'signup', 'register', 'forgot-password', 'reset-password',
   'help', 'about', 'careers', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore', 'changelog', 'blog', 'blogs', 'pricing', 'services', 'features',
-  // SEO discovery hubs (pages/Solutions.jsx, pages/Compare.jsx) — link every /for/* + /lp/* landing page.
+  // SEO discovery hubs (pages/Solutions.jsx, pages/Compare.jsx) — link every /for/* + /compare/* landing page.
   'solutions', 'compare',
   // Legal document set — see components/common/LegalLayout.jsx POLICIES.
   'guest-terms', 'host-agreement', 'host-fees',

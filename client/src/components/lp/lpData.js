@@ -1,12 +1,28 @@
 /* ════════════════════════════════════════════════════════════════════
-   lpData.js — single source of placeholder content for
-   /lp/topmate-vs-bookasloth (Topmate-style rebuild).
+   lpData.js — single source of content for /compare/topmate-alternative.
 
-   PROFILES + COHORTS use testimonial avatars as PLACEHOLDERS. Swap the
-   `img` / names here in ONE place when real creator profiles are chosen.
+   HONESTY: Topmate facts come from data/competitors.js (checked against its
+   pricing page, CHECKED_LABEL). Book A Sloth prices/plan names come from
+   data/plans.js — never type ₹399 / 5% / 0% here. Booking fee, gateway and
+   TDS/TCS figures mirror /host-fees.
+
+   PROFILES + COHORTS use real testimonial hosts (data/testimonials.js).
    ════════════════════════════════════════════════════════════════════ */
+import { FREE_PLAN, PREMIUM_PLAN, PLAN_MATRIX } from "../../data/plans";
+import { COMPETITORS, CHECKED_LABEL } from "../../data/competitors";
 
 const CDN = "/images/testimonials";
+const TM = COMPETITORS.topmate;
+const inr = (n) => `₹${n.toLocaleString("en-IN")}`;
+const ROW = (label) => PLAN_MATRIX.flatMap((g) => g.rows).find((r) => r.label === label);
+const COMMISSION = ROW("Commission on your bookings");
+// Free-plan limits as plans.js words them, e.g. "2 free services", "3 digital products".
+const FREE_SERVICES = ROW("Free (₹0) services").free.tip.split(" — ")[0];
+const FREE_PRODUCTS = ROW("Digital products").free.tip;
+// Monthly sales at which a flat Sloth Active fee equals Topmate's 10% cut.
+const BREAKEVEN = PREMIUM_PLAN.monthly * 10;
+export const PRICE_LINE = `${inr(PREMIUM_PLAN.monthly)} a month`;
+export const PER_DAY_LINE = `under ₹10 a day billed yearly (${inr(PREMIUM_PLAN.yearly)} a year)`;
 
 /* ─── Hero floating columns + creators carousel (placeholder creators) ─── */
 export const PROFILES = [
@@ -26,11 +42,11 @@ export const HERO_COL_B = PROFILES.slice(4, 8);
 
 /* ─── Block 2: "See what creators build" carousel cards ─── */
 export const COHORTS = [
-  { title: "Weekend Coworking Pass", blurb: "Book a cabin in seconds — no more 'is 4pm free?' WhatsApps.", tag: "Coworking · 0% cut", name: "Mukesh Tidke",        img: `${CDN}/mukesh-tidke.webp`        },
+  { title: "Weekend Coworking Pass", blurb: "Book a cabin in seconds — no more 'is 4pm free?' WhatsApps.", tag: "Coworking · In person", name: "Mukesh Tidke",        img: `${CDN}/mukesh-tidke.webp`        },
   { title: "Site-Visit Bookings",     blurb: "Clients pick a slot and pay upfront — no WhatsApp date juggling.", tag: "1:1 · Design",       name: "Ar. Pranav Kadoo",    img: `${CDN}/pranav-kadoo.webp`       },
   { title: "Salesforce Audit Calls",  blurb: "Link out, slot picked, paid up-front. No money talk.",          tag: "1:1 · 45 min",       name: "Vishal Chaware",      img: `${CDN}/vishal-chaware.webp`     },
   { title: "Weekend Mentoring",       blurb: "Set it up once. Slots fill, money's already in.",                tag: "Mentoring · Recurring", name: "Sangharata Somkuvar", img: `${CDN}/sangharata-somkuvar.webp`},
-  { title: "Recovery Sessions",       blurb: "Reminder texts mean patients never forget a slot.",              tag: "1:1 · Physio",       name: "Dr. Yukta Bawankar",  img: `${CDN}/yukta-bawankar.webp`     },
+  { title: "Recovery Sessions",       blurb: "Reminder texts help patients remember their slot.",              tag: "1:1 · Physio",       name: "Dr. Yukta Bawankar",  img: `${CDN}/yukta-bawankar.webp`     },
   { title: "Brand Power Hours",       blurb: "One link in the Insta bio. No GPay QR after the call.",          tag: "1:1 · Design",       name: "Happy Singh",         img: `${CDN}/happy-singh.webp`        },
 ];
 
@@ -42,24 +58,24 @@ export const CAPABILITIES = [
     preview: { kind: "session", title: "Strategy Call", meta: "Tomorrow · 5:00pm", price: "₹1,200", accent: "c-violet" },
   },
   {
-    title: "Setup Priority DM in seconds",
-    body: "Let fans pay to skip the queue and get a guaranteed reply. Zero commission on the fee.",
-    preview: { kind: "dm", title: "Priority DM", meta: "Guaranteed reply in 24h", price: "₹299", accent: "c-pink" },
+    title: "Offer a free discovery call",
+    body: `Let new clients book a free intro call before they pay. ${FREE_PLAN.name} includes ${FREE_SERVICES}; ${PREMIUM_PLAN.name} has no limit.`,
+    preview: { kind: "free", title: "Free Discovery Call", meta: "15 min · Google Meet", price: "Free", accent: "c-pink" },
   },
   {
-    title: "Host a webinar",
-    body: "Connect with hundreds at once — classes, group calls, workshops. One link, one price.",
-    preview: { kind: "webinar", title: "Personal Branding Workshop", meta: "Sat · 11:00am · 120 seats", price: "₹599", accent: "c-amber" },
+    title: "Meet clients in person",
+    body: "Run in-person appointments at your studio, clinic or office with the same link, reminders and upfront payment.",
+    preview: { kind: "offline", title: "Studio Session", meta: "Sat · 11:00am · In person", price: "₹599", accent: "c-amber" },
   },
   {
-    title: "Bundle your services",
-    body: "Package multiple sessions into one offer at a price you set. You keep 100% of it.",
-    preview: { kind: "bundle", title: "4-Session Coaching Pack", meta: "Save 20% vs single", price: "₹3,999", accent: "c-emerald" },
+    title: "Get paid before the session",
+    body: "Clients pay by UPI or card when they book. Book A Sloth settles it to your Indian bank account after a one-time KYC, with a GST invoice for every paid booking.",
+    preview: { kind: "paid", title: "Audit Call", meta: "45 min · Paid upfront", price: "₹1,999", accent: "c-emerald" },
   },
   {
-    title: "Sell courses & products",
-    body: "Drop a digital product or course on your SlothPage and get paid instantly to your bank.",
-    preview: { kind: "product", title: "GST Filing Playbook (PDF)", meta: "Instant download", price: "₹799", accent: "c-blue" },
+    title: "Sell digital products",
+    body: `Add a PDF, template or recording to your SlothPage and sell it next to your sessions. ${FREE_PLAN.name} includes ${FREE_PRODUCTS}.`,
+    preview: { kind: "product", title: "GST Filing Playbook (PDF)", meta: "Download after payment", price: "₹799", accent: "c-blue" },
   },
 ];
 
@@ -75,45 +91,47 @@ export const TESTIMONIALS = [
   { quote: "I run mentoring calls on the side — slots fill, payment's sorted, zero admin after work hours.", name: "Tushar Malvi", role: "Management Trainee, ECL", avatar: `${CDN}/tushar-malvi.webp` },
 ];
 
-/* ─── Block 6: bento stat grid ("Earn & Convert more") ─── */
+/* ─── Block 6: bento grid ("What you get") ─── */
 export const BENTO = [
-  { big: "0%",   label: "commission on every booking", sub: "Just Rs. 10 / Day — never a cut of what you earn.", color: "c-pink",    span: false },
-  { big: "40%",  label: "more trust with testimonials", sub: "Showcase guest & host reviews right on your page.",   color: "c-violet",  span: false },
-  { big: "100%", label: "yours — clients & data",       sub: "Your client list stays yours. No lock-in, ever.",     color: "c-emerald", span: false },
-  { big: "UPI",  label: "GST · INR-native payouts",      sub: "Razorpay up-front payments, settled straight to bank.", color: "c-blue",    span: false },
-  { big: "2-min",label: "setup, then it runs itself",    sub: "Google sign-in, claim your page, share the link.",     color: "c-amber",   span: false },
-  { big: "24×7", label: "reminders that cut no-shows",   sub: "Automatic WhatsApp + email nudges before every slot.", color: "c-cyan",    span: false },
+  { big: COMMISSION.premium, label: `commission on ${PREMIUM_PLAN.name}`, sub: `A flat ${PRICE_LINE}, ${PER_DAY_LINE}.`, color: "c-pink", span: false },
+  { big: COMMISSION.free, label: `on the free ${FREE_PLAN.name} plan`, sub: `Half of Topmate's 10%. Move to ${PREMIUM_PLAN.name} whenever it pays off.`, color: "c-violet", span: false },
+  { big: "UPI", label: "and cards at booking", sub: "Razorpay checkout, settled to your Indian bank after a one-time KYC.", color: "c-blue", span: false },
+  { big: "GST", label: "invoice on every paid booking", sub: "Sent automatically on both plans. No separate billing tool.", color: "c-emerald", span: false },
+  { big: "1 link", label: "for everything you sell", sub: "Sign in with Google, claim your page, add services and share it.", color: "c-amber", span: false },
+  { big: "24h", label: "reminders before each booking", sub: `Email on ${FREE_PLAN.name}. WhatsApp and 1-hour reminders on ${PREMIUM_PLAN.name}.`, color: "c-cyan", span: false },
 ];
 
 /* ─── Block: Book A Sloth vs Topmate comparison table ─────────────────
-   Honest stance: BAS wins the money/India rows, real parity rows are
-   marked, and ONE row concedes Topmate's larger discovery network today
-   (`win: false`). Competitor cells kept qualitative on purpose — no hard
-   fee % that would rot. Re-verify the Topmate column when it changes.
-   `win`: true = BAS advantage · null = parity (both ✓) · false = Topmate edge.
+   Topmate cells say ONLY what Topmate's pricing page says (competitors.js,
+   checked CHECKED_LABEL). `win`: true = Book A Sloth advantage · null = parity
+   or a different trade-off · false = Topmate's edge · "unlisted" = Topmate's
+   pricing page doesn't say (rendered neutral, never as an X).
    ──────────────────────────────────────────────────────────────────── */
 export const COMPARE_TM = [
-  { f: "Commission on paid bookings",        bas: "0% — flat ₹10 / day",  tm: "Takes a cut of earnings", win: true },
-  { f: "GST invoices — automatic",           bas: "Yes",                  tm: "No",                      win: true },
-  { f: "WhatsApp reminders",                 bas: "Built in",             tm: "Email-first",             win: true },
-  { f: "Flat price (never scales w/ earnings)", bas: "Yes — ₹10 / day",  tm: "Fee grows as you earn",   win: true },
-  { f: "Your client list & data",            bas: "100% yours, no lock-in", tm: "Held on the platform",  win: true },
-  { f: "UPI / INR payments at booking",      bas: "Yes",                  tm: "Yes",                     win: null },
-  { f: "1:1 sessions, webinars & products",  bas: "Yes",                  tm: "Yes",                     win: null },
-  { f: "Public creator page",                bas: "Yes (SlothPage)",      tm: "Yes",                     win: null },
-  { f: "Google Calendar + Meet",             bas: "Yes",                  tm: "Yes",                     win: null },
-  { f: "Creator discovery network",          bas: "Growing",              tm: "Larger today",            win: false },
+  { f: "Commission on your sales", bas: `${COMMISSION.premium} on ${PREMIUM_PLAN.name}, ${COMMISSION.free} on ${FREE_PLAN.name}`, tm: "10% of each sale", win: true },
+  { f: "Marketplace sales to new customers", bas: `Same as above`, tm: "20% of each sale", win: true },
+  { f: "Pricing model", bas: `Flat ${PRICE_LINE} on ${PREMIUM_PLAN.name}`, tm: "No subscription, a cut of each sale", win: null },
+  { f: "GST invoice on every paid booking", bas: "Yes, automatic", tm: "Not listed", win: "unlisted" },
+  { f: "WhatsApp reminders", bas: `Yes, on ${PREMIUM_PLAN.name}`, tm: "Not listed", win: "unlisted" },
+  { f: "Payments at booking", bas: "UPI and cards via Razorpay", tm: "Built in", win: null },
+  { f: "Payout timing", bas: "After the session", tm: "Instant payouts", win: false },
+  { f: "1:1 sessions and digital products", bas: "Yes", tm: "Yes", win: null },
+  { f: "Public creator page", bas: "Yes (SlothPage)", tm: "Yes", win: null },
+  { f: "Creator marketplace", bas: "Explore page, growing", tm: "Yes, larger today", win: false },
 ];
 
-/* ─── Block 7: FAQ (objection handling; answers front-loaded for AI/GEO) ─── */
+export const COMPARE_NOTE = `Checked against Topmate's pricing page in ${CHECKED_LABEL}.`;
+export const COMPARE_SOURCE = TM.source;
+
+/* ─── Block 7: FAQ (answer-first, facts only; feeds the FAQPage JSON-LD) ─── */
 export const FAQ = [
-  { q: "Does Book A Sloth take a commission like Topmate?", a: "No. On every paid plan Book A Sloth takes 0% commission — just a flat ₹10 per booking plus your payment gateway's standard charge. Topmate takes a cut of what you earn, so the more you make, the more it costs you. With Book A Sloth the price stays flat." },
-  { q: "Is it really 0% commission?", a: "Yes — on every paid plan, Book A Sloth takes 0% commission. The only per-booking cost is a flat ₹10 platform fee plus your payment gateway's standard charge. Nothing is skimmed as commission." },
-  { q: "What does Rs. 10 / Day include?", a: "Unlimited bookings, up-front payments, WhatsApp + email reminders, your own SlothPage, and automatic Google Calendar + Meet. One flat price — it never scales with how much you earn." },
-  { q: "Can my clients pay by UPI, and do I get paid in ₹?", a: "Yes. Clients pay up-front by UPI or card through Razorpay, and your earnings settle straight to your Indian bank account in ₹ — no USD, no foreign-currency conversion." },
-  { q: "Do I get GST invoices automatically?", a: "Yes. Book A Sloth generates GST-ready invoices automatically for your bookings — no separate accounting tool needed. Topmate doesn't do this for you." },
-  { q: "How do I switch from Topmate?", a: "Just share your new SlothPage link. There's nothing to migrate and no lock-in — your clients book in seconds and your client list stays yours. You can even run both side by side while you move over." },
-  { q: "Is there a free plan?", a: "Yes. The Starter plan is free with a small 5% commission — still far below Topmate. Upgrade to a 0%-commission paid plan whenever you're ready." },
-  { q: "How do payouts work?", a: "Clients pay up-front through Razorpay when they book. Your earnings are settled to you after the session completes." },
-  { q: "Is Topmate better than Book A Sloth for anything?", a: "Honestly, yes — Topmate has a larger creator discovery network today, so if you rely on its marketplace to find you new audience, that's its edge. Book A Sloth wins on keeping more of your money: 0% commission on paid plans, a flat ₹10/day price, automatic GST invoices, and WhatsApp reminders built in." },
+  { q: "Is Book A Sloth a good Topmate alternative?", a: `Yes, if you want to stop paying commission. Book A Sloth takes ${COMMISSION.premium} commission on ${PREMIUM_PLAN.name} for a flat ${PRICE_LINE}, or ${COMMISSION.free} on the free ${FREE_PLAN.name} plan. Clients pay by UPI or card at booking and every paid booking gets a GST invoice. Topmate takes 10% of each sale, with no subscription.` },
+  { q: "How much commission does Topmate take?", a: `Topmate's pricing page lists 10% of each sale made through your profile or link, and 20% on marketplace sales to new customers (checked ${CHECKED_LABEL}). Book A Sloth takes ${COMMISSION.free} on the free ${FREE_PLAN.name} plan and ${COMMISSION.premium} on ${PREMIUM_PLAN.name}.` },
+  { q: "When does Sloth Active cost less than Topmate?", a: `Once you sell more than about ${inr(BREAKEVEN)} a month. At that point Topmate's 10% equals the flat ${PRICE_LINE} for ${PREMIUM_PLAN.name}, and every rupee above it costs you nothing extra in commission. Below that, the free ${FREE_PLAN.name} plan at ${COMMISSION.free} costs less than Topmate's 10%.` },
+  { q: "Are there any other fees on Book A Sloth?", a: `Your client pays a flat ₹10 + GST booking fee on each paid booking. The payment gateway charge (about 2%) is passed through at cost, and TDS 1% and TCS 1% are deducted on payout as Indian tax law requires. On a ₹1,000 booking on ${PREMIUM_PLAN.name} you receive ₹959.76.` },
+  { q: "Can my clients pay by UPI, and do I get paid in rupees?", a: "Yes. Clients pay upfront by UPI or card through Razorpay, and your earnings settle to your Indian bank account in rupees after a one-time KYC. There's no foreign-currency conversion." },
+  { q: "Do I get GST invoices automatically?", a: `Yes. Book A Sloth sends a GST invoice for every paid booking on both the ${FREE_PLAN.name} and ${PREMIUM_PLAN.name} plans, so you don't need a separate billing tool.` },
+  { q: "How do payouts work?", a: "Clients pay upfront when they book. Book A Sloth settles your earnings to your bank account after the session, once your one-time KYC is done. Topmate advertises instant payouts, so if same-day money matters most to you, that is a real difference." },
+  { q: "How do I switch from Topmate?", a: "Sign in with Google, add your services and availability, then share your new SlothPage link. You can keep your Topmate page running while your clients move over." },
+  { q: "Is Topmate better than Book A Sloth for anything?", a: `Yes. Topmate has a larger creator marketplace today and advertises instant payouts, and it charges no subscription, which can suit you if you sell very little each month. Book A Sloth suits you once commission starts to add up: ${COMMISSION.premium} commission for a flat ${PRICE_LINE}, GST invoices and WhatsApp reminders on ${PREMIUM_PLAN.name}.` },
 ];

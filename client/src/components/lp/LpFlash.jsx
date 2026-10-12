@@ -24,8 +24,8 @@ export default function LpFlash() {
             <span className="text-primary">flash</span>
           </h2>
           <p className="mt-6 max-w-md text-lg text-neutral-600">
-            Start earning by the time you finish reading this page. Google sign-in,
-            claim your link, add your services — done.
+            Sign in with Google, claim your link, add your services and availability,
+            then share it. Clients book and pay from that one link.
           </p>
           <div className="mt-8">
             <CtaButton slot="flash" variant="link">

@@ -44,6 +44,7 @@ import { ogCard } from '../../config/ogImages';
 import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import { FREE_PLAN, PREMIUM_PLAN } from '../../data/plans';
 import { TESTIMONIALS as ALL_TESTIMONIALS } from '../../data/testimonials';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';
 const CREAM = '#FBF6EE';      // page ground
@@ -656,6 +657,8 @@ export default function ClientManagementFeature() {
       )}
 
       {/* ═══════════════ 8 · FAQ (single-card accordion) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: CREAM_DEEP }}>
         <div className="mx-auto max-w-3xl">
           <Reveal as="h2" className={`text-center ${h2}`}>

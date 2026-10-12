@@ -51,12 +51,12 @@ Key facts:
 
 ## Comparisons
 
-- [Book A Sloth vs Topmate](https://bookasloth.com/lp/topmate-vs-bookasloth)
-- [Calendly alternative](https://bookasloth.com/lp/calendly-alternative)
-- [Setmore alternative](https://bookasloth.com/lp/setmore-alternative)
-- [Acuity alternative](https://bookasloth.com/lp/acuity-alternative)
-- [SimplyBook.me alternative](https://bookasloth.com/lp/simplybook-alternative)
-- [Zoho Bookings alternative](https://bookasloth.com/lp/zoho-bookings-alternative)
+- [Book A Sloth vs Topmate](https://bookasloth.com/compare/topmate-alternative)
+- [Calendly alternative](https://bookasloth.com/compare/calendly-alternative)
+- [Setmore alternative](https://bookasloth.com/compare/setmore-alternative)
+- [Acuity alternative](https://bookasloth.com/compare/acuity-alternative)
+- [SimplyBook.me alternative](https://bookasloth.com/compare/simplybook-alternative)
+- [Zoho Bookings alternative](https://bookasloth.com/compare/zoho-bookings-alternative)
 
 ## For professions
 

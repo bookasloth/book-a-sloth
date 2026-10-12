@@ -56,6 +56,8 @@ import {
 } from '../../data/plans';
 import ToolLogo from './toolLogos';
 import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
+import OperatorCredit from '../../components/common/OperatorCredit';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';        // real host signup funnel
 const LOGIN = '/login-as-vendor';   // host login (Google-only door)
@@ -792,6 +794,8 @@ export default function LawyersPage() {
       </section>
 
       {/* ═══════════════ 11 · FAQ (two-column accordion) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--ca-grey)' }}>
         <div className="mx-auto max-w-5xl">
           <Reveal as="h2" className="text-center font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
@@ -849,7 +853,7 @@ export default function LawyersPage() {
             ))}
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-black/5 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-neutral-500">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+            <p className="text-xs text-neutral-500">© 2026 Book A Sloth. <OperatorCredit /></p>
             <p className="text-xs text-neutral-500">Made for India&apos;s advocates &amp; law firms</p>
           </div>
         </div>

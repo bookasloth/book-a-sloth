@@ -49,6 +49,8 @@ import {
 } from '../../data/plans';
 import ToolLogo from './toolLogos';
 import razorpayLogo from '../enterprise-v2/assets/logo/razorpay.png';
+import OperatorCredit from '../../components/common/OperatorCredit';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';
 const LOGIN = '/login-as-vendor';
@@ -855,6 +857,8 @@ export default function ArchitectPage() {
       </section>
 
       {/* ═══════════════ 11 · FAQ (two-column accordion) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
@@ -932,7 +936,7 @@ export default function ArchitectPage() {
             ))}
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-black/5 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-slate-500">© 2026 Book A Sloth. Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
+            <p className="text-xs text-slate-500">© 2026 Book A Sloth. <OperatorCredit /></p>
             <p className="text-xs text-slate-500">Made for India&apos;s architects &amp; interior designers</p>
           </div>
         </div>

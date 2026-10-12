@@ -378,7 +378,7 @@ describe('professionGraphJsonLd — one @graph for /for pages, HowTo + linked or
 
 describe('comparisonGraphJsonLd — one @graph for /lp competitor pages', () => {
   const base = {
-    canonical: 'https://bookasloth.com/lp/setmore-alternative',
+    canonical: 'https://bookasloth.com/compare/setmore-alternative',
     name: 'The Best Setmore Alternative for Indian Professionals — Book A Sloth',
     description: 'UPI payments, WhatsApp reminders, GST invoices, built for India.',
     breadcrumbName: 'Setmore Alternative',

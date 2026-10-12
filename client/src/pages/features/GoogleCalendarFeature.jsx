@@ -48,6 +48,7 @@ import { ogCard } from '../../config/ogImages';
 import { SITE_URL, professionGraphJsonLd } from '../../utils/seo';
 import { FREE_PLAN, PREMIUM_PLAN } from '../../data/plans';
 import { TESTIMONIALS as ALL_TESTIMONIALS } from '../../data/testimonials';
+import PageGuides from '../../components/common/PageGuides';
 
 const START = '/be-a-sloth';
 
@@ -693,6 +694,8 @@ export default function GoogleCalendarFeature() {
       )}
 
       {/* ═══════════════ 8 · FAQ (accordion, coloured-dot markers) ═══════════════ */}
+      <PageGuides />
+
       <section id="faq" className="border-t border-black/5 px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-3xl">
           <Reveal><Eyebrow>FAQ</Eyebrow></Reveal>

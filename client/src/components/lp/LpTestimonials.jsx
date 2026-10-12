@@ -19,7 +19,7 @@ export default function LpTestimonials() {
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <h2 className="max-w-xl text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-[2.6rem]">
-            Hosts who stopped paying commission.
+            What hosts say about Book A Sloth.
           </h2>
           <div className="flex gap-2">
             <button

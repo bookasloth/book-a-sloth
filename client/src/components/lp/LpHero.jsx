@@ -1,5 +1,6 @@
 import { CtaButton, Avatar } from "./LpKit";
-import { HERO_COL_A, HERO_COL_B } from "./lpData";
+import { HERO_COL_A, HERO_COL_B, PRICE_LINE } from "./lpData";
+import { PREMIUM_PLAN } from "../../data/plans";
 
 /* One floating creator card (Topmate-style: duotone photo + name/role). */
 function FloatCard({ p }) {
@@ -59,22 +60,23 @@ export default function LpHero() {
           </span>
 
           <h1 className="mt-6 text-[2.6rem] font-extrabold leading-[1.02] tracking-tight text-ink sm:text-[3.4rem] lg:text-[4rem]">
-            Your All-in-One
+            The Topmate alternative
             <br />
-            Creator <span className="text-primary">Storefront</span>
+            with <span className="text-primary">0% commission</span>
           </h1>
 
           <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-neutral-700 lg:mx-0">
-            Sell sessions, host workshops, grow your business — all from a single link.
-            Keep <strong className="text-ink">100% of every booking</strong>, instead of
-            losing up to 30% to commission.
+            Book A Sloth is a booking page for Indian creators and consultants. Clients pay by
+            UPI or card when they book, every paid booking gets a GST invoice, and{" "}
+            <strong className="text-ink">{PREMIUM_PLAN.name} takes 0% commission</strong> for a flat{" "}
+            {PRICE_LINE}. Topmate takes 10% of each sale.
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-5 sm:flex-row lg:items-center">
             <CtaButton slot="hero" />
             <div className="flex flex-col gap-1.5 text-sm">
               <span className="inline-flex items-center justify-center rounded-[4px] border border-black/5 bg-white/70 px-3 py-1 font-medium text-neutral-700">
-                0% commission · just Rs. 10 / Day
+                0% commission · {PRICE_LINE}
               </span>
             </div>
           </div>
