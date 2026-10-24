@@ -66,6 +66,7 @@ const otpStore           = require('../../utils/otpStore');
 const featureFlags       = require('../../services/featureFlags');
 const {
   registerVendor, registerUser, login, sendOtp, verifyOtp, getMe,
+  normalizeSeedTimezone,
 } = require('../../controllers/authController');
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -356,5 +357,18 @@ describe('getMe', () => {
     const r = res();
     await getMe(req({}, { id: 'ghost' }), r);
     expect(r.status).toHaveBeenCalledWith(404);
+  });
+});
+
+describe('normalizeSeedTimezone', () => {
+  test('UTC/GMT variants and empty fall back to India default', () => {
+    for (const v of ['UTC', 'utc', 'Etc/UTC', 'GMT', 'Etc/GMT', '', null, undefined]) {
+      expect(normalizeSeedTimezone(v)).toBe('Asia/Kolkata');
+    }
+  });
+  test('a genuine non-UTC Google timezone is kept', () => {
+    expect(normalizeSeedTimezone('Asia/Kolkata')).toBe('Asia/Kolkata');
+    expect(normalizeSeedTimezone('America/New_York')).toBe('America/New_York');
+    expect(normalizeSeedTimezone('Europe/London')).toBe('Europe/London');
   });
 });
