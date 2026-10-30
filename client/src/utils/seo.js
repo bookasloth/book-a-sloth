@@ -82,7 +82,7 @@ export const resolveServiceSeo = ({ service = {}, vendor = {}, siteUrl = SITE_UR
     ogDescription: service.og_description || description,
     // Ordered fallback: generated service card -> admin override -> host
     // thumbnail -> the static /service-og-default.png floor (Phase 1). See v3.154.
-    image: service.og_image || service.seo_image || service.thumbnail_url || serviceDefaultCard(site),
+    image: brandCard(site), // OG generation removed (growth removal): one static card for all
     canonical,
     indexable: service.is_indexable !== false,
     robots: robotsFor(service.is_indexable),
@@ -150,7 +150,7 @@ export const resolveProfileSeo = ({ host = {}, services = [], siteUrl = SITE_URL
     description,
     ogTitle: host.og_title || host.seo_title || name,
     ogDescription: host.og_description || description,
-    image: host.seo_image || host.profile_image || brandCard(site),
+    image: brandCard(site), // OG generation removed (growth removal): one static card for all
     canonical: host.username ? `${site}/${host.username}` : site,
     // A profile with no bookable service is a thin page (name + empty shell), so
     // keep it out of the index but let crawlers follow its links. Mirrors

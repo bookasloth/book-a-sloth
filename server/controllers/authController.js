@@ -436,7 +436,7 @@ const googleVendorAuth = (req, res) => {
     : undefined;
   // Marketing attribution — carried through the signed OAuth state so the
   // callback can stamp UTM/source on the brand-new host lead (CRM Phase 2b).
-  const att = require("../services/crm/attributionInput").cleanAttribution(req.query || {});
+  const att = undefined; // CRM attribution removed (growth removal)
   const state = jwt.sign(
     { flow: "vendor_auth", intent, ...(invite ? { invite } : {}), ...(att ? { att } : {}) },
     OAUTH_STATE_SECRET,
@@ -697,13 +697,7 @@ const googleCallback = async (req, res) => {
           },
         });
 
-        // Real-time CRM: brand-new host becomes a lead immediately (source
-        // host_signup), so Sales sees signups live instead of waiting on the
-        // manual backfill script. Never throws / never blocks the signup.
-        await require("../services/crm/leadService").safeUpsertLead(
-          { name: profile.name, email: googleEmail, profile_id: profileId },
-          { source: "host_signup", createdBy: "signup", attribution: statePayload?.att }
-        );
+        // CRM lead capture on host signup removed (growth removal).
       }
 
       // Re-attach Google tokens only when there's something to (re)store: a

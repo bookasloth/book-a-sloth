@@ -66,7 +66,8 @@ export const CATEGORY_THEME = {
   Comparison:       { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
   'Host Story':     { band: '#E63B82', accent: '#FF7DAE', light: false, chipBg: 'rgba(230,59,130,0.10)',chipFg: '#c2326f' },
 };
-export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME.News;
+// Growth removal: per-category colors collapsed to one orange — every post uses the News (orange) theme.
+export const themeFor = () => CATEGORY_THEME.News;
 
 export const BLOG_POSTS = [
 {

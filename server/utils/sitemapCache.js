@@ -30,13 +30,16 @@ const createSitemapCache = ({ ttlMs, now = Date.now } = {}) => {
     get,
     has: (key) => get(key) !== undefined,
     set: (key, value) => { store.set(key, { value, expires: now() + ttlMs }); },
-    bust: () => store.clear(),
+    // ponytail: sitemap frozen (growth removal) — bust is a no-op so content edits never force a DB rebuild.
+    // The current sitemap is served until process restart, which re-snapshots once from the DB then re-freezes.
+    bust: () => {},
   };
 };
 
 // Shared singleton used by the controller + mutation hooks. TTL configurable;
 // default 1h (crawlers re-poll the sitemap far more often than the DB changes).
-const SITEMAP_CACHE_TTL_MS = Number(process.env.SITEMAP_CACHE_TTL_MS) || 60 * 60 * 1000;
+// Growth removal: auto-generation frozen — TTL is effectively infinite so the snapshot never expires.
+const SITEMAP_CACHE_TTL_MS = Number(process.env.SITEMAP_CACHE_TTL_MS) || Number.MAX_SAFE_INTEGER;
 const sitemapCache = createSitemapCache({ ttlMs: SITEMAP_CACHE_TTL_MS });
 
 // Imported by every mutation point so a single require gives the bust handle

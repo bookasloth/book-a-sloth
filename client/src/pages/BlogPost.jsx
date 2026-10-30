@@ -354,7 +354,7 @@ const BlogPost = () => {
   // Share card only. Deliberately NOT `post.image` first: `image` is the on-page
   // hero and setting it suppresses the icon thumbnail, so the two must stay
   // separate concerns. Falls back to a real hero photo, then the site-wide card.
-  const ogImage = post.ogImage || post.image || `${SITE_URL}/og-image.png`;
+  const ogImage = `${SITE_URL}/og-image.png`; // OG generation removed (growth removal): one static card for all
   // The generated per-post card and the site-wide card are both 1200x630; only a
   // raw hero photo (post.image, used when no card exists) has unknown dimensions,
   // so we emit width/height only for the cards rather than invent them.
