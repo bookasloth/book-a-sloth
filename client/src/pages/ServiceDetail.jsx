@@ -1203,7 +1203,6 @@ export default function ServiceDetail() {
           <div className="hidden lg:block lg:w-[320px] flex-shrink-0">
             <div className="sticky top-20 flex flex-col gap-5">
               <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} bookingFeeBreakdown={bookingFeeBreakdown} compact={!heroInView} motionOK={motionOK}/>
-              <AdSpaceCard/>
             </div>
           </div>
         </div>
