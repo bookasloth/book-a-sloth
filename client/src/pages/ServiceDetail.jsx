@@ -484,18 +484,11 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Thumbnail — collapses on scroll past hero */}
+      {/* Thumbnail — always visible (does not collapse on scroll) */}
       <div
         ref={imgWrapRef}
-        aria-hidden={compact}
         className="overflow-hidden"
-        style={{
-          maxHeight: compact ? 0 : (imgH || 240),
-          opacity: compact ? 0 : 1,
-          transition: motionOK
-            ? 'max-height 280ms cubic-bezier(0.4,0,0.2,1), opacity 200ms ease'
-            : 'none',
-        }}
+        style={{ maxHeight: imgH || 240, opacity: 1 }}
       >
         <img src={service.thumbnail_url || '/service-og-default.jpg'} alt={service.title}
              className="w-full aspect-[16/10] object-cover"/>
