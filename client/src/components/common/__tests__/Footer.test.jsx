@@ -16,11 +16,11 @@ describe('<Footer>', () => {
     ).toBe('/be-a-sloth');
   });
 
-  test('links the Solutions + Compare discovery hubs (not a heavy column sitemap)', () => {
+  test('links the Compare discovery hub (not a heavy column sitemap)', () => {
     const { container } = renderFooter();
     // Discovery now lives on dedicated hub pages; the footer just links into them
-    // in static HTML so the crawler reaches /for/* + /compare/* via those hubs.
-    expect(screen.getByRole('link', { name: 'Solutions' }).getAttribute('href')).toBe('/solutions');
+    // in static HTML so the crawler reaches /compare/* via that hub. (/solutions scrapped.)
+    expect(screen.queryByRole('link', { name: 'Solutions' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Compare' }).getAttribute('href')).toBe('/compare');
     // The old 5-column discovery grid is gone, and so are the per-profession links.
     expect(container.querySelector('nav[aria-label="Site"]')).toBeNull();

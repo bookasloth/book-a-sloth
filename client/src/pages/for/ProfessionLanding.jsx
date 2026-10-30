@@ -253,54 +253,11 @@ export default function ProfessionLanding() {
   const topPlan = PAID_PLANS[PAID_PLANS.length - 1];
   const perDay = Math.max(1, Math.round(topPlan.yearly / 365));
 
-  // ── JSON-LD graph — SEO + AEO + GEO ──────────────────────────────────────
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Appointment Scheduling Software',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: seo.description,
-      offers: feeOnly
-        ? [{ '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` }]
-        : [
-            { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${FREE_PLAN.name} plan` },
-            { '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` },
-          ],
-      // No aggregateRating: a testimonial-derived 5.0 self-rating is exactly the
-      // "self-serving review" markup Google's policy flags (enterpriseSeo.js made
-      // the same call). Re-add only if backed by genuine on-page review data.
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      serviceType: `Appointment booking software for ${label.toLowerCase()}`,
-      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-      areaServed: 'IN',
-      description: seo.description,
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faq.map((f) => ({
-        '@type': 'Question',
-        name: f.q,
-        acceptedAnswer: { '@type': 'Answer', text: f.a },
-      })),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: label, item: canonical },
-      ],
-    },
-  ];
+  // No JSON-LD / structured data on these pages — deliberately. The heavy
+  // SoftwareApplication + Service + FAQPage + Breadcrumb @graph was removed so
+  // these marketing landings stay out of AI answers / AEO (they're also blocked
+  // for AI crawlers in robots.txt). Google still indexes them off plain HTML +
+  // the basic <Seo> meta below.
 
   // Palette → CSS custom properties consumed by the sections below.
   const styleVars = {
@@ -314,19 +271,17 @@ export default function ProfessionLanding() {
 
   return (
     <main className="overflow-x-clip bg-white text-[color:var(--lp-primary)]" style={styleVars}>
+      {/* Basic meta only — title, description, canonical. No keywords, no
+          clickbait OG, no JSON-LD (kept out of AI answers; see robots.txt). */}
       <Seo
         title={seo.title}
         description={seo.description}
-        keywords={seo.keywords}
         canonical={canonical}
-        robots="index, follow, max-image-preview:large, max-snippet:-1"
+        robots="index, follow"
         siteName="Book A Sloth"
         locale="en_IN"
         themeColor={theme.primary}
-        ogTitle={seo.ogTitle}
-        ogDescription={seo.ogDescription}
         image={seo.ogImage}
-        jsonLd={jsonLd}
       />
       <ForHeader ctaText="Get Started" />
 

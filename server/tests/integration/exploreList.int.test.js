@@ -95,26 +95,26 @@ describe('GET /api/explore', () => {
     expect(res.body.services[0].avgRating).toBeNull();
   });
 
-  test('ranks by effective_score desc; relevance gate drops non-matching rows', async () => {
+  test('ranks by effective_score desc within a category', async () => {
     const rows = [
-      row({ id: 'a', slug: 'a', title: 'Yoga for beginners', description: 'calm', category: 'yoga',
-            service_scores: [{ effective_score: 10 }] }),
-      row({ id: 'b', slug: 'b', title: 'Advanced Yoga', description: 'flow', category: 'yoga',
-            service_scores: [{ effective_score: 40 }] }),
-      row({ id: 'c', slug: 'c', title: 'Cooking class', description: 'no match here', category: 'food',
-            service_scores: [{ effective_score: 99 }] }), // high score but irrelevant to "yoga"
+      row({ id: 'a', slug: 'a', service_scores: [{ effective_score: 10 }] }),
+      row({ id: 'b', slug: 'b', service_scores: [{ effective_score: 40 }] }),
+      // other profession → filtered out in memory despite a higher score
+      row({ id: 'c', slug: 'c', profiles: { ...row().profiles, primary_category: 'chef' },
+            service_scores: [{ effective_score: 99 }] }),
     ];
     supabaseAdmin.from.mockReturnValueOnce(awaitable({ data: rows, error: null }));
 
-    const res = await request(app).get('/api/explore?q=yoga');
+    const res = await request(app).get('/api/explore?category=photographer');
 
     expect(res.status).toBe(200);
-    // 'c' excluded (no "yoga" in title/desc/category); 'b' before 'a' (40 > 10).
+    // 'c' excluded (chef, not photographer); 'b' before 'a' (40 > 10).
     expect(res.body.services.map(s => s.id)).toEqual(['b', 'a']);
     expect(res.body.meta.total).toBe(2);
   });
 
-  test('q never reaches a PostgREST filter; metachars are just word breaks', async () => {
+  test('a stray q param is ignored and never reaches a PostgREST filter', async () => {
+    // Explore no longer does text search; a leftover ?q= from an old link is a no-op.
     const mockQuery = awaitable({ data: [row()], error: null });
     supabaseAdmin.from.mockReturnValueOnce(mockQuery);
 
@@ -123,31 +123,7 @@ describe('GET /api/explore', () => {
     expect(res.status).toBe(200);
     expect(mockQuery.or).not.toHaveBeenCalled();
     expect(res.body.services.map(s => s.id)).toEqual(['svc1']);
-    expect(res.body.filters.parsed).toEqual({ text: 'wedding photo', location: '', mode: '' });
-    expect(res.body.meta.match).toBe('exact');
-  });
-
-  test('city + mode are parsed off the query and filter the results', async () => {
-    supabaseAdmin.from.mockReturnValueOnce(awaitable({ data: [
-      row({ id: 'pune-off', slug: 'a', meeting_mode: 'offline' }),
-      row({ id: 'pune-on', slug: 'b', meeting_mode: 'online' }),
-      row({ id: 'mum-off', slug: 'c', meeting_mode: 'offline', profiles: { ...row().profiles, location: 'Mumbai' } }),
-    ], error: null }));
-    const res = await request(app).get('/api/explore?q=' + encodeURIComponent('wedding photographer in person pune'));
-    expect(res.status).toBe(200);
-    expect(res.body.services.map(s => s.id)).toEqual(['pune-off']);
-    expect(res.body.filters.parsed).toEqual({ text: 'wedding photographer', location: 'Pune', mode: 'offline' });
-  });
-
-  test('q under 2 chars is ignored (no ilike filter)', async () => {
-    const mockQuery = awaitable({ data: [], error: null });
-    supabaseAdmin.from.mockReturnValueOnce(mockQuery);
-
-    const res = await request(app).get('/api/explore?q=a');
-
-    expect(res.status).toBe(200);
-    expect(res.body.filters.q).toBe('');
-    expect(mockQuery.or).not.toHaveBeenCalled();
+    expect(res.body.filters.q).toBeUndefined();
   });
 
   test('pagination: 96-cap, 12/page, page clamps to 8', async () => {

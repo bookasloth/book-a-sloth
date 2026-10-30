@@ -64,9 +64,9 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Lawyers, Advocates & Chartered Accountants',
-      headline: 'Appointment booking software',
-      headlineAccent: 'for lawyers',
-      headlineTail: '— consultations booked and paid before the first call.',
+      headline: 'Argue the case,',
+      headlineAccent: 'not the calendar.',
+      headlineTail: ' Clients book your consultation, pay the fee upfront, and get reminded — automatically.',
       subline:
         'You practise law. Book A Sloth handles everything around it — clients pick a slot, pay your fee upfront, and get reminded — so you stay in court, not in your inbox.',
       ctaText: 'Set Up My Booking Page',
@@ -248,6 +248,1437 @@ export const PROFESSION_LANDING = {
     ],
   },
 
+  dentists: {
+    slug: 'dentists',
+    label: 'Dentists & Clinics',
+    icon: Sparkles,
+
+    // ── Theme — clean clinical teal + bright dental cyan ─────────────────────
+    theme: {
+      primary: '#0e3a4f',    // deep clinical teal — ink / headings
+      accent: '#1fb6c9',     // bright dental cyan — signature colour
+      accentCta: '#0e7f90',  // AA-safe cyan for white-text buttons
+      tint: '#eefafb',       // soft aqua wash
+      heroFrom: '#082a39',   // dark teal
+      heroTo: '#0e3a4f',
+    },
+
+    // Basic meta only (no keywords / clickbait OG — pages are kept out of AI).
+    seo: {
+      title: 'Online Booking for Dental Clinics | Book A Sloth',
+      description:
+        'Let patients book and pay for their appointment online — and actually turn up. Book A Sloth keeps the dental chair full with automatic reminders, prepaid slots and a calendar that never double-books.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-dentists-og-1200x630.jpg',
+    },
+
+    hero: {
+      eyebrow: 'For Dentists, Orthodontists & Dental Clinics',
+      headline: 'The chair fills itself.',
+      headlineAccent: 'The front desk finally breathes.',
+      headlineTail: ' Patients pick a slot, pay, and get reminded — you just keep drilling.',
+      subline:
+        'You look after teeth. Book A Sloth looks after everything around the appointment — so your day is fewer no-shows, fewer “are you open?” calls, and a reception that isn’t glued to the phone.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Neha Kapoor',
+        practiceTag: 'Dental Surgeon · Smile Studio',
+        services: [
+          { name: 'Consultation & Check-up', meta: '20 min · In-clinic', price: '₹400' },
+          { name: 'Scaling & Polishing', meta: '45 min · In-clinic', price: '₹1,200' },
+        ],
+      },
+    },
+
+    socialProof: 'Trusted by dental surgeons, orthodontists and multi-chair clinics across India.',
+
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Patient data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after the clinic shuts' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Dental slots go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+
+    painPoints: [
+      { icon: PhoneOff, problem: 'Reception spends half the day confirming and rescheduling by phone', solution: 'One booking link. Patients pick, move or cancel their own slot — the desk stops dialling.' },
+      { icon: FileClock, problem: 'Empty chairs when patients forget a cleaning or a follow-up', solution: 'Automatic email + WhatsApp reminders go out before every appointment. The chair stays full.' },
+      { icon: IndianRupee, problem: 'Chasing payment after the procedure is awkward and slow', solution: 'Take the consult fee or a deposit upfront at booking. GST invoice generated automatically.' },
+      { icon: CalendarX2, problem: 'Double-booked chairs and clashing surgeon schedules', solution: 'Each chair’s Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR taped to the reception desk', solution: 'A clean, branded booking page with proper checkout — the first impression a clinic deserves.' },
+      { icon: Clock3, problem: 'Repeating opening hours to every caller', solution: 'Your live availability shows only open slots — patients self-serve, the desk stops repeating itself.' },
+    ],
+
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your clinic page takes appointments at midnight, on Sundays, and while you’re mid-procedure.' },
+      { icon: Wallet, title: 'Collect before the chair', desc: 'Consult fee or deposit paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Kill the no-show', desc: 'Reminders send themselves before every appointment, so recalls and cleanings don’t slip.' },
+      { icon: ShieldCheck, title: 'Keep patient data private', desc: 'Encrypted, access-controlled, never sold. Patient details and notes stay yours alone.' },
+    ],
+
+    pricing: {
+      hook: 'Less than a box of gloves a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+
+    faq: [
+      { q: 'Can patients book a dental appointment online and pay upfront?', a: 'Yes. Patients pick a slot on your clinic’s booking page and pay the consult fee or a deposit at checkout through Razorpay (UPI, cards, netbanking) before they arrive. You can also offer free-to-book slots.' },
+      { q: 'Will it stop two patients landing in the same chair?', a: 'Yes. Book A Sloth reads each chair’s Google Calendar, so busy times are never offered and a booked slot locks instantly — no double-booking across surgeons or chairs.' },
+      { q: 'How does it cut no-shows at a dental clinic?', a: 'Every appointment triggers automatic email and WhatsApp reminders before the slot, which is exactly where dental recalls and cleanings usually slip. Prepaid slots reduce no-shows further.' },
+      { q: 'Do patients need an account to book?', a: 'No. Patients just pick a time, enter their details and pay — no sign-up. It keeps booking fast for walk-in and recall patients alike.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+
+    midCtas: {
+      afterProblems: { text: 'Give your reception desk its day back.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+
+    finalCta: {
+      icon: CalendarCheck,
+      urgency: 'Every forgotten recall is a chair sitting empty.',
+      headline: 'Keep the chair full, not the voicemail.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Dentistry is detailed enough.', titleAccent: 'Booking shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'receptionist who never sleeps.' },
+      testimonials: { title: 'Built for how a clinic really runs.', subtitle: 'Surgeons, orthodontists and multi-chair clinics — booked, paid and reminded, without the front-desk churn.' },
+    },
+
+    madeFor: "India's Dentists & Clinics",
+
+    testimonials: [
+      { quote: 'Recalls used to slip through the cracks. Now patients get a reminder and just rebook themselves.', name: 'Dr. A. Sheth', role: 'Dental Surgeon', avatar: null },
+      { quote: 'My front desk isn’t on the phone all day confirming slots anymore. It changed how the clinic feels.', name: 'Dr. R. Iyer', role: 'Orthodontist', avatar: null },
+      { quote: 'Taking a deposit at booking quietly ended most of our no-shows.', name: 'Dr. M. Pillai', role: 'Dental Clinic Owner', avatar: null },
+    ],
+  },
+
+  astrologers: {
+    slug: 'astrologers',
+    label: 'Astrologers & Readers',
+    icon: Sparkles,
+    theme: {
+      primary: '#241a4d', accent: '#c99a3e', accentCta: '#8f6b22',
+      tint: '#f6f3ec', heroFrom: '#140f30', heroTo: '#241a4d',
+    },
+    seo: {
+      title: 'Online Booking for Astrologers & Readers | Book A Sloth',
+      description:
+        'Let clients book and pay for a reading online. Book A Sloth gives astrologers, tarot and numerology readers a clean booking page — fees collected upfront, slots reminded, calendar always in sync.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-astrologers-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Astrologers, Tarot & Numerology Readers',
+      headline: 'The stars align.',
+      headlineAccent: 'So does your calendar.',
+      headlineTail: ' Clients book a reading, pay upfront, and get reminded — you just tune in.',
+      subline:
+        'You read the charts. Book A Sloth handles the rest — seekers pick a slot, pay your fee, and get reminded — so your day is readings, not DMs about “are you free?”.',
+      ctaText: 'Set Up My Reading Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Ananya · Vedic Astrologer',
+        practiceTag: 'Astrology · Tarot',
+        services: [
+          { name: 'Birth Chart Reading', meta: '45 min · Online', price: '₹1,100' },
+          { name: 'Quick Tarot Session', meta: '20 min · Online', price: '₹500' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by astrologers, tarot readers and numerologists across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Readings kept private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: Clock3, value: '24/7', label: 'Readings booked, across every time zone' },
+      { icon: BadgePercent, value: '0%', label: 'Commission — you keep every fee' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your reading page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Reading requests scattered across Instagram DMs and WhatsApp', solution: 'One booking link. Seekers pick their own slot — you stop screenshotting your calendar.' },
+      { icon: IndianRupee, problem: 'Chasing payment before or after a reading feels awkward', solution: 'Your fee is paid upfront at booking. No “pay karo” message, no no-pay no-shows.' },
+      { icon: CalendarX2, problem: 'Clients across time zones booking your sleeping hours', solution: 'Your live availability shows only your real open slots — in the client’s own time.' },
+      { icon: FileClock, problem: 'Seekers forgetting the slot they asked for', solution: 'Automatic email + WhatsApp reminders go out before every reading. Fewer ghosted slots.' },
+      { icon: MessageSquareX, problem: 'A UPI number pasted into a DM looks unprofessional', solution: 'A calm, branded booking page with proper checkout — the first impression your practice deserves.' },
+      { icon: Clock3, problem: 'Repeating your rates and timings to every new enquiry', solution: 'Services, prices and open slots live on one page — seekers self-serve, you stop re-typing.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Get booked around the clock', desc: 'Your reading page takes bookings while you sleep, travel, or sit with a client.' },
+      { icon: Wallet, title: 'Get paid before you read', desc: 'Collect the full fee upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'End the no-show', desc: 'Reminders send themselves before every session — you never chase a seeker again.' },
+      { icon: ShieldCheck, title: 'Keep readings private', desc: 'Encrypted, access-controlled, never sold. Client details and notes stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show covers the month.',
+    },
+    faq: [
+      { q: 'Can clients book and pay for a reading online?', a: 'Yes. Seekers pick a slot on your booking page and pay your fee at checkout through Razorpay (UPI, cards, netbanking) before the reading begins. You can charge the full fee or take an advance.' },
+      { q: 'Does it handle clients in different time zones?', a: 'Yes. Your availability is shown in each client’s local time, and only your real open slots are offered — so no one books your 3am.' },
+      { q: 'How does it reduce no-shows for readings?', a: 'Every booking triggers automatic email and WhatsApp reminders before the slot, and because the fee is prepaid, far fewer seekers drift away.' },
+      { q: 'Do clients need an account to book?', a: 'No. They simply pick a time, enter their details and pay — no sign-up. It keeps booking fast and private.' },
+      { q: 'How much does it cost?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every reading fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Stop running your practice out of your DMs.', ctaText: 'Get My Reading Link' },
+      afterHow: { text: 'Your next seeker is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Sparkles,
+      urgency: 'Every missed DM is a reading someone booked elsewhere.',
+      headline: 'Read the charts, not your inbox.',
+      subline: 'Set up your reading page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Reading Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Reading the stars is the gift.', titleAccent: 'Scheduling shouldn’t be the curse.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like an', titleAccent: 'assistant who never sleeps.' },
+      testimonials: { title: 'Built for how readings really get booked.', subtitle: 'Astrologers, tarot and numerology readers — booked, paid and reminded, without the DM chaos.' },
+    },
+    madeFor: "India's Astrologers & Readers",
+    testimonials: [
+      { quote: 'Seekers book and pay before we ever speak. The awkward money part is just gone.', name: 'Ananya V.', role: 'Vedic Astrologer', avatar: null },
+      { quote: 'No more juggling DMs across time zones — my page shows my real slots in their time.', name: 'Rhea K.', role: 'Tarot Reader', avatar: null },
+      { quote: 'A proper booking link looks far more serious than a UPI number in a chat.', name: 'Devi S.', role: 'Numerologist', avatar: null },
+    ],
+  },
+
+  architects: {
+    slug: 'architects',
+    label: 'Architects & Designers',
+    icon: Building2,
+    theme: {
+      primary: '#1f2937', accent: '#d97706', accentCta: '#b45309',
+      tint: '#f7f4ef', heroFrom: '#111827', heroTo: '#1f2937',
+    },
+    seo: {
+      title: 'Online Booking for Architects & Interior Designers | Book A Sloth',
+      description:
+        'Let clients book and pay for a design consultation online. Book A Sloth gives architects and interior designers a clean booking page — fees upfront, site visits reminded, calendar synced.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-architects-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Architects & Interior Designers',
+      headline: 'Design the space,',
+      headlineAccent: 'not the schedule.',
+      headlineTail: ' Clients book a consult, pay the fee, and get reminded — automatically.',
+      subline:
+        'You shape how people live. Book A Sloth handles everything around the meeting — clients pick a slot, pay your consultation fee, and get reminded — so you stay on the drawing board, not the phone.',
+      ctaText: 'Set Up My Studio Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Studio Kabir · Architecture',
+        practiceTag: 'Architect · Interiors',
+        services: [
+          { name: 'Design Consultation', meta: '45 min · Online', price: '₹2,000' },
+          { name: 'Site Visit & Assessment', meta: '90 min · On-site', price: '₹4,500' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by independent architects and interior designers across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client plans private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: Clock3, value: '24/7', label: 'Consults booked, even between site visits' },
+      { icon: BadgePercent, value: '0%', label: 'Commission — you keep every fee' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your studio page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Consult requests scattered across calls, email and referrals', solution: 'One booking link. Clients pick a slot themselves — even while you’re on a site visit.' },
+      { icon: IndianRupee, problem: 'Giving away hours of “just a quick chat” for free', solution: 'Your consultation fee is shown and collected upfront. Enquiries that book are serious.' },
+      { icon: CalendarX2, problem: 'Site visits and studio meetings colliding on your calendar', solution: 'Google Calendar busy times are blocked automatically — no double-booked days.' },
+      { icon: FileClock, problem: 'No-shows after you’ve blocked half a day for a visit', solution: 'Automatic email + WhatsApp reminders go out before every meeting. No-shows drop.' },
+      { icon: MessageSquareX, problem: 'Sharing a GPay QR after a consult looks off-brand', solution: 'A clean, branded page with proper checkout — the first impression a design studio deserves.' },
+      { icon: Clock3, problem: 'Re-explaining your availability to every new enquiry', solution: 'Your live calendar shows only your open slots — clients self-serve, you stop re-typing.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Get booked around the clock', desc: 'Your studio page takes consultation bookings while you’re on site, travelling, or at the desk.' },
+      { icon: Wallet, title: 'Get paid before you advise', desc: 'Collect the consult fee or an advance upfront via UPI, card or netbanking. GST invoice automatic.' },
+      { icon: ShieldCheck, title: 'Keep client work private', desc: 'Encrypted, access-controlled, never sold. Plans, briefs and notes stay yours alone.' },
+      { icon: BellRing, title: 'End the no-show', desc: 'Reminders send themselves before every consult and site visit — you never chase one again.' },
+    ],
+    pricing: {
+      hook: 'Less than a sheet of trace a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered site visit pays for the year.',
+    },
+    faq: [
+      { q: 'Can clients book and pay for a design consultation online?', a: 'Yes. Clients pick a slot on your studio page and pay your consultation fee at checkout through Razorpay (UPI, cards, netbanking) before the meeting. You can charge the full fee or an advance.' },
+      { q: 'Will it avoid clashes between site visits and studio meetings?', a: 'Yes. Book A Sloth reads your Google Calendar, so blocked site visits and existing meetings are never offered as slots, and booked slots lock instantly.' },
+      { q: 'Does it work for both online consults and on-site visits?', a: 'Yes. You can offer online consultations and on-site visits as separate services, each with its own duration, price and availability.' },
+      { q: 'Do clients need an account to book?', a: 'No. Clients pick a time, enter their details and pay — no sign-up. It keeps the process fast and professional.' },
+      { q: 'How much does it cost?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Stop running your studio from your phone.', ctaText: 'Get My Studio Link' },
+      afterHow: { text: 'Your next client is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Building2,
+      urgency: 'Every free “quick chat” is an hour you can’t bill back.',
+      headline: 'Run a studio, not a switchboard.',
+      subline: 'Set up your consultation booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Studio Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Designing spaces is the work.', titleAccent: 'Scheduling them shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'studio manager who never sleeps.' },
+      testimonials: { title: 'Built for how a design practice really runs.', subtitle: 'Architects and interior designers — booked, paid and reminded, without the admin.' },
+    },
+    madeFor: "India's Architects & Designers",
+    testimonials: [
+      { quote: 'Paid consults filtered out the time-wasters overnight. Everyone who books now is serious.', name: 'Ar. K. Deshpande', role: 'Architect', avatar: null },
+      { quote: 'Site visits and studio meetings stopped clashing the day I connected my calendar.', name: 'Meghna R.', role: 'Interior Designer', avatar: null },
+      { quote: 'A clean booking link on my profile looks far more professional than a QR code.', name: 'Ar. S. Nair', role: 'Principal Architect', avatar: null },
+    ],
+  },
+
+  'chartered-accountants': {
+    slug: 'chartered-accountants',
+    label: 'Chartered Accountants',
+    icon: Landmark,
+    theme: {
+      primary: '#1e3a5f', accent: '#a16207', accentCta: '#845209',
+      tint: '#f8f6f1', heroFrom: '#0f2740', heroTo: '#1e3a5f',
+    },
+    seo: {
+      title: 'Online Booking for Chartered Accountants & CA Firms | Book A Sloth',
+      description:
+        'Let clients book and pay for a consultation online. Book A Sloth gives CAs and tax consultants a clean booking page — fees upfront, GST invoices, calendar synced around filing deadlines.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-cas-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Chartered Accountants & Tax Consultants',
+      headline: 'You balance the books.',
+      headlineAccent: 'We’ll balance your calendar.',
+      headlineTail: ' Clients book, pay your fee upfront, and get reminded — even mid-filing-season.',
+      subline:
+        'You handle the numbers. Book A Sloth handles everything around the appointment — clients pick a slot, pay upfront, and get reminded — so filing season is work, not a ringing phone.',
+      ctaText: 'Set Up My Practice Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'CA Rohan Mehta',
+        practiceTag: 'Chartered Accountant',
+        services: [
+          { name: 'Tax Consultation', meta: '30 min · Online', price: '₹1,000' },
+          { name: 'GST / ITR Filing Review', meta: '45 min · Online', price: '₹2,000' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by independent CAs, tax consultants and accounting firms across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client financials private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: Clock3, value: '24/7', label: 'Consults booked, even mid-deadline' },
+      { icon: BadgePercent, value: '0%', label: 'Commission — you keep every fee' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your practice page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Filing season turns your phone into a full-time job', solution: 'One booking link. Clients pick a slot around your deadlines instead of calling at 10pm.' },
+      { icon: IndianRupee, problem: 'Advisory time given away for free before anyone signs on', solution: 'Your consultation fee is shown and collected upfront. The free-advice drain stops.' },
+      { icon: CalendarX2, problem: 'Appointments colliding with filing and audit deadlines', solution: 'Google Calendar busy times are blocked automatically — no clashes with your crunch days.' },
+      { icon: FileClock, problem: 'No-shows eating billable hours during peak season', solution: 'Automatic email + WhatsApp reminders go out before every consultation. No-shows drop.' },
+      { icon: MessageSquareX, problem: 'Sharing a UPI number after advice looks unprofessional', solution: 'A clean, branded page with Razorpay checkout and automatic GST invoices.' },
+      { icon: Clock3, problem: 'Repeating your availability to every new client', solution: 'Your live calendar shows only open slots — clients self-serve, you stop re-typing times.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Get booked around the clock', desc: 'Your practice page takes consultations while you’re filing, in a meeting, or off the clock.' },
+      { icon: Wallet, title: 'Get paid before you advise', desc: 'Collect the full fee or an advance upfront via UPI, card or netbanking. GST invoice automatic.' },
+      { icon: ShieldCheck, title: 'Keep client financials private', desc: 'Encrypted, access-controlled, never sold. Client details and notes stay yours alone.' },
+      { icon: BellRing, title: 'End the no-show', desc: 'Reminders send themselves before every session — you never write another follow-up.' },
+    ],
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — it pays for itself in a single recovered no-show.',
+    },
+    faq: [
+      { q: 'What is the best appointment booking software for Chartered Accountants in India?', a: 'Book A Sloth is built for Indian finance professionals — clients book consultations online, pay your fee upfront via UPI or card, your calendar stays synced around filing deadlines, and reminders send automatically. It handles GST invoicing and charges 0% commission on paid plans.' },
+      { q: 'Can clients pay my consultation fee when they book?', a: 'Yes. Your fee is shown on your booking page and collected at checkout through Razorpay (UPI, cards, netbanking) before the consultation. You can charge the full fee or an advance.' },
+      { q: 'Will it avoid clashes with filing and audit deadlines?', a: 'Yes. Book A Sloth reads the busy times on your Google Calendar, so blocked deadline days and existing appointments are never offered as slots. Booked slots lock instantly.' },
+      { q: 'Do my clients need an account to book?', a: 'No. Clients book and pay without creating any account — they pick a slot, enter their details, and pay. Fast and professional.' },
+      { q: 'How much does it cost?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Stop running your practice from your phone.', ctaText: 'Get My Booking Link' },
+      afterHow: { text: 'Your next client is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Landmark,
+      urgency: 'Every missed call during filing season is a client who booked someone else.',
+      headline: 'Run a practice, not an inbox.',
+      subline: 'Set up your consultation booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Booking Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'The numbers are hard enough.', titleAccent: 'Client scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'clerk who never sleeps.' },
+      testimonials: { title: 'Built for how a CA practice really runs.', subtitle: 'CAs, tax and accounting consultants — booked, paid and reminded, without the admin.' },
+    },
+    madeFor: "India's Chartered Accountants",
+    testimonials: [
+      { quote: 'During filing season my phone never stops. Now clients pick a slot around my deadlines.', name: 'CA Priya Nair', role: 'Chartered Accountant', avatar: null },
+      { quote: 'Clients pay the consult fee before we speak. The free-advice drain finally stopped.', name: 'CA R. Menon', role: 'Tax Consultant', avatar: null },
+      { quote: 'Automatic GST invoices on every booking save me a genuinely annoying chore.', name: 'CA S. Bhatt', role: 'Practising CA', avatar: null },
+    ],
+  },
+
+  'sports-turf': {
+    slug: 'sports-turf',
+    label: 'Sports Turfs & Arenas',
+    icon: Zap,
+    theme: {
+      primary: '#14321f', accent: '#16a34a', accentCta: '#15803d',
+      tint: '#eefaf0', heroFrom: '#0b2415', heroTo: '#14321f',
+    },
+    seo: {
+      title: 'Online Slot Booking for Sports Turfs & Arenas | Book A Sloth',
+      description:
+        'Let players book and pay for a turf slot online. Book A Sloth gives box-cricket, football and sports arenas a clean booking page — slots prepaid, reminders sent, no more WhatsApp scramble.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-sports-turf-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Box Cricket, Football Turfs & Sports Arenas',
+      headline: 'The turf books itself.',
+      headlineAccent: 'The slots pay for themselves.',
+      headlineTail: ' Players reserve a slot, pay online, and get reminded — no more WhatsApp scramble.',
+      subline:
+        'You run the ground. Book A Sloth runs the bookings — players pick a slot, pay upfront, and get reminded — so your evenings are games, not a phone full of “is 8pm free?”.',
+      ctaText: 'Set Up My Turf Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Green Field Arena',
+        practiceTag: 'Box Cricket · Football',
+        services: [
+          { name: 'Box Cricket — 1 Hour', meta: '60 min · On-ground', price: '₹900' },
+          { name: 'Football Turf — 1 Hour', meta: '60 min · On-ground', price: '₹1,200' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by box-cricket, football and multi-sport turfs across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Bookings secure & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Slots booked, even after the floodlights go off' },
+      { icon: IndianRupee, value: 'Prepaid', label: 'Slots paid upfront — no-shows stop blocking the ground' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your turf page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Every slot booked by a flurry of WhatsApp messages and calls', solution: 'One booking link. Players see open slots and reserve their own — your phone stops buzzing.' },
+      { icon: CalendarX2, problem: 'Double-booked slots and arguments at the gate', solution: 'A slot locks the moment it’s booked — no two teams turning up for the same hour.' },
+      { icon: IndianRupee, problem: 'No-shows that block a prime-time slot and pay nothing', solution: 'Players pay upfront to reserve. A held slot is a paid slot.' },
+      { icon: FileClock, problem: 'Teams forgetting their slot and leaving the ground empty', solution: 'Automatic email + WhatsApp reminders go out before every booking. Fewer empty hours.' },
+      { icon: MessageSquareX, problem: 'A UPI number shared in a group chat for every booking', solution: 'A clean, branded page with proper checkout — a ground that looks professionally run.' },
+      { icon: Clock3, problem: 'Repeating rates and open hours to every caller', solution: 'Slots, prices and availability live on one page — players self-serve, you stop repeating.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Fill every slot, 24/7', desc: 'Your turf page takes bookings at midnight and on match days, while you run the ground.' },
+      { icon: Wallet, title: 'Get paid upfront', desc: 'Players pay to reserve via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Cut the empty hours', desc: 'Reminders send themselves before every slot, so teams turn up and the ground stays busy.' },
+      { icon: ShieldCheck, title: 'No more double-bookings', desc: 'Booked slots lock instantly — one slot, one team, no gate-side arguments.' },
+    ],
+    pricing: {
+      hook: 'Less than one hour’s slot a month.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered prime-time slot covers it.',
+    },
+    faq: [
+      { q: 'Can players book and pay for a turf slot online?', a: 'Yes. Players see your open slots on your booking page and pay to reserve at checkout through Razorpay (UPI, cards, netbanking). A paid slot locks instantly so it can’t be double-booked.' },
+      { q: 'Will it stop two teams booking the same slot?', a: 'Yes. The moment a slot is reserved it locks and disappears from availability — no overlaps, no arguments at the gate.' },
+      { q: 'How does it reduce no-shows on the ground?', a: 'Slots are prepaid, and automatic email and WhatsApp reminders go out before every booking, so far fewer prime-time hours sit empty.' },
+      { q: 'Do players need an account to book a slot?', a: 'No. Players pick a slot, enter their details and pay — no sign-up. Fast enough to book from the group chat.' },
+      { q: 'How much does it cost to run?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every slot fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Stop booking your turf from a group chat.', ctaText: 'Get My Turf Link' },
+      afterHow: { text: 'Your next team is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Zap,
+      urgency: 'Every no-show blocks a prime-time slot that could’ve been paid for.',
+      headline: 'Fill the ground, not the group chat.',
+      subline: 'Set up your turf’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Turf Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Running the ground is the job.', titleAccent: 'Chasing bookings shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'gatekeeper who never sleeps.' },
+      testimonials: { title: 'Built for how a turf really gets booked.', subtitle: 'Box-cricket, football and multi-sport grounds — reserved, prepaid and reminded, without the WhatsApp chaos.' },
+    },
+    madeFor: "India's Sports Turfs & Arenas",
+    testimonials: [
+      { quote: 'Prepaid slots ended our no-show problem. A blocked hour is now a paid hour.', name: 'Imran S.', role: 'Turf Owner', avatar: null },
+      { quote: 'No more double-booking arguments at the gate — a booked slot just disappears.', name: 'Karthik R.', role: 'Box Cricket Arena', avatar: null },
+      { quote: 'My evenings used to be 50 WhatsApp messages. Now players just book themselves.', name: 'Vivek P.', role: 'Football Turf Manager', avatar: null },
+    ],
+  },
+
+  veterinarians: {
+    slug: 'veterinarians',
+    label: 'Veterinarians & Pet Clinics',
+    icon: HeartPulse,
+    theme: {
+      primary: '#134e4a', accent: '#f59e0b', accentCta: '#b45309',
+      tint: '#effaf7', heroFrom: '#0c3b38', heroTo: '#134e4a',
+    },
+    seo: {
+      title: 'Online Booking for Veterinarians & Pet Clinics | Book A Sloth',
+      description:
+        'Let pet owners book and pay for a vet appointment online. Book A Sloth gives vets and pet clinics a clean booking page — fees upfront, reminders that cut no-shows, calendar always synced.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-veterinarians-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Veterinarians & Pet Clinics',
+      headline: 'You look after the animals.',
+      headlineAccent: 'We’ll look after the appointments.',
+      headlineTail: ' Owners book, pay, and get reminded — fewer missed visits, calmer front desk.',
+      subline:
+        'You care for pets. Book A Sloth handles everything around the visit — owners pick a slot, pay upfront, and get reminded — so your day is patients, not a ringing reception.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Sameer Joshi',
+        practiceTag: 'Veterinarian · Pet Clinic',
+        services: [
+          { name: 'Consultation & Check-up', meta: '20 min · In-clinic', price: '₹500' },
+          { name: 'Vaccination Visit', meta: '15 min · In-clinic', price: '₹700' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by veterinarians and pet clinics across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Pet & owner data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after clinic hours' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Vet visits go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Reception juggling calls while handling anxious pets', solution: 'One booking link. Owners pick, move or cancel their own slot — the desk stops dialling.' },
+      { icon: FileClock, problem: 'Owners forgetting vaccination boosters and follow-ups', solution: 'Automatic email + WhatsApp reminders go out before every visit. Fewer lapsed boosters.' },
+      { icon: IndianRupee, problem: 'Chasing the consult fee after an emotional visit', solution: 'Take the consult fee or a deposit upfront at booking. GST invoice generated automatically.' },
+      { icon: CalendarX2, problem: 'Walk-ins and booked slots colliding in a small clinic', solution: 'Your Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR at the reception desk', solution: 'A clean, branded booking page with proper checkout — the first impression a clinic deserves.' },
+      { icon: Clock3, problem: 'Repeating clinic hours to every caller', solution: 'Your live availability shows only open slots — owners self-serve, the desk stops repeating itself.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your clinic page takes appointments after hours, on Sundays, and while you’re with a patient.' },
+      { icon: Wallet, title: 'Collect before the visit', desc: 'Consult fee or deposit paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Kill the no-show', desc: 'Reminders send themselves before every visit, so boosters and follow-ups don’t lapse.' },
+      { icon: ShieldCheck, title: 'Keep records private', desc: 'Encrypted, access-controlled, never sold. Pet and owner details stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a strip of dewormer a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+    faq: [
+      { q: 'Can pet owners book and pay for a vet appointment online?', a: 'Yes. Owners pick a slot on your clinic page and pay the consult fee or a deposit at checkout through Razorpay (UPI, cards, netbanking) before they arrive. You can also offer free-to-book slots.' },
+      { q: 'How does it reduce no-shows and lapsed boosters?', a: 'Every appointment triggers automatic email and WhatsApp reminders before the slot — exactly where vaccination boosters and follow-ups usually slip. Prepaid slots reduce no-shows further.' },
+      { q: 'Will it stop walk-ins clashing with booked slots?', a: 'Yes. Book A Sloth reads your Google Calendar, so busy times are never offered and a booked slot locks instantly.' },
+      { q: 'Do owners need an account to book?', a: 'No. Owners pick a time, enter their details and pay — no sign-up. Fast for anxious owners and repeat visits alike.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Give your reception desk its day back.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: HeartPulse,
+      urgency: 'Every missed booster is a pet that slips through the net.',
+      headline: 'Care for pets, not the phone.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Caring for animals is the calling.', titleAccent: 'Booking them in shouldn’t be the battle.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'receptionist who never sleeps.' },
+      testimonials: { title: 'Built for how a pet clinic really runs.', subtitle: 'Vets and pet clinics — booked, paid and reminded, without the front-desk churn.' },
+    },
+    madeFor: "India's Veterinarians & Pet Clinics",
+    testimonials: [
+      { quote: 'Booster reminders go out on their own now — far fewer pets miss their shots.', name: 'Dr. S. Joshi', role: 'Veterinarian', avatar: null },
+      { quote: 'My reception isn’t glued to the phone anymore, which matters when you’re holding a scared dog.', name: 'Dr. A. Rao', role: 'Pet Clinic Owner', avatar: null },
+      { quote: 'Taking a deposit at booking quietly ended most of our no-shows.', name: 'Dr. N. Menon', role: 'Veterinary Surgeon', avatar: null },
+    ],
+  },
+
+  pediatricians: {
+    slug: 'pediatricians',
+    label: 'Pediatricians & Child Clinics',
+    icon: HeartPulse,
+    theme: {
+      primary: '#0f3b5c', accent: '#f59e0b', accentCta: '#b45309',
+      tint: '#eff6fb', heroFrom: '#0a2b43', heroTo: '#0f3b5c',
+    },
+    seo: {
+      title: 'Online Booking for Pediatricians & Child Clinics | Book A Sloth',
+      description:
+        'Let parents book and pay for a child’s appointment online. Book A Sloth gives pediatricians a clean booking page — vaccination reminders that cut no-shows, prepaid slots, calendar synced.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-pediatricians-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Pediatricians & Child Clinics',
+      headline: 'Parents book in seconds.',
+      headlineAccent: 'You get back to the kids.',
+      headlineTail: ' They pick a slot, pay, and get reminded — fewer anxious phone calls at the desk.',
+      subline:
+        'You care for children. Book A Sloth handles everything around the visit — parents pick a slot, pay upfront, and get reminded — so your clinic is calmer and your vaccination schedule stays on track.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Kavya Menon',
+        practiceTag: 'Pediatrician · Child Care',
+        services: [
+          { name: 'Child Consultation', meta: '20 min · In-clinic', price: '₹600' },
+          { name: 'Vaccination Visit', meta: '15 min · In-clinic', price: '₹400' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by pediatricians and child-care clinics across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Child & parent data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after clinic hours' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Visits go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Anxious parents clogging the phone line for a quick slot', solution: 'One booking link. Parents pick a slot themselves — the desk stops fielding every call.' },
+      { icon: FileClock, problem: 'Vaccination boosters quietly slipping past their due date', solution: 'Automatic email + WhatsApp reminders go out before every visit. Fewer missed boosters.' },
+      { icon: IndianRupee, problem: 'Chasing the consult fee with a crying child in the room', solution: 'Take the consult fee or a deposit upfront at booking. GST invoice generated automatically.' },
+      { icon: CalendarX2, problem: 'Walk-ins and booked slots colliding in a busy clinic', solution: 'Your Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR taped to the reception counter', solution: 'A clean, branded booking page with proper checkout — the first impression a clinic deserves.' },
+      { icon: Clock3, problem: 'Repeating clinic timings to every new parent', solution: 'Your live availability shows only open slots — parents self-serve, the desk stops repeating.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your clinic page takes appointments after hours and on Sundays, while you’re with a patient.' },
+      { icon: Wallet, title: 'Collect before the visit', desc: 'Consult fee or deposit paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Keep the schedule on track', desc: 'Reminders send themselves before every visit, so vaccinations and follow-ups don’t slip.' },
+      { icon: ShieldCheck, title: 'Keep records private', desc: 'Encrypted, access-controlled, never sold. Child and parent details stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a strip of syrup a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+    faq: [
+      { q: 'Can parents book and pay for a child’s appointment online?', a: 'Yes. Parents pick a slot on your clinic page and pay the consult fee or a deposit at checkout through Razorpay (UPI, cards, netbanking) before they arrive. You can also offer free-to-book slots.' },
+      { q: 'How does it help with the vaccination schedule?', a: 'Every appointment triggers automatic email and WhatsApp reminders before the slot, which is exactly where boosters and follow-ups usually slip. Prepaid slots reduce no-shows further.' },
+      { q: 'Will it stop walk-ins clashing with booked slots?', a: 'Yes. Book A Sloth reads your Google Calendar, so busy times are never offered and a booked slot locks instantly.' },
+      { q: 'Do parents need an account to book?', a: 'No. Parents pick a time, enter details and pay — no sign-up. Fast when a child is unwell.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Give your reception desk its day back.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: HeartPulse,
+      urgency: 'Every missed booster is a child who slipped through the schedule.',
+      headline: 'Care for the kids, not the phone.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Caring for children is the work.', titleAccent: 'Booking them in shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'receptionist who never sleeps.' },
+      testimonials: { title: 'Built for how a child clinic really runs.', subtitle: 'Pediatricians and child-care clinics — booked, paid and reminded, without the front-desk churn.' },
+    },
+    madeFor: "India's Pediatricians & Child Clinics",
+    testimonials: [
+      { quote: 'Booster reminders go out automatically now — far fewer children miss their shots.', name: 'Dr. K. Menon', role: 'Pediatrician', avatar: null },
+      { quote: 'The phone used to ring non-stop with slot requests. Parents just book themselves now.', name: 'Dr. A. Shah', role: 'Child Clinic', avatar: null },
+      { quote: 'Taking a deposit at booking quietly ended most of our no-shows.', name: 'Dr. R. Pillai', role: 'Pediatric Consultant', avatar: null },
+    ],
+  },
+
+  gynecologists: {
+    slug: 'gynecologists',
+    label: 'Gynecologists & Clinics',
+    icon: HeartPulse,
+    theme: {
+      primary: '#134e3a', accent: '#e11d74', accentCta: '#be185d',
+      tint: '#fdf2f7', heroFrom: '#0b3a2b', heroTo: '#134e3a',
+    },
+    seo: {
+      title: 'Online Booking for Gynecologists & Women’s Clinics | Book A Sloth',
+      description:
+        'Let patients book and pay for an appointment online — discreetly. Book A Sloth gives gynecologists a private booking page with reminders that cut no-shows, prepaid slots and a synced calendar.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-gynecologists-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Gynecologists & Women’s Health Clinics',
+      headline: 'Booked discreetly.',
+      headlineAccent: 'Reminded automatically.',
+      headlineTail: ' Patients pick a slot, pay, and get a private reminder — no awkward front-desk call.',
+      subline:
+        'You care for your patients. Book A Sloth handles everything around the visit — they book a slot privately, pay upfront, and get reminded — so your clinic is calmer and bookings stay confidential.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Ritu Sharma',
+        practiceTag: 'Gynecologist · Women’s Health',
+        services: [
+          { name: 'Consultation', meta: '20 min · In-clinic', price: '₹700' },
+          { name: 'Online Follow-up', meta: '15 min · Online', price: '₹400' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by gynecologists and women’s-health clinics across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Patient data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, discreetly, any hour' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Visits go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Patients uncomfortable explaining why they’re calling', solution: 'One private booking link. Patients pick a slot themselves — no front-desk conversation needed.' },
+      { icon: FileClock, problem: 'Follow-ups and routine checks quietly slipping', solution: 'Automatic, discreet email + WhatsApp reminders go out before every visit. Fewer missed follow-ups.' },
+      { icon: IndianRupee, problem: 'Chasing the consult fee after a sensitive visit', solution: 'Take the fee or a deposit upfront at booking. GST invoice generated automatically.' },
+      { icon: CalendarX2, problem: 'Walk-ins colliding with booked appointments', solution: 'Your Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR at a busy reception desk', solution: 'A clean, branded booking page with proper checkout — private and professional.' },
+      { icon: Clock3, problem: 'Repeating clinic timings to every caller', solution: 'Your live availability shows only open slots — patients self-serve, the desk stops repeating.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your clinic page takes appointments after hours and on Sundays, discreetly, while you work.' },
+      { icon: Wallet, title: 'Collect before the visit', desc: 'Consult fee or deposit paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Keep follow-ups on track', desc: 'Discreet reminders send themselves before every visit, so routine checks don’t slip.' },
+      { icon: ShieldCheck, title: 'Keep it private', desc: 'Encrypted, access-controlled, never sold. Patient details and notes stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+    faq: [
+      { q: 'Can patients book a gynecology appointment privately online?', a: 'Yes. Patients pick a slot on your booking page and pay at checkout through Razorpay (UPI, cards, netbanking) — without explaining anything to a receptionist. Reminders are worded discreetly.' },
+      { q: 'How does it reduce no-shows for follow-ups?', a: 'Every appointment triggers automatic email and WhatsApp reminders before the slot, and prepaid slots reduce no-shows further — which matters most for routine follow-ups.' },
+      { q: 'Will it stop walk-ins clashing with booked slots?', a: 'Yes. Book A Sloth reads your Google Calendar, so busy times are never offered and a booked slot locks instantly.' },
+      { q: 'Do patients need an account to book?', a: 'No. Patients pick a time, enter their details and pay — no sign-up. Fast and private.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Give your patients a private way to book.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: HeartPulse,
+      urgency: 'Every missed follow-up is a patient who meant to come back.',
+      headline: 'Care for your patients, not the phone.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Women’s health is the work.', titleAccent: 'Booking it shouldn’t be the barrier.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'receptionist who never sleeps.' },
+      testimonials: { title: 'Built for how a women’s clinic really runs.', subtitle: 'Gynecologists and women’s-health clinics — booked, paid and reminded, privately.' },
+    },
+    madeFor: "India's Gynecologists & Clinics",
+    testimonials: [
+      { quote: 'Patients book privately without having to explain anything to the desk. It matters here.', name: 'Dr. R. Sharma', role: 'Gynecologist', avatar: null },
+      { quote: 'Routine follow-ups stopped slipping once reminders went out on their own.', name: 'Dr. A. Iyer', role: 'Women’s Health Clinic', avatar: null },
+      { quote: 'Taking a deposit at booking quietly ended most of our no-shows.', name: 'Dr. S. Nair', role: 'Consultant Gynecologist', avatar: null },
+    ],
+  },
+
+  dermatologists: {
+    slug: 'dermatologists',
+    label: 'Dermatologists & Skin Clinics',
+    icon: Sparkles,
+    theme: {
+      primary: '#3b2a4d', accent: '#db2777', accentCta: '#be185d',
+      tint: '#fdf2f8', heroFrom: '#271a35', heroTo: '#3b2a4d',
+    },
+    seo: {
+      title: 'Online Booking for Dermatologists & Skin Clinics | Book A Sloth',
+      description:
+        'Let patients book and pay for a skin consultation online. Book A Sloth gives dermatologists and skin clinics a clean booking page — prepaid slots, reminders that cut no-shows, synced calendar.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-dermatologists-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Dermatologists & Skin Clinics',
+      headline: 'Clear skin runs on routine.',
+      headlineAccent: 'So does a full clinic.',
+      headlineTail: ' Patients book, pay, and get reminded — so follow-up courses don’t fall off.',
+      subline:
+        'You treat the skin. Book A Sloth handles everything around the appointment — patients pick a slot, pay upfront, and get reminded — so multi-session courses actually get finished.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Ananya Desai',
+        practiceTag: 'Dermatologist · Skin & Hair',
+        services: [
+          { name: 'Skin Consultation', meta: '20 min · In-clinic', price: '₹800' },
+          { name: 'Follow-up Session', meta: '15 min · In-clinic', price: '₹500' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by dermatologists and skin & hair clinics across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Patient data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after clinic hours' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Visits go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+    painPoints: [
+      { icon: FileClock, problem: 'Patients dropping off halfway through a treatment course', solution: 'Automatic email + WhatsApp reminders go out before every session. Courses get finished.' },
+      { icon: PhoneOff, problem: 'Reception fielding calls for consults and follow-ups all day', solution: 'One booking link. Patients pick, move or cancel their own slot — the desk stops dialling.' },
+      { icon: IndianRupee, problem: 'Chasing session fees across a multi-visit course', solution: 'Take each session’s fee or a deposit upfront at booking. GST invoices generated automatically.' },
+      { icon: CalendarX2, problem: 'Walk-ins colliding with booked procedure slots', solution: 'Your Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR at the reception desk of a premium clinic', solution: 'A clean, branded booking page with proper checkout — the polish a skin clinic deserves.' },
+      { icon: Clock3, problem: 'Repeating clinic timings to every caller', solution: 'Your live availability shows only open slots — patients self-serve, the desk stops repeating.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your clinic page takes consults and follow-ups after hours, while you’re with a patient.' },
+      { icon: Wallet, title: 'Collect before the chair', desc: 'Consult or session fee paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Finish the course', desc: 'Reminders send themselves before every session, so multi-visit treatments don’t drop off.' },
+      { icon: ShieldCheck, title: 'Keep records private', desc: 'Encrypted, access-controlled, never sold. Patient details and notes stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a sample sachet a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+    faq: [
+      { q: 'Can patients book and pay for a skin consultation online?', a: 'Yes. Patients pick a slot on your clinic page and pay the consult or session fee at checkout through Razorpay (UPI, cards, netbanking) before they arrive.' },
+      { q: 'How does it help multi-session treatment courses get finished?', a: 'Automatic email and WhatsApp reminders go out before every session, and prepaid slots reduce drop-off — so courses are far more likely to be completed.' },
+      { q: 'Will it stop walk-ins clashing with booked procedures?', a: 'Yes. Book A Sloth reads your Google Calendar, so busy times are never offered and a booked slot locks instantly.' },
+      { q: 'Do patients need an account to book?', a: 'No. Patients pick a time, enter details and pay — no sign-up.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Give your reception desk its day back.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Sparkles,
+      urgency: 'Every dropped course is revenue — and a result — left unfinished.',
+      headline: 'Treat the skin, not the phone.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Treating skin is the craft.', titleAccent: 'Booking it shouldn’t be the chore.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'receptionist who never sleeps.' },
+      testimonials: { title: 'Built for how a skin clinic really runs.', subtitle: 'Dermatologists and skin & hair clinics — booked, paid and reminded, without the front-desk churn.' },
+    },
+    madeFor: "India's Dermatologists & Skin Clinics",
+    testimonials: [
+      { quote: 'Reminders mean patients actually finish their treatment courses now.', name: 'Dr. A. Desai', role: 'Dermatologist', avatar: null },
+      { quote: 'Prepaid sessions ended the awkward fee-chasing between visits.', name: 'Dr. R. Kapoor', role: 'Skin & Hair Clinic', avatar: null },
+      { quote: 'A branded booking page looks right for a premium clinic — a QR code never did.', name: 'Dr. M. Shah', role: 'Consultant Dermatologist', avatar: null },
+    ],
+  },
+
+  physiotherapists: {
+    slug: 'physiotherapists',
+    label: 'Physiotherapists & Clinics',
+    icon: HeartPulse,
+    theme: {
+      primary: '#0e3b4a', accent: '#f97316', accentCta: '#c2410c',
+      tint: '#fff5ee', heroFrom: '#082c38', heroTo: '#0e3b4a',
+    },
+    seo: {
+      title: 'Online Booking for Physiotherapists & Rehab Clinics | Book A Sloth',
+      description:
+        'Let patients book and pay for a physio session online. Book A Sloth gives physiotherapists a clean booking page — session packages, reminders that keep recovery on track, synced calendar.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-physiotherapists-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Physiotherapists & Rehab Clinics',
+      headline: 'Recovery runs on routine.',
+      headlineAccent: 'So should the booking.',
+      headlineTail: ' Patients book their sessions, pay, and get reminded — so recovery plans don’t stall.',
+      subline:
+        'You rebuild people. Book A Sloth handles everything around the session — patients pick a slot, pay upfront, and get reminded — so recovery packages actually get finished.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Aarav Nair',
+        practiceTag: 'Physiotherapist · Rehab',
+        services: [
+          { name: 'Assessment & First Session', meta: '45 min · In-clinic', price: '₹800' },
+          { name: 'Therapy Session', meta: '30 min · In-clinic', price: '₹500' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by physiotherapists and rehab clinics across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Patient data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Sessions booked, even after clinic hours' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Sessions go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+    painPoints: [
+      { icon: FileClock, problem: 'Patients skipping sessions and stalling their own recovery', solution: 'Automatic email + WhatsApp reminders go out before every session. Fewer skipped visits.' },
+      { icon: PhoneOff, problem: 'Rebooking the next session by phone, every single time', solution: 'One booking link. Patients book their whole series themselves — no back-and-forth.' },
+      { icon: IndianRupee, problem: 'Chasing fees across a long course of sessions', solution: 'Take each session’s fee or a package deposit upfront. GST invoices generated automatically.' },
+      { icon: CalendarX2, problem: 'Home visits and clinic sessions clashing on your day', solution: 'Your Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR taped to the treatment-room wall', solution: 'A clean, branded booking page with proper checkout — the polish your clinic deserves.' },
+      { icon: Clock3, problem: 'Repeating your slots to every patient after each session', solution: 'Your live availability shows only open slots — patients self-serve the next one.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book the whole series', desc: 'Patients book their next sessions in one go, around the clock, while you’re treating.' },
+      { icon: Wallet, title: 'Collect before the session', desc: 'Session fee or package deposit paid upfront via UPI, card or netbanking — GST invoice automatic.' },
+      { icon: BellRing, title: 'Keep recovery on track', desc: 'Reminders send themselves before every session, so recovery plans don’t stall.' },
+      { icon: ShieldCheck, title: 'Keep records private', desc: 'Encrypted, access-controlled, never sold. Patient details and notes stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a roll of tape a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+    faq: [
+      { q: 'Can patients book and pay for physio sessions online?', a: 'Yes. Patients pick a slot on your clinic page and pay the session fee or a package deposit at checkout through Razorpay (UPI, cards, netbanking) before they arrive.' },
+      { q: 'Can patients book a whole course of sessions at once?', a: 'Yes. Patients can book their series of sessions in one go, around your availability, instead of rebooking by phone each time.' },
+      { q: 'How does it keep recovery plans on track?', a: 'Automatic email and WhatsApp reminders go out before every session, and prepaid slots reduce drop-off — so courses are far more likely to be completed.' },
+      { q: 'Do patients need an account to book?', a: 'No. Patients pick a time, enter details and pay — no sign-up.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Stop rebooking every session by phone.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: HeartPulse,
+      urgency: 'Every skipped session is recovery that stalls.',
+      headline: 'Rebuild people, not your schedule.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Rebuilding people is the work.', titleAccent: 'Rebooking them shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'front desk that never sleeps.' },
+      testimonials: { title: 'Built for how a rehab clinic really runs.', subtitle: 'Physiotherapists and rehab clinics — booked, paid and reminded, without the admin.' },
+    },
+    madeFor: "India's Physiotherapists & Clinics",
+    testimonials: [
+      { quote: 'Patients book their whole series now — I stopped rebooking by phone after every session.', name: 'Dr. A. Nair', role: 'Physiotherapist', avatar: null },
+      { quote: 'Reminders cut our skipped sessions sharply, and recovery plans actually get finished.', name: 'Dr. R. Menon', role: 'Rehab Clinic', avatar: null },
+      { quote: 'Package deposits upfront ended the awkward fee conversations mid-course.', name: 'Dr. S. Rao', role: 'Sports Physio', avatar: null },
+    ],
+  },
+
+  'ent-specialists': {
+    slug: 'ent-specialists',
+    label: 'ENT Specialists & Clinics',
+    icon: Stethoscope,
+    theme: {
+      primary: '#0f3550', accent: '#0ea5e9', accentCta: '#0369a1',
+      tint: '#eef7fc', heroFrom: '#092536', heroTo: '#0f3550',
+    },
+    seo: {
+      title: 'Online Booking for ENT Specialists & Clinics | Book A Sloth',
+      description:
+        'Let patients book and pay for an ENT consultation online. Book A Sloth gives ENT specialists a clean booking page — prepaid slots, reminders that cut no-shows and a calendar that never double-books.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-ent-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For ENT Specialists & Clinics',
+      headline: 'Blocked ears shouldn’t mean',
+      headlineAccent: 'a blocked phone line.',
+      headlineTail: ' Patients book, pay, and get reminded — your front desk clears up.',
+      subline:
+        'You treat ear, nose and throat. Book A Sloth handles everything around the appointment — patients pick a slot, pay upfront, and get reminded — so your clinic runs quieter and fuller.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Imran Qureshi',
+        practiceTag: 'ENT Specialist',
+        services: [
+          { name: 'ENT Consultation', meta: '20 min · In-clinic', price: '₹700' },
+          { name: 'Follow-up Visit', meta: '15 min · In-clinic', price: '₹400' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by ENT specialists and clinics across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Patient data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after clinic hours' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Visits go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Reception on the phone all day booking consults', solution: 'One booking link. Patients pick, move or cancel their own slot — the desk stops dialling.' },
+      { icon: FileClock, problem: 'Post-procedure follow-ups quietly slipping', solution: 'Automatic email + WhatsApp reminders go out before every visit. Fewer missed follow-ups.' },
+      { icon: IndianRupee, problem: 'Chasing the consult fee after the visit', solution: 'Take the consult fee or a deposit upfront at booking. GST invoice generated automatically.' },
+      { icon: CalendarX2, problem: 'Walk-ins colliding with booked procedure slots', solution: 'Your Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR at the reception desk', solution: 'A clean, branded booking page with proper checkout — the first impression a clinic deserves.' },
+      { icon: Clock3, problem: 'Repeating clinic timings to every caller', solution: 'Your live availability shows only open slots — patients self-serve, the desk stops repeating.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your clinic page takes consults and follow-ups after hours, while you’re with a patient.' },
+      { icon: Wallet, title: 'Collect before the visit', desc: 'Consult fee or deposit paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Keep follow-ups on track', desc: 'Reminders send themselves before every visit, so post-procedure checks don’t slip.' },
+      { icon: ShieldCheck, title: 'Keep records private', desc: 'Encrypted, access-controlled, never sold. Patient details and notes stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+    faq: [
+      { q: 'Can patients book and pay for an ENT consultation online?', a: 'Yes. Patients pick a slot on your clinic page and pay the consult fee or a deposit at checkout through Razorpay (UPI, cards, netbanking) before they arrive.' },
+      { q: 'How does it reduce no-shows and missed follow-ups?', a: 'Every appointment triggers automatic email and WhatsApp reminders before the slot, and prepaid slots reduce no-shows further.' },
+      { q: 'Will it stop walk-ins clashing with booked procedures?', a: 'Yes. Book A Sloth reads your Google Calendar, so busy times are never offered and a booked slot locks instantly.' },
+      { q: 'Do patients need an account to book?', a: 'No. Patients pick a time, enter details and pay — no sign-up.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Give your reception desk its day back.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Stethoscope,
+      urgency: 'Every missed follow-up is a patient who didn’t finish treatment.',
+      headline: 'Treat patients, not the phone.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'ENT care is the work.', titleAccent: 'Booking it shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'receptionist who never sleeps.' },
+      testimonials: { title: 'Built for how an ENT clinic really runs.', subtitle: 'ENT specialists and clinics — booked, paid and reminded, without the front-desk churn.' },
+    },
+    madeFor: "India's ENT Specialists",
+    testimonials: [
+      { quote: 'The phone used to ring all day with slot requests. Patients just book themselves now.', name: 'Dr. I. Qureshi', role: 'ENT Specialist', avatar: null },
+      { quote: 'Post-procedure follow-ups stopped slipping once reminders went out automatically.', name: 'Dr. A. Rao', role: 'ENT Clinic', avatar: null },
+      { quote: 'Taking a deposit at booking quietly ended most of our no-shows.', name: 'Dr. S. Menon', role: 'Consultant ENT Surgeon', avatar: null },
+    ],
+  },
+
+  ophthalmologists: {
+    slug: 'ophthalmologists',
+    label: 'Ophthalmologists & Eye Clinics',
+    icon: Stethoscope,
+    theme: {
+      primary: '#1e2a52', accent: '#6366f1', accentCta: '#4338ca',
+      tint: '#f0f1fb', heroFrom: '#131b3a', heroTo: '#1e2a52',
+    },
+    seo: {
+      title: 'Online Booking for Ophthalmologists & Eye Clinics | Book A Sloth',
+      description:
+        'Let patients book and pay for an eye appointment online. Book A Sloth gives ophthalmologists and eye clinics a clean booking page — prepaid slots, reminders that cut no-shows, synced calendar.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-ophthalmologists-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Ophthalmologists & Eye Clinics',
+      headline: 'Eye tests booked',
+      headlineAccent: 'at a glance.',
+      headlineTail: ' Patients pick a slot, pay, and get reminded — your clinic runs clearer.',
+      subline:
+        'You look after sight. Book A Sloth handles everything around the appointment — patients pick a slot, pay upfront, and get reminded — so your clinic runs full without a ringing front desk.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Leela Krishnan',
+        practiceTag: 'Ophthalmologist · Eye Care',
+        services: [
+          { name: 'Eye Consultation', meta: '20 min · In-clinic', price: '₹600' },
+          { name: 'Vision Test & Check-up', meta: '30 min · In-clinic', price: '₹400' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by ophthalmologists and eye clinics across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Patient data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after clinic hours' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Visits go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Reception on the phone all day booking eye tests', solution: 'One booking link. Patients pick, move or cancel their own slot — the desk stops dialling.' },
+      { icon: FileClock, problem: 'Post-op and review appointments quietly slipping', solution: 'Automatic email + WhatsApp reminders go out before every visit. Fewer missed reviews.' },
+      { icon: IndianRupee, problem: 'Chasing the consult fee after the visit', solution: 'Take the consult fee or a deposit upfront at booking. GST invoice generated automatically.' },
+      { icon: CalendarX2, problem: 'Walk-ins colliding with booked procedure slots', solution: 'Your Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR at the reception desk', solution: 'A clean, branded booking page with proper checkout — the first impression a clinic deserves.' },
+      { icon: Clock3, problem: 'Repeating clinic timings to every caller', solution: 'Your live availability shows only open slots — patients self-serve, the desk stops repeating.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your clinic page takes consults and reviews after hours, while you’re with a patient.' },
+      { icon: Wallet, title: 'Collect before the visit', desc: 'Consult fee or deposit paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Keep reviews on track', desc: 'Reminders send themselves before every visit, so post-op and review checks don’t slip.' },
+      { icon: ShieldCheck, title: 'Keep records private', desc: 'Encrypted, access-controlled, never sold. Patient details and notes stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a cleaning-cloth a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+    faq: [
+      { q: 'Can patients book and pay for an eye appointment online?', a: 'Yes. Patients pick a slot on your clinic page and pay the consult fee or a deposit at checkout through Razorpay (UPI, cards, netbanking) before they arrive.' },
+      { q: 'How does it reduce no-shows and missed reviews?', a: 'Every appointment triggers automatic email and WhatsApp reminders before the slot, and prepaid slots reduce no-shows further — which matters most for post-op reviews.' },
+      { q: 'Will it stop walk-ins clashing with booked procedures?', a: 'Yes. Book A Sloth reads your Google Calendar, so busy times are never offered and a booked slot locks instantly.' },
+      { q: 'Do patients need an account to book?', a: 'No. Patients pick a time, enter details and pay — no sign-up.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Give your reception desk its day back.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Stethoscope,
+      urgency: 'Every missed review is a patient who didn’t finish care.',
+      headline: 'Look after sight, not the phone.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Eye care is the work.', titleAccent: 'Booking it shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'receptionist who never sleeps.' },
+      testimonials: { title: 'Built for how an eye clinic really runs.', subtitle: 'Ophthalmologists and eye clinics — booked, paid and reminded, without the front-desk churn.' },
+    },
+    madeFor: "India's Ophthalmologists & Eye Clinics",
+    testimonials: [
+      { quote: 'Reviews stopped slipping once reminders went out on their own.', name: 'Dr. L. Krishnan', role: 'Ophthalmologist', avatar: null },
+      { quote: 'The phone used to ring all day for eye tests. Patients just book themselves now.', name: 'Dr. A. Pillai', role: 'Eye Clinic', avatar: null },
+      { quote: 'Taking a deposit at booking quietly ended most of our no-shows.', name: 'Dr. S. Rao', role: 'Consultant Ophthalmologist', avatar: null },
+    ],
+  },
+
+  nutritionists: {
+    slug: 'nutritionists',
+    label: 'Nutritionists & Dietitians',
+    icon: ClipboardList,
+    theme: {
+      primary: '#14432a', accent: '#65a30d', accentCta: '#4d7c0f',
+      tint: '#f3f9ec', heroFrom: '#0c3119', heroTo: '#14432a',
+    },
+    seo: {
+      title: 'Online Booking for Nutritionists & Dietitians | Book A Sloth',
+      description:
+        'Let clients book and pay for a consultation online. Book A Sloth gives nutritionists and dietitians a clean booking page — plan check-ins reminded, slots prepaid, calendar always synced.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-nutritionists-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Nutritionists & Dietitians',
+      headline: 'Plans that actually get followed.',
+      headlineAccent: 'Because the check-ins book themselves.',
+      headlineTail: ' Clients book, pay, and get reminded — so follow-ups don’t fall off in week three.',
+      subline:
+        'You build the plan. Book A Sloth handles everything around the check-in — clients pick a slot, pay upfront, and get reminded — so programmes actually get finished.',
+      ctaText: 'Set Up My Practice Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Sana · Clinical Nutritionist',
+        practiceTag: 'Nutrition · Diet Plans',
+        services: [
+          { name: 'Diet Consultation', meta: '45 min · Online', price: '₹1,200' },
+          { name: 'Fortnightly Check-in', meta: '20 min · Online', price: '₹500' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by clinical nutritionists and dietitians across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: Clock3, value: '24/7', label: 'Consults booked, around your clients’ lives' },
+      { icon: BadgePercent, value: '0%', label: 'Commission — you keep every fee' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your practice page' },
+    ],
+    painPoints: [
+      { icon: FileClock, problem: 'Clients drifting off the plan by the third week', solution: 'Automatic email + WhatsApp reminders go out before every check-in. Programmes stay on track.' },
+      { icon: PhoneOff, problem: 'Rebooking each check-in over WhatsApp, every time', solution: 'One booking link. Clients book their whole series of check-ins themselves.' },
+      { icon: IndianRupee, problem: 'Chasing fees across a multi-month programme', solution: 'Take each session’s fee or a package deposit upfront. GST invoices generated automatically.' },
+      { icon: CalendarX2, problem: 'Consults clashing across time zones and busy evenings', solution: 'Your live availability shows only your real open slots, in the client’s own time.' },
+      { icon: MessageSquareX, problem: 'A UPI number shared after every call', solution: 'A clean, branded booking page with proper checkout — the polish your practice deserves.' },
+      { icon: Clock3, problem: 'Repeating your slots to every client after each session', solution: 'Your live availability shows only open slots — clients self-serve the next check-in.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book the whole programme', desc: 'Clients book their series of check-ins in one go, around the clock, while you work with others.' },
+      { icon: Wallet, title: 'Get paid upfront', desc: 'Session fee or package deposit paid upfront via UPI, card or netbanking — GST invoice automatic.' },
+      { icon: BellRing, title: 'Keep clients on plan', desc: 'Reminders send themselves before every check-in, so programmes don’t fall off.' },
+      { icon: ShieldCheck, title: 'Keep client data private', desc: 'Encrypted, access-controlled, never sold. Client details and notes stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show covers the month.',
+    },
+    faq: [
+      { q: 'Can clients book and pay for a nutrition consultation online?', a: 'Yes. Clients pick a slot on your practice page and pay your fee or a package deposit at checkout through Razorpay (UPI, cards, netbanking) before the session.' },
+      { q: 'Can clients book a whole programme of check-ins at once?', a: 'Yes. Clients can book their series of check-ins in one go, around your availability, instead of rebooking over WhatsApp each time.' },
+      { q: 'How does it keep clients on their plan?', a: 'Automatic email and WhatsApp reminders go out before every check-in, and prepaid slots reduce drop-off — so programmes are far more likely to be completed.' },
+      { q: 'Do clients need an account to book?', a: 'No. Clients pick a time, enter details and pay — no sign-up.' },
+      { q: 'How much does it cost?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Stop rebooking every check-in over WhatsApp.', ctaText: 'Get My Booking Link' },
+      afterHow: { text: 'Your next client is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: ClipboardList,
+      urgency: 'Every skipped check-in is a plan that quietly stalls.',
+      headline: 'Build the plan, not the schedule.',
+      subline: 'Set up your consultation page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Booking Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Building the plan is the work.', titleAccent: 'Chasing the check-ins shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like an', titleAccent: 'assistant who never sleeps.' },
+      testimonials: { title: 'Built for how a nutrition practice really runs.', subtitle: 'Nutritionists and dietitians — booked, paid and reminded, without the admin.' },
+    },
+    madeFor: "India's Nutritionists & Dietitians",
+    testimonials: [
+      { quote: 'Clients actually finish their programmes now — the check-in reminders do the nudging.', name: 'Sana M.', role: 'Clinical Nutritionist', avatar: null },
+      { quote: 'They book the whole series up front. I stopped chasing the next slot over chat.', name: 'Pooja R.', role: 'Dietitian', avatar: null },
+      { quote: 'Package deposits ended the awkward fee conversations mid-programme.', name: 'Aditi S.', role: 'Sports Nutritionist', avatar: null },
+    ],
+  },
+
+  'life-coaches': {
+    slug: 'life-coaches',
+    label: 'Life & Career Coaches',
+    icon: Target,
+    theme: {
+      primary: '#3a2550', accent: '#f59e0b', accentCta: '#b45309',
+      tint: '#f7f3fb', heroFrom: '#261636', heroTo: '#3a2550',
+    },
+    seo: {
+      title: 'Online Booking for Life & Career Coaches | Book A Sloth',
+      description:
+        'Let clients book and pay for a coaching session online. Book A Sloth gives life and career coaches a clean booking page — session packages, reminders, prepaid slots and a synced calendar.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-life-coaches-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Life, Career & Executive Coaches',
+      headline: 'Clients book the next session.',
+      headlineAccent: 'You stay in the conversation.',
+      headlineTail: ' They pick a slot, pay, and get reminded — momentum doesn’t stall between calls.',
+      subline:
+        'You do the deep work. Book A Sloth handles everything around the session — clients pick a slot, pay upfront, and get reminded — so your week is coaching, not calendar admin.',
+      ctaText: 'Set Up My Coaching Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Arjun · Career Coach',
+        practiceTag: 'Coaching · 1:1 Sessions',
+        services: [
+          { name: 'Discovery Session', meta: '45 min · Online', price: '₹1,500' },
+          { name: 'Coaching Session', meta: '60 min · Online', price: '₹2,500' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by life, career and executive coaches across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Sessions private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: Clock3, value: '24/7', label: 'Sessions booked, across every time zone' },
+      { icon: BadgePercent, value: '0%', label: 'Commission — you keep every fee' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your coaching page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Booking sessions over a tangle of DMs and emails', solution: 'One booking link. Clients pick their own slot — you stop playing calendar tennis.' },
+      { icon: IndianRupee, problem: 'Awkward money talk before a vulnerable session', solution: 'Your fee is paid upfront at booking. The session starts on the work, not the payment.' },
+      { icon: CalendarX2, problem: 'Clients across time zones booking your off-hours', solution: 'Your live availability shows only your real open slots, in the client’s own time.' },
+      { icon: FileClock, problem: 'Momentum lost when clients forget the next session', solution: 'Automatic email + WhatsApp reminders go out before every session. Fewer gaps between calls.' },
+      { icon: MessageSquareX, problem: 'A UPI number shared after every call', solution: 'A clean, branded booking page with proper checkout — the polish your practice deserves.' },
+      { icon: Clock3, problem: 'Re-explaining your availability to every new client', solution: 'Your live calendar shows only open slots — clients self-serve the next session.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book the whole package', desc: 'Clients book their series of sessions in one go, around the clock, in their own time zone.' },
+      { icon: Wallet, title: 'Get paid before you coach', desc: 'Session fee or package deposit paid upfront via UPI, card or netbanking — GST invoice automatic.' },
+      { icon: BellRing, title: 'Keep the momentum', desc: 'Reminders send themselves before every session, so clients don’t drift between calls.' },
+      { icon: ShieldCheck, title: 'Keep sessions private', desc: 'Encrypted, access-controlled, never sold. Client details and notes stay yours alone.' },
+    ],
+    pricing: {
+      hook: 'Less than a cup of coffee a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show covers the month.',
+    },
+    faq: [
+      { q: 'Can clients book and pay for a coaching session online?', a: 'Yes. Clients pick a slot on your coaching page and pay your fee or a package deposit at checkout through Razorpay (UPI, cards, netbanking) before the session.' },
+      { q: 'Can clients book a package of sessions at once?', a: 'Yes. Clients can book their series of sessions in one go, around your availability and in their own time zone.' },
+      { q: 'How does it keep clients from drifting between sessions?', a: 'Automatic email and WhatsApp reminders go out before every session, and prepaid packages keep clients committed — so momentum holds between calls.' },
+      { q: 'Do clients need an account to book?', a: 'No. Clients pick a time, enter details and pay — no sign-up.' },
+      { q: 'How much does it cost?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Stop booking sessions out of your DMs.', ctaText: 'Get My Coaching Link' },
+      afterHow: { text: 'Your next client is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Target,
+      urgency: 'Every gap between sessions is momentum lost.',
+      headline: 'Coach people, not your calendar.',
+      subline: 'Set up your coaching page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Coaching Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'The coaching is the gift.', titleAccent: 'The scheduling shouldn’t be the grind.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like an', titleAccent: 'assistant who never sleeps.' },
+      testimonials: { title: 'Built for how coaching really gets booked.', subtitle: 'Life, career and executive coaches — booked, paid and reminded, without the admin.' },
+    },
+    madeFor: "India's Life & Career Coaches",
+    testimonials: [
+      { quote: 'Clients book their package up front and the reminders keep them showing up between calls.', name: 'Arjun M.', role: 'Career Coach', avatar: null },
+      { quote: 'Paid-before-the-call means the session starts on the work, not the awkward money bit.', name: 'Neha R.', role: 'Life Coach', avatar: null },
+      { quote: 'Time zones used to be a nightmare. My page shows my real slots in their time now.', name: 'Sameer K.', role: 'Executive Coach', avatar: null },
+    ],
+  },
+
+  spa: {
+    slug: 'spa',
+    label: 'Spas & Wellness Studios',
+    icon: Sparkles,
+    theme: {
+      primary: '#2f3d2a', accent: '#b08968', accentCta: '#8a6a4f',
+      tint: '#f6f3ee', heroFrom: '#1f2a1c', heroTo: '#2f3d2a',
+    },
+    seo: {
+      title: 'Online Booking for Spas & Wellness Studios | Book A Sloth',
+      description:
+        'Let guests book and pay for a treatment online. Book A Sloth gives spas and wellness studios a clean booking page — prepaid slots, reminders that cut no-shows and a calendar that never double-books.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-spa-og-1200x630.jpg',
+    },
+    hero: {
+      eyebrow: 'For Spas, Wellness & Massage Studios',
+      headline: 'Guests book their calm.',
+      headlineAccent: 'You run the room.',
+      headlineTail: ' They pick a slot, pay, and get reminded — fewer empty beds, no front-desk scramble.',
+      subline:
+        'You create the calm. Book A Sloth handles everything around the treatment — guests pick a slot, pay upfront, and get reminded — so your therapists stay booked and your desk stays serene.',
+      ctaText: 'Set Up My Studio Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Serene · Day Spa',
+        practiceTag: 'Spa · Wellness',
+        services: [
+          { name: 'Signature Massage', meta: '60 min · In-studio', price: '₹1,800' },
+          { name: 'Facial & Glow', meta: '45 min · In-studio', price: '₹1,400' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by spas, wellness and massage studios across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Guest data private & encrypted' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Treatments booked, even after the studio shuts' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Slots go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your studio page' },
+    ],
+    painPoints: [
+      { icon: PhoneOff, problem: 'Reception taking bookings by phone while guests wait', solution: 'One booking link. Guests pick, move or cancel their own slot — the desk stays calm.' },
+      { icon: IndianRupee, problem: 'No-shows leaving a therapist and a bed sitting idle', solution: 'Take the treatment fee or a deposit upfront at booking. An empty bed costs you nothing.' },
+      { icon: CalendarX2, problem: 'Double-booked therapists and overlapping treatments', solution: 'Each therapist’s Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: FileClock, problem: 'Guests forgetting the appointment they made last week', solution: 'Automatic email + WhatsApp reminders go out before every treatment. Fewer empty beds.' },
+      { icon: MessageSquareX, problem: 'A GPay QR at the reception of a premium studio', solution: 'A clean, branded booking page with proper checkout — the polish a spa deserves.' },
+      { icon: Clock3, problem: 'Repeating your treatment menu and timings to every caller', solution: 'Treatments, prices and open slots live on one page — guests self-serve, the desk stops repeating.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your studio page takes bookings after hours and on weekends, while your therapists work.' },
+      { icon: Wallet, title: 'Collect before the bed', desc: 'Treatment fee or deposit paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Keep the beds full', desc: 'Reminders send themselves before every treatment, so fewer slots sit empty.' },
+      { icon: ShieldCheck, title: 'No more double-bookings', desc: 'Each therapist’s slots lock instantly when booked — no overlaps, no awkward waits.' },
+    ],
+    pricing: {
+      hook: 'Less than a sachet of oil a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show covers the month.',
+    },
+    faq: [
+      { q: 'Can guests book and pay for a spa treatment online?', a: 'Yes. Guests pick a slot on your studio page and pay the treatment fee or a deposit at checkout through Razorpay (UPI, cards, netbanking) before they arrive.' },
+      { q: 'Will it stop two guests being booked with the same therapist?', a: 'Yes. Book A Sloth reads each therapist’s Google Calendar, so busy times are never offered and a booked slot locks instantly.' },
+      { q: 'How does it reduce no-shows at a spa?', a: 'Every booking triggers automatic email and WhatsApp reminders before the slot, and deposits mean a no-show no longer leaves a bed idle for nothing.' },
+      { q: 'Do guests need an account to book?', a: 'No. Guests pick a time, enter details and pay — no sign-up.' },
+      { q: 'How much does it cost for a studio?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+    midCtas: {
+      afterProblems: { text: 'Give your front desk its calm back.', ctaText: 'Get My Studio Link' },
+      afterHow: { text: 'Your next guest is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+    finalCta: {
+      icon: Sparkles,
+      urgency: 'Every no-show is a therapist and a bed sitting idle.',
+      headline: 'Create the calm, not the chaos at the desk.',
+      subline: 'Set up your studio’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Studio Page',
+    },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Creating calm is the craft.', titleAccent: 'Booking it shouldn’t be the chaos.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'front desk that never sleeps.' },
+      testimonials: { title: 'Built for how a spa really runs.', subtitle: 'Spas, wellness and massage studios — booked, paid and reminded, without the front-desk scramble.' },
+    },
+    madeFor: "India's Spas & Wellness Studios",
+    testimonials: [
+      { quote: 'Deposits ended our no-show problem — an idle bed used to cost us nothing back.', name: 'Riya S.', role: 'Spa Owner', avatar: null },
+      { quote: 'Therapists stopped getting double-booked the day we connected calendars.', name: 'Anjali M.', role: 'Wellness Studio', avatar: null },
+      { quote: 'My front desk isn’t on the phone all day anymore — guests just book themselves.', name: 'Farah K.', role: 'Day Spa Manager', avatar: null },
+    ],
+  },
+
   doctors: {
     slug: 'doctors',
     label: 'Doctors & Clinics',
@@ -280,9 +1711,9 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Doctors, Clinics & Independent Practitioners',
-      headline: 'Appointment booking software',
-      headlineAccent: 'for doctors & clinics',
-      headlineTail: '— patients book, pay, and actually show up.',
+      headline: 'Patients book, pay,',
+      headlineAccent: 'and actually show up.',
+      headlineTail: ' You stay with patients — the phone, the fees and the reminders run themselves.',
       subline:
         'You care for patients. Book A Sloth handles everything around it — patients pick a slot, pay upfront, and get reminded — so it’s fewer no-shows, fewer phone calls, and more time with patients.',
       ctaText: 'Set Up My Clinic Page',
@@ -492,9 +1923,9 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Business Consultants, Advisors & Strategists',
-      headline: 'Appointment booking software',
-      headlineAccent: 'for business consultants',
-      headlineTail: '— strategy sessions booked and paid before the first reply.',
+      headline: 'Strategy is your product.',
+      headlineAccent: 'Scheduling shouldn’t be your job.',
+      headlineTail: ' Clients book a strategy session, pay upfront, and get reminded — automatically.',
       subline:
         'You advise. Book A Sloth handles everything around it — clients pick a slot, pay your fee upfront, and get reminded — so your time goes to strategy, not scheduling.',
       ctaText: 'Set Up My Booking Page',
@@ -704,9 +2135,9 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Salons, Spas & Beauty Studios',
-      headline: 'Appointment booking software',
-      headlineAccent: 'for salons & spas',
-      headlineTail: '— chairs booked and filled without the phone ringing off the hook.',
+      headline: 'The chairs stay full.',
+      headlineAccent: 'The phone stops ringing.',
+      headlineTail: ' Clients book, pay, and get reminded — your front desk finally breathes.',
       subline:
         'You make clients look their best. Book A Sloth handles everything around it — clients pick a slot, pay a deposit, and get reminded — so it’s fewer no-shows and more time behind the chair.',
       ctaText: 'Set Up My Salon Page',
@@ -916,9 +2347,9 @@ export const PROFESSION_LANDING = {
     // ── Hero ─────────────────────────────────────────────────────────────────
     hero: {
       eyebrow: 'For Freelancers, Designers, Developers & Writers',
-      headline: 'Appointment booking software',
-      headlineAccent: 'for freelancers',
-      headlineTail: '— client calls booked and paid before you open the laptop.',
+      headline: 'Calls booked and paid,',
+      headlineAccent: 'before you open the laptop.',
+      headlineTail: ' Clients pick a slot, pay upfront, and get reminded — you just do the work.',
       subline:
         'You do the work. Book A Sloth handles everything around it — clients pick a slot, pay an advance upfront, and get reminded — so your day goes to the craft, not chasing invoices.',
       ctaText: 'Set Up My Booking Page',
@@ -1419,9 +2850,9 @@ export const PROFESSION_LANDING = {
     },
     hero: {
       eyebrow: 'For Photographers, Studios & Videographers',
-      headline: 'Appointment booking software',
-      headlineAccent: 'for photographers',
-      headlineTail: '— shoots booked and secured before you pack the gear.',
+      headline: 'Shoots booked and secured,',
+      headlineAccent: 'before you pack the gear.',
+      headlineTail: ' Clients pick a slot, pay the deposit, and get reminded — automatically.',
       subline:
         'You make great images. Book A Sloth handles everything around it — clients pick a slot, pay a deposit upfront, and get reminded — so you stay behind the lens, not in your inbox.',
       ctaText: 'Set Up My Booking Page',
@@ -1510,9 +2941,9 @@ export const PROFESSION_LANDING = {
     },
     hero: {
       eyebrow: 'For Event Planners, Organisers & Decorators',
-      headline: 'Appointment booking software',
-      headlineAccent: 'for event organisers',
-      headlineTail: '— consultations booked and dates held before the first meeting.',
+      headline: 'Dates held, deposits in,',
+      headlineAccent: 'before the first meeting.',
+      headlineTail: ' Clients book a consult, pay to hold the date, and get reminded — automatically.',
       subline:
         'You create the celebration. Book A Sloth handles everything around it — clients book a consultation, pay an advance to hold the date, and get reminded — so you plan events, not your calendar.',
       ctaText: 'Set Up My Booking Page',
@@ -1601,9 +3032,9 @@ export const PROFESSION_LANDING = {
     },
     hero: {
       eyebrow: 'For Agencies, Studios & Creative Teams',
-      headline: 'Appointment booking software',
-      headlineAccent: 'for agencies & studios',
-      headlineTail: '— discovery calls booked and routed before the email thread starts.',
+      headline: 'Discovery calls booked,',
+      headlineAccent: 'before the email thread starts.',
+      headlineTail: ' Leads pick a slot, the call is routed, and reminders go out — automatically.',
       subline:
         'Your team does the work. Book A Sloth handles everything around it — clients pick a slot with the right person, pay if you charge, and get reminded — so your team pitches, not schedules.',
       ctaText: 'Set Up My Booking Page',
