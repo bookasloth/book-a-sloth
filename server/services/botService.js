@@ -389,9 +389,23 @@ function mergeChunks(vec, fts, cap = MATCH_COUNT) {
   return out;
 }
 
+// Bolt's document knowledge base is intentionally switched OFF in production. It
+// no longer answers from the docs/help/* corpus (kb_chunks): retrieval returns
+// nothing, so any question the cheaper layers can't handle escalates to a human.
+// The canned FAQ layer (bot_faqs), hardcoded pricing and the intent handlers still
+// answer — they run before retrieval. The docs/help/* files and the public
+// /help/docs help centre are untouched; this only unplugs the bot.
+//   - prod (no env / NODE_ENV=production): OFF.
+//   - tests (NODE_ENV=test): ON, so the KB pipeline stays covered.
+//   - set BOT_KB_ENABLED=true|false to force either way (e.g. to re-feed Bolt).
+const KB_RETRIEVAL_ENABLED = process.env.BOT_KB_ENABLED
+  ? process.env.BOT_KB_ENABLED === 'true'
+  : process.env.NODE_ENV === 'test';
+
 // Hybrid retrieve. FTS errors propagate (caller flags retrieval failed); vector is
 // additive + best-effort. queryEmbedding is null when Voyage is unconfigured.
 async function retrieve(queryText, queryEmbedding = null) {
+  if (!KB_RETRIEVAL_ENABLED) return [];
   const [fts, vec] = await Promise.all([
     ftsRetrieve(queryText),
     vectorRetrieve(queryEmbedding),
