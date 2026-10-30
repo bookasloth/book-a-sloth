@@ -603,66 +603,6 @@ export default function FeaturePage() {
   const feature = getFeature(slug);
 
   const canonical = feature ? `${SITE_URL}/features/${feature.slug}` : null;
-  const jsonLd = useMemo(() => {
-    if (!feature) return undefined;
-    const graph = [];
-
-    // Breadcrumb trail (Home → this feature).
-    graph.push({
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: feature.title, item: canonical },
-      ],
-    });
-
-    // SoftwareApplication — answer engines cite this as the product itself, with
-    // its feature list and the real free tier (no fabricated rating).
-    graph.push({
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Book A Sloth',
-      applicationCategory: 'BusinessApplication',
-      operatingSystem: 'Web',
-      url: canonical,
-      description: feature.seo?.description || feature.description,
-      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
-      featureList: (feature.capabilities || []).map((c) => c.title),
-      publisher: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
-    });
-
-    // HowTo — the page's one signature process (coverflow steps, timeline stops,
-    // or automation chain) as an ordered how-to for AI "how do I…" answers.
-    const howSteps = feature.steps
-      ? feature.steps.map((s) => ({ name: s.title, text: s.desc }))
-      : feature.timeline?.nodes
-        ? feature.timeline.nodes.map((n) => ({ name: n.title, text: n.desc }))
-        : feature.automation?.nodes
-          ? feature.automation.nodes.map((n) => ({ name: n.label, text: n.label }))
-          : [];
-    if (howSteps.length) {
-      graph.push({
-        '@context': 'https://schema.org',
-        '@type': 'HowTo',
-        name: feature.stepsHeading || feature.timeline?.heading || feature.automation?.heading || `How ${feature.title} works`,
-        description: feature.stepsLead || feature.timeline?.lead || feature.automation?.lead || feature.description,
-        step: howSteps.map((s, i) => ({ '@type': 'HowToStep', position: i + 1, name: s.name, text: s.text })),
-      });
-    }
-
-    // FAQ — direct Q&A for answer-engine extraction.
-    if (feature.faq?.length) {
-      graph.push({
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: feature.faq.map((f) => ({
-          '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a },
-        })),
-      });
-    }
-    return graph;
-  }, [feature, canonical]);
 
   if (!feature) return <Navigate to="/404" replace />;
 
@@ -672,33 +612,20 @@ export default function FeaturePage() {
     '--fp-dark': feature.darkBg,
   };
 
+  // Deliberately bare: a plain hero + a single CTA, nothing else. No stats,
+  // benefits, product mock, use-cases, testimonials, related, guides or FAQ — and
+  // no JSON-LD / answer-engine schema (these pages are intentionally not SEO-tuned).
+  // Content is reused from featureData; nothing is authored here.
   return (
     <div className="fp-page" style={styleVars}>
       <Seo
-        title={feature.seo?.title || feature.title}
-        description={feature.seo?.description || feature.description}
+        title={feature.title}
+        description={feature.description}
         canonical={canonical}
-        robots="index, follow, max-image-preview:large, max-snippet:-1"
-        siteName="Book A Sloth"
-        locale="en_IN"
-        themeColor={feature.accent}
-        ogTitle={feature.seo?.title || feature.title}
-        ogDescription={feature.seo?.description || feature.description}
-        image={ogCard(`features-${feature.slug}`)}
-        jsonLd={jsonLd}
+        robots="index, follow"
       />
 
       <Hero feature={feature} />
-      <Stats stats={feature.stats} />
-      <Benefits benefits={feature.benefits} />
-      <Signature feature={feature} />
-      <Capabilities feature={feature} />
-      <ProductPanel feature={feature} />
-      <UseCases useCases={feature.useCases} />
-      <Testimonials testimonials={feature.testimonials} />
-      <Related related={feature.related} />
-      <PageGuides />
-      <Faq faq={feature.faq} />
       <FinalCta feature={feature} />
     </div>
   );
