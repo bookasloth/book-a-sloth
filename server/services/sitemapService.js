@@ -111,7 +111,6 @@ const STATIC_ROUTES = [
   ...GLOSSARY_SLUGS.map((s) => ({ path: `/glossary/${s}`, changefreq: 'monthly', priority: '0.4' })),
   { path: '/press',                    changefreq: 'monthly', priority: '0.4' },
   { path: '/stats',                    changefreq: 'monthly', priority: '0.4' },
-  { path: '/wall-of-love',             changefreq: 'weekly',  priority: '0.5' },
   { path: '/moments',                  changefreq: 'weekly',  priority: '0.5' },
   ...MOMENT_SLUGS.map((s) => ({ path: `/moments/${s}`, changefreq: 'monthly', priority: '0.5' })),
   { path: '/help/docs',                changefreq: 'monthly', priority: '0.4' },

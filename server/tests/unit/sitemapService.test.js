@@ -47,7 +47,7 @@ describe('staticEntries', () => {
     const locs = new Set(staticEntries(SITE).map((e) => e.loc));
     for (const path of [
       '/compare/topmate-alternative', '/features/payments', '/features/online-scheduling',
-      '/help/docs', '/help/docs/what-is-book-a-sloth', '/wall-of-love',
+      '/help/docs', '/help/docs/what-is-book-a-sloth',
       '/careers/mern-stack-developer',
     ]) {
       expect(locs.has(`https://bookasloth.com${path}`)).toBe(true);

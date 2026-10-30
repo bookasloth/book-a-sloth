@@ -106,15 +106,23 @@ const SOCIAL_ICONS = {
   </>,
 };
 
+// Per-platform brand colours for the circular social icons.
+const SOCIAL_COLORS = {
+  instagram: '#E1306C', youtube: '#FF0000', linkedin: '#0A66C2',
+  facebook: '#1877F2', twitter: '#1DA1F2', whatsapp: '#25D366',
+  website: '#0EA5E9', github: '#181717', email: '#EA4335',
+};
+
 const SocialIcon = ({ platform, href }) => {
   const icon = SOCIAL_ICONS[platform];
   if (!icon || !href) return null;
+  const bg = SOCIAL_COLORS[platform] || C.secondary;
   return (
     <a href={href} target="_blank" rel="noreferrer"
-      className="flex items-center justify-center flex-shrink-0 transition-colors hover:bg-gray-50"
-      style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${C.border}`, color: C.secondary }}
+      className="flex items-center justify-center flex-shrink-0 transition-transform hover:-translate-y-0.5 hover:opacity-90"
+      style={{ width: 34, height: 34, borderRadius: '50%', background: bg, color: '#fff' }}
       title={platform.charAt(0).toUpperCase() + platform.slice(1)}>
-      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor"
+      <svg className="w-4 h-4" fill="none" stroke="currentColor"
         strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"
         viewBox="0 0 24 24">
         {icon}
@@ -171,9 +179,7 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
         style={{ border: `1px solid ${C.border}` }}>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 min-w-0">
-            {detailUrl
-              ? <Link to={detailUrl} className="font-semibold text-base hover:opacity-60 transition-opacity flex-shrink-0" style={{ color: C.text }}>{s.title}</Link>
-              : <span className="font-semibold text-base flex-shrink-0" style={{ color: C.text }}>{s.title}</span>}
+            <span className="font-semibold text-base flex-shrink-0" style={{ color: C.text }}>{s.title}</span>
             {desc && <span className="flex-shrink-0 self-stretch w-px" style={{ background: C.border }} />}
             {desc && <span className="text-sm truncate min-w-0 flex-1" style={{ color: C.secondary }}>{desc}</span>}
           </div>
@@ -190,13 +196,22 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
             ))}
           </div>
         </div>
-        {bookUrl && (
-          <Link to={bookUrl}
-            className="btn flex-shrink-0 text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
-            style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
-            Book Now
-          </Link>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {detailUrl && (
+            <Link to={detailUrl}
+              className="btn text-sm font-semibold flex items-center transition-colors hover:bg-black/5"
+              style={{ border: `1px solid ${C.border}`, color: C.text, height: 40, padding: '0 16px' }}>
+              View Details
+            </Link>
+          )}
+          {bookUrl && (
+            <Link to={bookUrl}
+              className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
+              style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
+              Book Now
+            </Link>
+          )}
+        </div>
       </div>
     );
   }
@@ -208,9 +223,7 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
 
       {/* Title + tag */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        {detailUrl
-          ? <Link to={detailUrl} className="font-semibold text-base leading-snug hover:opacity-60 transition-opacity line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</Link>
-          : <span className="font-semibold text-base leading-snug line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</span>}
+        <span className="font-semibold text-base leading-snug line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</span>
         {tag && (
           <span className="flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
             style={{ background: 'var(--profile-accent-light, #FFEDE5)', color: 'var(--profile-accent, #FE5100)' }}>
@@ -249,15 +262,24 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
       </div>
 
       {/* Footer — price promoted, stronger Book */}
-      <div className="flex items-center justify-between mt-auto pt-4" style={{ borderTop: `1px solid ${C.border}` }}>
+      <div className="flex items-center justify-between gap-2 mt-auto pt-4" style={{ borderTop: `1px solid ${C.border}` }}>
         <div className="font-bold text-lg leading-none" style={{ color: C.text }}>{cardPriceLabel(s)}</div>
-        {bookUrl && (
-          <Link to={bookUrl}
-            className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
-            style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 38, padding: '0 18px' }}>
-            Book Now
-          </Link>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {detailUrl && (
+            <Link to={detailUrl}
+              className="btn text-sm font-semibold flex items-center transition-colors hover:bg-black/5"
+              style={{ border: `1px solid ${C.border}`, color: C.text, height: 38, padding: '0 16px' }}>
+              View Details
+            </Link>
+          )}
+          {bookUrl && (
+            <Link to={bookUrl}
+              className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
+              style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 38, padding: '0 18px' }}>
+              Book Now
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -638,11 +660,11 @@ const HostProfile = () => {
                 )}
               </div>
 
-              {/* Profile photo — 100×100 square, overlapping cover */}
+              {/* Profile photo — 100×100 circle, overlapping cover */}
               <div className="flex justify-center" style={{ marginTop: -42, position: 'relative' }}>
                 <div style={{
                   width: 100, height: 100,
-                  borderRadius: 12,
+                  borderRadius: '50%',
                   border: `3px solid ${C.card}`,
                   overflow: 'hidden',
                   background: C.card,

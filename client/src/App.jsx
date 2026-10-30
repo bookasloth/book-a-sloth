@@ -91,7 +91,7 @@ const Pricing        = lazy(() => import('./pages/Pricing'));
 const AppointmentBookingSoftware = lazy(() => import('./pages/AppointmentBookingSoftware'));
 const Blog           = lazy(() => import('./pages/Blog'));
 const Search         = lazy(() => import('./pages/Search'));
-const WallOfLove     = lazy(() => import('./pages/WallOfLove'));
+// WallOfLove page removed.
 const Opening        = lazy(() => import('./pages/Opening'));
 const Inaugurators   = lazy(() => import('./pages/Inaugurators'));
 const BlogPost       = lazy(() => import('./pages/BlogPost'));
@@ -420,7 +420,7 @@ function App() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/appointment-booking-software" element={<AppointmentBookingSoftware />} />
           <Route path="/search" element={<Search />} />
-          <Route path="/wall-of-love" element={<WallOfLove />} />
+          {/* /wall-of-love route removed. */}
           <Route path="/opening" element={<Opening />} />
           <Route path="/inaugurators" element={<Inaugurators />} />
           <Route path="/blog" element={<Blog />} />

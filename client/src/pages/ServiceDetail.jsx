@@ -484,18 +484,11 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Thumbnail — collapses on scroll past hero */}
+      {/* Thumbnail — always visible (does not collapse on scroll) */}
       <div
         ref={imgWrapRef}
-        aria-hidden={compact}
         className="overflow-hidden"
-        style={{
-          maxHeight: compact ? 0 : (imgH || 240),
-          opacity: compact ? 0 : 1,
-          transition: motionOK
-            ? 'max-height 280ms cubic-bezier(0.4,0,0.2,1), opacity 200ms ease'
-            : 'none',
-        }}
+        style={{ maxHeight: imgH || 240, opacity: 1 }}
       >
         <img src={service.thumbnail_url || '/service-og-default.jpg'} alt={service.title}
              className="w-full aspect-[16/10] object-cover"/>
@@ -575,21 +568,7 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
             </li>
           ))}
 
-          {/* Social proof */}
-          <li className="flex items-start gap-2.5 text-xs text-gray-600">
-            <svg className="w-4 h-4 flex-shrink-0 text-orange-500 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            <span><strong className="text-gray-800">{recentBookers}</strong> people booked this in last 3 days</span>
-          </li>
-
-          {/* Safety */}
-          <li className="flex items-start gap-2.5 text-xs text-gray-600">
-            <svg className="w-4 h-4 flex-shrink-0 text-green-500 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            <span>Follow safety measures advised at the venue</span>
-          </li>
+          {/* Social-proof ("N people booked…") + venue-safety lines removed */}
         </ul>
       </div>
     </div>
@@ -1075,28 +1054,14 @@ export default function ServiceDetail() {
 
       {/* ── HERO + Content — single container so sidebar starts under h1 ── */}
       <div className="app-container pb-28 lg:pb-8 relative z-10" style={{ paddingTop: 44 }}>
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-xs text-white/50 font-medium" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-white transition-colors">home</Link>
-          <span className="mx-1">/</span>
-          {vendor?.username && (
-            <>
-              <Link to={`/${vendor.username}`} className="hover:text-white transition-colors">{vendor.username}</Link>
-              <span className="mx-1">/</span>
-            </>
-          )}
-          <span className="text-white/70 max-w-[120px] sm:max-w-[200px] truncate inline-block align-bottom">{service.slug || 'service'}</span>
-        </nav>
+        {/* Breadcrumb removed (visual); breadcrumb JSON-LD is kept for SEO. */}
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── LEFT: Hero + tabs ── */}
           <div className="flex-1 min-w-0">
             <section className="relative pb-6">
 
-              {/* Eyebrow */}
-              {eyebrow && (
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-white/60">{eyebrow}</p>
-              )}
+              {/* Eyebrow (category · type pill) removed. */}
 
               {/* Title — 110% of content column width */}
               <h1 className="text-4xl sm:text-5xl font-black text-white mb-4 leading-[1.1] tracking-tight" style={{ maxWidth: '110%' }}>
@@ -1217,7 +1182,6 @@ export default function ServiceDetail() {
           <div className="hidden lg:block lg:w-[320px] flex-shrink-0">
             <div className="sticky top-20 flex flex-col gap-5">
               <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} bookingFeeBreakdown={bookingFeeBreakdown} compact={!heroInView} motionOK={motionOK}/>
-              <AdSpaceCard/>
             </div>
           </div>
         </div>
