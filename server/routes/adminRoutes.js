@@ -35,13 +35,9 @@ router.get('/reports/withholding',      requireAdmin('commission.view'),     wit
 // ── GST command center — /api/admin/gst/* (docs/gst-finance-module-architecture.md) ──
 // Derives all figures from the invoices table (source of truth); own gst.* RBAC.
 router.use('/gst', require('./gstRoutes'));
-router.use('/seo', require('./seoRoutes'));
+// SEO-audit admin routes removed (growth removal).
 
-// ── Marketing / performance insights (owned KPI tiles, Postgres-first) ──
-const insights = require('../controllers/insightsAdminController');
-router.get('/insights/kpis', requireAdmin('analytics.view'), insights.getKpis);
-router.get('/activation', requireAdmin('analytics.view'), insights.getActivationFunnel);
-router.post('/activation/test-send', requireAdmin('settings.manage'), insights.testSendActivationNudges);
+// Marketing/performance insights (insightsAdminController) removed (growth removal).
 router.get('/ops/summary',  requireAdmin('ops.view'), ops.getSummary);
 
 // ── Image upload (admin session) — badges, branding, CMS, etc. ─
@@ -256,28 +252,7 @@ router.get('/email/settings',                 requireAdmin('email.manage'), emai
 router.put('/email/settings',                 requireAdmin('email.manage'), email.updateSettings);
 router.get('/email/events',                   requireAdmin('email.manage'), email.listEvents);
 
-// ── Campaigns (Phase 1: email) ─────────────────────────────────
-// Static sub-paths (contacts, segments) are registered BEFORE '/campaigns/:id'
-// so Express does not match them as an :id param.
-const campaigns = require('../controllers/campaignAdminController');
-router.get('/campaigns/contacts',          requireAdmin('campaigns.view'),   campaigns.listContacts);
-router.post('/campaigns/contacts/sync',    requireAdmin('campaigns.manage'), campaigns.syncContacts);
-router.patch('/campaigns/contacts/:id',    requireAdmin('campaigns.manage'), campaigns.suppressContact);
-router.get('/campaigns/segments',          requireAdmin('campaigns.view'),   campaigns.listSegments);
-router.post('/campaigns/segments/preview', requireAdmin('campaigns.view'),   campaigns.previewSegment);
-router.post('/campaigns/segments',         requireAdmin('campaigns.manage'), campaigns.createSegment);
-router.post('/campaigns/audience/resolve', requireAdmin('campaigns.view'),   campaigns.resolveAudience);
-router.post('/campaigns/test',             requireAdmin('campaigns.manage'), campaigns.testCampaign);
-router.get('/campaigns/wa-templates',      requireAdmin('campaigns.view'),   campaigns.listWaTemplates);
-router.post('/campaigns/wa-templates',     requireAdmin('campaigns.manage'), campaigns.createWaTemplate);
-router.put('/campaigns/wa-templates/:id',  requireAdmin('campaigns.manage'), campaigns.updateWaTemplate);
-router.post('/campaigns/preview',          requireAdmin('campaigns.view'),   campaigns.previewCampaign);
-router.get('/campaigns',                   requireAdmin('campaigns.view'),   campaigns.listCampaigns);
-router.post('/campaigns',                  requireAdmin('campaigns.manage'), campaigns.createCampaign);
-router.get('/campaigns/:id',               requireAdmin('campaigns.view'),   campaigns.getCampaign);
-router.get('/campaigns/:id/recipients',    requireAdmin('campaigns.view'),   campaigns.campaignRecipients);
-router.put('/campaigns/:id',               requireAdmin('campaigns.manage'), campaigns.updateCampaign);
-router.post('/campaigns/:id/launch',       requireAdmin('campaigns.manage'), campaigns.launchCampaign);
+// Campaigns admin API (campaignAdminController) removed (growth removal).
 
 // ── Financial ledger (P1) ──────────────────────────────────────
 const finance = require('../controllers/financeAdminController');

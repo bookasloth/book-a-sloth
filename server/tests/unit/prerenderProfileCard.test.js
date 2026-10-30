@@ -39,7 +39,9 @@ describe('profile OG card', () => {
 
   // v3.88: og:image is a generated 1200x630 CARD, never the square avatar (which
   // letterboxes under summary_large_image). The avatar moves to JSON-LD instead.
-  test('uses the generated card as og:image when one is ready', async () => {
+  // Growth removal: OG generation removed — og:image is ALWAYS the one static card,
+  // even when a stale per-host og_image column still holds a generated URL.
+  test('always serves the static site card as og:image, ignoring og_image', async () => {
     wireHost({
       og_status: 'ready',
       og_image: 'https://cdn.supabase/images/host-og/ketaki.png?v=1',
@@ -47,8 +49,8 @@ describe('profile OG card', () => {
     });
     const html = await render();
 
-    expect(ogImageContent(html)).toBe('https://cdn.supabase/images/host-og/ketaki.png?v=1');
-    // Known 1200x630 card => size hints are honest here.
+    expect(ogImageContent(html)).toBe('https://bookasloth.com/og-image.png');
+    // The static card is a known 1200x630 => size hints stay honest.
     expect(html).toContain('<meta property="og:image:width" content="1200">');
     expect(html).toContain('<meta property="og:image:height" content="630">');
   });
@@ -61,18 +63,6 @@ describe('profile OG card', () => {
 
     expect(ogImageContent(html)).toBe('https://bookasloth.com/og-image.png');
     expect(html).not.toContain('content="https://cdn.example.com/pic.png"'); // avatar is NOT the og:image
-  });
-
-  test('a dirty card still serves its (stale) image, never the avatar', async () => {
-    wireHost({
-      og_status: 'dirty',
-      og_image: 'https://cdn.supabase/host-og/ketaki.png?v=1',
-      profile_image: 'https://cdn.example.com/pic.png',
-    });
-    const html = await render();
-    // Design: dirty => serve the OLD card while a regen is queued, not the generic.
-    expect(ogImageContent(html)).toBe('https://cdn.supabase/host-og/ketaki.png?v=1');
-    expect(html).not.toContain('content="https://cdn.example.com/pic.png"');
   });
 
   // The avatar still belongs in structured data (Person.image), upscaled past

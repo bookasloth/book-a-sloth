@@ -190,7 +190,7 @@ export default function Pricing() {
       <section className="bg-canvas px-5 pb-14 sm:px-8">
         <p className="mx-auto max-w-[1050px] text-center text-sm text-neutral-500">
           Teams, agencies or multi-location practices?{" "}
-          <Link to="/enterprise" className="font-semibold text-primary">Talk to sales →</Link>
+          <Link to="/contact" className="font-semibold text-primary">Talk to sales →</Link>
         </p>
       </section>
 

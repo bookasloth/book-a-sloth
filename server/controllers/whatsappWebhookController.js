@@ -17,7 +17,7 @@ const crypto = require('crypto');
 const { safeError } = require('../utils/httpError');
 const { supabaseAdmin } = require('../config/supabase');
 const aisensy = require('../services/aisensyService');
-const { recordDeliveryEvent } = require('../services/crm/webhookEvents');
+// CRM WhatsApp delivery-event recording removed (growth removal).
 
 // Constant-time secret comparison with a length guard (timingSafeEqual throws
 // on unequal-length buffers).
@@ -74,7 +74,7 @@ const handleWebhook = async (req, res) => {
       else if (st.includes('sent')) event = 'sent';
       else if (st.includes('fail') || st.includes('error') || st.includes('undeliver')) event = 'failed';
     }
-    if (event) await recordDeliveryEvent({ channel: 'whatsapp', event, providerMessageId, phone: phoneRaw, payload: body });
+    // (CRM delivery-event recording removed — event still drives the ack below)
 
     return res.json({ ok: true, action: event || (status ? 'status_ack' : 'ignored') });
   } catch (e) { safeError(res, e); }
