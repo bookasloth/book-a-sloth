@@ -7,7 +7,7 @@
 const { supabase, supabaseAdmin } = require('../config/supabase');
 const responseCache = require('../services/responseCache');
 const { setPublicCache } = require('../utils/httpCache');
-const { search, norm, cityOf } = require('../lib/exploreSearch');
+const { listCatalog } = require('../lib/exploreSearch');
 
 // Read-through cache TTL for the public catalog (matches host/service pages).
 const EXPLORE_CACHE_MS = 120 * 1000;
@@ -66,12 +66,12 @@ function toCard(row) {
 
 // Fire-and-forget: log the explore load. NEVER awaited — analytics loss is
 // acceptable, user latency is not. (Batching deferred: see PROGRESS.md.)
-function logSearchEvent(req, { q, filters, page, results }) {
+function logSearchEvent(req, { filters, page, results }) {
   try {
     const session_id = String(req.headers['x-session-id'] || req.query.sid || '').slice(0, 100) || null;
     const user_id = req.user?.id || null;
     supabaseAdmin.from('search_events')
-      .insert({ session_id, user_id, query: q || null, filters: filters || {}, page, results: results || [] })
+      .insert({ session_id, user_id, query: null, filters: filters || {}, page, results: results || [] })
       .then(({ error }) => { if (error) console.warn('[explore.searchEvent]', error.message); });
   } catch { /* best-effort */ }
 }
@@ -91,59 +91,33 @@ function baseQuery() {
     .not('profiles.username', 'is', null);
 }
 
-// One catalog entry = the card + pre-normalized searchable fields. Labels come
-// from the profession (categories.label) and service category
-// (service_categories.name) so guests can search "Chartered Accountant" or
-// "1:1 Session" rather than slugs. Reads precomputed service_scores.effective_score
-// (quality × penalties, baked at compute time); request time never scores.
-function toEntry(row, profLabel, svcLabel) {
+// One catalog entry = the card + the fields the catalog is filtered/ordered by
+// (profession, service slug, quality score). Reads precomputed
+// service_scores.effective_score (quality × penalties, baked at compute time);
+// request time never scores.
+function toEntry(row) {
   const host = row.profiles || {};
-  const prof = host.primary_category || '';
-  const svc  = row.category || '';
-  const card = toCard(row);
   return {
-    card,
+    card: toCard(row),
     eff: Number(scoreOf(row)?.effective_score) || 0,
-    prof,
-    svc,
-    mode: card.meetingMode,
-    title: norm(row.title),
-    labels: norm([svcLabel.get(`${prof}|${svc}`) || svcLabel.get(svc), profLabel.get(prof), svc, prof].join(' ')),
-    host: norm(`${host.name || ''} ${host.username || ''}`),
-    desc: norm(`${row.short_description || ''} ${row.description || ''}`).slice(0, 2000),
-    loc: norm(host.location),
-    city: cityOf(host.location),
+    prof: host.primary_category || '',
+    svc:  row.category || '',
   };
 }
 
-// One DB read (+ two tiny label lookups) builds the whole searchable catalog.
+// One DB read builds the whole browsable catalog.
 async function buildCatalog() {
-  const [svcRes, profRes, catRes] = await Promise.all([
-    baseQuery().limit(CATALOG_CAP),
-    supabaseAdmin.from('categories').select('slug, label'),
-    supabaseAdmin.from('service_categories').select('primary_category, slug, name'),
-  ]);
+  const svcRes = await baseQuery().limit(CATALOG_CAP);
   if (svcRes.error) throw svcRes.error; // thrown → not cached; outer catch returns 500
-  // Labels are search sugar only: a failed lookup degrades to slug words, never a 500.
-  const profLabel = new Map((profRes.data || []).map((r) => [r.slug, r.label]));
-  const svcLabel = new Map();
-  for (const r of catRes.data || []) {
-    svcLabel.set(`${r.primary_category}|${r.slug}`, r.name);
-    if (!svcLabel.has(r.slug)) svcLabel.set(r.slug, r.name); // slug-only fallback
-  }
-  return (svcRes.data || []).map((row) => toEntry(row, profLabel, svcLabel));
+  return (svcRes.data || []).map(toEntry);
 }
 
 const parseControls = (req) => {
   const category = String(req.query.category || '').trim();
   const service  = String(req.query.service  || '').trim();
-  // Text never reaches SQL (searched in memory), so just cap the length and
-  // ignore <2-char terms. Under 2 chars → no text filter.
-  const rawQ = String(req.query.q || '').trim().slice(0, 80);
-  const q = rawQ.length >= 2 ? rawQ : '';
   const page  = Math.max(1, Math.min(8, parseInt(req.query.page, 10) || 1));
   const limit = Math.min(DEFAULT_LIMIT, Math.max(1, parseInt(req.query.limit, 10) || DEFAULT_LIMIT));
-  return { category, service, q, page, limit };
+  return { category, service, page, limit };
 };
 
 const paginate = (ranked, page, limit) => {
@@ -159,30 +133,27 @@ const paginate = (ranked, page, limit) => {
 // (v3.60 pair model), so a slug-only filter could leak across professions.
 async function listServices(req, res) {
   try {
-    const { category, service, q, page, limit } = parseControls(req);
+    const { category, service, page, limit } = parseControls(req);
     if (service && !category) {
       return res.status(400).json({ message: 'service filter requires a category (profession)' });
     }
 
-    // Read-through cache (120s, Redis L1, fail-open) of the whole catalog. The
-    // query is parsed deterministically ("Mock Interview offline Nagpur" →
-    // topic/city/mode) and matched in memory — see lib/exploreSearch.js.
+    // Read-through cache (120s, Redis L1, fail-open) of the whole catalog, then
+    // filter by profession/service and order by quality score in memory.
     const catalog = await responseCache.getOrSet(CATALOG_KEY, EXPLORE_CACHE_MS, buildCatalog);
-    const { cards, parsed, match } = search(catalog, { category, service, q });
+    const { cards } = listCatalog(catalog, { category, service });
     const { total, totalPages, start, items } = paginate(cards, page, limit);
 
     logSearchEvent(req, {
-      q, filters: { category, service, ...parsed, match }, page,
+      filters: { category, service }, page,
       results: items.map((c, i) => ({ service_id: c.id, rank: start + i + 1, score: c.score })),
     });
 
     setPublicCache(res, 120);
     return res.json({
       services: items,
-      // `match` tells the client when results are a fallback (partial / relaxed).
-      meta: { page, limit, total, totalPages, hasMore: page < totalPages, match },
-      // `parsed` lets the client show what it understood ("offline · Nagpur").
-      filters: { category, service, q, parsed },
+      meta: { page, limit, total, totalPages, hasMore: page < totalPages },
+      filters: { category, service },
     });
   } catch (err) {
     console.error('[explore.listServices]', err);
@@ -195,22 +166,22 @@ async function listServices(req, res) {
 // seen before), else a soft-empty 200 — never a hard 429 into a shared-IP user's face.
 async function serveStaleOrEmpty(req, res) {
   try {
-    const { category, service, q, page, limit } = parseControls(req);
+    const { category, service, page, limit } = parseControls(req);
     const catalog = await responseCache.peek(CATALOG_KEY);
     if (catalog) {
-      const { cards, parsed, match } = search(catalog, { category, service, q });
+      const { cards } = listCatalog(catalog, { category, service });
       const { total, totalPages, items } = paginate(cards, page, limit);
       setPublicCache(res, 120);
       return res.json({
         services: items,
-        meta: { page, limit, total, totalPages, hasMore: page < totalPages, match, stale: true },
-        filters: { category, service, q, parsed },
+        meta: { page, limit, total, totalPages, hasMore: page < totalPages, stale: true },
+        filters: { category, service },
       });
     }
     return res.status(200).json({
       services: [],
       meta: { page, limit, total: 0, totalPages: 0, hasMore: false, rateLimited: true },
-      filters: { category, service, q },
+      filters: { category, service },
     });
   } catch {
     return res.status(200).json({ services: [], meta: { rateLimited: true }, filters: {} });
