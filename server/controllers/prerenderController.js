@@ -243,7 +243,7 @@ async function resolveProfileMeta(username) {
   // The avatar still feeds JSON-LD Person.image below, which is correct there.
   // ponytail: default = the existing site card; swap for a host-flavoured
   // default 1200x630 when one's designed.
-  const ogCard = host.og_image || `${site}/og-image.png`;
+  const ogCard = `${site}/og-image.png`; // OG generation removed (growth scrape): one static card for all
 
   // sameAs (external identity links) + dateModified are AEO/entity-clarity signals:
   // they tell answer engines who this Person is and how fresh the page is.
@@ -420,8 +420,8 @@ async function resolveServiceMeta(username, serviceSlug) {
     ogDescription: service.og_description || description,
     // Ordered fallback mirroring client resolveServiceSeo (utils/seo.js): generated
     // service card -> admin override -> host thumbnail -> static default floor.
-    image: service.og_image || hostImage || `${site}/service-og-default.png`,
-    cardImage: Boolean(service.og_image) || !hostImage,
+    image: `${site}/og-image.png`, // OG generation removed (growth scrape): one static card for all
+    cardImage: true,
     robots: service.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
     jsonLd,
     // Visible FAQ (host-authored ∪ templated) is now rendered in the body, so emit the

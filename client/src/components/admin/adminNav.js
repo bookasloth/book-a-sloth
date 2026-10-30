@@ -185,50 +185,20 @@ export const NAV = [
       { label:'Invite Links',     to:'/admin/invite-links', perm:'referrals.view' },
     ]},
   ]},
-  { key:'sales', label:'Sales', icon:'affiliate', color:'#f59e0b', children:[
-    { label:'Leads',              icon:'users2',    to:'/admin/sales/leads', perm:'leads.view' },
-    { label:'Pipeline',           icon:'layout2',   to:'/admin/sales/pipeline', perm:'leads.view' },
-    { label:'Follow-ups',         icon:'clock',     to:'/admin/sales/follow-ups', perm:'leads.view' },
-    { label:'Desk',               icon:'grid',      to:'/admin/sales/desk', perm:'leads.view' },
-    { label:'Lists',              icon:'layers',    to:'/admin/sales/lists', perm:'leads.view' },
-    { key:'cold-calling', label:'Cold Calling', icon:'send', children:[
-      { label:'Overview',         to:'/admin/sales/cold-calling', exact:true, perm:'leads.view' },
-      { label:"Today's Calls",    to:'/admin/sales/cold-calling/today', perm:'leads.view' },
-      { label:'Follow-ups',       to:'/admin/sales/cold-calling/follow-ups', perm:'leads.view' },
-      { label:'Call History',     to:'/admin/sales/cold-calling/history', perm:'leads.view' },
-      { label:'Lists',            to:'/admin/sales/cold-calling/lists', perm:'leads.view' },
-      { label:'Reports',          to:'/admin/sales/cold-calling/reports', perm:'leads.view' },
-    ]},
-    { label:'Reports',            icon:'layout2',   to:'/admin/sales/reports', perm:'leads.view' },
-  ]},
+  // Sales nav section removed (growth scrape).
   { key:'marketing', label:'Marketing', icon:'mail', color:'#6366f1', children:[
-    { key:'campaigns', label:'Campaigns', icon:'mail', children:[
-      { label:'Campaigns',        to:'/admin/campaigns', perm:'campaigns.view' },
-      { label:'Cold Sequences',   to:'/admin/marketing/sequences', perm:'leads.view' },      // cold acquisition drips
-      { label:'Lifecycle Sequences',to:'/admin/growth/sequences', perm:'leads.view' },        // host lifecycle drips
-      { label:'Templates',        to:'/admin/sales/templates', perm:'leads.view' },
-    ]},
+    // Campaigns nav group removed (growth scrape).
     { key:'messaging', label:'Messaging', icon:'send', children:[
       { label:'Communication',    to:'/admin/platform/communication', perm:'email.manage', badge:'failed_emails' },
       { label:'Notifications',    to:'/admin/notifications', perm:'notifications.view', badge:'failed_notifications' },
       { label:'Badges',           to:'/admin/badges', perm:'badges.manage' },
     ]},
   ]},
-  { key:'seo', label:'SEO & GEO', icon:'search', color:'#16a34a', children:[
-    { label:'Dashboard',          icon:'grid',      to:'/admin/seo', exact:true, perm:'seo.manage' },
-    { label:'Services',           icon:'layers',    to:'/admin/seo/services', perm:'seo.manage' },
-    { label:'Profiles',           icon:'users',     to:'/admin/seo/profiles', perm:'seo.manage' },
-    { label:'Blog',               icon:'news',      to:'/admin/seo/blogs', perm:'seo.manage' },
-    { label:'Pages',              icon:'file',      to:'/admin/seo/pages', perm:'seo.manage' },
-    { label:'Link Network',       icon:'affiliate', to:'/admin/seo/network', perm:'seo.manage' },
-    { label:'Issues',             icon:'alert',     to:'/admin/seo/issues', perm:'seo.manage' },
-    { label:'Fixes',              icon:'checkCircle', to:'/admin/seo/fixes', perm:'seo.manage' },
-    { label:'Search Console',     icon:'search',    to:'/admin/seo/search-console', perm:'seo.manage' },
-  ]},
+  // SEO & GEO admin nav section removed (growth scrape).
   { key:'content', label:'Content', icon:'pencil', color:'#0d9488', children:[
     { key:'c-blog', label:'Blog', icon:'news', children:[
       { label:'Posts',            to:'/admin/content/blogs', perm:'cms.manage' },
-      { label:'Newsletter',       to:'/admin/content/newsletter', perm:'cms.manage' },
+      // Newsletter removed (growth scrape).
     ]},
     { key:'c-site', label:'Site', icon:'layout2', children:[
       { label:'Pages',            to:'/admin/content/pages', perm:'cms.manage' },
@@ -267,7 +237,7 @@ export const QUICK_ACTIONS = [
   { label:'Add Host',        icon:'userCheck', to:'/admin/providers/pending' },
   { label:'Create Blog',     icon:'news',      to:'/admin/content/blogs' },
   { label:'Create Page',     icon:'file',      to:'/admin/content/pages' },
-  { label:'Send Newsletter', icon:'mail',      to:'/admin/content/newsletter' },
+  // Send Newsletter quick-action removed (growth scrape).
   { label:'View Bookings',   icon:'calCheck',  to:'/admin/bookings' },
 ];
 

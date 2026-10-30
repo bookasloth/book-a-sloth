@@ -120,13 +120,11 @@ describe('activateFromSubscription', () => {
     expect(alert[0].key).toBe('sub_charge:pay_new');
   });
 
-  test('subsequent charge records as renewal + captures subscription_renewed + sends renewal receipt', async () => {
+  test('subsequent charge records as renewal + sends renewal receipt', async () => {
     const { insert } = wireSupabase({ priorPayment: null, priorCount: 1 });
     await svc.activateFromSubscription({ rzpSub: RZP_SUB, rzpPayment: { id: 'pay_renew' } });
     expect(insert.mock.calls[0][0].kind).toBe('renewal');
-    expect(phCapture).toHaveBeenCalledWith('vendor-1', 'subscription_renewed', {
-      plan: 'creator', cadence: 'monthly', expires_at: expect.any(String),
-    });
+    // analytics fan-out removed (growth scrape) — no subscription_renewed capture here
     // renewal now sends its own receipt email (previously sent nothing)
     const email = notifySend.mock.calls.find((c) => c[0].event === 'SUBSCRIPTION_RENEWED');
     expect(email).toBeTruthy();

@@ -129,10 +129,7 @@ async function onReferredCharge({ referredId, planSlug, cadence }) {
     qualified_at: nowIso(), release_at: releaseAt, updated_at: nowIso(),
   }).eq('id', ref.id).eq('status', 'pending');
 
-  // Real-time CRM: a qualified referral makes the REFERRER an Ambassador (Champion
-  // at 3+ qualified referrals), once they're a Sloth. Best-effort; never breaks the
-  // charge flow. resolveAccountStatus gates Marketing states behind the Sloth milestone.
-  try { await require('./crm/leadService').recomputeFromAccount(ref.referrer_id); } catch (_) { /* best-effort */ }
+  // CRM ambassador recompute removed (growth scrape).
   return { qualified: true };
 }
 

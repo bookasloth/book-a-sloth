@@ -152,39 +152,9 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
     },
   });
 
-  // 2a) Deferred KYC: first time this host actually earns and still has no
-  //     payout-ready KYC, nudge them (email + bell) to verify. Self-dedupes to
-  //     once per host and skips ₹0 bookings; never throws.
-  await require('./kycEarningNudge').maybeSendFirstEarningKycNudge({ host, booking });
-
-  // 2a-ii) Activation funnel: emit host_first_booking (host-keyed) on the host's
-  //        first paid booking. Never throws.
-  const firstBooking = await require('./hostActivation').maybeTrackFirstBooking({ host, booking });
-
-  // 2a-ii-b) Celebrate that first paid booking — the host's aha moment (email now;
-  //          WhatsApp later). Reuses the existing MILESTONE_FIRST_BOOKING template
-  //          (Durga). NotificationEngine never throws, so a celebration failure
-  //          can't affect the confirmation.
-  if (firstBooking && firstBooking.tracked) {
-    await NotificationEngine.send({
-      event: 'MILESTONE_FIRST_BOOKING',
-      data: {
-        email: host.email, phone: host.phone, name: host.name,
-        emailUser: { name: host.name, email: host.email, username: host.username },
-        emailData: { ...emailData, first_name: (host.name || '').split(' ')[0] || 'there' },
-        recipientUserId: booking.host_id, bookingId: booking.id,
-      },
-    });
-  }
-
-  // 2a-iv) Free host crossing the commission threshold → email upgrade nudge
-  //        (Sujata). Free-plan only, deduped, never throws.
-  await require('./upgradeNudge').maybeSendUpgradeNudge({ host, booking });
-
-  // 2a-iii) Real-time CRM: a paid booking is the HOST's Won signal — resolve the
-  //         host's lead now (a paid host → Won; an unpaid host stays in Presale per
-  //         O-1). Guests are NOT captured as leads (excluded from the host pipeline).
-  await require('./crm/leadService').recomputeFromAccount(booking.host_id);
+  // Host lifecycle nudges (KYC-earning, first-booking activation + celebration,
+  // commission upgrade) and the CRM host-Won recompute were removed in the growth
+  // scrape. Booking confirmations below are unaffected.
 
   // 2b) In-app confirmation for signed-in guests — mirrors the free-booking path
   //     so paid guests (the higher-value ones) aren't the only bookings missing an
