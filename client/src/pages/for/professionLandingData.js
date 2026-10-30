@@ -248,6 +248,121 @@ export const PROFESSION_LANDING = {
     ],
   },
 
+  dentists: {
+    slug: 'dentists',
+    label: 'Dentists & Clinics',
+    icon: Sparkles,
+
+    // ── Theme — clean clinical teal + bright dental cyan ─────────────────────
+    theme: {
+      primary: '#0e3a4f',    // deep clinical teal — ink / headings
+      accent: '#1fb6c9',     // bright dental cyan — signature colour
+      accentCta: '#0e7f90',  // AA-safe cyan for white-text buttons
+      tint: '#eefafb',       // soft aqua wash
+      heroFrom: '#082a39',   // dark teal
+      heroTo: '#0e3a4f',
+    },
+
+    // Basic meta only (no keywords / clickbait OG — pages are kept out of AI).
+    seo: {
+      title: 'Online Booking for Dental Clinics | Book A Sloth',
+      description:
+        'Let patients book and pay for their appointment online — and actually turn up. Book A Sloth keeps the dental chair full with automatic reminders, prepaid slots and a calendar that never double-books.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-dentists-og-1200x630.jpg',
+    },
+
+    hero: {
+      eyebrow: 'For Dentists, Orthodontists & Dental Clinics',
+      headline: 'The chair fills itself.',
+      headlineAccent: 'The front desk finally breathes.',
+      headlineTail: ' Patients pick a slot, pay, and get reminded — you just keep drilling.',
+      subline:
+        'You look after teeth. Book A Sloth looks after everything around the appointment — so your day is fewer no-shows, fewer “are you open?” calls, and a reception that isn’t glued to the phone.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · No lock-in · Live in minutes',
+      mock: {
+        practice: 'Dr. Neha Kapoor',
+        practiceTag: 'Dental Surgeon · Smile Studio',
+        services: [
+          { name: 'Consultation & Check-up', meta: '20 min · In-clinic', price: '₹400' },
+          { name: 'Scaling & Polishing', meta: '45 min · In-clinic', price: '₹1,200' },
+        ],
+      },
+    },
+
+    socialProof: 'Trusted by dental surgeons, orthodontists and multi-chair clinics across India.',
+
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Patient data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after the clinic shuts' },
+      { icon: TrendingDown, value: '1 in 5', label: 'Dental slots go no-show — reminders win them back' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+
+    painPoints: [
+      { icon: PhoneOff, problem: 'Reception spends half the day confirming and rescheduling by phone', solution: 'One booking link. Patients pick, move or cancel their own slot — the desk stops dialling.' },
+      { icon: FileClock, problem: 'Empty chairs when patients forget a cleaning or a follow-up', solution: 'Automatic email + WhatsApp reminders go out before every appointment. The chair stays full.' },
+      { icon: IndianRupee, problem: 'Chasing payment after the procedure is awkward and slow', solution: 'Take the consult fee or a deposit upfront at booking. GST invoice generated automatically.' },
+      { icon: CalendarX2, problem: 'Double-booked chairs and clashing surgeon schedules', solution: 'Each chair’s Google Calendar is read live — booked slots lock instantly, no overlaps.' },
+      { icon: MessageSquareX, problem: 'A GPay QR taped to the reception desk', solution: 'A clean, branded booking page with proper checkout — the first impression a clinic deserves.' },
+      { icon: Clock3, problem: 'Repeating opening hours to every caller', solution: 'Your live availability shows only open slots — patients self-serve, the desk stops repeating itself.' },
+    ],
+
+    features: [
+      { icon: CalendarCheck, title: 'Book around the clock', desc: 'Your clinic page takes appointments at midnight, on Sundays, and while you’re mid-procedure.' },
+      { icon: Wallet, title: 'Collect before the chair', desc: 'Consult fee or deposit paid upfront via UPI, card or netbanking — with an automatic GST invoice.' },
+      { icon: BellRing, title: 'Kill the no-show', desc: 'Reminders send themselves before every appointment, so recalls and cleanings don’t slip.' },
+      { icon: ShieldCheck, title: 'Keep patient data private', desc: 'Encrypted, access-controlled, never sold. Patient details and notes stay yours alone.' },
+    ],
+
+    pricing: {
+      hook: 'Less than a box of gloves a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for the month.',
+    },
+
+    faq: [
+      { q: 'Can patients book a dental appointment online and pay upfront?', a: 'Yes. Patients pick a slot on your clinic’s booking page and pay the consult fee or a deposit at checkout through Razorpay (UPI, cards, netbanking) before they arrive. You can also offer free-to-book slots.' },
+      { q: 'Will it stop two patients landing in the same chair?', a: 'Yes. Book A Sloth reads each chair’s Google Calendar, so busy times are never offered and a booked slot locks instantly — no double-booking across surgeons or chairs.' },
+      { q: 'How does it cut no-shows at a dental clinic?', a: 'Every appointment triggers automatic email and WhatsApp reminders before the slot, which is exactly where dental recalls and cleanings usually slip. Prepaid slots reduce no-shows further.' },
+      { q: 'Do patients need an account to book?', a: 'No. Patients just pick a time, enter their details and pay — no sign-up. It keeps booking fast for walk-in and recall patients alike.' },
+      { q: 'How much does it cost for a clinic?', a: 'You can start free with a small per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+    ],
+
+    midCtas: {
+      afterProblems: { text: 'Give your reception desk its day back.', ctaText: 'Get My Clinic Link' },
+      afterHow: { text: 'Your next patient is ready to book. Give them somewhere to do it.', ctaText: 'Set Up My Page Free' },
+    },
+
+    finalCta: {
+      icon: CalendarCheck,
+      urgency: 'Every forgotten recall is a chair sitting empty.',
+      headline: 'Keep the chair full, not the voicemail.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required — cancel anytime, no lock-in.',
+      ctaText: 'Create My Clinic Page',
+    },
+
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Dentistry is detailed enough.', titleAccent: 'Booking shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'receptionist who never sleeps.' },
+      testimonials: { title: 'Built for how a clinic really runs.', subtitle: 'Surgeons, orthodontists and multi-chair clinics — booked, paid and reminded, without the front-desk churn.' },
+    },
+
+    madeFor: "India's Dentists & Clinics",
+
+    testimonials: [
+      { quote: 'Recalls used to slip through the cracks. Now patients get a reminder and just rebook themselves.', name: 'Dr. A. Sheth', role: 'Dental Surgeon', avatar: null },
+      { quote: 'My front desk isn’t on the phone all day confirming slots anymore. It changed how the clinic feels.', name: 'Dr. R. Iyer', role: 'Orthodontist', avatar: null },
+      { quote: 'Taking a deposit at booking quietly ended most of our no-shows.', name: 'Dr. M. Pillai', role: 'Dental Clinic Owner', avatar: null },
+    ],
+  },
+
   doctors: {
     slug: 'doctors',
     label: 'Doctors & Clinics',
