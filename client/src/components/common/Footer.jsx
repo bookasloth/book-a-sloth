@@ -7,12 +7,11 @@ const EMAIL = 'bolt@bookasloth.in';
 // Minimal footer: link discovery now lives in the navbar mega-menus, so the
 // footer is just the CTA band + a centered legal strip + socials + operator bar.
 
-// Single centered inline row (support + legal, no label). Solutions + Compare
-// lead the row: they are hub pages (/solutions, /compare) that carry crawlable
-// internal links to every profession (/for/*) and competitor (/compare/*) landing
-// page, keeping those out of the SEO orphan list without a heavy footer sitemap.
+// Single centered inline row (support + legal, no label). Compare leads the row:
+// it's a hub page (/compare) that carries crawlable internal links to every
+// competitor (/compare/*) landing page, keeping those out of the SEO orphan list
+// without a heavy footer sitemap. (/solutions was scrapped.)
 const LEGAL = [
-  { t: 'Solutions', href: '/solutions' },
   { t: 'Compare', href: '/compare' },
   { t: 'FAQ', href: '/#faq' },
   { t: 'Documentation', href: '/help/docs' },

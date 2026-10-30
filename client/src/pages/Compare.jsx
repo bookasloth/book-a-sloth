@@ -6,11 +6,11 @@
 // pricing page, with sources). Book A Sloth's column comes ONLY from
 // data/plans.js. Never type a price or a competitor claim into this file.
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, X } from 'lucide-react';
+import { ArrowRight, Check, X, Clock } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import { ogCard } from '../config/ogImages';
 import { SITE_URL, collectionPageJsonLd, breadcrumbJsonLd } from '../utils/seo';
-import { COMPETITOR_LIST, CHECKED_LABEL } from '../data/competitors';
+import { COMPETITOR_LIST, LIVE_COMPETITOR_LIST, CHECKED_LABEL } from '../data/competitors';
 import { FREE_PLAN, PREMIUM_PLAN, PLAN_MATRIX } from '../data/plans';
 
 const TITLE = 'Book A Sloth vs the alternatives | Compare';
@@ -61,8 +61,10 @@ function Cell({ value }) {
 const favicon = (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 
 export default function Compare() {
+  // Only advertise live comparison pages in schema; the "coming soon" ones aren't
+  // real comparisons yet.
   const items = [
-    ...COMPETITOR_LIST.map((c) => ({ name: `Book A Sloth vs ${c.name}`, url: c.path })),
+    ...LIVE_COMPETITOR_LIST.map((c) => ({ name: `Book A Sloth vs ${c.name}`, url: c.path })),
     ...GUIDES.map((g) => ({ name: g.title, url: g.href })),
   ];
 
@@ -112,23 +114,41 @@ export default function Compare() {
           <ul className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {COMPETITOR_LIST.map((c) => (
               <li key={c.key}>
-                <Link
-                  to={c.path}
-                  className="group flex h-full flex-col rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-colors hover:border-primary/30 hover:no-underline"
-                >
-                  <span className="flex items-center gap-3">
-                    <img src={favicon(c.domain)} alt="" width="28" height="28" loading="lazy" className="h-7 w-7 rounded-full border border-black/5 bg-white p-0.5" />
-                    <span className="font-heading text-lg font-bold text-ink">vs {c.name}</span>
-                  </span>
-                  <span className="mt-3 text-sm leading-relaxed text-neutral-600">{VERDICT[c.key]}</span>
-                  <dl className="mt-5 space-y-1.5 border-t border-black/5 pt-4 text-xs">
-                    <div className="flex gap-2"><dt className="w-20 shrink-0 text-neutral-500">Free plan</dt><dd className="text-ink">{c.freePlan}</dd></div>
-                    <div className="flex gap-2"><dt className="w-20 shrink-0 text-neutral-500">Paid from</dt><dd className="text-ink">{c.paidFrom}</dd></div>
-                  </dl>
-                  <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-sm font-semibold text-primary-cta">
-                    Read the comparison <ArrowRight size={15} className="transition group-hover:translate-x-0.5" aria-hidden />
-                  </span>
-                </Link>
+                {c.comingSoon ? (
+                  <Link
+                    to={c.path}
+                    className="group flex h-full flex-col rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-colors hover:border-primary/30 hover:no-underline"
+                  >
+                    <span className="flex items-center gap-3">
+                      <img src={favicon(c.domain)} alt="" width="28" height="28" loading="lazy" className="h-7 w-7 rounded-full border border-black/5 bg-white p-0.5 opacity-70" />
+                      <span className="font-heading text-lg font-bold text-ink">vs {c.name}</span>
+                    </span>
+                    <span className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-sand px-2.5 py-1 text-xs font-semibold text-neutral-600">
+                      <Clock size={13} aria-hidden /> Coming soon
+                    </span>
+                    <span className="mt-auto inline-flex items-center gap-1.5 pt-6 text-sm font-semibold text-neutral-500">
+                      Notify me when it&rsquo;s live <ArrowRight size={15} className="transition group-hover:translate-x-0.5" aria-hidden />
+                    </span>
+                  </Link>
+                ) : (
+                  <Link
+                    to={c.path}
+                    className="group flex h-full flex-col rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-colors hover:border-primary/30 hover:no-underline"
+                  >
+                    <span className="flex items-center gap-3">
+                      <img src={favicon(c.domain)} alt="" width="28" height="28" loading="lazy" className="h-7 w-7 rounded-full border border-black/5 bg-white p-0.5" />
+                      <span className="font-heading text-lg font-bold text-ink">vs {c.name}</span>
+                    </span>
+                    <span className="mt-3 text-sm leading-relaxed text-neutral-600">{VERDICT[c.key]}</span>
+                    <dl className="mt-5 space-y-1.5 border-t border-black/5 pt-4 text-xs">
+                      <div className="flex gap-2"><dt className="w-20 shrink-0 text-neutral-500">Free plan</dt><dd className="text-ink">{c.freePlan}</dd></div>
+                      <div className="flex gap-2"><dt className="w-20 shrink-0 text-neutral-500">Paid from</dt><dd className="text-ink">{c.paidFrom}</dd></div>
+                    </dl>
+                    <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-sm font-semibold text-primary-cta">
+                      Read the comparison <ArrowRight size={15} className="transition group-hover:translate-x-0.5" aria-hidden />
+                    </span>
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -145,13 +165,13 @@ export default function Compare() {
             &ldquo;Not listed&rdquo; means the company&rsquo;s pricing page doesn&rsquo;t say. It doesn&rsquo;t mean they can&rsquo;t.
           </p>
           <div className="mt-10 overflow-x-auto rounded-[6px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
-            <table className="w-full min-w-[960px] border-collapse text-left text-sm">
-              <caption className="sr-only">Book A Sloth compared with six booking tools</caption>
+            <table className="w-full border-collapse text-left text-sm">
+              <caption className="sr-only">Book A Sloth compared with Topmate</caption>
               <thead>
                 <tr className="border-b border-black/5">
                   <th scope="col" className="sticky left-0 z-10 bg-white p-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">&nbsp;</th>
                   <th scope="col" className="bg-primary-light p-4 font-heading font-bold text-ink">Book A Sloth</th>
-                  {COMPETITOR_LIST.map((c) => (
+                  {LIVE_COMPETITOR_LIST.map((c) => (
                     <th key={c.key} scope="col" className="p-4 font-heading font-bold text-ink">
                       <Link to={c.path} className="text-ink hover:text-primary-cta hover:no-underline">{c.name}</Link>
                     </th>
@@ -163,7 +183,7 @@ export default function Compare() {
                   <tr key={field} className="border-b border-black/5 last:border-0 align-top">
                     <th scope="row" className="sticky left-0 z-10 bg-white p-4 font-semibold text-ink">{label}</th>
                     <td className="bg-primary-light/60 p-4 text-ink"><Cell value={bas} /></td>
-                    {COMPETITOR_LIST.map((c) => (
+                    {LIVE_COMPETITOR_LIST.map((c) => (
                       <td key={c.key} className="p-4 text-neutral-700"><Cell value={c[field]} /></td>
                     ))}
                   </tr>
@@ -174,10 +194,10 @@ export default function Compare() {
           <p className="mt-5 text-xs leading-relaxed text-neutral-500">
             Checked against each company&rsquo;s own pricing page in {CHECKED_LABEL}. Their prices are shown as published, in
             their currency, and may have changed since. Sources:{' '}
-            {COMPETITOR_LIST.map((c, i) => (
+            {LIVE_COMPETITOR_LIST.map((c, i) => (
               <span key={c.key}>
                 <a href={c.source} target="_blank" rel="noopener noreferrer nofollow" className="text-neutral-500 underline underline-offset-2 hover:text-ink">{c.name}</a>
-                {i < COMPETITOR_LIST.length - 1 ? ', ' : '.'}
+                {i < LIVE_COMPETITOR_LIST.length - 1 ? ', ' : '.'}
               </span>
             ))}
           </p>
@@ -204,7 +224,7 @@ export default function Compare() {
           {/* Cross-links so this hub isn't a dead end. */}
           <p className="mt-10 text-sm text-neutral-600">
             Not sure which fits your work?{' '}
-            <Link to="/solutions" className="font-semibold text-ink underline underline-offset-2">Find the page built for your profession</Link>{' '}
+            <Link to="/appointment-booking-software" className="font-semibold text-ink underline underline-offset-2">Find the page built for your profession</Link>{' '}
             or <Link to="/pricing" className="font-semibold text-ink underline underline-offset-2">see pricing</Link>.
           </p>
         </div>

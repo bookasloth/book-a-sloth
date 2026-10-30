@@ -72,19 +72,15 @@ const Careers        = lazy(() => import('./pages/Careers'));
 const JobDetail      = lazy(() => import('./pages/JobDetail'));
 const Enterprise     = lazy(() => import('./pages/Enterprise'));
 const HowItWorks     = lazy(() => import('./pages/HowItWorks'));
-// SEO discovery hubs — crawlable directories that internally link every
-// /for/* profession page (Solutions) and /compare/* competitor page (Compare).
-const Solutions      = lazy(() => import('./pages/Solutions'));
+// SEO discovery hub — crawlable directory that internally links every
+// /compare/* competitor page. (/solutions was scrapped — see its route.)
 const Compare        = lazy(() => import('./pages/Compare'));
 
-// Competitor comparison pages (/compare/*, formerly /lp/*). Pages not yet rebuilt
-// still draw their own header/footer and call useHideChrome() to drop the global nav.
+// Competitor comparison pages (/compare/*, formerly /lp/*). Topmate keeps its full
+// bespoke page (draws its own header/footer, calls useHideChrome()). The other
+// competitors are parked behind one shared "Coming soon" placeholder.
 const TopmateVsBookASloth = lazy(() => import('./pages/compare/TopmateVsBookASloth'));
-const CalendlyAlternative  = lazy(() => import('./pages/compare/CalendlyAlternative'));
-const SetmoreAlternative   = lazy(() => import('./pages/compare/SetmoreAlternative'));
-const AcuityAlternative    = lazy(() => import('./pages/compare/AcuityAlternative'));
-const SimplybookAlternative = lazy(() => import('./pages/compare/SimplybookAlternative'));
-const ZohoBookingsAlternative = lazy(() => import('./pages/compare/ZohoBookingsAlternative'));
+const CompareComingSoon = lazy(() => import('./pages/compare/CompareComingSoon'));
 
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
@@ -446,11 +442,11 @@ function App() {
           <Route path="/" element={<HomeGate />} />
           {/* Competitor comparison pages — live under the /compare hub. */}
           <Route path="/compare/topmate-alternative" element={<TopmateVsBookASloth />} />
-          <Route path="/compare/calendly-alternative" element={<CalendlyAlternative />} />
-          <Route path="/compare/setmore-alternative" element={<SetmoreAlternative />} />
-          <Route path="/compare/acuity-alternative" element={<AcuityAlternative />} />
-          <Route path="/compare/simplybook-alternative" element={<SimplybookAlternative />} />
-          <Route path="/compare/zoho-bookings-alternative" element={<ZohoBookingsAlternative />} />
+          <Route path="/compare/calendly-alternative" element={<CompareComingSoon />} />
+          <Route path="/compare/setmore-alternative" element={<CompareComingSoon />} />
+          <Route path="/compare/acuity-alternative" element={<CompareComingSoon />} />
+          <Route path="/compare/simplybook-alternative" element={<CompareComingSoon />} />
+          <Route path="/compare/zoho-bookings-alternative" element={<CompareComingSoon />} />
           {/* Old /lp/* URLs (Oct 2026 move). vercel.json 301s them at the edge;
               these cover in-app navigation from a stale link or cached bundle. */}
           <Route path="/lp/topmate-vs-bookasloth" element={<Navigate to="/compare/topmate-alternative" replace />} />
@@ -484,8 +480,11 @@ function App() {
           <Route path="/blogs" element={<BlogsRedirect />} />
           <Route path="/blogs/:slug" element={<BlogsRedirect />} />
           <Route path="/about" element={<About />} />
-          {/* SEO discovery hubs — link every profession + competitor landing page */}
-          <Route path="/solutions" element={<Solutions />} />
+          {/* SEO discovery hub — links every competitor landing page */}
+          {/* /solutions scrapped: redirect so existing inbound links (older /for
+              pages, external) don't 404. /appointment-booking-software is the
+              surviving profession-discovery hub. */}
+          <Route path="/solutions" element={<Navigate to="/appointment-booking-software" replace />} />
           <Route path="/compare" element={<Compare />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/careers/:jobSlug" element={<JobDetail />} />

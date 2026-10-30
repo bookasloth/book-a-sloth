@@ -108,8 +108,7 @@ const PRERENDER_ROUTES = [
   '/wall-of-love',
   // SEO discovery hubs — crawlable directories that link every /for/* profession
   // page and /compare/* competitor page (which hide the global nav). Prerender so the
-  // internal links land in static HTML for non-JS crawlers.
-  '/solutions',
+  // internal links land in static HTML for non-JS crawlers. (/solutions was scrapped.)
   '/compare',
   '/appointment-booking-software',
   // Marketing/event pages with bespoke OG cards — prerender so social scrapers
@@ -157,12 +156,9 @@ const PRERENDER_ROUTES = [
   '/for/photographers',
   '/for/events',
   '/for/agencies',
-  '/compare/calendly-alternative',
+  // Only Topmate keeps a live comparison page; the rest are noindex "Coming soon"
+  // placeholders, so there's nothing to prerender for them.
   '/compare/topmate-alternative',
-  '/compare/setmore-alternative',
-  '/compare/acuity-alternative',
-  '/compare/simplybook-alternative',
-  '/compare/zoho-bookings-alternative',
   ...FEATURES.map((f) => `/features/${f.slug}`),
 ];
 

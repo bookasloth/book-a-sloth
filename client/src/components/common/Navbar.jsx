@@ -107,13 +107,15 @@ const RESOURCES_MENU = [
 // Compare — a mega-menu of "Sloth vs <competitor>" cards. Each carries the
 // competitor's domain (favicon) and primary brand colour (hover tint). Only LPs
 // that exist. `label` (mobile) kept alongside name/domain/color (desktop cards).
+// Topmate is the one live comparison; the rest land on a "Coming soon" placeholder
+// (marked `soon` so the card shows a badge). Links stay so the menu is crawlable.
 const COMPARE_MENU = [
-  { label: 'vs Calendly',      name: 'Calendly',      href: '/compare/calendly-alternative',      domain: 'calendly.com',         color: '#006BFF' },
-  { label: 'vs Acuity',        name: 'Acuity',        href: '/compare/acuity-alternative',        domain: 'acuityscheduling.com', color: '#1B7FA8' },
-  { label: 'vs Setmore',       name: 'Setmore',       href: '/compare/setmore-alternative',       domain: 'setmore.com',          color: '#009DE0' },
-  { label: 'vs SimplyBook',    name: 'SimplyBook',    href: '/compare/simplybook-alternative',    domain: 'simplybook.me',        color: '#2FA8C9' },
-  { label: 'vs Zoho Bookings', name: 'Zoho Bookings', href: '/compare/zoho-bookings-alternative', domain: 'zoho.com',             color: '#E42527' },
-  { label: 'vs Topmate',       name: 'Topmate',       href: '/compare/topmate-alternative',     domain: 'topmate.io',           color: '#FF3E5F' },
+  { label: 'vs Topmate',       name: 'Topmate',       href: '/compare/topmate-alternative',       domain: 'topmate.io',           color: '#FF3E5F' },
+  { label: 'vs Calendly',      name: 'Calendly',      href: '/compare/calendly-alternative',      domain: 'calendly.com',         color: '#006BFF', soon: true },
+  { label: 'vs Acuity',        name: 'Acuity',        href: '/compare/acuity-alternative',        domain: 'acuityscheduling.com', color: '#1B7FA8', soon: true },
+  { label: 'vs Setmore',       name: 'Setmore',       href: '/compare/setmore-alternative',       domain: 'setmore.com',          color: '#009DE0', soon: true },
+  { label: 'vs SimplyBook',    name: 'SimplyBook',    href: '/compare/simplybook-alternative',    domain: 'simplybook.me',        color: '#2FA8C9', soon: true },
+  { label: 'vs Zoho Bookings', name: 'Zoho Bookings', href: '/compare/zoho-bookings-alternative', domain: 'zoho.com',             color: '#E42527', soon: true },
 ];
 
 // Flat lists derived from the mega configs — reused by the mobile accordions.
@@ -461,6 +463,9 @@ const CompareItem = ({ item, active }) => {
         )}
       </span>
       <span className="relative z-10 text-[14px] font-bold text-[#1E1E1E] transition-colors group-hover/mi:text-[var(--bc)]">{item.name}</span>
+      {item.soon && (
+        <span className="relative z-10 ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">Soon</span>
+      )}
     </Link>
   );
 };
