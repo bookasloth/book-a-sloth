@@ -101,13 +101,11 @@ const BAS_KEYFRAMES = `
 .bas-fade{animation:basFade .5s ease both}
 `;
 
-// Skeleton placeholder shown while the slot list is being fetched, so the panel
-// doesn't flash empty / jump when times arrive.
+// Shown while the slot list is being fetched. Skeleton removed — a plain spinner
+// instead, so the panel doesn't flash empty / jump when times arrive.
 const SlotSkeleton = () => (
-  <div className="grid grid-cols-3 gap-2" aria-hidden="true">
-    {Array.from({ length: 9 }).map((_, i) => (
-      <div key={i} className="h-[42px] rounded-lg bg-gray-200/70 animate-pulse" />
-    ))}
+  <div className="flex justify-center py-8" aria-hidden="true">
+    <PetalSpinner size={32} />
   </div>
 );
 

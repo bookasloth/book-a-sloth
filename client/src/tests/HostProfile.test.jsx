@@ -150,11 +150,11 @@ describe('HostProfile — services listing', () => {
   });
 
   test('service detail links use /:profileSlug/:serviceSlug', async () => {
-    // Redesign: the card no longer has a "View details" label — the service
-    // title itself is the link to the service detail page.
+    // The title is no longer a link; each card has a "View Details" button that
+    // links to the service detail page.
     renderProfile();
     await waitFor(() => {
-      const detailLinks = screen.getAllByRole('link', { name: /consultation|workshop/i });
+      const detailLinks = screen.getAllByRole('link', { name: /view details/i });
       expect(detailLinks.length).toBeGreaterThan(0);
       detailLinks.forEach((link) => {
         expect(link.getAttribute('href')).toMatch(/\/jane-vendor\/(consultation|workshop)/);

@@ -8,18 +8,6 @@
   },
   "entries": [
     {
-      "identifier": "urn:air:bookasloth:docs:llms-txt",
-      "displayName": "Book A Sloth — LLM Guide (llms.txt)",
-      "description": "Structured overview of Book A Sloth for AI agents: what it is, plans and pricing, key pages, features, comparisons and profession landing pages.",
-      "type": "text/markdown",
-      "url": "https://bookasloth.com/llms.txt",
-      "tags": ["overview", "documentation", "pricing", "features"],
-      "representativeQueries": [
-        "What is Book A Sloth and how does it work?",
-        "How much does Book A Sloth cost and what are the plans?"
-      ]
-    },
-    {
       "identifier": "urn:air:bookasloth:index:sitemap",
       "displayName": "Book A Sloth — Sitemap Index",
       "description": "XML sitemap index listing all indexable pages: marketing pages, profession pages, host profiles, bookable services and blog posts.",

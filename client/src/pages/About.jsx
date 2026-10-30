@@ -29,7 +29,6 @@ const JSON_LD = {
 // discovery columns onto About, which keeps them crawlable in static HTML (About
 // is prerendered) so pages like Wall of Love and Careers aren't SEO-orphaned.
 const EXPLORE = [
-  { t: "Wall of Love", href: "/wall-of-love", desc: "Real words from hosts who get booked with us.", Icon: Heart, accent: "var(--c-pink)" },
   { t: "Blog", href: "/blog", desc: "Guides on getting booked, pricing and growth.", Icon: Newspaper, accent: "var(--c-blue)" },
   { t: "Careers", href: "/careers", desc: "Help us build the calm way to get booked.", Icon: Briefcase, accent: "var(--c-violet)" },
   { t: "Help center", href: "/help", desc: "Answers, docs and setup walkthroughs.", Icon: LifeBuoy, accent: "var(--c-emerald)" },

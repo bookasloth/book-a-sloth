@@ -93,7 +93,6 @@ const RESOURCES_MENU = [
   ] },
   { header: 'Discover', items: [
     { label: 'Blog',         href: '/blog',         desc: 'Tips & playbooks',   icon: BookOpen },
-    { label: 'Wall of Love', href: '/wall-of-love', desc: 'What hosts say',     icon: Heart },
     { label: 'About',        href: '/about',        desc: 'Our mission',        icon: Info },
     { label: 'Careers',      href: '/careers',      desc: 'Join the team',      icon: Award },
   ] },

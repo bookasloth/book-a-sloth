@@ -42,7 +42,9 @@ export default function TestimonialsFlip() {
   const root = useRef(null);
   const track = useRef(null);
   // Hide team members who also appear as testimonial authors on the About page.
-  const HIDE = new Set(["Arjun Ravikumar", "Happy Singh"]);
+  // (Happy Singh is kept: after the testimonial trim he's the only author, so
+  // hiding him would leave the carousel empty.)
+  const HIDE = new Set(["Arjun Ravikumar"]);
   const items = testimonials.items.filter((t) => !HIDE.has(t.name));
 
   useGSAP(

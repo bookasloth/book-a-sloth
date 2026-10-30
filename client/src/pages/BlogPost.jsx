@@ -452,10 +452,10 @@ const BlogPost = () => {
         <HeroVisual post={post} t={t} />
       </header>
 
-      {/* ── Reading body + sticky promo rail (cal.com-style, lg+ only) ── */}
+      {/* ── Reading body (single centered column) ── */}
       <div className="app-container py-14 sm:py-20">
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] xl:gap-14">
-          <div className="mx-auto min-w-0 max-w-2xl lg:mx-0">
+        <div className="mx-auto max-w-2xl">
+          <div className="min-w-0">
             {post.body.map((block, i) => <Block key={i} block={block} accent={t.accent} />)}
 
             {/* Byline + share */}
@@ -470,10 +470,6 @@ const BlogPost = () => {
             {/* Related reading — cluster-aware internal links (static, prerendered) */}
             <RelatedPosts slug={post.slug} />
           </div>
-
-          <aside className="hidden lg:block">
-            <SidebarCta theme={t} />
-          </aside>
         </div>
       </div>
       </article>

@@ -52,8 +52,8 @@ describe('admin ui primitives', () => {
     expect(screen.getByText('Nothing here')).toBeInTheDocument();
   });
 
-  it('Skeleton renders pulse div', () => {
+  it('Skeleton renders nothing (skeleton loading removed)', () => {
     const { container } = render(<Skeleton className="h-4 w-24" />);
-    expect(container.firstChild.className).toContain('animate-pulse');
+    expect(container.firstChild).toBeNull();
   });
 });
