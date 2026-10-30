@@ -1075,28 +1075,14 @@ export default function ServiceDetail() {
 
       {/* ── HERO + Content — single container so sidebar starts under h1 ── */}
       <div className="app-container pb-28 lg:pb-8 relative z-10" style={{ paddingTop: 44 }}>
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-xs text-white/50 font-medium" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-white transition-colors">home</Link>
-          <span className="mx-1">/</span>
-          {vendor?.username && (
-            <>
-              <Link to={`/${vendor.username}`} className="hover:text-white transition-colors">{vendor.username}</Link>
-              <span className="mx-1">/</span>
-            </>
-          )}
-          <span className="text-white/70 max-w-[120px] sm:max-w-[200px] truncate inline-block align-bottom">{service.slug || 'service'}</span>
-        </nav>
+        {/* Breadcrumb removed (visual); breadcrumb JSON-LD is kept for SEO. */}
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── LEFT: Hero + tabs ── */}
           <div className="flex-1 min-w-0">
             <section className="relative pb-6">
 
-              {/* Eyebrow */}
-              {eyebrow && (
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-white/60">{eyebrow}</p>
-              )}
+              {/* Eyebrow (category · type pill) removed. */}
 
               {/* Title — 110% of content column width */}
               <h1 className="text-4xl sm:text-5xl font-black text-white mb-4 leading-[1.1] tracking-tight" style={{ maxWidth: '110%' }}>
