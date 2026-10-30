@@ -473,7 +473,9 @@ const HostProfile = () => {
   // host is still loading, so these run before host exists.
   const tc          = host && isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
   const social      = host?.social_links || {};
-  const badges      = badgeList;
+  // Public profile shows ONLY the Google/Gmail-verified badge; all other trust
+  // badges are hidden. Matched by name (badge awards are admin-managed in the DB).
+  const badges      = badgeList.filter(b => /verif|google|gmail/i.test(`${b?.name || ''} ${b?.label || ''}`));
 
   const SOCIAL_ORDER = ['instagram', 'youtube', 'linkedin', 'facebook', 'twitter', 'whatsapp', 'website', 'github', 'email'];
   const socialLinks  = SOCIAL_ORDER
