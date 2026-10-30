@@ -129,8 +129,6 @@ const STATIC_ROUTES = [
   { path: '/for/chartered-accountants', changefreq: 'monthly', priority: '0.8' },
   { path: '/for/lawyers',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors',              changefreq: 'monthly', priority: '0.8' },
-  { path: '/for/therapists',           changefreq: 'monthly', priority: '0.8' },
-  { path: '/for/yoga-instructors',     changefreq: 'monthly', priority: '0.8' },
   { path: '/for/business-consultant',  changefreq: 'monthly', priority: '0.8' },
   { path: '/for/pediatricians',        changefreq: 'monthly', priority: '0.8' },
   { path: '/for/gynecologists',        changefreq: 'monthly', priority: '0.8' },

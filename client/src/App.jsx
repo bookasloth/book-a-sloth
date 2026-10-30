@@ -214,25 +214,10 @@ const BadgeShowcase      = lazy(() => import('./pages/BadgeShowcase'));
 const Explore         = lazy(() => import('./pages/Explore'));
 const ServicesDirectory  = lazy(() => import('./pages/services/ServicesDirectory'));
 const ProfessionServices = lazy(() => import('./pages/services/ProfessionServices'));
+// All /for/<profession> pages are data-driven: one template + one data entry per
+// profession (see pages/for/professionLandingData.js). The bespoke per-profession
+// components were retired in favour of this single template.
 const ProfessionLanding  = lazy(() => import('./pages/for/ProfessionLanding'));
-const Astrologers        = lazy(() => import('./pages/for/Astrologers'));
-const ArchitectPage      = lazy(() => import('./pages/for/ArchitectPage'));
-const CharteredAccountants = lazy(() => import('./pages/for/CharteredAccountants'));
-const SportsTurf         = lazy(() => import('./pages/for/SportsTurf'));
-const LawyersPage        = lazy(() => import('./pages/for/LawyersPage'));
-const Pediatricians      = lazy(() => import('./pages/for/Pediatricians'));
-const Gynecologists      = lazy(() => import('./pages/for/Gynecologists'));
-const Dermatologists     = lazy(() => import('./pages/for/Dermatologists'));
-const GeneralPhysicians  = lazy(() => import('./pages/for/GeneralPhysicians'));
-const Physiotherapists   = lazy(() => import('./pages/for/Physiotherapists'));
-const BusinessConsultants = lazy(() => import('./pages/for/BusinessConsultants'));
-const EntSpecialists     = lazy(() => import('./pages/for/EntSpecialists'));
-const Ophthalmologists   = lazy(() => import('./pages/for/Ophthalmologists'));
-const Nutritionists      = lazy(() => import('./pages/for/Nutritionists'));
-const LifeCoaches        = lazy(() => import('./pages/for/LifeCoaches'));
-const Spas               = lazy(() => import('./pages/for/Spas'));
-const SalonPage          = lazy(() => import('./pages/for/SalonPage'));
-const Veterinarians      = lazy(() => import('./pages/for/Veterinarians'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 const PaymentsFeature = lazy(() => import('./pages/features/PaymentsFeature'));
 const SchedulingFeature       = lazy(() => import('./pages/features/SchedulingFeature'));
@@ -707,26 +692,9 @@ function App() {
           <Route path="/services" element={<ServicesDirectory />} />
           <Route path="/services/:profession" element={<ProfessionServices />} />
 
-          {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession. */}
-          {/* Bespoke standalone /for pages must precede the :profession catch-all. */}
-          <Route path="/for/astrologers" element={<Astrologers />} />
-          <Route path="/for/architects" element={<ArchitectPage />} />
-          <Route path="/for/chartered-accountants" element={<CharteredAccountants />} />
-          <Route path="/for/sports-turf" element={<SportsTurf />} />
-          <Route path="/for/lawyers" element={<LawyersPage />} />
-          <Route path="/for/pediatricians" element={<Pediatricians />} />
-          <Route path="/for/gynecologists" element={<Gynecologists />} />
-          <Route path="/for/dermatologists" element={<Dermatologists />} />
-          <Route path="/for/doctors" element={<GeneralPhysicians />} />
-          <Route path="/for/physiotherapists" element={<Physiotherapists />} />
-          <Route path="/for/business-consultant" element={<BusinessConsultants />} />
-          <Route path="/for/ent-specialists" element={<EntSpecialists />} />
-          <Route path="/for/ophthalmologists" element={<Ophthalmologists />} />
-          <Route path="/for/nutritionists" element={<Nutritionists />} />
-          <Route path="/for/life-coaches" element={<LifeCoaches />} />
-          <Route path="/for/spa" element={<Spas />} />
-          <Route path="/for/salon" element={<SalonPage />} />
-          <Route path="/for/veterinarians" element={<Veterinarians />} />
+          {/* Profession marketing landing pages — one data-driven template for every
+              profession (/for/<slug>). Content + palette per profession live in
+              pages/for/professionLandingData.js; an unknown slug renders a 404. */}
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
