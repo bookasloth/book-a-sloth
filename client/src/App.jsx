@@ -70,21 +70,17 @@ const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
 const About          = lazy(() => import('./pages/About'));
 const Careers        = lazy(() => import('./pages/Careers'));
 const JobDetail      = lazy(() => import('./pages/JobDetail'));
-const Enterprise     = lazy(() => import('./pages/Enterprise'));
+// Enterprise lead page removed (growth removal).
 const HowItWorks     = lazy(() => import('./pages/HowItWorks'));
-// SEO discovery hubs — crawlable directories that internally link every
-// /for/* profession page (Solutions) and /compare/* competitor page (Compare).
-const Solutions      = lazy(() => import('./pages/Solutions'));
+// SEO discovery hub — crawlable directory that internally links every
+// /compare/* competitor page. (/solutions was scrapped — see its route.)
 const Compare        = lazy(() => import('./pages/Compare'));
 
-// Competitor comparison pages (/compare/*, formerly /lp/*). Pages not yet rebuilt
-// still draw their own header/footer and call useHideChrome() to drop the global nav.
+// Competitor comparison pages (/compare/*, formerly /lp/*). Topmate keeps its full
+// bespoke page (draws its own header/footer, calls useHideChrome()). The other
+// competitors are parked behind one shared "Coming soon" placeholder.
 const TopmateVsBookASloth = lazy(() => import('./pages/compare/TopmateVsBookASloth'));
-const CalendlyAlternative  = lazy(() => import('./pages/compare/CalendlyAlternative'));
-const SetmoreAlternative   = lazy(() => import('./pages/compare/SetmoreAlternative'));
-const AcuityAlternative    = lazy(() => import('./pages/compare/AcuityAlternative'));
-const SimplybookAlternative = lazy(() => import('./pages/compare/SimplybookAlternative'));
-const ZohoBookingsAlternative = lazy(() => import('./pages/compare/ZohoBookingsAlternative'));
+const CompareComingSoon = lazy(() => import('./pages/compare/CompareComingSoon'));
 
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
@@ -101,9 +97,7 @@ const Inaugurators   = lazy(() => import('./pages/Inaugurators'));
 const BlogPost       = lazy(() => import('./pages/BlogPost'));
 const Moments        = lazy(() => import('./pages/Moments'));
 const MomentPage     = lazy(() => import('./pages/MomentPage'));
-const OgCard         = lazy(() => import('./pages/OgCard'));
-const HostOgCard     = lazy(() => import('./pages/HostOgCard'));
-const ServiceOgCard  = lazy(() => import('./pages/ServiceOgCard'));
+// OG card render pages removed (growth removal): one static /og-image.png for all.
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
 
 // Vendor Onboarding (Google-first 7-step flow)
@@ -193,7 +187,7 @@ const AdminRefunds      = lazy(() => import('./pages/admin/AdminRefunds'));
 // Admin — Content
 const AdminPages        = lazy(() => import('./pages/admin/AdminPages'));
 const AdminBlogs        = lazy(() => import('./pages/admin/AdminBlogs'));
-const AdminNewsletter   = lazy(() => import('./pages/admin/AdminNewsletter'));
+// AdminNewsletter removed (growth removal).
 const AdminFAQ          = lazy(() => import('./pages/admin/AdminFAQ'));
 const AdminTestimonials = lazy(() => import('./pages/admin/AdminTestimonials'));
 
@@ -212,32 +206,16 @@ const AdminMenuBuilder   = lazy(() => import('./pages/admin/AdminMenuBuilder'));
 const AdminFooterBuilder = lazy(() => import('./pages/admin/AdminFooterBuilder'));
 const AdminCommunication = lazy(() => import('./pages/admin/AdminCommunication'));
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'));
-const AdminCampaigns     = lazy(() => import('./pages/admin/AdminCampaigns'));
+// AdminCampaigns removed (growth removal).
 const AdminBadges        = lazy(() => import('./pages/admin/AdminBadges'));
 const BadgeShowcase      = lazy(() => import('./pages/BadgeShowcase'));
 const Explore         = lazy(() => import('./pages/Explore'));
 const ServicesDirectory  = lazy(() => import('./pages/services/ServicesDirectory'));
 const ProfessionServices = lazy(() => import('./pages/services/ProfessionServices'));
+// All /for/<profession> pages are data-driven: one template + one data entry per
+// profession (see pages/for/professionLandingData.js). The bespoke per-profession
+// components were retired in favour of this single template.
 const ProfessionLanding  = lazy(() => import('./pages/for/ProfessionLanding'));
-const Astrologers        = lazy(() => import('./pages/for/Astrologers'));
-const ArchitectPage      = lazy(() => import('./pages/for/ArchitectPage'));
-const DentistPage        = lazy(() => import('./pages/for/DentistPage'));
-const CharteredAccountants = lazy(() => import('./pages/for/CharteredAccountants'));
-const SportsTurf         = lazy(() => import('./pages/for/SportsTurf'));
-const LawyersPage        = lazy(() => import('./pages/for/LawyersPage'));
-const Pediatricians      = lazy(() => import('./pages/for/Pediatricians'));
-const Gynecologists      = lazy(() => import('./pages/for/Gynecologists'));
-const Dermatologists     = lazy(() => import('./pages/for/Dermatologists'));
-const GeneralPhysicians  = lazy(() => import('./pages/for/GeneralPhysicians'));
-const Physiotherapists   = lazy(() => import('./pages/for/Physiotherapists'));
-const BusinessConsultants = lazy(() => import('./pages/for/BusinessConsultants'));
-const EntSpecialists     = lazy(() => import('./pages/for/EntSpecialists'));
-const Ophthalmologists   = lazy(() => import('./pages/for/Ophthalmologists'));
-const Nutritionists      = lazy(() => import('./pages/for/Nutritionists'));
-const LifeCoaches        = lazy(() => import('./pages/for/LifeCoaches'));
-const Spas               = lazy(() => import('./pages/for/Spas'));
-const SalonPage          = lazy(() => import('./pages/for/SalonPage'));
-const Veterinarians      = lazy(() => import('./pages/for/Veterinarians'));
 const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 const PaymentsFeature = lazy(() => import('./pages/features/PaymentsFeature'));
 const SchedulingFeature       = lazy(() => import('./pages/features/SchedulingFeature'));
@@ -268,26 +246,7 @@ const AdminBlockedIps = lazy(() => import('./pages/admin/AdminBlockedIps'));
 // Admin — Platform Control
 const AdminFeatureStatus = lazy(() => import('./pages/admin/AdminFeatureStatus'));
 
-// Admin — Sales CRM command center
-const SalesDesk       = lazy(() => import('./pages/admin/sales/SalesDesk'));
-const RelationshipDesk = lazy(() => import('./pages/admin/sales/RelationshipDesk'));
-const SalesLeads      = lazy(() => import('./pages/admin/sales/SalesLeads'));
-const SalesLists      = lazy(() => import('./pages/admin/sales/SalesLists'));
-const SalesLeadDetail = lazy(() => import('./pages/admin/sales/SalesLeadDetail'));
-const SalesFollowUps  = lazy(() => import('./pages/admin/sales/SalesFollowUps'));
-const SalesPipeline   = lazy(() => import('./pages/admin/sales/SalesPipeline'));
-const SalesReports    = lazy(() => import('./pages/admin/sales/SalesReports'));
-const CustomerDetail  = lazy(() => import('./pages/admin/sales/CustomerDetail'));
-const SalesTemplates  = lazy(() => import('./pages/admin/sales/SalesTemplates'));
-const ColdCallingLayout = lazy(() => import('./pages/admin/sales/ColdCallingLayout'));
-const ColdCallOverview = lazy(() => import('./pages/admin/sales/ColdCallOverview'));
-const ColdCallFollowUps = lazy(() => import('./pages/admin/sales/ColdCallFollowUps'));
-const ColdCallHistory = lazy(() => import('./pages/admin/sales/ColdCallHistory'));
-const ColdCallLists = lazy(() => import('./pages/admin/sales/ColdCallLists'));
-const ColdCallReports = lazy(() => import('./pages/admin/sales/ColdCallReports'));
-const ColdCallToday = lazy(() => import('./pages/admin/sales/ColdCallToday'));
-const ColdCallLead = lazy(() => import('./pages/admin/sales/ColdCallLead'));
-const SalesSequences  = lazy(() => import('./pages/admin/sales/SalesSequences'));
+// Admin Sales CRM command center lazy imports removed (growth removal).
 
 // Admin — Finance (P1: double-entry ledger)
 const AdminFinanceDashboard = lazy(() => import('./pages/admin/AdminFinanceDashboard'));
@@ -305,7 +264,7 @@ const AdminGstReports      = lazy(() => import('./pages/admin/AdminGstReports'))
 const AdminGstSettings     = lazy(() => import('./pages/admin/AdminGstSettings'));
 const AdminGstExports      = lazy(() => import('./pages/admin/AdminGstExports'));
 // Admin — SEO audit dashboard
-const AdminSeo = lazy(() => import('./pages/admin/AdminSeo'));
+// AdminSeo removed (growth removal).
 const Presentation = lazy(() => import('./pages/presentation/Presentation'));
 const PitchDeck = lazy(() => import('./pages/pitch-deck/PitchDeck'));
 
@@ -446,11 +405,11 @@ function App() {
           <Route path="/" element={<HomeGate />} />
           {/* Competitor comparison pages — live under the /compare hub. */}
           <Route path="/compare/topmate-alternative" element={<TopmateVsBookASloth />} />
-          <Route path="/compare/calendly-alternative" element={<CalendlyAlternative />} />
-          <Route path="/compare/setmore-alternative" element={<SetmoreAlternative />} />
-          <Route path="/compare/acuity-alternative" element={<AcuityAlternative />} />
-          <Route path="/compare/simplybook-alternative" element={<SimplybookAlternative />} />
-          <Route path="/compare/zoho-bookings-alternative" element={<ZohoBookingsAlternative />} />
+          <Route path="/compare/calendly-alternative" element={<CompareComingSoon />} />
+          <Route path="/compare/setmore-alternative" element={<CompareComingSoon />} />
+          <Route path="/compare/acuity-alternative" element={<CompareComingSoon />} />
+          <Route path="/compare/simplybook-alternative" element={<CompareComingSoon />} />
+          <Route path="/compare/zoho-bookings-alternative" element={<CompareComingSoon />} />
           {/* Old /lp/* URLs (Oct 2026 move). vercel.json 301s them at the edge;
               these cover in-app navigation from a stale link or cached bundle. */}
           <Route path="/lp/topmate-vs-bookasloth" element={<Navigate to="/compare/topmate-alternative" replace />} />
@@ -476,16 +435,15 @@ function App() {
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/moments" element={<Moments />} />
           <Route path="/moments/:slug" element={<MomentPage />} />
-          {/* Render target for the OG card generator, not a page for humans.
-              noindex + absent from the sitemap and prerender lists. */}
-          <Route path="/og/blog/:slug" element={<OgCard />} />
-          <Route path="/og/host/:username" element={<HostOgCard />} />
-          <Route path="/og/service/:username/:slug" element={<ServiceOgCard />} />
+          {/* OG card render routes removed (growth removal): one static /og-image.png for all. */}
           <Route path="/blogs" element={<BlogsRedirect />} />
           <Route path="/blogs/:slug" element={<BlogsRedirect />} />
           <Route path="/about" element={<About />} />
-          {/* SEO discovery hubs — link every profession + competitor landing page */}
-          <Route path="/solutions" element={<Solutions />} />
+          {/* SEO discovery hub — links every competitor landing page */}
+          {/* /solutions scrapped: redirect so existing inbound links (older /for
+              pages, external) don't 404. /appointment-booking-software is the
+              surviving profession-discovery hub. */}
+          <Route path="/solutions" element={<Navigate to="/appointment-booking-software" replace />} />
           <Route path="/compare" element={<Compare />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/careers/:jobSlug" element={<JobDetail />} />
@@ -606,7 +564,7 @@ function App() {
           {/* Content */}
           <Route path="/admin/content/pages" element={<AdminWrapper><AdminPages /></AdminWrapper>} />
           <Route path="/admin/content/blogs" element={<AdminWrapper><AdminBlogs /></AdminWrapper>} />
-          <Route path="/admin/content/newsletter" element={<AdminWrapper><AdminNewsletter /></AdminWrapper>} />
+          {/* Newsletter admin route removed (growth removal). */}
           <Route path="/admin/content/faq" element={<AdminWrapper><AdminFAQ /></AdminWrapper>} />
           <Route path="/admin/content/testimonials" element={<AdminWrapper><AdminTestimonials /></AdminWrapper>} />
 
@@ -626,7 +584,7 @@ function App() {
           <Route path="/admin/platform/footer" element={<AdminWrapper><AdminFooterBuilder /></AdminWrapper>} />
           <Route path="/admin/platform/communication" element={<AdminWrapper><AdminCommunication /></AdminWrapper>} />
           <Route path="/admin/notifications" element={<AdminWrapper><AdminNotifications /></AdminWrapper>} />
-          <Route path="/admin/campaigns" element={<AdminWrapper><AdminCampaigns /></AdminWrapper>} />
+          {/* Campaigns admin route removed (growth removal). */}
           <Route path="/admin/badges" element={<AdminWrapper><AdminBadges /></AdminWrapper>} />
 
           {/* Finance — double-entry ledger (P1) */}
@@ -647,8 +605,7 @@ function App() {
           <Route path="/admin/gst/exports" element={<AdminWrapper><AdminGstExports /></AdminWrapper>} />
 
           {/* SEO audit dashboard (read-only) */}
-          <Route path="/admin/seo" element={<AdminWrapper><AdminSeo /></AdminWrapper>} />
-          <Route path="/admin/seo/:view" element={<AdminWrapper><AdminSeo /></AdminWrapper>} />
+          {/* SEO admin routes removed (growth removal). */}
 
           {/* System — bare /admin/system has no page; send it to the dashboard */}
           <Route path="/admin/system" element={<Navigate to="/super-dashboard" replace />} />
@@ -670,33 +627,7 @@ function App() {
           {/* Platform Control */}
           <Route path="/admin/features" element={<AdminWrapper><AdminFeatureStatus /></AdminWrapper>} />
 
-          {/* Sales CRM command center — /admin/sales folds into the Leads workspace */}
-          <Route path="/admin/sales" element={<Navigate to="/admin/sales/desk" replace />} />
-          <Route path="/admin/sales/desk" element={<AdminWrapper><SalesDesk /></AdminWrapper>} />
-          <Route path="/admin/sales/relationships" element={<AdminWrapper><RelationshipDesk /></AdminWrapper>} />
-          <Route path="/admin/sales/leads" element={<AdminWrapper><SalesLeads /></AdminWrapper>} />
-          <Route path="/admin/sales/leads/:id" element={<AdminWrapper><SalesLeadDetail /></AdminWrapper>} />
-          <Route path="/admin/sales/lists" element={<AdminWrapper><SalesLists /></AdminWrapper>} />
-          <Route path="/admin/sales/lists/:id" element={<AdminWrapper><SalesLists /></AdminWrapper>} />
-          <Route path="/admin/sales/follow-ups" element={<AdminWrapper><SalesFollowUps /></AdminWrapper>} />
-          <Route path="/admin/sales/reports" element={<AdminWrapper><SalesReports /></AdminWrapper>} />
-          <Route path="/admin/customer/:leadId" element={<AdminWrapper><CustomerDetail /></AdminWrapper>} />
-          <Route path="/admin/sales/pipeline" element={<AdminWrapper><SalesPipeline /></AdminWrapper>} />
-          <Route path="/admin/sales/templates" element={<AdminWrapper><SalesTemplates /></AdminWrapper>} />
-          <Route path="/admin/sales/cold-calling" element={<AdminWrapper><ColdCallingLayout /></AdminWrapper>}>
-            <Route index element={<ColdCallOverview />} />
-            <Route path="today" element={<ColdCallToday />} />
-            <Route path="lead/:leadId" element={<ColdCallLead />} />
-            <Route path="follow-ups" element={<ColdCallFollowUps />} />
-            <Route path="history" element={<ColdCallHistory />} />
-            <Route path="lists" element={<ColdCallLists />} />
-            <Route path="reports" element={<ColdCallReports />} />
-          </Route>
-          {/* Sequences, split by audience (v3.160): host lifecycle → Growth, cold acquisition → Marketing. */}
-          <Route path="/admin/growth/sequences" element={<AdminWrapper><SalesSequences audience="customer" title="Lifecycle Sequences" subtitle="Post-signup host journeys — onboarding, activation, win-back. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />
-          <Route path="/admin/marketing/sequences" element={<AdminWrapper><SalesSequences audience="lead" title="Acquisition Sequences" subtitle="Automated cold-lead nurture. Fire through the gated send queue; nothing sends while the CRM kill-switch is off." /></AdminWrapper>} />
-          {/* Back-compat: the old combined route now lands on lifecycle. */}
-          <Route path="/admin/sales/sequences" element={<AdminWrapper><SalesSequences audience="customer" title="Lifecycle Sequences" /></AdminWrapper>} />
+          {/* Sales CRM command center routes (desk, leads, lists, pipeline, cold-calling, sequences) removed (growth removal). */}
 
           {/* General settings */}
           <Route path="/admin/settings" element={<AdminWrapper><AdminSettings /></AdminWrapper>} />
@@ -709,27 +640,9 @@ function App() {
           <Route path="/services" element={<ServicesDirectory />} />
           <Route path="/services/:profession" element={<ProfessionServices />} />
 
-          {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession. */}
-          {/* Bespoke standalone /for pages must precede the :profession catch-all. */}
-          <Route path="/for/astrologers" element={<Astrologers />} />
-          <Route path="/for/architects" element={<ArchitectPage />} />
-          <Route path="/for/dentists" element={<DentistPage />} />
-          <Route path="/for/chartered-accountants" element={<CharteredAccountants />} />
-          <Route path="/for/sports-turf" element={<SportsTurf />} />
-          <Route path="/for/lawyers" element={<LawyersPage />} />
-          <Route path="/for/pediatricians" element={<Pediatricians />} />
-          <Route path="/for/gynecologists" element={<Gynecologists />} />
-          <Route path="/for/dermatologists" element={<Dermatologists />} />
-          <Route path="/for/doctors" element={<GeneralPhysicians />} />
-          <Route path="/for/physiotherapists" element={<Physiotherapists />} />
-          <Route path="/for/business-consultant" element={<BusinessConsultants />} />
-          <Route path="/for/ent-specialists" element={<EntSpecialists />} />
-          <Route path="/for/ophthalmologists" element={<Ophthalmologists />} />
-          <Route path="/for/nutritionists" element={<Nutritionists />} />
-          <Route path="/for/life-coaches" element={<LifeCoaches />} />
-          <Route path="/for/spa" element={<Spas />} />
-          <Route path="/for/salon" element={<SalonPage />} />
-          <Route path="/for/veterinarians" element={<Veterinarians />} />
+          {/* Profession marketing landing pages — one data-driven template for every
+              profession (/for/<slug>). Content + palette per profession live in
+              pages/for/professionLandingData.js; an unknown slug renders a 404. */}
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
@@ -750,7 +663,7 @@ function App() {
           <Route path="/support" element={<Support />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/get-in-touch" element={<Contact />} />
-          <Route path="/enterprise" element={<Enterprise />} />
+          {/* /enterprise lead page removed (growth removal). */}
           <Route path="/how-it-works" element={<HowItWorks />} />
           {/* Full-screen shareable product pitch deck (pages/presentation/). */}
           <Route path="/presentation" element={<Presentation />} />

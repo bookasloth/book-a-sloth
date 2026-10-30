@@ -17,6 +17,14 @@ const planService = require("../services/planService");
 const inviteService = require("../services/inviteService");
 const { SAFETY_KEYS } = require("../config/featureRegistry");
 
+// Book A Sloth is India-first: a Google Calendar left on its default UTC is not
+// a real location signal, and seeding it makes the host's slots render in UTC so
+// guests see times that look hours in the past ("old times" bug). Treat UTC/GMT
+// (or no value) as "no signal" and fall back to the platform default IST; a
+// genuine non-UTC Google timezone is still honoured for hosts truly elsewhere.
+const normalizeSeedTimezone = (googleTz) =>
+  (!googleTz || /^(Etc\/)?(UTC|GMT)$/i.test(googleTz)) ? "Asia/Kolkata" : googleTz;
+
 // Invite-link attribution: stamp only in the brand-new-profile branch (caller
 // guarantees profileId was just created). Existing accounts never reach here.
 // No-ops when state carries no slug or the slug is unknown (service-validated).
@@ -436,7 +444,7 @@ const googleVendorAuth = (req, res) => {
     : undefined;
   // Marketing attribution — carried through the signed OAuth state so the
   // callback can stamp UTM/source on the brand-new host lead (CRM Phase 2b).
-  const att = require("../services/crm/attributionInput").cleanAttribution(req.query || {});
+  const att = undefined; // CRM attribution removed (growth removal)
   const state = jwt.sign(
     { flow: "vendor_auth", intent, ...(invite ? { invite } : {}), ...(att ? { att } : {}) },
     OAUTH_STATE_SECRET,
@@ -572,13 +580,12 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
     const { data: avail } = await supabaseAdmin
       .from("availability").select("host_id").eq("host_id", profileId).maybeSingle();
     if (!avail) {
-      const tz = await getCalendarTimezone(tokens.access_token, tokens.refresh_token);
-      if (tz) {
-        await supabaseAdmin.from("availability").upsert(
-          { host_id: profileId, timezone: tz, updated_at: new Date().toISOString() },
-          { onConflict: "host_id" },
-        );
-      }
+      const googleTz = await getCalendarTimezone(tokens.access_token, tokens.refresh_token);
+      const tz = normalizeSeedTimezone(googleTz);
+      await supabaseAdmin.from("availability").upsert(
+        { host_id: profileId, timezone: tz, updated_at: new Date().toISOString() },
+        { onConflict: "host_id" },
+      );
     }
   } catch (tzErr) {
     console.error("google timezone seed (non-fatal):", tzErr.message);
@@ -697,13 +704,7 @@ const googleCallback = async (req, res) => {
           },
         });
 
-        // Real-time CRM: brand-new host becomes a lead immediately (source
-        // host_signup), so Sales sees signups live instead of waiting on the
-        // manual backfill script. Never throws / never blocks the signup.
-        await require("../services/crm/leadService").safeUpsertLead(
-          { name: profile.name, email: googleEmail, profile_id: profileId },
-          { source: "host_signup", createdBy: "signup", attribution: statePayload?.att }
-        );
+        // CRM lead capture on host signup removed (growth removal).
       }
 
       // Re-attach Google tokens only when there's something to (re)store: a
@@ -1678,4 +1679,5 @@ module.exports = {
   resetPassword,
   maybeStampInvite,
   backfillGuestBookings,
+  normalizeSeedTimezone,
 };

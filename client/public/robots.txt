@@ -23,17 +23,42 @@ Disallow: /*/booking/
 # Social-card render target (/og/blog/:slug) — an art board, not a page.
 Disallow: /og/
 
-# AI crawlers — explicitly welcomed (GEO / AI-search citation).
+# AI crawlers — welcomed site-wide (GEO / AI-search citation) EXCEPT the
+# /for/* profession landing pages, which are deliberately kept out of AI answers.
 User-agent: GPTBot
 Allow: /
+Disallow: /for/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /for/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /for/
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /for/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /for/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /for/
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /for/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /for/
+
+User-agent: CCBot
+Allow: /
+Disallow: /for/
 
 Sitemap: https://bookasloth.com/sitemap.xml

@@ -583,16 +583,7 @@ const verifySubscription = async (req, res) => {
 
     auditLog('SUBSCRIPTION_ACTIVATED', req.user.id, { plan, expires_at: expiresAt });
 
-    // CRM: real-time "became a customer" event + immediate paid promotion (the
-    // annual one-time path never flows through the webhook/renewal hook).
-    try {
-      await require('../services/crm/leadService').recordAccountEvent({
-        profileId: req.user.id, type: 'subscription_started',
-        title: `Subscribed — ${plan} (annual)`,
-        meta: { plan, cadence: 'annual', payment_id: razorpay_payment_id },
-        promoteToPaid: true, wonAt: new Date().toISOString(),
-      });
-    } catch (crmErr) { console.error('[crm] subscription event hook failed (non-fatal):', crmErr.message); }
+    // CRM subscription-event hook removed (growth removal).
 
     trackServer(req.user.id, "subscription_purchased", {
       plan,

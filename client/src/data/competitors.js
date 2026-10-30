@@ -2,6 +2,10 @@
 // live pricing page on CHECKED_AT. The /compare hub and every /compare/* page
 // read competitor claims from HERE, so a re-check is one edit.
 //
+// `comingSoon: true` = the individual /compare/<slug> page is parked behind a
+// "Coming soon" placeholder and the hub drops it from the matrix/sources/schema.
+// Only Topmate currently keeps a full comparison page + live matrix data.
+//
 // Rules (comparative claims about named companies — get them right):
 //   - Only state what the `source` page says. Prices are as published, in their
 //     currency; never convert to ₹ in a way that hides their free plan.
@@ -28,6 +32,7 @@ export const COMPETITORS = {
     sms: null,
     commission: 'None',
     trial: null,
+    comingSoon: true,
   },
   acuity: {
     name: 'Acuity Scheduling',
@@ -44,6 +49,7 @@ export const COMPETITORS = {
     sms: 'Standard plan and up',
     commission: 'None',
     trial: '7 days',
+    comingSoon: true,
   },
   setmore: {
     name: 'Setmore',
@@ -60,6 +66,7 @@ export const COMPETITORS = {
     sms: 'Pro plan (500 credits / month)',
     commission: 'None',
     trial: '30-day refund on Pro',
+    comingSoon: true,
   },
   simplybook: {
     name: 'SimplyBook.me',
@@ -76,6 +83,7 @@ export const COMPETITORS = {
     sms: 'Paid credits ($8 per 100)',
     commission: 'None',
     trial: '14 days',
+    comingSoon: true,
   },
   zoho: {
     name: 'Zoho Bookings',
@@ -92,6 +100,7 @@ export const COMPETITORS = {
     sms: 'Via SMS provider integrations',
     commission: 'None',
     trial: null,
+    comingSoon: true,
   },
   topmate: {
     name: 'Topmate',
@@ -112,3 +121,7 @@ export const COMPETITORS = {
 };
 
 export const COMPETITOR_LIST = Object.entries(COMPETITORS).map(([key, c]) => ({ key, ...c }));
+
+// Competitors with a full, live comparison page (Topmate today). The hub builds
+// its matrix, sources and schema from these; the rest show a "Coming soon" page.
+export const LIVE_COMPETITOR_LIST = COMPETITOR_LIST.filter((c) => !c.comingSoon);

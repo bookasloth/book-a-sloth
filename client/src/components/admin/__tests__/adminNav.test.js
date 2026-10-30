@@ -33,9 +33,9 @@ describe('adminNav tree', () => {
     });
   });
 
-  it('Sales and Marketing are distinct top-level areas', () => {
+  it('Marketing is a top-level area; Sales was removed (growth removal)', () => {
     const keys = NAV.map(a => a.key);
-    expect(keys).toContain('sales');
+    expect(keys).not.toContain('sales');
     expect(keys).toContain('marketing');
   });
 

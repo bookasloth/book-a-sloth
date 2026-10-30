@@ -116,10 +116,7 @@ jobs:
           VITE_POSTHOG_HOST: https://placeholder.invalid
 
       - name: Generate cards for newly-published posts
-        run: node scripts/generateBlogOgImages.mjs --missing
-        env:
-          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
+        run: echo "OG card generation removed (growth removal) — static /og-image.png serves all posts"
 
   # Deploy runs independently of blog-og. OG-card generation is best-effort and
   # must NEVER block a production deploy — its Chromium apt step is flaky and has

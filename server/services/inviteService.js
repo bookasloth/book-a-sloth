@@ -13,18 +13,14 @@ const isSchemaMiss = (e) =>
 
 const norm = (s) => normalizeSlug(String(s || '').trim());
 
-// Cold-call invite codes (bookasloth.com/invite/CX12) share this landing page; an
-// invite_links slug always wins. Lazy require — coldCallService pulls in the CRM.
-const coldCall = () => require('./crm/coldCallService');
+// Cold-call invite-code fallback removed (CRM removal); only invite_links slugs remain.
 
 async function getPublicConfig(slug) {
   try {
     const { data, error } = await supabaseAdmin
       .from('invite_links').select('label, active').eq('slug', norm(slug)).maybeSingle();
     if (error) throw error;
-    if (data) return data;
-    const lead = await coldCall().leadByRefCode(slug);
-    return lead ? { label: lead.business_name || lead.name || 'friend', active: true } : null;
+    return data || null;
   } catch (e) { if (isSchemaMiss(e)) return null; throw e; }
 }
 
@@ -44,7 +40,7 @@ async function stampInviteSlug(profileId, slug) {
   const s = norm(slug);
   if (!profileId || !s) return;
   try {
-    if (!(await slugExists(s))) { await coldCall().claimSignup(s, profileId); return; }   // cold-call invite code, else bogus
+    if (!(await slugExists(s))) return;   // not a known invite_links slug
     const { error } = await supabaseAdmin
       .from('profiles').update({ invite_slug: s })
       .eq('id', profileId).is('invite_slug', null);
@@ -66,7 +62,7 @@ async function recordVisit(slug, ip, ua) {
   if (seen.has(key) && seen.get(key) > now) return;
   seen.set(key, now + 26 * 3600 * 1000);
   if (seen.size > 50000) for (const [k, exp] of seen) if (exp <= now) seen.delete(k); // cheap sweep
-  if (!(await slugExists(s))) { await coldCall().trackClick(s); return; }   // cold-call invite code
+  if (!(await slugExists(s))) return;   // not a known invite_links slug
   try {
     const { error } = await supabaseAdmin.rpc('increment_invite_visit', { p_slug: s });
     if (error) throw error;

@@ -22,13 +22,14 @@ describe('createSitemapCache', () => {
     expect(cache.get('x')).toBeUndefined();
   });
 
-  test('bust() drops every entry (a mutation invalidates the whole sitemap)', () => {
+  test('bust() is a no-op — the sitemap is frozen (growth removal)', () => {
     const cache = createSitemapCache({ ttlMs: 1000, now: () => 0 });
     cache.set('a', '1');
     cache.set('b', '2');
     cache.bust();
-    expect(cache.get('a')).toBeUndefined();
-    expect(cache.get('b')).toBeUndefined();
+    // Freeze: content mutations no longer invalidate the cached sitemap.
+    expect(cache.get('a')).toBe('1');
+    expect(cache.get('b')).toBe('2');
   });
 
   test('a falsy-but-valid cached value (empty string) is still a hit', () => {
